@@ -1,0 +1,263 @@
+package com.fitnesslink.fit.ui.home
+
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fitnesslink.fit.model.HomeDashboard
+import com.fitnesslink.fit.model.HorizontalCalendar
+import com.fitnesslink.fit.ui.components.HeaderView
+import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.BlueTheme
+import com.fitnesslink.fit.ui.theme.FLPrimary
+import com.fitnesslink.fit.ui.theme.HighlightState
+import com.fitnesslink.fit.ui.theme.OrangeTheme
+import com.fitnesslink.fit.ui.theme.PurpleTheme
+import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.viewmodel.HomeViewModel
+
+@Composable
+fun HomeScreen() {
+    val viewModel: HomeViewModel = viewModel()
+
+    LaunchedEffect(Unit) { viewModel.loadData() }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(BackgroundColor)
+    ) {
+        HeaderView()
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            Spacer(modifier = Modifier.height(10.dp))
+            DateScrollView(
+                calendarItems = viewModel.calendarItems,
+                scrollTo = viewModel.scrollToDay
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            TodayWorkoutView()
+            Spacer(modifier = Modifier.height(16.dp))
+            HomeDashboardView(dashboards = viewModel.dashboards)
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+    }
+}
+
+@Composable
+fun DateScrollView(
+    calendarItems: List<HorizontalCalendar>,
+    scrollTo: Int
+) {
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(scrollTo) {
+        if (scrollTo > 0 && calendarItems.isNotEmpty()) {
+            listState.scrollToItem(maxOf(0, scrollTo - 1))
+        }
+    }
+
+    LazyRow(
+        state = listState,
+        contentPadding = PaddingValues(horizontal = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White)
+            .padding(vertical = 10.dp)
+    ) {
+        items(calendarItems) { item ->
+            DateCellView(item = item)
+        }
+    }
+}
+
+@Composable
+fun DateCellView(item: HorizontalCalendar) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(44.dp)
+            .height(72.dp)
+            .background(
+                if (item.selected) HighlightState else Color.Transparent,
+                RoundedCornerShape(8.dp)
+            )
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            text = item.name,
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Text(
+            text = item.weekDay,
+            fontSize = 11.sp,
+            color = TextSecondaryColor
+        )
+        Spacer(modifier = Modifier.height(7.dp))
+        Box(
+            modifier = Modifier
+                .width(10.dp)
+                .height(10.dp)
+                .background(FLPrimary, RoundedCornerShape(50))
+        )
+    }
+}
+
+@Composable
+fun TodayWorkoutView() {
+    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Text(
+            text = "Today's Workout",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        RestView()
+    }
+}
+
+@Composable
+fun RestView() {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White, RoundedCornerShape(12.dp))
+            .padding(vertical = 24.dp, horizontal = 20.dp)
+    ) {
+        Text(text = "\uD83D\uDCA4", fontSize = 48.sp)
+        Spacer(modifier = Modifier.height(12.dp))
+        Text(
+            text = "Rest Day",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = "Rest days are essential for recovery and muscle growth. Use this time to stretch, hydrate, and prepare for your next workout.",
+            fontSize = 14.sp,
+            color = TextSecondaryColor,
+            lineHeight = 20.sp
+        )
+    }
+}
+
+@Composable
+fun HomeDashboardView(dashboards: List<HomeDashboard>) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+        Text(
+            text = "Dashboard",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+
+        val rows = dashboards.chunked(2)
+        rows.forEach { rowItems ->
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                rowItems.forEach { dashboard ->
+                    DashboardCard(
+                        dashboard = dashboard,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                if (rowItems.size == 1) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+        }
+    }
+}
+
+@Composable
+fun DashboardCard(
+    dashboard: HomeDashboard,
+    modifier: Modifier = Modifier
+) {
+    val progressColor = when (dashboard.name) {
+        "Hydration" -> BlueTheme
+        "Activity", "Workout Time" -> OrangeTheme
+        "Current Weight" -> PurpleTheme
+        else -> FLPrimary
+    }
+
+    val icon = when (dashboard.name) {
+        "Hydration" -> "\uD83D\uDCA7"
+        "Current Weight" -> "\u2696\uFE0F"
+        "Activity", "Workout Time" -> "\uD83C\uDFC3"
+        else -> "\uD83D\uDCAA"
+    }
+
+    Column(
+        modifier = modifier
+            .background(White, RoundedCornerShape(12.dp))
+            .padding(16.dp)
+    ) {
+        Text(text = icon, fontSize = 24.sp)
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(
+            text = dashboard.name,
+            fontSize = 12.sp,
+            color = TextSecondaryColor
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Row(verticalAlignment = Alignment.Bottom) {
+            Text(
+                text = dashboard.progress,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = progressColor
+            )
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = dashboard.unit,
+                fontSize = 12.sp,
+                color = TextSecondaryColor,
+                modifier = Modifier.padding(bottom = 4.dp)
+            )
+        }
+        Text(
+            text = "Goal: ${dashboard.goals}",
+            fontSize = 11.sp,
+            color = TextSecondaryColor
+        )
+    }
+}

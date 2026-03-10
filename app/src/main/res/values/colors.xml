@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="fl_primary">#FF23AF8D</color>
+    <color name="fl_primary_dark">#FF1A8A6E</color>
+    <color name="fl_background">#FFF0F4F5</color>
+    <color name="fl_orange">#FFF69833</color>
+    <color name="fl_purple">#FF8B5CF6</color>
+    <color name="fl_blue">#FF3B82F6</color>
+    <color name="fl_text_primary">#FF1A1A1A</color>
+    <color name="fl_text_secondary">#FF6B7280</color>
+    <color name="fl_medium_gray">#FF9CA3AF</color>
+    <color name="fl_blend_gray">#FFE5E7EB</color>
+    <color name="fl_progress_bg">#FFE5E7EB</color>
+    <color name="fl_progress_highlight">#FF23AF8D</color>
+    <color name="fl_disabled_button">#FFB0B0B0</color>
+    <color name="fl_calendar_line">#FFD1D5DB</color>
+    <color name="fl_image_placeholder">#FFE5E7EB</color>
+    <color name="fl_menu_color">#FFF9FAFB</color>
+    <color name="fl_info_color">#FF6B7280</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>

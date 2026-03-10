@@ -1,0 +1,270 @@
+package com.fitnesslink.fit.ui.navigation
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.automirrored.filled.DirectionsRun
+import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.automirrored.outlined.DirectionsRun
+import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.fitnesslink.fit.ui.auth.LoginScreen
+import com.fitnesslink.fit.ui.auth.WelcomeScreen
+import com.fitnesslink.fit.ui.calendar.CalendarScreen
+import com.fitnesslink.fit.ui.catalog.CatalogScreen
+import com.fitnesslink.fit.ui.catalog.ProgramDetailScreen
+import com.fitnesslink.fit.ui.catalog.ProgramsScreen
+import com.fitnesslink.fit.ui.catalog.WorkoutsScreen
+import com.fitnesslink.fit.ui.home.HomeScreen
+import com.fitnesslink.fit.ui.personalization.PersonalizationScreen
+import com.fitnesslink.fit.ui.profile.ProfileScreen
+import com.fitnesslink.fit.ui.profile.ProfileStubScreen
+import com.fitnesslink.fit.ui.session.InteractiveSessionScreen
+import com.fitnesslink.fit.ui.session.PlaylistScreen
+import com.fitnesslink.fit.ui.workout.WorkoutDetailScreen
+import com.fitnesslink.fit.ui.theme.FLPrimary
+import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.White
+
+data class BottomNavItem(
+    val route: String,
+    val title: String,
+    val selectedIcon: ImageVector,
+    val unselectedIcon: ImageVector
+)
+
+@Composable
+fun AppNavigation() {
+    var isAuthenticated by rememberSaveable { mutableStateOf(false) }
+    var showPersonalization by rememberSaveable { mutableStateOf(false) }
+
+    if (!isAuthenticated) {
+        AuthNavigation(
+            onLogin = { needsPersonalization ->
+                showPersonalization = needsPersonalization
+                isAuthenticated = true
+            }
+        )
+    } else if (showPersonalization) {
+        PersonalizationScreen(
+            onComplete = { showPersonalization = false }
+        )
+    } else {
+        MainTabNavigation(
+            onLogout = {
+                isAuthenticated = false
+                showPersonalization = false
+            }
+        )
+    }
+}
+
+@Composable
+fun AuthNavigation(onLogin: (Boolean) -> Unit) {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "welcome") {
+        composable("welcome") {
+            WelcomeScreen(
+                onSignUp = { navController.navigate("signUp") },
+                onLogin = { navController.navigate("login") }
+            )
+        }
+        composable("login") {
+            LoginScreen(
+                initialTab = 1,
+                onLogin = onLogin
+            )
+        }
+        composable("signUp") {
+            LoginScreen(
+                initialTab = 0,
+                onLogin = onLogin
+            )
+        }
+    }
+}
+
+@Composable
+fun MainTabNavigation(onLogout: () -> Unit) {
+    val navController = rememberNavController()
+    var selectedTab by rememberSaveable { mutableStateOf(0) }
+
+    val bottomNavItems = listOf(
+        BottomNavItem("home", "Home", Icons.Filled.Home, Icons.Outlined.Home),
+        BottomNavItem("catalog", "Catalog", Icons.AutoMirrored.Filled.DirectionsRun, Icons.AutoMirrored.Outlined.DirectionsRun),
+        BottomNavItem("calendar", "Calendar", Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth),
+        BottomNavItem("profile", "Profile", Icons.Filled.Person, Icons.Outlined.Person)
+    )
+
+    Scaffold(
+        bottomBar = {
+            NavigationBar(containerColor = White) {
+                bottomNavItems.forEachIndexed { index, item ->
+                    NavigationBarItem(
+                        icon = {
+                            Icon(
+                                imageVector = if (selectedTab == index) item.selectedIcon else item.unselectedIcon,
+                                contentDescription = item.title
+                            )
+                        },
+                        label = { Text(item.title) },
+                        selected = selectedTab == index,
+                        onClick = {
+                            selectedTab = index
+                            navController.navigate(item.route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        },
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = FLPrimary,
+                            selectedTextColor = FLPrimary,
+                            unselectedIconColor = TextSecondaryColor,
+                            unselectedTextColor = TextSecondaryColor,
+                            indicatorColor = White
+                        )
+                    )
+                }
+            }
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = "home",
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable("home") { HomeScreen() }
+            composable("catalog") {
+                CatalogScreen(
+                    onNavigateToPrograms = { navController.navigate("programs") },
+                    onNavigateToWorkouts = { navController.navigate("workouts") },
+                    onNavigateToProgramDetail = { navController.navigate("programDetail/$it") },
+                    onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") }
+                )
+            }
+            composable("calendar") {
+                CalendarScreen(
+                    onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") }
+                )
+            }
+            composable("profile") {
+                ProfileScreen(
+                    onNavigate = { route -> navController.navigate(route) },
+                    onLogout = onLogout
+                )
+            }
+
+            // Programs
+            composable("programs") {
+                ProgramsScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToProgramDetail = { navController.navigate("programDetail/$it") }
+                )
+            }
+            composable(
+                "programDetail/{programId}",
+                arguments = listOf(navArgument("programId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                ProgramDetailScreen(
+                    programId = backStackEntry.arguments?.getString("programId") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // Workouts
+            composable("workouts") {
+                WorkoutsScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") }
+                )
+            }
+            composable(
+                "workoutDetail/{workoutId}",
+                arguments = listOf(navArgument("workoutId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                WorkoutDetailScreen(
+                    workoutId = backStackEntry.arguments?.getString("workoutId") ?: "",
+                    onBack = { navController.popBackStack() },
+                    onStartPlaylist = { navController.navigate("playlistSession/$it") },
+                    onStartInteractive = { navController.navigate("interactiveSession/$it") }
+                )
+            }
+
+            // Workout Sessions
+            composable(
+                "playlistSession/{workoutId}",
+                arguments = listOf(navArgument("workoutId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                PlaylistScreen(
+                    workoutId = backStackEntry.arguments?.getString("workoutId") ?: "",
+                    onBack = { navController.popBackStack() },
+                    onNavigateToInteractive = { navController.navigate("interactiveSession/$it") }
+                )
+            }
+            composable(
+                "interactiveSession/{workoutId}",
+                arguments = listOf(navArgument("workoutId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                InteractiveSessionScreen(
+                    workoutId = backStackEntry.arguments?.getString("workoutId") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // Profile sub-screens
+            composable("personalInfo") {
+                ProfileStubScreen(title = "Personal Info", onBack = { navController.popBackStack() })
+            }
+            composable("personalizationProfile") {
+                ProfileStubScreen(title = "Personalization", onBack = { navController.popBackStack() })
+            }
+            composable("analyticsProgress") {
+                ProfileStubScreen(title = "Analytics & Progress", onBack = { navController.popBackStack() })
+            }
+            composable("preferences") {
+                ProfileStubScreen(title = "Preferences", onBack = { navController.popBackStack() })
+            }
+            composable("billing") {
+                ProfileStubScreen(title = "Billing", onBack = { navController.popBackStack() })
+            }
+            composable("goals") {
+                ProfileStubScreen(title = "Goals", onBack = { navController.popBackStack() })
+            }
+            composable("measurements") {
+                ProfileStubScreen(title = "Measurements", onBack = { navController.popBackStack() })
+            }
+            composable("photos") {
+                ProfileStubScreen(title = "Photos", onBack = { navController.popBackStack() })
+            }
+            composable("weight") {
+                ProfileStubScreen(title = "Weight", onBack = { navController.popBackStack() })
+            }
+            composable("workoutReport") {
+                ProfileStubScreen(title = "Workout Report", onBack = { navController.popBackStack() })
+            }
+        }
+    }
+}
