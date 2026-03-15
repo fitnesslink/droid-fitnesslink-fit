@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.catalog
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -13,19 +14,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.ProgramList
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.HeaderBackView
@@ -103,10 +102,11 @@ fun ProgramItemView(
                     color = TextSecondaryColor
                 )
             }
-            Icon(
-                imageVector = if (program.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+            Image(
+                painter = painterResource(
+                    if (program.isFavorite) R.drawable.heartselected else R.drawable.heart
+                ),
                 contentDescription = "Favorite",
-                tint = if (program.isFavorite) FLPrimary else TextSecondaryColor,
                 modifier = Modifier.size(20.dp)
             )
         }

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.calendar
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,21 +21,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.CalendarCell
 import com.fitnesslink.fit.model.CalendarHeaderCell
 import com.fitnesslink.fit.model.FitnessContent
@@ -109,18 +107,19 @@ fun MonthCalendarView(cells: List<CalendarCell>) {
                     fontWeight = FontWeight.SemiBold,
                     color = FLPrimary
                 )
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
+                Image(
+                    painter = painterResource(R.drawable.downarrow),
                     contentDescription = "Select Month",
-                    tint = FLPrimary
+                    modifier = Modifier.size(16.dp)
                 )
             }
             Spacer(modifier = Modifier.weight(1f))
-            Icon(
-                imageVector = Icons.Default.Add,
+            Image(
+                painter = painterResource(R.drawable.greenplus),
                 contentDescription = "Add",
-                tint = FLPrimary,
-                modifier = Modifier.clickable { }
+                modifier = Modifier
+                    .size(20.dp)
+                    .clickable { }
             )
         }
 
@@ -186,13 +185,12 @@ fun CalendarCellView(cell: CalendarCell) {
         )
         if (cell.status == "scheduled" || cell.status == "completed") {
             Spacer(modifier = Modifier.height(7.dp))
-            Box(
-                modifier = Modifier
-                    .size(10.dp)
-                    .background(
-                        if (cell.status == "completed") FLPrimary else FLPrimary.copy(alpha = 0.5f),
-                        CircleShape
-                    )
+            Image(
+                painter = painterResource(
+                    if (cell.status == "completed") R.drawable.completedstate else R.drawable.scheduledstate
+                ),
+                contentDescription = cell.status,
+                modifier = Modifier.size(10.dp)
             )
         }
     }
@@ -249,13 +247,14 @@ fun DateContentView(
             modifier = Modifier.weight(1f)
         )
         if (content.workoutId.isNotEmpty()) {
-            Icon(
-                imageVector = Icons.Default.ChevronRight,
+            Image(
+                painter = painterResource(R.drawable.rightarrow),
                 contentDescription = "View",
-                tint = TextSecondaryColor,
-                modifier = Modifier.clickable {
-                    onNavigateToWorkoutDetail(content.workoutId)
-                }
+                modifier = Modifier
+                    .size(16.dp)
+                    .clickable {
+                        onNavigateToWorkoutDetail(content.workoutId)
+                    }
             )
         }
     }

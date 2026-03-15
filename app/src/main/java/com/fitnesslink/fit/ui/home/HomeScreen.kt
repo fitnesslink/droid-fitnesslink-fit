@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -27,10 +29,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.HomeDashboard
 import com.fitnesslink.fit.model.HorizontalCalendar
 import com.fitnesslink.fit.ui.components.HeaderView
@@ -128,11 +132,10 @@ fun DateCellView(item: HorizontalCalendar) {
             color = TextSecondaryColor
         )
         Spacer(modifier = Modifier.height(7.dp))
-        Box(
-            modifier = Modifier
-                .width(10.dp)
-                .height(10.dp)
-                .background(FLPrimary, RoundedCornerShape(50))
+        Image(
+            painter = painterResource(R.drawable.scheduledstate),
+            contentDescription = "Scheduled",
+            modifier = Modifier.size(10.dp)
         )
     }
 }
@@ -159,7 +162,11 @@ fun RestView() {
             .background(White, RoundedCornerShape(12.dp))
             .padding(vertical = 24.dp, horizontal = 20.dp)
     ) {
-        Text(text = "\uD83D\uDCA4", fontSize = 48.sp)
+        Image(
+            painter = painterResource(R.drawable.rest),
+            contentDescription = "Rest",
+            modifier = Modifier.size(48.dp)
+        )
         Spacer(modifier = Modifier.height(12.dp))
         Text(
             text = "Rest Day",
@@ -219,11 +226,11 @@ fun DashboardCard(
         else -> FLPrimary
     }
 
-    val icon = when (dashboard.name) {
-        "Hydration" -> "\uD83D\uDCA7"
-        "Current Weight" -> "\u2696\uFE0F"
-        "Activity", "Workout Time" -> "\uD83C\uDFC3"
-        else -> "\uD83D\uDCAA"
+    val iconRes = when (dashboard.name) {
+        "Hydration" -> R.drawable.hydration
+        "Current Weight" -> R.drawable.scale
+        "Activity", "Workout Time" -> R.drawable.runningicon
+        else -> R.drawable.dumbbell
     }
 
     Column(
@@ -231,7 +238,11 @@ fun DashboardCard(
             .background(White, RoundedCornerShape(12.dp))
             .padding(16.dp)
     ) {
-        Text(text = icon, fontSize = 24.sp)
+        Image(
+            painter = painterResource(iconRes),
+            contentDescription = dashboard.name,
+            modifier = Modifier.size(24.dp)
+        )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = dashboard.name,

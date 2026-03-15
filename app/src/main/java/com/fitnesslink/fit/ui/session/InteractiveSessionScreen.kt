@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.session
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,11 +24,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.ExerciseProgress
 import com.fitnesslink.fit.model.WorkoutProgress
 import com.fitnesslink.fit.model.WorkoutTask
@@ -265,7 +268,11 @@ fun WorkoutControlTopView(
             )
         }
         Spacer(modifier = Modifier.weight(1f))
-        Text("🏋️", fontSize = 24.sp)
+        Image(
+            painter = painterResource(R.drawable.kettlebell),
+            contentDescription = "Kettlebell",
+            modifier = Modifier.size(24.dp)
+        )
     }
 }
 

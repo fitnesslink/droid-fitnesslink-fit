@@ -2,6 +2,7 @@ package com.fitnesslink.fit.data
 
 import com.fitnesslink.fit.model.*
 import java.util.Calendar
+import java.util.Date
 
 object MockDataProvider {
 
@@ -226,4 +227,64 @@ object MockDataProvider {
         FitnessContent(id = "fc2", title = "Rest Day", programId = "", workoutId = "", mealPlanId = "", status = "rest"),
         FitnessContent(id = "fc3", title = "Lower Body Strength", programId = "p1", workoutId = "w2", mealPlanId = "", status = "scheduled")
     )
+
+    // Nutrition
+
+    val nutritionGoal = NutritionGoal(
+        id = "ng1",
+        calorieGoal = 2000,
+        proteinTarget = 150,
+        fatTarget = 65,
+        carbsTarget = 250
+    )
+
+    val todayFoodEntries: List<FoodEntry> = listOf(
+        FoodEntry(id = "fe1", name = "Oatmeal with Berries", calories = 320, protein = 12.0, fat = 8.0, carbs = 52.0, servingSize = 1.0, servingUnit = "bowl", mealType = MealType.BREAKFAST),
+        FoodEntry(id = "fe2", name = "Banana", calories = 105, protein = 1.3, fat = 0.4, carbs = 27.0, servingSize = 1.0, servingUnit = "medium", mealType = MealType.BREAKFAST),
+        FoodEntry(id = "fe3", name = "Protein Shake", calories = 180, protein = 30.0, fat = 3.0, carbs = 8.0, servingSize = 1.0, servingUnit = "shake", mealType = MealType.BREAKFAST),
+        FoodEntry(id = "fe4", name = "Grilled Chicken Breast", calories = 284, protein = 53.0, fat = 6.0, carbs = 0.0, servingSize = 8.0, servingUnit = "oz", mealType = MealType.LUNCH),
+        FoodEntry(id = "fe5", name = "Brown Rice", calories = 216, protein = 5.0, fat = 1.8, carbs = 45.0, servingSize = 1.0, servingUnit = "cup", mealType = MealType.LUNCH),
+        FoodEntry(id = "fe6", name = "Mixed Greens Salad", calories = 120, protein = 3.0, fat = 7.0, carbs = 12.0, servingSize = 1.0, servingUnit = "bowl", mealType = MealType.LUNCH),
+        FoodEntry(id = "fe7", name = "Salmon Fillet", calories = 367, protein = 34.0, fat = 22.0, carbs = 0.0, servingSize = 6.0, servingUnit = "oz", mealType = MealType.DINNER),
+        FoodEntry(id = "fe8", name = "Sweet Potato", calories = 103, protein = 2.3, fat = 0.1, carbs = 24.0, servingSize = 1.0, servingUnit = "medium", mealType = MealType.DINNER),
+        FoodEntry(id = "fe9", name = "Greek Yogurt", calories = 100, protein = 17.0, fat = 0.7, carbs = 6.0, servingSize = 1.0, servingUnit = "cup", mealType = MealType.SNACK),
+        FoodEntry(id = "fe10", name = "Almonds", calories = 164, protein = 6.0, fat = 14.0, carbs = 6.0, servingSize = 1.0, servingUnit = "oz", mealType = MealType.SNACK)
+    )
+
+    val recentFoods: List<FoodEntry> = listOf(
+        FoodEntry(id = "rf1", name = "Oatmeal with Berries", calories = 320, protein = 12.0, fat = 8.0, carbs = 52.0, servingSize = 1.0, servingUnit = "bowl", mealType = MealType.BREAKFAST),
+        FoodEntry(id = "rf2", name = "Grilled Chicken Breast", calories = 284, protein = 53.0, fat = 6.0, carbs = 0.0, servingSize = 8.0, servingUnit = "oz", mealType = MealType.LUNCH),
+        FoodEntry(id = "rf3", name = "Protein Shake", calories = 180, protein = 30.0, fat = 3.0, carbs = 8.0, servingSize = 1.0, servingUnit = "shake", mealType = MealType.SNACK),
+        FoodEntry(id = "rf4", name = "Salmon Fillet", calories = 367, protein = 34.0, fat = 22.0, carbs = 0.0, servingSize = 6.0, servingUnit = "oz", mealType = MealType.DINNER),
+        FoodEntry(id = "rf5", name = "Greek Yogurt", calories = 100, protein = 17.0, fat = 0.7, carbs = 6.0, servingSize = 1.0, servingUnit = "cup", mealType = MealType.SNACK),
+        FoodEntry(id = "rf6", name = "Brown Rice", calories = 216, protein = 5.0, fat = 1.8, carbs = 45.0, servingSize = 1.0, servingUnit = "cup", mealType = MealType.LUNCH),
+        FoodEntry(id = "rf7", name = "Banana", calories = 105, protein = 1.3, fat = 0.4, carbs = 27.0, servingSize = 1.0, servingUnit = "medium", mealType = MealType.SNACK),
+        FoodEntry(id = "rf8", name = "Eggs (Scrambled)", calories = 182, protein = 12.0, fat = 13.0, carbs = 2.0, servingSize = 2.0, servingUnit = "large", mealType = MealType.BREAKFAST)
+    )
+
+    val customFoods: List<FoodEntry> = listOf(
+        FoodEntry(id = "cf1", name = "Post-Workout Smoothie", calories = 350, protein = 35.0, fat = 8.0, carbs = 40.0, servingSize = 1.0, servingUnit = "smoothie", mealType = MealType.SNACK, isCustomTemplate = true),
+        FoodEntry(id = "cf2", name = "Homemade Granola", calories = 220, protein = 6.0, fat = 10.0, carbs = 30.0, servingSize = 0.5, servingUnit = "cup", mealType = MealType.BREAKFAST, isCustomTemplate = true)
+    )
+
+    val weeklyCalories: List<DailyCalorieSummary> = listOf(
+        DailyCalorieSummary(id = "wc1", dayLabel = "Mon", calories = 1850, protein = 140.0, fat = 60.0, carbs = 230.0, goal = 2000),
+        DailyCalorieSummary(id = "wc2", dayLabel = "Tue", calories = 2100, protein = 155.0, fat = 70.0, carbs = 260.0, goal = 2000),
+        DailyCalorieSummary(id = "wc3", dayLabel = "Wed", calories = 1750, protein = 135.0, fat = 55.0, carbs = 220.0, goal = 2000),
+        DailyCalorieSummary(id = "wc4", dayLabel = "Thu", calories = 1960, protein = 148.0, fat = 63.0, carbs = 245.0, goal = 2000),
+        DailyCalorieSummary(id = "wc5", dayLabel = "Fri", calories = 2200, protein = 160.0, fat = 75.0, carbs = 270.0, goal = 2000),
+        DailyCalorieSummary(id = "wc6", dayLabel = "Sat", calories = 1680, protein = 120.0, fat = 58.0, carbs = 210.0, goal = 2000),
+        DailyCalorieSummary(id = "wc7", dayLabel = "Sun", calories = 1959, protein = 146.0, fat = 64.0, carbs = 243.0, goal = 2000)
+    )
+
+    fun foodEntry(id: String): FoodEntry? = todayFoodEntries.firstOrNull { it.id == id }
+
+    val mockBarcodeProducts: Map<String, BarcodeProduct> = mapOf(
+        "049000006346" to BarcodeProduct(barcode = "049000006346", name = "Coca-Cola Classic", brand = "Coca-Cola", caloriesPer100g = 42.0, proteinPer100g = 0.0, fatPer100g = 0.0, carbsPer100g = 10.6, servingSizeGrams = 355.0, servingUnit = "ml"),
+        "016000275287" to BarcodeProduct(barcode = "016000275287", name = "Cheerios", brand = "General Mills", caloriesPer100g = 357.0, proteinPer100g = 11.3, fatPer100g = 6.0, carbsPer100g = 71.4, servingSizeGrams = 28.0, servingUnit = "g"),
+        "818290014306" to BarcodeProduct(barcode = "818290014306", name = "Greek Yogurt, Strawberry", brand = "Chobani", caloriesPer100g = 83.0, proteinPer100g = 8.3, fatPer100g = 2.5, carbsPer100g = 8.3, servingSizeGrams = 150.0, servingUnit = "g"),
+        "038000138416" to BarcodeProduct(barcode = "038000138416", name = "Crunchy Peanut Butter", brand = "Skippy", caloriesPer100g = 588.0, proteinPer100g = 24.0, fatPer100g = 50.0, carbsPer100g = 18.0, servingSizeGrams = 32.0, servingUnit = "g")
+    )
+
+    fun barcodeProduct(barcode: String): BarcodeProduct? = mockBarcodeProducts[barcode]
 }

@@ -1,21 +1,18 @@
 package com.fitnesslink.fit.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.fitnesslink.fit.ui.theme.FLPrimary
+import com.fitnesslink.fit.R
 import com.fitnesslink.fit.ui.theme.White
 
 @Composable
@@ -31,10 +28,9 @@ fun BackCircleButton(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+        Image(
+            painter = painterResource(R.drawable.greenarrow),
             contentDescription = "Back",
-            tint = FLPrimary,
             modifier = Modifier.size(13.dp)
         )
     }
@@ -53,10 +49,9 @@ fun CloseCircleButton(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.Close,
+        Image(
+            painter = painterResource(R.drawable.closegreen),
             contentDescription = "Close",
-            tint = FLPrimary,
             modifier = Modifier.size(16.dp)
         )
     }
@@ -75,10 +70,9 @@ fun ContextCircleButton(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = Icons.Default.MoreVert,
+        Image(
+            painter = painterResource(R.drawable.rowmenu),
             contentDescription = "Menu",
-            tint = FLPrimary,
             modifier = Modifier.size(20.dp)
         )
     }

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,9 +18,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitnesslink.fit.R
 import com.fitnesslink.fit.ui.theme.DisabledButton
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.White
@@ -103,6 +106,9 @@ fun SocialSignInButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val iconRes = if (icon == "google") R.drawable.google else R.drawable.facebook
+    val iconSize = if (icon == "google") 26.dp else 13.dp
+
     Box(
         modifier = modifier
             .size(56.dp)
@@ -111,11 +117,10 @@ fun SocialSignInButton(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = if (icon == "google") "G" else "f",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            color = if (icon == "google") Color(0xFFDB4437) else Color(0xFF4267B2)
+        Image(
+            painter = painterResource(iconRes),
+            contentDescription = icon,
+            modifier = Modifier.size(iconSize)
         )
     }
 }
@@ -128,7 +133,11 @@ fun PlayButtonView(modifier: Modifier = Modifier) {
             .background(FLPrimary, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Text("\u25B6", fontSize = 30.sp, color = White)
+        Image(
+            painter = painterResource(R.drawable.play),
+            contentDescription = "Play",
+            modifier = Modifier.size(30.dp)
+        )
     }
 }
 
@@ -140,6 +149,10 @@ fun PauseButtonView(modifier: Modifier = Modifier) {
             .background(FLPrimary, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Text("\u23F8", fontSize = 30.sp, color = White)
+        Image(
+            painter = painterResource(R.drawable.pause),
+            contentDescription = "Pause",
+            modifier = Modifier.size(30.dp)
+        )
     }
 }

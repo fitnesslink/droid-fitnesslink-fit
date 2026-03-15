@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -23,10 +24,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.TaskRow
 import com.fitnesslink.fit.model.WorkoutPhase
 import com.fitnesslink.fit.model.WorkoutTask
@@ -224,7 +227,11 @@ fun WorkoutRestView(task: WorkoutTask) {
                 .background(ImagePlaceholder),
             contentAlignment = Alignment.Center
         ) {
-            Text("\uD83D\uDCA4", fontSize = 24.sp)
+            Image(
+                painter = painterResource(R.drawable.rest),
+                contentDescription = "Rest",
+                modifier = Modifier.size(30.dp)
+            )
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column {

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.session
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -24,10 +25,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.TaskRow
 import com.fitnesslink.fit.model.WorkoutPhase
 import com.fitnesslink.fit.model.WorkoutTask
@@ -93,7 +96,11 @@ fun PlaylistScreen(
                         ),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("⚡", fontSize = 14.sp)
+                    Image(
+                        painter = painterResource(R.drawable.interactive),
+                        contentDescription = "Interactive",
+                        modifier = Modifier.size(14.dp)
+                    )
                 }
             }
 
@@ -201,7 +208,11 @@ fun PlaylistMovementView(task: WorkoutTask) {
                 fontSize = 14.sp
             )
         }
-        Text("⋮", fontSize = 20.sp)
+        Image(
+            painter = painterResource(R.drawable.menu),
+            contentDescription = "Menu",
+            modifier = Modifier.size(20.dp)
+        )
     }
 }
 
@@ -220,7 +231,11 @@ fun PlaylistRestView(task: WorkoutTask) {
                 .background(ImagePlaceholder),
             contentAlignment = Alignment.Center
         ) {
-            Text("💤", fontSize = 24.sp)
+            Image(
+                painter = painterResource(R.drawable.rest),
+                contentDescription = "Rest",
+                modifier = Modifier.size(30.dp)
+            )
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column {

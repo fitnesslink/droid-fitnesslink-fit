@@ -1,16 +1,8 @@
 package com.fitnesslink.fit.ui.navigation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.automirrored.filled.DirectionsRun
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.automirrored.outlined.DirectionsRun
-import androidx.compose.material.icons.outlined.Home
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -22,8 +14,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavHostController
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import com.fitnesslink.fit.R
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -37,6 +30,14 @@ import com.fitnesslink.fit.ui.catalog.ProgramDetailScreen
 import com.fitnesslink.fit.ui.catalog.ProgramsScreen
 import com.fitnesslink.fit.ui.catalog.WorkoutsScreen
 import com.fitnesslink.fit.ui.home.HomeScreen
+import com.fitnesslink.fit.ui.nutrition.BarcodeScannerScreen
+import com.fitnesslink.fit.ui.nutrition.CustomFoodFormScreen
+import com.fitnesslink.fit.ui.nutrition.FoodEntryDetailScreen
+import com.fitnesslink.fit.ui.nutrition.NutritionGoalSettingsScreen
+import com.fitnesslink.fit.ui.nutrition.NutritionScreen
+import com.fitnesslink.fit.ui.nutrition.QuickAddScreen
+import com.fitnesslink.fit.ui.nutrition.RecentFoodsScreen
+import com.fitnesslink.fit.ui.nutrition.WeeklyProgressScreen
 import com.fitnesslink.fit.ui.personalization.PersonalizationScreen
 import com.fitnesslink.fit.ui.profile.ProfileScreen
 import com.fitnesslink.fit.ui.profile.ProfileStubScreen
@@ -50,8 +51,8 @@ import com.fitnesslink.fit.ui.theme.White
 data class BottomNavItem(
     val route: String,
     val title: String,
-    val selectedIcon: ImageVector,
-    val unselectedIcon: ImageVector
+    val selectedIcon: Int,
+    val unselectedIcon: Int
 )
 
 @Composable
@@ -112,10 +113,11 @@ fun MainTabNavigation(onLogout: () -> Unit) {
     var selectedTab by rememberSaveable { mutableStateOf(0) }
 
     val bottomNavItems = listOf(
-        BottomNavItem("home", "Home", Icons.Filled.Home, Icons.Outlined.Home),
-        BottomNavItem("catalog", "Catalog", Icons.AutoMirrored.Filled.DirectionsRun, Icons.AutoMirrored.Outlined.DirectionsRun),
-        BottomNavItem("calendar", "Calendar", Icons.Filled.CalendarMonth, Icons.Outlined.CalendarMonth),
-        BottomNavItem("profile", "Profile", Icons.Filled.Person, Icons.Outlined.Person)
+        BottomNavItem("home", "Home", R.drawable.homeselected, R.drawable.homeicon),
+        BottomNavItem("catalog", "Catalog", R.drawable.runningselected, R.drawable.runningicon),
+        BottomNavItem("nutrition", "Nutrition", R.drawable.nutrition, R.drawable.nutrition),
+        BottomNavItem("calendar", "Calendar", R.drawable.calendarselected, R.drawable.calendaricon),
+        BottomNavItem("profile", "Profile", R.drawable.profileselected, R.drawable.profileicon)
     )
 
     Scaffold(
@@ -124,9 +126,12 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                 bottomNavItems.forEachIndexed { index, item ->
                     NavigationBarItem(
                         icon = {
-                            Icon(
-                                imageVector = if (selectedTab == index) item.selectedIcon else item.unselectedIcon,
-                                contentDescription = item.title
+                            Image(
+                                painter = painterResource(
+                                    if (selectedTab == index) item.selectedIcon else item.unselectedIcon
+                                ),
+                                contentDescription = item.title,
+                                modifier = Modifier.size(24.dp)
                             )
                         },
                         label = { Text(item.title) },
@@ -163,6 +168,16 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                     onNavigateToWorkouts = { navController.navigate("workouts") },
                     onNavigateToProgramDetail = { navController.navigate("programDetail/$it") },
                     onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") }
+                )
+            }
+            composable("nutrition") {
+                NutritionScreen(
+                    onNavigateToGoalSettings = { navController.navigate("nutritionGoalSettings") },
+                    onNavigateToQuickAdd = { mealType -> navController.navigate("quickAdd/$mealType") },
+                    onNavigateToFoodEntryDetail = { entryId -> navController.navigate("foodEntryDetail/$entryId") },
+                    onNavigateToRecentFoods = { navController.navigate("recentFoods") },
+                    onNavigateToWeeklyProgress = { navController.navigate("weeklyProgress") },
+                    onNavigateToBarcodeScanner = { mealType -> navController.navigate("barcodeScanner/$mealType") }
                 )
             }
             composable("calendar") {
@@ -230,6 +245,62 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             ) { backStackEntry ->
                 InteractiveSessionScreen(
                     workoutId = backStackEntry.arguments?.getString("workoutId") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // Nutrition sub-screens
+            composable("nutritionGoalSettings") {
+                NutritionGoalSettingsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                "quickAdd/{mealType}",
+                arguments = listOf(navArgument("mealType") { type = NavType.StringType })
+            ) { backStackEntry ->
+                QuickAddScreen(
+                    mealTypeName = backStackEntry.arguments?.getString("mealType") ?: "BREAKFAST",
+                    onBack = { navController.popBackStack() },
+                    onNavigateToBarcodeScanner = { mealType -> navController.navigate("barcodeScanner/$mealType") },
+                    onNavigateToRecentFoods = { navController.navigate("recentFoods") }
+                )
+            }
+            composable(
+                "foodEntryDetail/{entryId}",
+                arguments = listOf(navArgument("entryId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                FoodEntryDetailScreen(
+                    entryId = backStackEntry.arguments?.getString("entryId") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("recentFoods") {
+                RecentFoodsScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToCustomFoodForm = { entryId -> navController.navigate("customFoodForm/$entryId") }
+                )
+            }
+            composable("weeklyProgress") {
+                WeeklyProgressScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                "customFoodForm/{entryId}",
+                arguments = listOf(navArgument("entryId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                CustomFoodFormScreen(
+                    entryId = backStackEntry.arguments?.getString("entryId") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                "barcodeScanner/{mealType}",
+                arguments = listOf(navArgument("mealType") { type = NavType.StringType })
+            ) { backStackEntry ->
+                BarcodeScannerScreen(
+                    mealTypeName = backStackEntry.arguments?.getString("mealType") ?: "BREAKFAST",
                     onBack = { navController.popBackStack() }
                 )
             }
