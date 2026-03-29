@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.CalendarCell
+import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.model.FitnessContent
 import java.util.Calendar
 
@@ -17,6 +18,6 @@ class CalendarViewModel : ViewModel() {
         val calendar = Calendar.getInstance()
         val totalDays = calendar.getActualMaximum(Calendar.DAY_OF_MONTH)
         calendarCells = MockDataProvider.calendarCells(totalDays)
-        content = MockDataProvider.calendarContent
+        content = DatabaseManager.calendarContent()
     }
 }

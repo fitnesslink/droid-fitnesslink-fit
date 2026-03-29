@@ -33,8 +33,13 @@ import com.fitnesslink.fit.ui.home.HomeScreen
 import com.fitnesslink.fit.ui.nutrition.BarcodeScannerScreen
 import com.fitnesslink.fit.ui.nutrition.CustomFoodFormScreen
 import com.fitnesslink.fit.ui.nutrition.FoodEntryDetailScreen
+import com.fitnesslink.fit.ui.nutrition.GroceryListScreen
+import com.fitnesslink.fit.ui.nutrition.MealPlanScreen
+import com.fitnesslink.fit.ui.nutrition.MealSlotDetailScreen
 import com.fitnesslink.fit.ui.nutrition.NutritionGoalSettingsScreen
+import com.fitnesslink.fit.ui.nutrition.NutritionHomeScreen
 import com.fitnesslink.fit.ui.nutrition.NutritionScreen
+import com.fitnesslink.fit.ui.nutrition.NutritionSummaryScreen
 import com.fitnesslink.fit.ui.nutrition.QuickAddScreen
 import com.fitnesslink.fit.ui.nutrition.RecentFoodsScreen
 import com.fitnesslink.fit.ui.nutrition.WeeklyProgressScreen
@@ -171,13 +176,12 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                 )
             }
             composable("nutrition") {
-                NutritionScreen(
-                    onNavigateToGoalSettings = { navController.navigate("nutritionGoalSettings") },
-                    onNavigateToQuickAdd = { mealType -> navController.navigate("quickAdd/$mealType") },
-                    onNavigateToFoodEntryDetail = { entryId -> navController.navigate("foodEntryDetail/$entryId") },
-                    onNavigateToRecentFoods = { navController.navigate("recentFoods") },
-                    onNavigateToWeeklyProgress = { navController.navigate("weeklyProgress") },
-                    onNavigateToBarcodeScanner = { mealType -> navController.navigate("barcodeScanner/$mealType") }
+                NutritionHomeScreen(
+                    onNavigateToCalorieTracking = { navController.navigate("calorieTracking") },
+                    onNavigateToMealPlan = { navController.navigate("mealPlan") },
+                    onNavigateToNutritionSummary = { navController.navigate("nutritionSummary") },
+                    onNavigateToGroceryList = { navController.navigate("groceryList") },
+                    onNavigateToGoalSettings = { navController.navigate("nutritionGoalSettings") }
                 )
             }
             composable("calendar") {
@@ -250,6 +254,47 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             }
 
             // Nutrition sub-screens
+            composable("calorieTracking") {
+                NutritionScreen(
+                    onNavigateToGoalSettings = { navController.navigate("nutritionGoalSettings") },
+                    onNavigateToQuickAdd = { mealType -> navController.navigate("quickAdd/$mealType") },
+                    onNavigateToFoodEntryDetail = { entryId -> navController.navigate("foodEntryDetail/$entryId") },
+                    onNavigateToRecentFoods = { navController.navigate("recentFoods") },
+                    onNavigateToWeeklyProgress = { navController.navigate("weeklyProgress") },
+                    onNavigateToBarcodeScanner = { mealType -> navController.navigate("barcodeScanner/$mealType") }
+                )
+            }
+            composable("mealPlan") {
+                MealPlanScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToMealSlotDetail = { day, mealType -> navController.navigate("mealSlotDetail/$day/$mealType") },
+                    onNavigateToNutritionSummary = { navController.navigate("nutritionSummary") },
+                    onNavigateToGroceryList = { navController.navigate("groceryList") }
+                )
+            }
+            composable(
+                "mealSlotDetail/{day}/{mealType}",
+                arguments = listOf(
+                    navArgument("day") { type = NavType.StringType },
+                    navArgument("mealType") { type = NavType.StringType }
+                )
+            ) { backStackEntry ->
+                MealSlotDetailScreen(
+                    dayName = backStackEntry.arguments?.getString("day") ?: "MONDAY",
+                    mealTypeName = backStackEntry.arguments?.getString("mealType") ?: "BREAKFAST",
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("nutritionSummary") {
+                NutritionSummaryScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("groceryList") {
+                GroceryListScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable("nutritionGoalSettings") {
                 NutritionGoalSettingsScreen(
                     onBack = { navController.popBackStack() }
@@ -325,13 +370,35 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                 ProfileStubScreen(title = "Goals", onBack = { navController.popBackStack() })
             }
             composable("measurements") {
-                ProfileStubScreen(title = "Measurements", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.progress.MeasurementsLogScreen(
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable("photos") {
-                ProfileStubScreen(title = "Photos", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.progress.ProgressPhotosScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigate = { route -> navController.navigate(route) }
+                )
             }
             composable("weight") {
-                ProfileStubScreen(title = "Weight", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.progress.WeightLogScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                AppRoute.PhotoEntryDetail.ROUTE,
+                arguments = listOf(navArgument("entryId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val entryId = backStackEntry.arguments?.getString("entryId") ?: ""
+                com.fitnesslink.fit.ui.progress.PhotoEntryDetailScreen(
+                    entryId = entryId,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable("photoComparison") {
+                com.fitnesslink.fit.ui.progress.PhotoComparisonScreen(
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable("workoutReport") {
                 ProfileStubScreen(title = "Workout Report", onBack = { navController.popBackStack() })

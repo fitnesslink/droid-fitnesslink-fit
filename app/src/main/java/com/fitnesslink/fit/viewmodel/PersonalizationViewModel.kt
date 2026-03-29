@@ -5,8 +5,10 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.Personalization
+import com.fitnesslink.fit.persistence.DatabaseManager
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 import com.fitnesslink.fit.model.PersonalizationItem
 import com.fitnesslink.fit.model.ProgressPage
 import com.fitnesslink.fit.model.ProgressTracker
@@ -34,7 +36,7 @@ class PersonalizationViewModel : ViewModel() {
         get() = currentPage?.options?.any { it.selected } ?: false
 
     fun loadData() {
-        personalizations = MockDataProvider.personalizations
+        personalizations = DatabaseManager.personalizations()
     }
 
     fun toggleSelection(item: PersonalizationItem) {
@@ -52,10 +54,15 @@ class PersonalizationViewModel : ViewModel() {
         personalizations = personalizations.toMutableList().also {
             it[currentIndex] = page.copy(options = updatedOptions)
         }
+        viewModelScope.launch { DatabaseManager.savePersonalizations(personalizations) }
     }
 
     fun next() {
         if (isLastPage) {
+            viewModelScope.launch {
+                DatabaseManager.savePersonalizations(personalizations)
+                DatabaseManager.user()?.id?.let { DatabaseManager.setUserPersonalized(it) }
+            }
             isComplete = true
         } else {
             currentIndex++

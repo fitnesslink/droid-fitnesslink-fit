@@ -71,6 +71,16 @@ fun InteractiveSessionScreen(
             .fillMaxSize()
             .background(Color.Black)
     ) {
+        if (viewModel.isWorkoutComplete) {
+            WorkoutCompletedScreen(
+                workoutName = viewModel.workoutName,
+                exerciseCount = viewModel.exerciseCount,
+                totalSets = viewModel.totalSets,
+                duration = viewModel.timerText,
+                onDismiss = onBack
+            )
+            return@Box
+        }
         // Background
         if (viewModel.isRest) {
             FLImageView(url = viewModel.workoutTask.iconUrl, height = 400.dp)

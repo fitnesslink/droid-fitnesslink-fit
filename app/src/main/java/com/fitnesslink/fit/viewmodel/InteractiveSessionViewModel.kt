@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.ExerciseProgress
+import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.model.WorkoutProgress
 import com.fitnesslink.fit.model.WorkoutTask
 import kotlinx.coroutines.Job
@@ -32,9 +32,15 @@ class InteractiveSessionViewModel : ViewModel() {
     var isVideoPaused by mutableStateOf(false)
     var rest by mutableStateOf("00:00")
     var restCount by mutableIntStateOf(0)
+    var isWorkoutComplete by mutableStateOf(false)
+    var workoutName by mutableStateOf("")
+
+    val exerciseCount: Int get() = workoutTasks.count { it.isMovement }
+    val totalSets: Int get() = workoutTasks.filter { it.isMovement }.sumOf { maxOf(it.sets, 1) }
 
     fun loadData(workoutId: String) {
-        val detail = MockDataProvider.workoutDetail(workoutId)
+        val detail = DatabaseManager.workout(workoutId) ?: com.fitnesslink.fit.model.Workout()
+        workoutName = detail.name
         workoutTasks = detail.phases
             .flatMap { it.taskRows }
             .mapNotNull { it.task }
@@ -60,7 +66,8 @@ class InteractiveSessionViewModel : ViewModel() {
         currentSet = 1
         position++
         if (position > workoutTasks.size - 1) {
-            position = workoutTasks.size - 1
+            stop()
+            isWorkoutComplete = true
             return
         }
         updateUI()

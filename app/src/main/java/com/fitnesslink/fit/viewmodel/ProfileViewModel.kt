@@ -4,8 +4,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.ProfileMenu
+import com.fitnesslink.fit.persistence.DatabaseManager
 
 class ProfileViewModel : ViewModel() {
     var menuItems by mutableStateOf<List<ProfileMenu>>(emptyList())
@@ -13,7 +13,11 @@ class ProfileViewModel : ViewModel() {
     var userEmail by mutableStateOf("user@fitnesslink.com")
 
     fun loadData() {
-        menuItems = MockDataProvider.profileMenuItems
+        menuItems = DatabaseManager.profileMenuItems()
+        DatabaseManager.user()?.let {
+            userName = it.name
+            userEmail = it.email
+        }
     }
 
     fun routeForMenuItem(item: ProfileMenu): String? {

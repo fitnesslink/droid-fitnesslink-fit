@@ -4,10 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.FoodEntry
 import com.fitnesslink.fit.model.MealType
 import com.fitnesslink.fit.model.NutritionGoal
+import com.fitnesslink.fit.persistence.DatabaseManager
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.launch
 
 class NutritionViewModel : ViewModel() {
     var todayEntries by mutableStateOf<List<FoodEntry>>(emptyList())
@@ -33,15 +35,21 @@ class NutritionViewModel : ViewModel() {
         entriesForMeal(mealType).sumOf { it.calories }
 
     fun addEntry(entry: FoodEntry) {
-        todayEntries = todayEntries + entry
+        viewModelScope.launch {
+            DatabaseManager.saveFoodEntry(entry)
+            todayEntries = DatabaseManager.allFoodEntries()
+        }
     }
 
     fun deleteEntry(id: String) {
-        todayEntries = todayEntries.filter { it.id != id }
+        viewModelScope.launch {
+            DatabaseManager.deleteFoodEntry(id)
+            todayEntries = DatabaseManager.allFoodEntries()
+        }
     }
 
     fun loadData() {
-        todayEntries = MockDataProvider.todayFoodEntries
-        goal = MockDataProvider.nutritionGoal
+        todayEntries = DatabaseManager.allFoodEntries()
+        goal = DatabaseManager.nutritionGoal()
     }
 }

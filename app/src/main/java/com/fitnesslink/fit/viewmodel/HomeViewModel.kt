@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.HomeDashboard
 import com.fitnesslink.fit.model.HorizontalCalendar
+import com.fitnesslink.fit.persistence.DatabaseManager
 import java.util.Calendar
 
 class HomeViewModel : ViewModel() {
@@ -20,7 +21,7 @@ class HomeViewModel : ViewModel() {
         val currentDay = getCurrentDay()
         scrollToDay = maxOf(1, currentDay - 3)
         calendarItems = MockDataProvider.calendarItems(totalDays, currentDay)
-        dashboards = MockDataProvider.dashboards
+        dashboards = DatabaseManager.dashboards()
     }
 
     private fun getTotalDaysOfMonth(): Int {
