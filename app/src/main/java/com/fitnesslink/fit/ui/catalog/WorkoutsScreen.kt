@@ -11,12 +11,15 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
@@ -38,7 +41,8 @@ import com.fitnesslink.fit.viewmodel.WorkoutsViewModel
 @Composable
 fun WorkoutsScreen(
     onBack: () -> Unit,
-    onNavigateToWorkoutDetail: (String) -> Unit
+    onNavigateToWorkoutDetail: (String) -> Unit,
+    onNavigateToWorkoutEditor: () -> Unit = {}
 ) {
     val viewModel: WorkoutsViewModel = viewModel()
 
@@ -50,10 +54,22 @@ fun WorkoutsScreen(
             .background(BackgroundColor)
     ) {
         HeaderBackView(onBack = onBack)
-        SearchView(
+        Row(
             modifier = Modifier
-                .padding(horizontal = 20.dp, vertical = 10.dp)
-        )
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            SearchView(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.width(10.dp))
+            FloatingActionButton(
+                onClick = onNavigateToWorkoutEditor,
+                containerColor = FLPrimary,
+                modifier = Modifier.size(42.dp)
+            ) {
+                Text("+", color = White, fontSize = 20.sp)
+            }
+        }
         LazyColumn(
             modifier = Modifier.padding(horizontal = 20.dp)
         ) {

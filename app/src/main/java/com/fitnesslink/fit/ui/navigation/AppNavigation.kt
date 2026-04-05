@@ -49,6 +49,8 @@ import com.fitnesslink.fit.ui.profile.ProfileStubScreen
 import com.fitnesslink.fit.ui.session.InteractiveSessionScreen
 import com.fitnesslink.fit.ui.session.PlaylistScreen
 import com.fitnesslink.fit.ui.workout.WorkoutDetailScreen
+import com.fitnesslink.fit.ui.workout.WorkoutEditorScreen
+import com.fitnesslink.fit.ui.notifications.NotificationsScreen
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
@@ -166,7 +168,9 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             startDestination = "home",
             modifier = Modifier.padding(innerPadding)
         ) {
-            composable("home") { HomeScreen() }
+            composable("home") {
+                HomeScreen(onNavigateToNotifications = { navController.navigate("notifications") })
+            }
             composable("catalog") {
                 CatalogScreen(
                     onNavigateToPrograms = { navController.navigate("programs") },
@@ -217,7 +221,8 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             composable("workouts") {
                 WorkoutsScreen(
                     onBack = { navController.popBackStack() },
-                    onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") }
+                    onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") },
+                    onNavigateToWorkoutEditor = { navController.navigate("workoutEditor") }
                 )
             }
             composable(
@@ -229,6 +234,31 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                     onBack = { navController.popBackStack() },
                     onStartPlaylist = { navController.navigate("playlistSession/$it") },
                     onStartInteractive = { navController.navigate("interactiveSession/$it") }
+                )
+            }
+
+            // Workout Editor
+            composable("workoutEditor") {
+                WorkoutEditorScreen(
+                    workoutId = null,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                AppRoute.WorkoutEditor.ROUTE,
+                arguments = listOf(navArgument("workoutId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                WorkoutEditorScreen(
+                    workoutId = backStackEntry.arguments?.getString("workoutId"),
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            // Notifications
+            composable("notifications") {
+                NotificationsScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigate = { route -> navController.navigate(route) }
                 )
             }
 

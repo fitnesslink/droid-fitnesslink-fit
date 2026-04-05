@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import com.fitnesslink.fit.R
 
 @Composable
-fun HeaderView(modifier: Modifier = Modifier) {
+fun HeaderView(modifier: Modifier = Modifier, onNotificationsTap: () -> Unit = {}) {
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -34,7 +34,7 @@ fun HeaderView(modifier: Modifier = Modifier) {
             modifier = Modifier
                 .align(Alignment.CenterEnd)
                 .size(20.dp)
-                .clickable { }
+                .clickable(onClick = onNotificationsTap)
         )
     }
 }

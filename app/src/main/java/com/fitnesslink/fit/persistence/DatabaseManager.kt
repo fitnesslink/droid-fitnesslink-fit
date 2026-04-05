@@ -28,7 +28,7 @@ object DatabaseManager {
 
     // MARK: - Schema
 
-    private const val DB_VERSION = 3
+    private const val DB_VERSION = 5
 
     private class DatabaseHelper(context: Context) :
         SQLiteOpenHelper(context, "fitnesslink.db", null, DB_VERSION) {
@@ -36,10 +36,14 @@ object DatabaseManager {
             createAllTables(db)
             migrateToV2(db)
             migrateToV3(db)
+            migrateToV4(db)
+            migrateToV5(db)
         }
         override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) {
             if (old < 2) migrateToV2(db)
             if (old < 3) migrateToV3(db)
+            if (old < 4) migrateToV4(db)
+            if (old < 5) migrateToV5(db)
         }
     }
 
@@ -175,6 +179,30 @@ object DatabaseManager {
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_workout_sessions_date ON workout_sessions(startDate)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_session_history_logdate ON workout_session_history(logDate)")
         try { db.execSQL("ALTER TABLE workout_session_history ADD COLUMN taskName TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
+    }
+
+    private fun migrateToV4(db: SQLiteDatabase) {
+        val cols = listOf(
+            "ALTER TABLE movements ADD COLUMN muscleGroup TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE movements ADD COLUMN equipment TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE movements ADD COLUMN isFavorite INTEGER NOT NULL DEFAULT 0"
+        )
+        cols.forEach { try { db.execSQL(it) } catch (_: Exception) {} }
+        db.execSQL("""CREATE TABLE IF NOT EXISTS recent_movements (
+            movementId TEXT PRIMARY KEY,
+            addedAt REAL NOT NULL)""")
+    }
+
+    private fun migrateToV5(db: SQLiteDatabase) {
+        db.execSQL("""CREATE TABLE IF NOT EXISTS notifications (
+            id TEXT PRIMARY KEY,
+            type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            body TEXT NOT NULL DEFAULT '',
+            isRead INTEGER NOT NULL DEFAULT 0,
+            createdAt INTEGER NOT NULL,
+            deepLink TEXT)""")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_notifications_date ON notifications(createdAt)")
     }
 
     // MARK: - Nutrition Report Queries
@@ -782,5 +810,116 @@ object DatabaseManager {
                 o.optString("unit", ""), GroceryCategory.valueOf(o.optString("category", "OTHER")),
                 o.optBoolean("isChecked"))
         }
+    }
+
+    // MARK: - Movement Queries
+
+    fun allMovements(): List<MovementLibraryItem> = db().rawQuery(
+        "SELECT id, name, COALESCE(description,''), muscleGroup, equipment, isFavorite FROM movements WHERE isDeleted=0 ORDER BY name", null
+    ).use { c ->
+        buildList {
+            while (c.moveToNext()) add(MovementLibraryItem(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.getInt(5) != 0))
+        }
+    }
+
+    fun searchMovements(query: String, muscleGroup: String?, equipment: String?): List<MovementLibraryItem> {
+        val sb = StringBuilder("SELECT id, name, COALESCE(description,''), muscleGroup, equipment, isFavorite FROM movements WHERE isDeleted=0")
+        val args = mutableListOf<String>()
+        if (query.isNotEmpty()) { sb.append(" AND name LIKE ?"); args.add("%$query%") }
+        if (!muscleGroup.isNullOrEmpty()) { sb.append(" AND muscleGroup=?"); args.add(muscleGroup) }
+        if (!equipment.isNullOrEmpty()) { sb.append(" AND equipment=?"); args.add(equipment) }
+        sb.append(" ORDER BY name")
+        return db().rawQuery(sb.toString(), args.toTypedArray()).use { c ->
+            buildList {
+                while (c.moveToNext()) add(MovementLibraryItem(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.getInt(5) != 0))
+            }
+        }
+    }
+
+    fun favoriteMovements(): List<MovementLibraryItem> = db().rawQuery(
+        "SELECT id, name, COALESCE(description,''), muscleGroup, equipment, isFavorite FROM movements WHERE isFavorite=1 AND isDeleted=0 ORDER BY name", null
+    ).use { c ->
+        buildList {
+            while (c.moveToNext()) add(MovementLibraryItem(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), true))
+        }
+    }
+
+    fun recentMovements(limit: Int = 20): List<MovementLibraryItem> = db().rawQuery(
+        """SELECT m.id, m.name, COALESCE(m.description,''), m.muscleGroup, m.equipment, m.isFavorite
+           FROM recent_movements r JOIN movements m ON m.id=r.movementId
+           WHERE m.isDeleted=0 ORDER BY r.addedAt DESC LIMIT ?""", arrayOf(limit.toString())
+    ).use { c ->
+        buildList {
+            while (c.moveToNext()) add(MovementLibraryItem(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.getInt(5) != 0))
+        }
+    }
+
+    fun toggleMovementFavorite(id: String) {
+        db().execSQL("UPDATE movements SET isFavorite = CASE WHEN isFavorite=1 THEN 0 ELSE 1 END WHERE id=?", arrayOf(id))
+    }
+
+    fun logRecentMovement(movementId: String) {
+        db().insertWithOnConflict("recent_movements", null, ContentValues().apply {
+            put("movementId", movementId); put("addedAt", System.currentTimeMillis().toDouble() / 1000.0)
+        }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun insertMovementFull(id: String, name: String, description: String, muscleGroup: String, equipment: String) {
+        db().insertWithOnConflict("movements", null, ContentValues().apply {
+            put("id", id); put("name", name); put("description", description)
+            put("muscleGroup", muscleGroup); put("equipment", equipment)
+            put("isDeleted", 0); put("isFavorite", 0)
+        }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun deleteWorkout(id: String) {
+        db().delete("workouts", "id=?", arrayOf(id))
+    }
+
+    // MARK: - Notification Queries
+
+    fun allNotifications(type: String? = null): List<NotificationItem> {
+        val sb = StringBuilder("SELECT id, type, title, body, isRead, createdAt, deepLink FROM notifications")
+        val args = mutableListOf<String>()
+        if (type != null) { sb.append(" WHERE type=?"); args.add(type) }
+        sb.append(" ORDER BY createdAt DESC")
+        return db().rawQuery(sb.toString(), args.toTypedArray()).use { c ->
+            buildList {
+                while (c.moveToNext()) add(NotificationItem(
+                    id = c.str(0),
+                    type = NotificationType.fromString(c.str(1)),
+                    title = c.str(2),
+                    body = c.str(3),
+                    isRead = c.getInt(4) != 0,
+                    createdAt = Date(c.getLong(5)),
+                    deepLink = c.str(6).ifEmpty { null }
+                ))
+            }
+        }
+    }
+
+    fun unreadNotificationCount(): Int = db().rawQuery(
+        "SELECT COUNT(*) FROM notifications WHERE isRead=0", null
+    ).use { c -> if (c.moveToFirst()) c.getInt(0) else 0 }
+
+    fun markNotificationRead(id: String) {
+        db().execSQL("UPDATE notifications SET isRead=1 WHERE id=?", arrayOf(id))
+    }
+
+    fun markAllNotificationsRead() {
+        db().execSQL("UPDATE notifications SET isRead=1")
+    }
+
+    fun deleteNotification(id: String) {
+        db().delete("notifications", "id=?", arrayOf(id))
+    }
+
+    fun insertNotification(id: String, type: String, title: String, body: String,
+                           isRead: Boolean, createdAt: Long, deepLink: String?) {
+        db().insertWithOnConflict("notifications", null, ContentValues().apply {
+            put("id", id); put("type", type); put("title", title); put("body", body)
+            put("isRead", if (isRead) 1 else 0); put("createdAt", createdAt)
+            deepLink?.let { put("deepLink", it) }
+        }, SQLiteDatabase.CONFLICT_REPLACE)
     }
 }

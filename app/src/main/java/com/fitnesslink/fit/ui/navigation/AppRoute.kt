@@ -69,4 +69,12 @@ sealed class AppRoute(val route: String) {
     data object PhotoComparison : AppRoute("photoComparison")
     data object WeightLog : AppRoute("weightLog")
     data object MeasurementsLog : AppRoute("measurementsLog")
+    data object Notifications : AppRoute("notifications")
+    data object WorkoutEditorNew : AppRoute("workoutEditor")
+    data class WorkoutEditor(val workoutId: String) : AppRoute("workoutEditor/{workoutId}") {
+        companion object {
+            const val ROUTE = "workoutEditor/{workoutId}"
+            fun createRoute(workoutId: String) = "workoutEditor/$workoutId"
+        }
+    }
 }

@@ -49,7 +49,7 @@ import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.HomeViewModel
 
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onNavigateToNotifications: () -> Unit = {}) {
     val viewModel: HomeViewModel = viewModel()
 
     LaunchedEffect(Unit) { viewModel.loadData() }
@@ -59,7 +59,7 @@ fun HomeScreen() {
             .fillMaxSize()
             .background(BackgroundColor)
     ) {
-        HeaderView()
+        HeaderView(onNotificationsTap = onNavigateToNotifications)
 
         Column(
             modifier = Modifier
