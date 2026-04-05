@@ -22,6 +22,9 @@ class InteractiveSessionViewModel : ViewModel() {
     private var timerJob: Job? = null
     private var restTimerJob: Job? = null
     private var currentSet = 1
+    private var workoutId: String = ""
+    private var sessionId: String = java.util.UUID.randomUUID().toString()
+    private var startDate: Long = System.currentTimeMillis()
 
     var workoutTask by mutableStateOf(WorkoutTask())
     var workoutProgress by mutableStateOf<List<WorkoutProgress>>(emptyList())
@@ -39,6 +42,7 @@ class InteractiveSessionViewModel : ViewModel() {
     val totalSets: Int get() = workoutTasks.filter { it.isMovement }.sumOf { maxOf(it.sets, 1) }
 
     fun loadData(workoutId: String) {
+        this.workoutId = workoutId
         val detail = DatabaseManager.workout(workoutId) ?: com.fitnesslink.fit.model.Workout()
         workoutName = detail.name
         workoutTasks = detail.phases
@@ -114,6 +118,27 @@ class InteractiveSessionViewModel : ViewModel() {
     fun removeRestTimer() {
         restTimerJob?.cancel()
         restTimerJob = null
+    }
+
+    fun saveSession(rpe: Double) {
+        val userId = DatabaseManager.user()?.id ?: "user1"
+        val movementTasks = workoutTasks.filter { it.isMovement }
+        DatabaseManager.insertWorkoutSession(
+            sessionId, workoutId, userId, null, workoutName, startDate,
+            System.currentTimeMillis(), secondsElapsed, true, exerciseCount, totalSets,
+            movementTasks.sumOf { it.reps * maxOf(it.sets, 1) },
+            movementTasks.sumOf { (it.weightKg ?: 0).toDouble() * it.reps * maxOf(it.sets, 1) },
+            movementTasks.sumOf { (it.caloriesBurned ?: 0).toDouble() }, rpe
+        )
+        for (task in movementTasks) {
+            for (setNum in 1..maxOf(task.sets, 1)) {
+                DatabaseManager.insertSessionHistory(
+                    java.util.UUID.randomUUID().toString(), sessionId, task.id,
+                    workoutId, null, userId, System.currentTimeMillis(),
+                    task.reps, setNum, null, (task.weightKg ?: 0).toDouble(), task.name
+                )
+            }
+        }
     }
 
     private fun start() {

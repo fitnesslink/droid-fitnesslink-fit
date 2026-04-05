@@ -9,7 +9,10 @@ object DatabaseSeeder {
         if (DatabaseManager.user() != null) return
 
         // User
-        DatabaseManager.insertUser("user1", "Fitness User", "user@fitnesslink.com")
+        DatabaseManager.insertFullUser(
+            "user1", "Fitness", "User", "user@fitnesslink.com",
+            "+1 (555) 123-4567", "fitnessuser", "United States"
+        )
 
         // Dashboards
         MockDataProvider.dashboards.forEach { DatabaseManager.insertDashboard(it) }
@@ -40,8 +43,9 @@ object DatabaseSeeder {
             DatabaseManager.insertWorkout(uniqueDetail)
         }
 
-        // Food Entries
+        // Food Entries (today + historical)
         MockDataProvider.todayFoodEntries.forEach { DatabaseManager.insertFoodEntry(it) }
+        MockDataProvider.historicalFoodEntries.forEach { DatabaseManager.insertFoodEntry(it) }
 
         // Nutrition Goal
         DatabaseManager.insertNutritionGoal(MockDataProvider.nutritionGoal)
@@ -60,5 +64,25 @@ object DatabaseSeeder {
 
         // Profile Menus
         MockDataProvider.profileMenuItems.forEach { DatabaseManager.insertProfileMenu(it) }
+
+        // Workout Sessions (for Report)
+        val now = System.currentTimeMillis()
+        val dayMs = 86400000L
+        MockDataProvider.mockSessions.forEach { s ->
+            val startDate = now - s.daysAgo * dayMs
+            val completionDate = if (s.isCompleted) startDate + s.durationSeconds * 1000L else null
+            DatabaseManager.insertWorkoutSession(
+                s.id, s.workoutId, "user1", null, s.workoutName, startDate, completionDate,
+                s.durationSeconds, s.isCompleted, s.exerciseCount, s.totalSets, s.totalReps,
+                s.totalWeightLifted, s.totalCaloriesBurned, s.rpeValue
+            )
+        }
+        MockDataProvider.mockSessionHistory.forEach { h ->
+            DatabaseManager.insertSessionHistory(
+                java.util.UUID.randomUUID().toString(), h.sessionId,
+                java.util.UUID.randomUUID().toString(), h.workoutId, null, "user1",
+                now - h.daysAgo * dayMs, h.reps, h.setNumber, null, h.weightLifted, h.taskName
+            )
+        }
     }
 }

@@ -352,13 +352,31 @@ fun MainTabNavigation(onLogout: () -> Unit) {
 
             // Profile sub-screens
             composable("personalInfo") {
-                ProfileStubScreen(title = "Personal Info", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.profile.PersonalInfoScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigateToBilling = { navController.navigate("billing") }
+                )
             }
             composable("personalizationProfile") {
-                ProfileStubScreen(title = "Personalization", onBack = { navController.popBackStack() })
+                PersonalizationScreen(
+                    onComplete = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
             }
-            composable("analyticsProgress") {
-                ProfileStubScreen(title = "Analytics & Progress", onBack = { navController.popBackStack() })
+            composable("nutritionReport") {
+                com.fitnesslink.fit.ui.profile.NutritionReportScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigate = { route -> navController.navigate(route) }
+                )
+            }
+            composable("nutritionMetricDetail/{metric}", arguments = listOf(navArgument("metric") { type = NavType.StringType })) { backStackEntry ->
+                ProfileStubScreen(title = backStackEntry.arguments?.getString("metric") ?: "Detail", onBack = { navController.popBackStack() })
+            }
+            composable("mealTypeDetail/{mealType}", arguments = listOf(navArgument("mealType") { type = NavType.StringType })) { backStackEntry ->
+                ProfileStubScreen(title = backStackEntry.arguments?.getString("mealType") ?: "Meal", onBack = { navController.popBackStack() })
+            }
+            composable("foodItemDetail/{foodName}", arguments = listOf(navArgument("foodName") { type = NavType.StringType })) { backStackEntry ->
+                ProfileStubScreen(title = backStackEntry.arguments?.getString("foodName") ?: "Food", onBack = { navController.popBackStack() })
             }
             composable("preferences") {
                 ProfileStubScreen(title = "Preferences", onBack = { navController.popBackStack() })
@@ -401,7 +419,40 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                 )
             }
             composable("workoutReport") {
-                ProfileStubScreen(title = "Workout Report", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.profile.WorkoutReportScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigate = { route -> navController.navigate(route) }
+                )
+            }
+            composable(
+                AppRoute.ReportDetail.ROUTE,
+                arguments = listOf(navArgument("metric") { type = NavType.StringType })
+            ) { backStackEntry ->
+                // TODO: ReportDetailScreen
+                ProfileStubScreen(title = backStackEntry.arguments?.getString("metric") ?: "Detail", onBack = { navController.popBackStack() })
+            }
+            composable(
+                AppRoute.SessionDetail.ROUTE,
+                arguments = listOf(navArgument("sessionId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                com.fitnesslink.fit.ui.profile.SessionDetailScreen(
+                    sessionId = backStackEntry.arguments?.getString("sessionId") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                AppRoute.WorkoutAggregateDetail.ROUTE,
+                arguments = listOf(navArgument("workoutName") { type = NavType.StringType })
+            ) { backStackEntry ->
+                // TODO: WorkoutAggregateDetailScreen
+                ProfileStubScreen(title = backStackEntry.arguments?.getString("workoutName") ?: "Workout", onBack = { navController.popBackStack() })
+            }
+            composable(
+                AppRoute.MovementAggregateDetail.ROUTE,
+                arguments = listOf(navArgument("exerciseName") { type = NavType.StringType })
+            ) { backStackEntry ->
+                // TODO: MovementAggregateDetailScreen
+                ProfileStubScreen(title = backStackEntry.arguments?.getString("exerciseName") ?: "Movement", onBack = { navController.popBackStack() })
             }
         }
     }

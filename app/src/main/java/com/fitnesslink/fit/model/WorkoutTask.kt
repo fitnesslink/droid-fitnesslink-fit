@@ -24,5 +24,24 @@ data class WorkoutTask(
     val advancedMovement: String = "",
     val currentSet: Int = 0,
     val order: Int = 0,
-    val groupId: String = ""
+    val groupId: String = "",
+
+    // API-aligned fields
+    val workoutId: String? = null,
+    val movementId: String? = null,
+    val advancedMovementId: String? = null,
+    val workoutTaskTypeId: String? = null,
+    val workoutPhaseId: String? = null,
+    val rpeId: String? = null,
+    val metricTypeId: String? = null,
+    val restTypeId: String? = null,
+    val weightKg: Int? = null,
+    val caloriesBurned: Int? = null,
+    val heartRate: Double? = null,
+    val incline: Double? = null,
+    val paceSeconds: Int? = null,
+    val speed: Double? = null,
+    val rounds: Int? = null,
+    val instructions: String? = null,
+    val contributorId: String? = null
 )

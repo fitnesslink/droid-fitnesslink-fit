@@ -1,6 +1,7 @@
 package com.fitnesslink.fit.data
 
 import com.fitnesslink.fit.model.*
+import com.fitnesslink.fit.model.api.*
 import java.util.Calendar
 import java.util.Date
 import java.util.UUID
@@ -190,7 +191,7 @@ object MockDataProvider {
     val profileMenuItems: List<ProfileMenu> = listOf(
         ProfileMenu(id = 1, text = "Personal Info"),
         ProfileMenu(id = 2, text = "Personalization"),
-        ProfileMenu(id = 3, text = "Analytics & Progress"),
+        ProfileMenu(id = 3, text = "Nutrition Report"),
         ProfileMenu(id = 4, text = "Preferences"),
         ProfileMenu(id = 5, text = "Billing"),
         ProfileMenu(id = 6, text = "Goals"),
@@ -542,5 +543,203 @@ object MockDataProvider {
 
     private fun ClosedFloatingPointRange<Double>.random(): Double {
         return start + Math.random() * (endInclusive - start)
+    }
+
+    // MARK: - API-Aligned Entities
+
+    val contentStatuses: List<ContentStatus> = listOf(
+        ContentStatus(id = UUID.fromString("00000000-0000-0000-0000-000000000001"), name = "Draft"),
+        ContentStatus(id = UUID.fromString("00000000-0000-0000-0000-000000000002"), name = "Approved"),
+        ContentStatus(id = UUID.fromString("00000000-0000-0000-0000-000000000003"), name = "Published"),
+    )
+
+    val publishedStatusId: EntityID = contentStatuses[2].id
+
+    val mockContributor = Contributor(
+        id = UUID.fromString("10000000-0000-0000-0000-000000000001"),
+        userId = UUID.fromString("20000000-0000-0000-0000-000000000001"),
+        isApproved = true
+    )
+
+    val movements: List<Movement> = listOf(
+        Movement(id = UUID.fromString("30000000-0000-0000-0000-000000000001"), name = "Arm Circles", description = "Loosen up shoulder joints", statusId = publishedStatusId, contributorId = mockContributor.id),
+        Movement(id = UUID.fromString("30000000-0000-0000-0000-000000000002"), name = "Jumping Jacks", description = "Full body warm-up", statusId = publishedStatusId, contributorId = mockContributor.id),
+        Movement(id = UUID.fromString("30000000-0000-0000-0000-000000000003"), name = "Bench Press", description = "Primary chest compound movement", statusId = publishedStatusId, contributorId = mockContributor.id),
+        Movement(id = UUID.fromString("30000000-0000-0000-0000-000000000004"), name = "Overhead Press", description = "Shoulder compound movement", statusId = publishedStatusId, contributorId = mockContributor.id),
+        Movement(id = UUID.fromString("30000000-0000-0000-0000-000000000005"), name = "Incline Dumbbell Fly", description = "Upper chest isolation", statusId = publishedStatusId, contributorId = mockContributor.id),
+        Movement(id = UUID.fromString("30000000-0000-0000-0000-000000000006"), name = "Tricep Pushdown", description = "Tricep isolation", statusId = publishedStatusId, contributorId = mockContributor.id),
+        Movement(id = UUID.fromString("30000000-0000-0000-0000-000000000007"), name = "Chest Stretch", description = "Cool down stretch for pecs", statusId = publishedStatusId, contributorId = mockContributor.id),
+    )
+
+    val rpeScale: List<Rpe> = listOf(
+        Rpe(id = UUID.fromString("40000000-0000-0000-0000-000000000001"), name = "Very Light", fromValue = 1, toValue = 2),
+        Rpe(id = UUID.fromString("40000000-0000-0000-0000-000000000002"), name = "Light", fromValue = 3, toValue = 4),
+        Rpe(id = UUID.fromString("40000000-0000-0000-0000-000000000003"), name = "Moderate", fromValue = 5, toValue = 6),
+        Rpe(id = UUID.fromString("40000000-0000-0000-0000-000000000004"), name = "Hard", fromValue = 7, toValue = 8),
+        Rpe(id = UUID.fromString("40000000-0000-0000-0000-000000000005"), name = "Max Effort", fromValue = 9, toValue = 10),
+    )
+
+    val advancedMovements: List<AdvancedMovement> = listOf(
+        AdvancedMovement(id = UUID.fromString("50000000-0000-0000-0000-000000000001"), name = "Circuit"),
+        AdvancedMovement(id = UUID.fromString("50000000-0000-0000-0000-000000000002"), name = "Superset"),
+        AdvancedMovement(id = UUID.fromString("50000000-0000-0000-0000-000000000003"), name = "Interval"),
+    )
+
+    val mockProgramSchedules: List<ProgramSchedule> = listOf(
+        ProgramSchedule(id = UUID.randomUUID(), programId = UUID.randomUUID(), workoutId = UUID.randomUUID(), weekNumber = 1, dayNumber = 1),
+        ProgramSchedule(id = UUID.randomUUID(), programId = UUID.randomUUID(), workoutId = UUID.randomUUID(), weekNumber = 1, dayNumber = 3),
+        ProgramSchedule(id = UUID.randomUUID(), programId = UUID.randomUUID(), workoutId = UUID.randomUUID(), weekNumber = 1, dayNumber = 5),
+    )
+
+    val mockUser = FLUser(
+        id = UUID.fromString("20000000-0000-0000-0000-000000000001"),
+        firstName = "Demo",
+        lastName = "User",
+        email = "demo@fitnesslink.app",
+        firebaseId = "mock-firebase-id",
+        username = "demouser"
+    )
+
+    val mockUserPreference = UserPreference(
+        id = UUID.randomUUID(),
+        userId = mockUser.id,
+        language = "en",
+        timezone = "America/New_York",
+        workoutSessionType = WorkoutSessionType.STANDARD
+    )
+
+    // MARK: - Historical Food Entries
+
+    private data class MockFood(val name: String, val cal: Int, val p: Double, val f: Double, val c: Double, val unit: String, val meal: MealType)
+    private val bFoods = listOf(
+        MockFood("Oatmeal with Berries", 320, 12.0, 8.0, 52.0, "bowl", MealType.BREAKFAST),
+        MockFood("Eggs (Scrambled)", 182, 12.0, 13.0, 2.0, "large", MealType.BREAKFAST),
+        MockFood("Protein Pancakes", 290, 25.0, 8.0, 32.0, "pancakes", MealType.BREAKFAST),
+        MockFood("Avocado Toast", 310, 8.0, 18.0, 30.0, "slices", MealType.BREAKFAST),
+        MockFood("Smoothie Bowl", 340, 15.0, 10.0, 50.0, "bowl", MealType.BREAKFAST),
+    )
+    private val lFoods = listOf(
+        MockFood("Grilled Chicken Breast", 284, 53.0, 6.0, 0.0, "oz", MealType.LUNCH),
+        MockFood("Turkey Wrap", 380, 28.0, 14.0, 38.0, "wrap", MealType.LUNCH),
+        MockFood("Mixed Greens Salad", 120, 3.0, 7.0, 12.0, "bowl", MealType.LUNCH),
+        MockFood("Brown Rice", 216, 5.0, 1.8, 45.0, "cup", MealType.LUNCH),
+        MockFood("Quinoa Bowl", 350, 14.0, 12.0, 48.0, "bowl", MealType.LUNCH),
+        MockFood("Tuna Sandwich", 420, 32.0, 16.0, 38.0, "sandwich", MealType.LUNCH),
+    )
+    private val dFoods = listOf(
+        MockFood("Salmon Fillet", 367, 34.0, 22.0, 0.0, "oz", MealType.DINNER),
+        MockFood("Grilled Steak", 450, 42.0, 28.0, 0.0, "oz", MealType.DINNER),
+        MockFood("Chicken Stir Fry", 380, 35.0, 12.0, 32.0, "plate", MealType.DINNER),
+        MockFood("Sweet Potato", 103, 2.3, 0.1, 24.0, "medium", MealType.DINNER),
+        MockFood("Pasta with Meat Sauce", 520, 25.0, 18.0, 62.0, "plate", MealType.DINNER),
+        MockFood("Grilled Tilapia", 280, 36.0, 8.0, 0.0, "oz", MealType.DINNER),
+    )
+    private val sFoods = listOf(
+        MockFood("Greek Yogurt", 100, 17.0, 0.7, 6.0, "cup", MealType.SNACK),
+        MockFood("Almonds", 164, 6.0, 14.0, 6.0, "oz", MealType.SNACK),
+        MockFood("Protein Shake", 180, 30.0, 3.0, 8.0, "shake", MealType.SNACK),
+        MockFood("Banana", 105, 1.3, 0.4, 27.0, "medium", MealType.SNACK),
+        MockFood("Apple with Peanut Butter", 200, 5.0, 12.0, 24.0, "apple", MealType.SNACK),
+        MockFood("Trail Mix", 175, 5.0, 11.0, 16.0, "oz", MealType.SNACK),
+    )
+    private val skipDays = setOf(5, 14, 27, 35)
+
+    val historicalFoodEntries: List<FoodEntry> by lazy {
+        val now = System.currentTimeMillis()
+        val dayMs = 86400000L
+        buildList {
+            for (daysAgo in 1..40) {
+                if (daysAgo in skipDays) continue
+                val dayStart = now - daysAgo * dayMs
+                val idx = daysAgo
+                val bf = bFoods[idx % bFoods.size]
+                add(FoodEntry("hfe-$daysAgo-b", bf.name, bf.cal, bf.p, bf.f, bf.c, 1.0, bf.unit, MealType.BREAKFAST, Date(dayStart + 8 * 3600000)))
+                val ln = lFoods[idx % lFoods.size]
+                add(FoodEntry("hfe-$daysAgo-l", ln.name, ln.cal, ln.p, ln.f, ln.c, 1.0, ln.unit, MealType.LUNCH, Date(dayStart + 12 * 3600000 + 1800000)))
+                val dn = dFoods[idx % dFoods.size]
+                add(FoodEntry("hfe-$daysAgo-d", dn.name, dn.cal, dn.p, dn.f, dn.c, 1.0, dn.unit, MealType.DINNER, Date(dayStart + 18 * 3600000 + 1800000)))
+                if (daysAgo % 4 != 0) {
+                    val sn = sFoods[idx % sFoods.size]
+                    add(FoodEntry("hfe-$daysAgo-s", sn.name, sn.cal, sn.p, sn.f, sn.c, 1.0, sn.unit, MealType.SNACK, Date(dayStart + 15 * 3600000)))
+                }
+                if (daysAgo % 3 == 0) {
+                    val sn2 = sFoods[(idx + 2) % sFoods.size]
+                    add(FoodEntry("hfe-$daysAgo-s2", sn2.name, sn2.cal, sn2.p, sn2.f, sn2.c, 1.0, sn2.unit, MealType.SNACK, Date(dayStart + 20 * 3600000)))
+                }
+            }
+        }
+    }
+
+    // MARK: - Workout Sessions (for Report)
+
+    data class MockSession(
+        val id: String, val workoutId: String, val workoutName: String,
+        val daysAgo: Int, val durationSeconds: Int, val isCompleted: Boolean,
+        val exerciseCount: Int, val totalSets: Int, val totalReps: Int,
+        val totalWeightLifted: Double, val totalCaloriesBurned: Double,
+        val rpeValue: Double?
+    )
+
+    data class MockHistoryEntry(
+        val sessionId: String, val taskName: String, val workoutId: String,
+        val reps: Int, val setNumber: Int, val weightLifted: Double, val daysAgo: Int
+    )
+
+    val mockSessions = listOf(
+        MockSession("s1", "w1", "Upper Body Strength", 1, 2700, true, 8, 24, 192, 4800.0, 320.0, 7.5),
+        MockSession("s2", "w2", "Lower Body Power", 2, 3200, true, 7, 21, 168, 6300.0, 410.0, 8.0),
+        MockSession("s3", "w3", "HIIT Cardio Blast", 3, 1800, true, 10, 20, 200, 0.0, 520.0, 9.0),
+        MockSession("s4", "w4", "Core & Flexibility", 4, 2400, true, 9, 18, 144, 600.0, 240.0, 5.5),
+        MockSession("s5", "w5", "Full Body Circuit", 6, 3600, true, 12, 36, 288, 5400.0, 480.0, 8.5),
+        MockSession("s6", "w1", "Upper Body Strength", 7, 2850, true, 8, 24, 192, 5000.0, 330.0, 7.0),
+        MockSession("s7", "w6", "Push Day", 8, 2500, true, 6, 18, 144, 3600.0, 290.0, 7.5),
+        MockSession("s8", "w2", "Lower Body Power", 9, 3100, true, 7, 21, 168, 6500.0, 400.0, 8.0),
+        MockSession("s9", "w3", "HIIT Cardio Blast", 10, 1500, false, 6, 12, 120, 0.0, 310.0, null),
+        MockSession("s10", "w4", "Core & Flexibility", 11, 2300, true, 9, 18, 144, 650.0, 230.0, 6.0),
+        MockSession("s11", "w1", "Upper Body Strength", 12, 2900, true, 8, 24, 192, 5200.0, 340.0, 7.5),
+        MockSession("s12", "w5", "Full Body Circuit", 13, 3500, true, 12, 36, 288, 5600.0, 490.0, 8.0),
+        MockSession("s13", "w2", "Lower Body Power", 16, 3000, true, 7, 21, 168, 6100.0, 390.0, 7.5),
+        MockSession("s14", "w6", "Push Day", 18, 2600, true, 6, 18, 144, 3800.0, 300.0, 7.0),
+        MockSession("s15", "w1", "Upper Body Strength", 20, 2800, true, 8, 24, 192, 4600.0, 310.0, 7.0),
+        MockSession("s16", "w3", "HIIT Cardio Blast", 22, 1200, false, 4, 8, 80, 0.0, 200.0, null),
+        MockSession("s17", "w4", "Core & Flexibility", 24, 2350, true, 9, 18, 144, 700.0, 235.0, 5.0),
+        MockSession("s18", "w5", "Full Body Circuit", 26, 3400, true, 12, 36, 288, 5200.0, 470.0, 8.5),
+        MockSession("s19", "w2", "Lower Body Power", 28, 3050, true, 7, 21, 168, 5900.0, 380.0, 8.0),
+        MockSession("s20", "w1", "Upper Body Strength", 30, 2750, true, 8, 24, 192, 4500.0, 305.0, 6.5),
+        MockSession("s21", "w6", "Push Day", 33, 2400, true, 6, 18, 144, 3400.0, 280.0, 6.5),
+        MockSession("s22", "w3", "HIIT Cardio Blast", 36, 1850, true, 10, 20, 200, 0.0, 530.0, 9.5),
+        MockSession("s23", "w2", "Lower Body Power", 39, 3150, true, 7, 21, 168, 5800.0, 395.0, 7.5),
+        MockSession("s24", "w5", "Full Body Circuit", 42, 3300, false, 8, 24, 192, 3600.0, 350.0, null),
+    )
+
+    val mockSessionHistory: List<MockHistoryEntry> by lazy {
+        val exercises = listOf(
+            Triple("s1", "w1", 1) to listOf(Triple("Bench Press", 10, 135.0), Triple("Overhead Press", 8, 85.0), Triple("Dumbbell Row", 10, 50.0), Triple("Lateral Raise", 12, 20.0)),
+            Triple("s2", "w2", 2) to listOf(Triple("Squat", 8, 225.0), Triple("Romanian Deadlift", 10, 185.0), Triple("Leg Press", 12, 300.0), Triple("Calf Raise", 15, 100.0)),
+            Triple("s5", "w5", 6) to listOf(Triple("Squat", 10, 185.0), Triple("Bench Press", 10, 135.0), Triple("Deadlift", 8, 225.0)),
+            Triple("s6", "w1", 7) to listOf(Triple("Bench Press", 10, 140.0), Triple("Overhead Press", 8, 90.0), Triple("Dumbbell Row", 10, 55.0)),
+            Triple("s7", "w6", 8) to listOf(Triple("Bench Press", 10, 145.0), Triple("Incline Press", 8, 115.0), Triple("Tricep Pushdown", 12, 50.0)),
+            Triple("s8", "w2", 9) to listOf(Triple("Squat", 8, 235.0), Triple("Romanian Deadlift", 10, 195.0), Triple("Leg Press", 12, 315.0)),
+            Triple("s11", "w1", 12) to listOf(Triple("Bench Press", 10, 140.0), Triple("Overhead Press", 8, 85.0), Triple("Dumbbell Row", 10, 55.0)),
+            Triple("s12", "w5", 13) to listOf(Triple("Squat", 10, 195.0), Triple("Bench Press", 10, 140.0), Triple("Deadlift", 8, 235.0)),
+            Triple("s13", "w2", 16) to listOf(Triple("Squat", 8, 225.0), Triple("Romanian Deadlift", 10, 185.0)),
+            Triple("s14", "w6", 18) to listOf(Triple("Bench Press", 10, 140.0), Triple("Incline Press", 8, 110.0)),
+            Triple("s15", "w1", 20) to listOf(Triple("Bench Press", 10, 130.0), Triple("Overhead Press", 8, 80.0)),
+            Triple("s18", "w5", 26) to listOf(Triple("Squat", 10, 185.0), Triple("Bench Press", 10, 130.0), Triple("Deadlift", 8, 220.0)),
+            Triple("s19", "w2", 28) to listOf(Triple("Squat", 8, 215.0), Triple("Romanian Deadlift", 10, 175.0)),
+            Triple("s20", "w1", 30) to listOf(Triple("Bench Press", 10, 125.0), Triple("Overhead Press", 8, 75.0)),
+            Triple("s23", "w2", 39) to listOf(Triple("Squat", 8, 210.0), Triple("Romanian Deadlift", 10, 170.0)),
+        )
+        buildList {
+            exercises.forEach { (session, tasks) ->
+                tasks.forEach { (name, reps, weight) ->
+                    if (weight > 0) {
+                        for (setNum in 1..3) {
+                            add(MockHistoryEntry(session.first, name, session.second, reps, setNum, weight, session.third))
+                        }
+                    }
+                }
+            }
+        }
     }
 }

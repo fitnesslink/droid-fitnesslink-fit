@@ -21,16 +21,26 @@ object DatabaseManager {
     fun initializeForTesting() {
         database = SQLiteDatabase.create(null)
         createAllTables(database)
+        migrateToV2(database)
     }
 
     private fun db(): SQLiteDatabase = database
 
     // MARK: - Schema
 
+    private const val DB_VERSION = 3
+
     private class DatabaseHelper(context: Context) :
-        SQLiteOpenHelper(context, "fitnesslink.db", null, 1) {
-        override fun onCreate(db: SQLiteDatabase) = createAllTables(db)
-        override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) {}
+        SQLiteOpenHelper(context, "fitnesslink.db", null, DB_VERSION) {
+        override fun onCreate(db: SQLiteDatabase) {
+            createAllTables(db)
+            migrateToV2(db)
+            migrateToV3(db)
+        }
+        override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) {
+            if (old < 2) migrateToV2(db)
+            if (old < 3) migrateToV3(db)
+        }
     }
 
     private fun createAllTables(db: SQLiteDatabase) {
@@ -88,6 +98,298 @@ object DatabaseManager {
             menuId INTEGER PRIMARY KEY, text TEXT NOT NULL)""")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_barcode ON barcode_products(barcode)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_food_logged ON food_entries(loggedAt)")
+    }
+
+    // MARK: - Schema Migration
+
+    private fun migrateToV2(db: SQLiteDatabase) {
+        // Expand users table
+        val userColumns = listOf(
+            "ALTER TABLE users ADD COLUMN firstName TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN lastName TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN alias TEXT",
+            "ALTER TABLE users ADD COLUMN phone TEXT",
+            "ALTER TABLE users ADD COLUMN firebaseId TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN username TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE users ADD COLUMN country TEXT",
+            "ALTER TABLE users ADD COLUMN profileImageId TEXT",
+            "ALTER TABLE users ADD COLUMN companyId TEXT",
+            "ALTER TABLE users ADD COLUMN isActive INTEGER NOT NULL DEFAULT 1",
+            "ALTER TABLE users ADD COLUMN requirePersonalization INTEGER NOT NULL DEFAULT 1",
+        )
+        userColumns.forEach { try { db.execSQL(it) } catch (_: Exception) { } }
+
+        // New tables
+        db.execSQL("""CREATE TABLE IF NOT EXISTS movements (
+            id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT,
+            videoId TEXT, statusId TEXT, contributorId TEXT,
+            imageId TEXT, relatedToId TEXT, thumbnailId TEXT,
+            preBuiltTemplateId TEXT, timestamp INTEGER,
+            lastUpdateDate INTEGER, isDeleted INTEGER NOT NULL DEFAULT 0,
+            createdBy TEXT)""")
+
+        db.execSQL("""CREATE TABLE IF NOT EXISTS user_preferences (
+            id TEXT PRIMARY KEY, userId TEXT NOT NULL,
+            language TEXT, timezone TEXT,
+            darkMode INTEGER NOT NULL DEFAULT 0,
+            workoutSessionType INTEGER NOT NULL DEFAULT 0)""")
+
+        db.execSQL("""CREATE TABLE IF NOT EXISTS user_personalizations (
+            id TEXT PRIMARY KEY, personalizationId TEXT NOT NULL,
+            personalizationOptionId TEXT NOT NULL,
+            userId TEXT NOT NULL)""")
+
+        db.execSQL("""CREATE TABLE IF NOT EXISTS program_schedules (
+            id TEXT PRIMARY KEY, programId TEXT NOT NULL,
+            workoutId TEXT NOT NULL, weekNumber INTEGER NOT NULL,
+            dayNumber INTEGER NOT NULL)""")
+
+        db.execSQL("""CREATE TABLE IF NOT EXISTS workout_session_history (
+            id TEXT PRIMARY KEY, workoutSessionId TEXT NOT NULL,
+            workoutTaskId TEXT NOT NULL, workoutId TEXT NOT NULL,
+            programId TEXT, userId TEXT NOT NULL,
+            logDate INTEGER NOT NULL, reps INTEGER,
+            setNumber INTEGER, intervalSeconds INTEGER,
+            weightLifted REAL)""")
+
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_session_history_session ON workout_session_history(workoutSessionId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_session_history_user ON workout_session_history(userId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_program_schedules_program ON program_schedules(programId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_user_personalizations_user ON user_personalizations(userId)")
+    }
+
+    private fun migrateToV3(db: SQLiteDatabase) {
+        db.execSQL("""CREATE TABLE IF NOT EXISTS workout_sessions (
+            id TEXT PRIMARY KEY, workoutId TEXT NOT NULL, userId TEXT NOT NULL,
+            programId TEXT, workoutName TEXT NOT NULL DEFAULT '',
+            startDate INTEGER NOT NULL, completionDate INTEGER,
+            durationSeconds INTEGER NOT NULL DEFAULT 0,
+            isCompleted INTEGER NOT NULL DEFAULT 0,
+            exerciseCount INTEGER NOT NULL DEFAULT 0,
+            totalSets INTEGER NOT NULL DEFAULT 0,
+            totalReps INTEGER NOT NULL DEFAULT 0,
+            totalWeightLifted REAL NOT NULL DEFAULT 0,
+            totalCaloriesBurned REAL NOT NULL DEFAULT 0,
+            rpeValue REAL)""")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_workout_sessions_user ON workout_sessions(userId)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_workout_sessions_date ON workout_sessions(startDate)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_session_history_logdate ON workout_session_history(logDate)")
+        try { db.execSQL("ALTER TABLE workout_session_history ADD COLUMN taskName TEXT NOT NULL DEFAULT ''") } catch (_: Exception) {}
+    }
+
+    // MARK: - Nutrition Report Queries
+
+    fun dailyNutritionRows(since: Long): List<DailyNutritionRow> {
+        val goal = nutritionGoal()
+        val lower = goal.calorieGoal * 0.9; val upper = goal.calorieGoal * 1.1
+        return db().rawQuery("""
+            SELECT date(loggedAt/1000,'unixepoch','localtime'), SUM(calories), SUM(protein), SUM(fat), SUM(carbs), MIN(loggedAt)
+            FROM food_entries WHERE loggedAt>=? GROUP BY date(loggedAt/1000,'unixepoch','localtime') ORDER BY MIN(loggedAt) DESC
+        """, arrayOf(since.toString())).use { c ->
+            buildList {
+                while (c.moveToNext()) {
+                    val cals = c.getInt(1)
+                    add(DailyNutritionRow(c.str(0), Date(c.getLong(5)), cals, c.getDouble(2),
+                        c.getDouble(3), c.getDouble(4), goal.calorieGoal,
+                        cals.toDouble() in lower..upper))
+                }
+            }
+        }
+    }
+
+    fun mealTypeAggregates(since: Long): List<MealTypeAggregate> {
+        data class Row(val mt: String, val count: Int, val avgC: Double, val avgP: Double, val avgF: Double, val avgCb: Double, val sumC: Double)
+        val rows = db().rawQuery("""
+            SELECT mealType, COUNT(*), AVG(calories), AVG(protein), AVG(fat), AVG(carbs), SUM(calories)
+            FROM food_entries WHERE loggedAt>=? GROUP BY mealType
+        """, arrayOf(since.toString())).use { c ->
+            buildList { while (c.moveToNext()) add(Row(c.str(0), c.getInt(1), c.getDouble(2), c.getDouble(3), c.getDouble(4), c.getDouble(5), c.getDouble(6))) }
+        }
+        val total = rows.sumOf { it.sumC }
+        return rows.map { r ->
+            MealTypeAggregate(r.mt, MealType.valueOf(r.mt), r.avgC, r.avgP, r.avgF, r.avgCb,
+                if (total > 0) r.sumC / total * 100 else 0.0, r.count)
+        }.sortedByDescending { it.percentOfDailyCalories }
+    }
+
+    fun foodAggregates(since: Long): List<FoodAggregate> {
+        return db().rawQuery("""
+            SELECT name, COUNT(*), AVG(calories), SUM(calories), SUM(protein), AVG(protein)
+            FROM food_entries WHERE loggedAt>=? GROUP BY name ORDER BY COUNT(*) DESC
+        """, arrayOf(since.toString())).use { c ->
+            buildList { while (c.moveToNext()) add(FoodAggregate(c.str(0), c.str(0), c.getInt(1), c.getDouble(2), c.getInt(3), c.getDouble(4), c.getDouble(5))) }
+        }
+    }
+
+    fun foodEntriesForName(name: String, since: Long): List<FoodEntry> {
+        return db().rawQuery("SELECT id,name,calories,protein,fat,carbs,servingSize,servingUnit,mealType,loggedAt,isCustomTemplate FROM food_entries WHERE name=? AND loggedAt>=? ORDER BY loggedAt DESC",
+            arrayOf(name, since.toString())).use { c -> buildList { while (c.moveToNext()) add(readFoodEntry(c)) } }
+    }
+
+    fun foodEntriesForMealType(mealType: String, since: Long): List<FoodEntry> {
+        return db().rawQuery("SELECT id,name,calories,protein,fat,carbs,servingSize,servingUnit,mealType,loggedAt,isCustomTemplate FROM food_entries WHERE mealType=? AND loggedAt>=? ORDER BY loggedAt DESC",
+            arrayOf(mealType, since.toString())).use { c -> buildList { while (c.moveToNext()) add(readFoodEntry(c)) } }
+    }
+
+    fun nutritionLogDates(since: Long): List<Date> {
+        return db().rawQuery("SELECT DISTINCT date(loggedAt/1000,'unixepoch','localtime'), MIN(loggedAt) FROM food_entries WHERE loggedAt>=? GROUP BY date(loggedAt/1000,'unixepoch','localtime') ORDER BY MIN(loggedAt)",
+            arrayOf(since.toString())).use { c -> buildList { while (c.moveToNext()) add(Date(c.getLong(1))) } }
+    }
+
+    // MARK: - Workout Report Queries
+
+    fun workoutReportData(userId: String, since: Long): WorkoutReportData {
+        return db().rawQuery("""
+            SELECT SUM(CASE WHEN isCompleted=1 THEN 1 ELSE 0 END),
+                   SUM(durationSeconds),
+                   SUM(CASE WHEN isCompleted=0 THEN 1 ELSE 0 END),
+                   AVG(CASE WHEN rpeValue IS NOT NULL AND isCompleted=1 THEN rpeValue END),
+                   SUM(exerciseCount), SUM(totalWeightLifted), SUM(totalCaloriesBurned)
+            FROM workout_sessions WHERE userId=? AND startDate>=?
+        """, arrayOf(userId, since.toString())).use { c ->
+            if (!c.moveToFirst()) return WorkoutReportData()
+            WorkoutReportData(c.getInt(0), c.getInt(1), c.getInt(2),
+                if (c.isNull(3)) 0.0 else c.getDouble(3),
+                c.getInt(4), c.getDouble(5), c.getDouble(6))
+        }
+    }
+
+    fun sessionRows(userId: String, since: Long): List<SessionRow> {
+        return db().rawQuery("""
+            SELECT id, workoutName, startDate, durationSeconds, isCompleted,
+                   exerciseCount, totalWeightLifted, totalCaloriesBurned, rpeValue
+            FROM workout_sessions WHERE userId=? AND startDate>=? ORDER BY startDate DESC
+        """, arrayOf(userId, since.toString())).use { c ->
+            buildList {
+                while (c.moveToNext()) add(SessionRow(c.str(0), c.str(1), Date(c.getLong(2)),
+                    c.getInt(3), c.getInt(4) != 0, c.getInt(5), c.getDouble(6), c.getDouble(7),
+                    if (c.isNull(8)) null else c.getDouble(8)))
+            }
+        }
+    }
+
+    fun volumeEntries(userId: String, since: Long): List<VolumeEntry> {
+        return db().rawQuery("""
+            SELECT id, taskName, logDate, COALESCE(setNumber,1), COALESCE(reps,0), COALESCE(weightLifted,0)
+            FROM workout_session_history WHERE userId=? AND logDate>=? AND weightLifted>0 ORDER BY logDate DESC
+        """, arrayOf(userId, since.toString())).use { c ->
+            buildList { while (c.moveToNext()) add(VolumeEntry(c.str(0), c.str(1), Date(c.getLong(2)), 1, c.getInt(3), c.getDouble(5))) }
+        }
+    }
+
+    fun personalRecords(userId: String, since: Long): List<PersonalRecord> {
+        return db().rawQuery("""
+            SELECT taskName, MAX(weightLifted), MAX(reps), logDate
+            FROM workout_session_history WHERE userId=? AND logDate>=? AND weightLifted>0
+            GROUP BY taskName ORDER BY MAX(weightLifted) DESC
+        """, arrayOf(userId, since.toString())).use { c ->
+            buildList { while (c.moveToNext()) { val n = c.str(0); add(PersonalRecord(n, n, c.getDouble(1), c.getInt(2), Date(c.getLong(3)))) } }
+        }
+    }
+
+    fun workoutDates(userId: String, since: Long): List<Date> {
+        return db().rawQuery("SELECT startDate FROM workout_sessions WHERE userId=? AND isCompleted=1 AND startDate>=? ORDER BY startDate",
+            arrayOf(userId, since.toString())).use { c ->
+            buildList { while (c.moveToNext()) add(Date(c.getLong(0))) }
+        }
+    }
+
+    fun sessionById(id: String): SessionRow? {
+        return db().rawQuery("""
+            SELECT id, workoutName, startDate, durationSeconds, isCompleted,
+                   exerciseCount, totalWeightLifted, totalCaloriesBurned, rpeValue
+            FROM workout_sessions WHERE id=?
+        """, arrayOf(id)).use { c ->
+            if (!c.moveToFirst()) return null
+            SessionRow(c.str(0), c.str(1), Date(c.getLong(2)), c.getInt(3),
+                c.getInt(4) != 0, c.getInt(5), c.getDouble(6), c.getDouble(7),
+                if (c.isNull(8)) null else c.getDouble(8))
+        }
+    }
+
+    fun sessionExercises(sessionId: String): List<SessionExerciseRow> {
+        return db().rawQuery("""
+            SELECT taskName, reps, setNumber, COALESCE(weightLifted,0), logDate
+            FROM workout_session_history WHERE workoutSessionId=? ORDER BY logDate, taskName, setNumber
+        """, arrayOf(sessionId)).use { c ->
+            buildList { while (c.moveToNext()) add(SessionExerciseRow(c.str(0), c.getInt(1), c.getInt(2), c.getDouble(3), Date(c.getLong(4)))) }
+        }
+    }
+
+    fun workoutAggregates(userId: String, since: Long): List<WorkoutAggregate> {
+        val sessions = sessionRows(userId, since)
+        return sessions.groupBy { it.workoutName }.map { (name, rows) ->
+            val completed = rows.filter { it.isCompleted }
+            val avgDur = if (completed.isEmpty()) 0 else completed.sumOf { it.durationSeconds } / completed.size
+            val rpes = completed.mapNotNull { it.rpeValue }
+            WorkoutAggregate(name, name, completed.size, avgDur,
+                if (rpes.isEmpty()) 0.0 else rpes.average(),
+                completed.sumOf { it.totalWeightLifted }, completed.sumOf { it.totalWeightLifted },
+                completed.sumOf { it.totalCaloriesBurned }, rows.sortedByDescending { it.date })
+        }.sortedByDescending { it.timesCompleted }
+    }
+
+    fun movementAggregates(userId: String, since: Long): List<MovementAggregate> {
+        data class R(val tn: String, val reps: Int, val sn: Int, val w: Double, val d: Date, val wn: String, val sid: String)
+        val raw = db().rawQuery("""
+            SELECT h.taskName, h.reps, h.setNumber, COALESCE(h.weightLifted,0),
+                   h.logDate, s.workoutName, h.workoutSessionId
+            FROM workout_session_history h JOIN workout_sessions s ON s.id=h.workoutSessionId
+            WHERE h.userId=? AND h.logDate>=? AND h.taskName!='' ORDER BY h.taskName, h.logDate DESC, h.setNumber
+        """, arrayOf(userId, since.toString())).use { c ->
+            buildList { while (c.moveToNext()) add(R(c.str(0), c.getInt(1), c.getInt(2), c.getDouble(3), Date(c.getLong(4)), c.str(5), c.str(6))) }
+        }
+        return raw.groupBy { it.tn }.map { (name, entries) ->
+            val bySession = entries.groupBy { it.sid }
+            val hist = bySession.map { (sid, sets) ->
+                val s = sets.sortedBy { it.sn }
+                MovementHistoryEntry(sid, s.first().d, s.first().wn, s.size, s.sumOf { it.reps },
+                    s.maxOf { it.w }, s.map { MovementSetDetail(it.sn, it.reps, it.w) })
+            }.sortedByDescending { it.sessionDate }
+            val mw = entries.maxOf { it.w }; val pr = entries.first { it.w == mw }
+            MovementAggregate(name, name, bySession.size, entries.size, entries.sumOf { it.reps },
+                mw, entries.sumOf { it.reps.toDouble() * it.w }, mw, pr.reps, pr.d, hist)
+        }.sortedByDescending { it.totalVolume }
+    }
+
+    // MARK: - Workout Session Write Methods
+
+    fun insertWorkoutSession(
+        id: String, workoutId: String, userId: String, programId: String?,
+        workoutName: String, startDate: Long, completionDate: Long?,
+        durationSeconds: Int, isCompleted: Boolean, exerciseCount: Int,
+        totalSets: Int, totalReps: Int, totalWeightLifted: Double,
+        totalCaloriesBurned: Double, rpeValue: Double?
+    ) {
+        db().insertWithOnConflict("workout_sessions", null, ContentValues().apply {
+            put("id", id); put("workoutId", workoutId); put("userId", userId)
+            programId?.let { put("programId", it) }
+            put("workoutName", workoutName); put("startDate", startDate)
+            completionDate?.let { put("completionDate", it) }
+            put("durationSeconds", durationSeconds); put("isCompleted", if (isCompleted) 1 else 0)
+            put("exerciseCount", exerciseCount); put("totalSets", totalSets)
+            put("totalReps", totalReps); put("totalWeightLifted", totalWeightLifted)
+            put("totalCaloriesBurned", totalCaloriesBurned)
+            rpeValue?.let { put("rpeValue", it) }
+        }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun insertSessionHistory(
+        id: String, workoutSessionId: String, workoutTaskId: String,
+        workoutId: String, programId: String?, userId: String,
+        logDate: Long, reps: Int?, setNumber: Int?,
+        intervalSeconds: Int?, weightLifted: Double?, taskName: String
+    ) {
+        db().insertWithOnConflict("workout_session_history", null, ContentValues().apply {
+            put("id", id); put("workoutSessionId", workoutSessionId)
+            put("workoutTaskId", workoutTaskId); put("workoutId", workoutId)
+            programId?.let { put("programId", it) }
+            put("userId", userId); put("logDate", logDate)
+            reps?.let { put("reps", it) }; setNumber?.let { put("setNumber", it) }
+            intervalSeconds?.let { put("intervalSeconds", it) }
+            weightLifted?.let { put("weightLifted", it) }
+            put("taskName", taskName)
+        }, SQLiteDatabase.CONFLICT_REPLACE)
     }
 
     // MARK: - Read Queries
@@ -163,11 +465,32 @@ object DatabaseManager {
         buildList { while (c.moveToNext()) add(ProfileMenu(c.getInt(0), c.str(1))) }
     }
 
-    data class UserInfo(val id: String, val name: String, val email: String, val isPersonalized: Boolean)
+    data class UserInfo(
+        val id: String, val name: String, val email: String, val isPersonalized: Boolean,
+        val firstName: String = "", val lastName: String = "", val phone: String = "",
+        val username: String = "", val country: String = "", val profileImageId: String = "",
+        val isActive: Boolean = true
+    )
 
-    fun user(): UserInfo? = db().rawQuery("SELECT id, name, email, isPersonalized FROM users LIMIT 1", null).use { c ->
+    fun user(): UserInfo? = db().rawQuery("""
+        SELECT id, name, email, isPersonalized, firstName, lastName,
+               COALESCE(phone,''), username, COALESCE(country,''),
+               COALESCE(profileImageId,''), isActive
+        FROM users LIMIT 1
+    """, null).use { c ->
         if (!c.moveToFirst()) return null
-        UserInfo(c.str(0), c.str(1), c.str(2), c.getInt(3) != 0)
+        UserInfo(c.str(0), c.str(1), c.str(2), c.getInt(3) != 0,
+            c.str(4), c.str(5), c.str(6), c.str(7), c.str(8), c.str(9), c.getInt(10) != 0)
+    }
+
+    fun updateUserProfile(id: String, firstName: String, lastName: String, email: String,
+                          phone: String, username: String, country: String) {
+        db().execSQL("UPDATE users SET firstName=?, lastName=?, name=?, email=?, phone=?, username=?, country=? WHERE id=?",
+            arrayOf(firstName, lastName, "$firstName $lastName", email, phone, username, country, id))
+    }
+
+    fun updateProfileImage(userId: String, imageId: String) {
+        db().execSQL("UPDATE users SET profileImageId=? WHERE id=?", arrayOf(imageId, userId))
     }
 
     fun catalogPrograms(): List<CatalogItem> = db().rawQuery("SELECT id, name, imageUrl, time FROM programs", null).use { c ->
@@ -335,6 +658,15 @@ object DatabaseManager {
     fun insertUser(id: String, name: String, email: String) {
         db().insertWithOnConflict("users", null, ContentValues().apply {
             put("id", id); put("name", name); put("email", email); put("isPersonalized", 0)
+        }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun insertFullUser(id: String, firstName: String, lastName: String, email: String,
+                       phone: String, username: String, country: String) {
+        db().insertWithOnConflict("users", null, ContentValues().apply {
+            put("id", id); put("name", "$firstName $lastName"); put("email", email)
+            put("isPersonalized", 0); put("firstName", firstName); put("lastName", lastName)
+            put("phone", phone); put("username", username); put("country", country)
         }, SQLiteDatabase.CONFLICT_REPLACE)
     }
 

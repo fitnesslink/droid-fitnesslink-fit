@@ -24,7 +24,7 @@ class ProfileViewModel : ViewModel() {
         return when (item.id) {
             1 -> "personalInfo"
             2 -> "personalizationProfile"
-            3 -> "analyticsProgress"
+            3 -> "nutritionReport"
             4 -> "preferences"
             5 -> "billing"
             6 -> "goals"

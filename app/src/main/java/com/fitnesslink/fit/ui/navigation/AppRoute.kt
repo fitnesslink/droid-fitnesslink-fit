@@ -28,7 +28,7 @@ sealed class AppRoute(val route: String) {
     }
     data object PersonalInfo : AppRoute("personalInfo")
     data object PersonalizationProfile : AppRoute("personalizationProfile")
-    data object AnalyticsProgress : AppRoute("analyticsProgress")
+    data object NutritionReport : AppRoute("nutritionReport")
     data object Preferences : AppRoute("preferences")
     data object Billing : AppRoute("billing")
     data object Goals : AppRoute("goals")
@@ -36,6 +36,30 @@ sealed class AppRoute(val route: String) {
     data object Photos : AppRoute("photos")
     data object Weight : AppRoute("weight")
     data object WorkoutReport : AppRoute("workoutReport")
+    data class ReportDetail(val metric: String) : AppRoute("reportDetail/{metric}") {
+        companion object {
+            const val ROUTE = "reportDetail/{metric}"
+            fun createRoute(metric: String) = "reportDetail/$metric"
+        }
+    }
+    data class SessionDetail(val sessionId: String) : AppRoute("sessionDetail/{sessionId}") {
+        companion object {
+            const val ROUTE = "sessionDetail/{sessionId}"
+            fun createRoute(sessionId: String) = "sessionDetail/$sessionId"
+        }
+    }
+    data class WorkoutAggregateDetail(val workoutName: String) : AppRoute("workoutAggregate/{workoutName}") {
+        companion object {
+            const val ROUTE = "workoutAggregate/{workoutName}"
+            fun createRoute(workoutName: String) = "workoutAggregate/$workoutName"
+        }
+    }
+    data class MovementAggregateDetail(val exerciseName: String) : AppRoute("movementAggregate/{exerciseName}") {
+        companion object {
+            const val ROUTE = "movementAggregate/{exerciseName}"
+            fun createRoute(exerciseName: String) = "movementAggregate/$exerciseName"
+        }
+    }
     data class PhotoEntryDetail(val entryId: String) : AppRoute("photoEntryDetail/{entryId}") {
         companion object {
             const val ROUTE = "photoEntryDetail/{entryId}"
