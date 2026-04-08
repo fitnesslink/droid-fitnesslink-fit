@@ -5,26 +5,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fitnesslink.fit.model.WorkoutList
+import com.fitnesslink.fit.model.Achievement
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
-import com.fitnesslink.fit.persistence.DatabaseManager
 import kotlinx.coroutines.launch
 
-class WorkoutsViewModel : ViewModel() {
-    var workouts by mutableStateOf<List<WorkoutList>>(emptyList())
+class AchievementsViewModel : ViewModel() {
+    var achievements by mutableStateOf<List<Achievement>>(emptyList())
 
     fun loadData() {
-        workouts = DatabaseManager.allWorkouts()
         viewModelScope.launch { refreshFromServer() }
     }
 
     private suspend fun refreshFromServer() {
         if (!NetworkMonitor.isConnected.value) return
         try {
-            val remote = ApiClient.workoutApi.listView()
-            remote.forEach { DatabaseManager.insertWorkout(it) }
-            workouts = DatabaseManager.allWorkouts()
+            achievements = ApiClient.goalApi.getMyAchievements()
         } catch (_: Exception) { /* use cached */ }
     }
 }

@@ -7,12 +7,18 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitnesslink.fit.model.ExerciseProgress
-import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.model.WorkoutProgress
 import com.fitnesslink.fit.model.WorkoutTask
+import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.dto.CompleteSessionRequest
+import com.fitnesslink.fit.network.dto.LogHistoryRequest
+import com.fitnesslink.fit.persistence.DatabaseManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class InteractiveSessionViewModel : ViewModel() {
     private var workoutTasks = mutableListOf<WorkoutTask>()
@@ -137,6 +143,32 @@ class InteractiveSessionViewModel : ViewModel() {
                     workoutId, null, userId, System.currentTimeMillis(),
                     task.reps, setNum, null, (task.weightKg ?: 0).toDouble(), task.name
                 )
+            }
+        }
+        // Fire-and-forget server sync
+        viewModelScope.launch {
+            try {
+                ApiClient.sessionApi.complete(sessionId, CompleteSessionRequest(rpeId = null))
+            } catch (_: Exception) {}
+        }
+        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+        for (task in movementTasks) {
+            for (setNum in 1..maxOf(task.sets, 1)) {
+                viewModelScope.launch {
+                    try {
+                        ApiClient.sessionApi.logHistory(sessionId, LogHistoryRequest(
+                            workoutTaskId = task.id,
+                            workoutId = workoutId,
+                            programId = null,
+                            userId = userId,
+                            logDate = dateFormat.format(Date()),
+                            reps = task.reps,
+                            setNumber = setNum,
+                            intervalSeconds = null,
+                            weightLifted = (task.weightKg ?: 0).toDouble()
+                        ))
+                    } catch (_: Exception) {}
+                }
             }
         }
     }

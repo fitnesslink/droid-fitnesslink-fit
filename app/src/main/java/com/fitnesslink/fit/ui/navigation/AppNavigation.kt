@@ -387,6 +387,11 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                     onNavigateToBilling = { navController.navigate("billing") }
                 )
             }
+            composable("developerSettings") {
+                com.fitnesslink.fit.ui.profile.DeveloperSettingsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable("personalizationProfile") {
                 PersonalizationScreen(
                     onComplete = { navController.popBackStack() },

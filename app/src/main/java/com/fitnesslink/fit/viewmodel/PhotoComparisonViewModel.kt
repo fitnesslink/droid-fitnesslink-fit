@@ -4,8 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.*
+import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.NetworkMonitor
+import kotlinx.coroutines.launch
 import java.util.Date
 
 class PhotoComparisonViewModel : ViewModel() {
@@ -22,6 +26,21 @@ class PhotoComparisonViewModel : ViewModel() {
         } else if (allEntries.isNotEmpty()) {
             afterEntry = allEntries[0]
         }
+        viewModelScope.launch { refreshFromServer() }
+    }
+
+    private suspend fun refreshFromServer() {
+        if (!NetworkMonitor.isConnected.value) return
+        try {
+            val remote = ApiClient.bodyTrackingApi.getProgressPhotos()
+            allEntries = remote.sortedByDescending { it.date }
+            if (allEntries.size >= 2) {
+                afterEntry = allEntries[0]
+                beforeEntry = allEntries[1]
+            } else if (allEntries.isNotEmpty()) {
+                afterEntry = allEntries[0]
+            }
+        } catch (_: Exception) { /* use cached */ }
     }
 
     fun selectBefore(entry: ProgressPhotoEntry) { beforeEntry = entry }

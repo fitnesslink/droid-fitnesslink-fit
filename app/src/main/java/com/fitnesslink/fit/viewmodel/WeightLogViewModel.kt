@@ -4,8 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.*
+import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.NetworkMonitor
+import kotlinx.coroutines.launch
 import java.util.Date
 
 class WeightLogViewModel : ViewModel() {
@@ -21,6 +25,16 @@ class WeightLogViewModel : ViewModel() {
     fun loadData() {
         entries = MockDataProvider.weightEntries.sortedByDescending { it.date }
         chartPoints = MockDataProvider.weightChartPoints
+        viewModelScope.launch { refreshFromServer() }
+    }
+
+    private suspend fun refreshFromServer() {
+        if (!NetworkMonitor.isConnected.value) return
+        try {
+            val remote = ApiClient.bodyTrackingApi.getWeightEntries()
+            entries = remote.sortedByDescending { it.date }
+            chartPoints = entries.map { WeightChartPoint(id = it.id, date = it.date, weight = it.weight) }
+        } catch (_: Exception) { /* use cached */ }
     }
 
     val latestWeight: WeightEntry? get() = entries.firstOrNull()
@@ -47,10 +61,16 @@ class WeightLogViewModel : ViewModel() {
         newNotes = ""
         newDate = Date()
         showAddEntry = false
+        viewModelScope.launch {
+            try { ApiClient.bodyTrackingApi.addWeightEntry(entry) } catch (_: Exception) {}
+        }
     }
 
     fun deleteEntry(id: String) {
         entries = entries.filter { it.id != id }
         chartPoints = entries.map { WeightChartPoint(id = it.id, date = it.date, weight = it.weight) }
+        viewModelScope.launch {
+            try { ApiClient.bodyTrackingApi.deleteWeightEntry(id) } catch (_: Exception) {}
+        }
     }
 }

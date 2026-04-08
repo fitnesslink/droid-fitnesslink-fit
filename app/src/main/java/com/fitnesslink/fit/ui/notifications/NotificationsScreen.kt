@@ -252,6 +252,6 @@ fun NotificationRowView(
 private fun notificationIcon(type: NotificationType): ImageVector = when (type) {
     NotificationType.SYSTEM -> Icons.Default.Campaign
     NotificationType.GOALS -> Icons.Default.TrackChanges
-    NotificationType.CONTENT -> Icons.AutoMirrored.Filled.MenuBook
+    NotificationType.CONTENT -> Icons.Default.MenuBook
     NotificationType.CALENDAR -> Icons.Default.CalendarMonth
 }

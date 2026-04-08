@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.fitnesslink.fit.model.Personalization
+import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.dto.UserPersonalizationRequest
 import com.fitnesslink.fit.persistence.DatabaseManager
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -62,6 +64,19 @@ class PersonalizationViewModel : ViewModel() {
             viewModelScope.launch {
                 DatabaseManager.savePersonalizations(personalizations)
                 DatabaseManager.user()?.id?.let { DatabaseManager.setUserPersonalized(it) }
+            }
+            viewModelScope.launch {
+                try {
+                    val selections = personalizations.flatMap { page ->
+                        page.options.filter { it.selected }.map { option ->
+                            UserPersonalizationRequest(
+                                personalizationId = page.id,
+                                personalizationOptionId = option.id
+                            )
+                        }
+                    }
+                    ApiClient.personalizationApi.saveSelections(selections)
+                } catch (_: Exception) {}
             }
             isComplete = true
         } else {

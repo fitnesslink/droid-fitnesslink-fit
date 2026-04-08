@@ -28,7 +28,7 @@ object DatabaseManager {
 
     // MARK: - Schema
 
-    private const val DB_VERSION = 5
+    private const val DB_VERSION = 6
 
     private class DatabaseHelper(context: Context) :
         SQLiteOpenHelper(context, "fitnesslink.db", null, DB_VERSION) {
@@ -38,12 +38,14 @@ object DatabaseManager {
             migrateToV3(db)
             migrateToV4(db)
             migrateToV5(db)
+            migrateToV6(db)
         }
         override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) {
             if (old < 2) migrateToV2(db)
             if (old < 3) migrateToV3(db)
             if (old < 4) migrateToV4(db)
             if (old < 5) migrateToV5(db)
+            if (old < 6) migrateToV6(db)
         }
     }
 
@@ -203,6 +205,72 @@ object DatabaseManager {
             createdAt INTEGER NOT NULL,
             deepLink TEXT)""")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_notifications_date ON notifications(createdAt)")
+    }
+
+    private fun migrateToV6(db: SQLiteDatabase) {
+        db.execSQL("""CREATE TABLE IF NOT EXISTS goals (
+            id TEXT PRIMARY KEY, userId TEXT NOT NULL, goalType TEXT NOT NULL,
+            title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
+            targetValue REAL, targetUnit TEXT, currentValue REAL NOT NULL DEFAULT 0,
+            startDate INTEGER NOT NULL, targetDate INTEGER, completedDate INTEGER,
+            status TEXT NOT NULL DEFAULT 'Active', identityStatement TEXT,
+            trajectoryStatus TEXT NOT NULL DEFAULT 'OnTrack',
+            createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, lastSyncedAt INTEGER)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS habits (
+            id TEXT PRIMARY KEY, goalId TEXT, userId TEXT NOT NULL,
+            title TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',
+            habitType TEXT NOT NULL, anchorBehavior TEXT,
+            frequencyType TEXT NOT NULL DEFAULT 'Daily', frequencyDaysJson TEXT,
+            targetValue REAL, targetUnit TEXT, tier TEXT NOT NULL DEFAULT 'Seedling',
+            estimatedMinutes INTEGER NOT NULL DEFAULT 2, isActive INTEGER NOT NULL DEFAULT 1,
+            sortOrder INTEGER NOT NULL DEFAULT 0,
+            createdAt INTEGER NOT NULL, updatedAt INTEGER NOT NULL, lastSyncedAt INTEGER)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS habit_logs (
+            id TEXT PRIMARY KEY, habitId TEXT NOT NULL, userId TEXT NOT NULL,
+            completedAt INTEGER NOT NULL, completionType TEXT NOT NULL DEFAULT 'Manual',
+            actualValue REAL, notes TEXT)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS streaks (
+            id TEXT PRIMARY KEY, habitId TEXT NOT NULL, userId TEXT NOT NULL,
+            currentCount INTEGER NOT NULL DEFAULT 0, longestCount INTEGER NOT NULL DEFAULT 0,
+            lastCompletedDate INTEGER, streakStartDate INTEGER)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS milestones (
+            id TEXT PRIMARY KEY, goalId TEXT NOT NULL, title TEXT NOT NULL,
+            targetValue REAL NOT NULL, achievedAt INTEGER)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS achievements (
+            id TEXT PRIMARY KEY, userId TEXT NOT NULL, achievementType TEXT NOT NULL,
+            title TEXT NOT NULL, earnedAt INTEGER NOT NULL)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS weight_entries (
+            id TEXT PRIMARY KEY, userId TEXT NOT NULL, weight REAL NOT NULL,
+            unit TEXT NOT NULL, date INTEGER NOT NULL, notes TEXT NOT NULL DEFAULT '',
+            createdAt INTEGER NOT NULL)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS measurement_entries (
+            id TEXT PRIMARY KEY, userId TEXT NOT NULL, date INTEGER NOT NULL,
+            measurementsJson TEXT NOT NULL DEFAULT '[]', notes TEXT NOT NULL DEFAULT '',
+            createdAt INTEGER NOT NULL)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS progress_photo_entries (
+            id TEXT PRIMARY KEY, userId TEXT NOT NULL, date INTEGER NOT NULL,
+            photosJson TEXT NOT NULL DEFAULT '[]', notes TEXT NOT NULL DEFAULT '',
+            createdAt INTEGER NOT NULL)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS notification_preferences (
+            id TEXT PRIMARY KEY, userId TEXT NOT NULL,
+            coachingTone TEXT NOT NULL DEFAULT 'EncouragingCoach',
+            maxDailyNotifications INTEGER NOT NULL DEFAULT 5,
+            enableHabitReminders INTEGER NOT NULL DEFAULT 1,
+            enableStreakAlerts INTEGER NOT NULL DEFAULT 1,
+            enableMilestones INTEGER NOT NULL DEFAULT 1,
+            enableAiCoaching INTEGER NOT NULL DEFAULT 1,
+            enableReengagement INTEGER NOT NULL DEFAULT 1,
+            enableGoalCheckIns INTEGER NOT NULL DEFAULT 1)""")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS sync_queue (
+            id TEXT PRIMARY KEY, entityType TEXT NOT NULL, entityId TEXT NOT NULL,
+            action TEXT NOT NULL, payload TEXT NOT NULL, createdAt INTEGER NOT NULL,
+            synced INTEGER NOT NULL DEFAULT 0)""")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_sync_queue_unsynced ON sync_queue(synced) WHERE synced = 0")
+        val tablesToAlter = listOf("workouts", "programs", "food_entries", "movements",
+            "workout_sessions", "meal_slots", "grocery_items", "notifications")
+        for (table in tablesToAlter) {
+            try { db.execSQL("ALTER TABLE $table ADD COLUMN lastSyncedAt INTEGER") } catch (_: Exception) {}
+        }
     }
 
     // MARK: - Nutrition Report Queries
@@ -921,5 +989,91 @@ object DatabaseManager {
             put("isRead", if (isRead) 1 else 0); put("createdAt", createdAt)
             deepLink?.let { put("deepLink", it) }
         }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    // MARK: - Server Sync Support
+
+    fun saveUserFromApi(user: com.fitnesslink.fit.model.api.FLUser) {
+        db().execSQL("""
+            INSERT INTO users (id, name, email, isPersonalized, firstName, lastName, phone, username, country, profileImageId, isActive)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET name=excluded.name, email=excluded.email,
+                isPersonalized=excluded.isPersonalized, firstName=excluded.firstName,
+                lastName=excluded.lastName, phone=excluded.phone, username=excluded.username,
+                country=excluded.country, profileImageId=excluded.profileImageId, isActive=excluded.isActive
+        """.trimIndent(), arrayOf(
+            user.id, "${user.firstName} ${user.lastName}", user.email,
+            if (user.requirePersonalization) 0 else 1,
+            user.firstName, user.lastName, user.phone ?: "",
+            user.username, user.country ?: "",
+            user.profileImageId ?: "", if (user.isActive) 1 else 0
+        ))
+    }
+
+    fun clearUserData() {
+        val tables = listOf("users", "home_dashboards", "programs", "workouts", "food_entries",
+            "nutrition_goals", "meal_slots", "grocery_items", "barcode_products",
+            "personalizations", "calendar_content", "profile_menus",
+            "workout_sessions", "workout_session_history", "movements",
+            "user_preferences", "user_personalizations", "program_schedules",
+            "recent_movements", "notifications",
+            "goals", "habits", "habit_logs", "streaks", "milestones",
+            "achievements", "weight_entries", "measurement_entries",
+            "progress_photo_entries", "notification_preferences", "sync_queue")
+        for (table in tables) {
+            try { db().execSQL("DELETE FROM $table") } catch (_: Exception) {}
+        }
+    }
+
+    // MARK: - Sync Queue
+
+    fun enqueueSyncEntry(entityType: String, entityId: String, action: String, payload: String) {
+        db().insertWithOnConflict("sync_queue", null, ContentValues().apply {
+            put("id", java.util.UUID.randomUUID().toString())
+            put("entityType", entityType); put("entityId", entityId)
+            put("action", action); put("payload", payload)
+            put("createdAt", System.currentTimeMillis()); put("synced", 0)
+        }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    data class SyncQueueEntry(
+        val id: String, val entityType: String, val entityId: String,
+        val action: String, val payload: String, val createdAt: Long
+    )
+
+    fun pendingSyncEntries(): List<SyncQueueEntry> {
+        val cursor = db().rawQuery(
+            "SELECT id, entityType, entityId, action, payload, createdAt FROM sync_queue WHERE synced=0 ORDER BY createdAt ASC",
+            null
+        )
+        val results = mutableListOf<SyncQueueEntry>()
+        while (cursor.moveToNext()) {
+            results.add(SyncQueueEntry(
+                id = cursor.getString(0), entityType = cursor.getString(1),
+                entityId = cursor.getString(2), action = cursor.getString(3),
+                payload = cursor.getString(4), createdAt = cursor.getLong(5)
+            ))
+        }
+        cursor.close()
+        return results
+    }
+
+    fun markSyncEntrySynced(id: String) {
+        db().execSQL("UPDATE sync_queue SET synced=1 WHERE id=?", arrayOf(id))
+    }
+
+    fun pruneSyncedEntries(olderThanDays: Int = 7) {
+        val cutoff = System.currentTimeMillis() - olderThanDays * 86_400_000L
+        db().execSQL("DELETE FROM sync_queue WHERE synced=1 AND createdAt<?", arrayOf(cutoff))
+    }
+
+    fun deleteSyncEntity(entityType: String, entityId: String) {
+        try { db().execSQL("DELETE FROM $entityType WHERE id=?", arrayOf(entityId)) } catch (_: Exception) {}
+    }
+
+    fun applySyncPayload(entityType: String, entityId: String, data: Map<String, Any?>?) {
+        // Placeholder for per-entity-type sync application.
+        // Will be expanded as each domain is fully integrated.
+        if (data == null) return
     }
 }

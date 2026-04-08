@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fitnesslink.fit.persistence.DatabaseManager
-import kotlinx.coroutines.delay
+import com.fitnesslink.fit.auth.AuthManager
+import com.fitnesslink.fit.sync.SyncManager
 import kotlinx.coroutines.launch
 
 class LoginViewModel : ViewModel() {
@@ -27,27 +27,26 @@ class LoginViewModel : ViewModel() {
             isLoading = true
             errorMessage = null
             isInvalidCredentials = false
-            delay(1500)
-            DatabaseManager.saveUser(id = "user1", name = "Fitness User", email = email)
-            DatabaseManager.user()?.let { needsPersonalization = !it.isPersonalized }
-            isLoading = false
-            isAuthenticated = true
+            try {
+                AuthManager.login(email, password)
+                needsPersonalization = AuthManager.currentUser.value?.requirePersonalization ?: true
+                isLoading = false
+                isAuthenticated = true
+                // Trigger initial sync
+                SyncManager.performInitialSync()
+            } catch (e: Exception) {
+                isLoading = false
+                isInvalidCredentials = true
+                errorMessage = AuthManager.mapFirebaseError(e)
+            }
         }
     }
 
     fun loginWithGoogle() {
-        viewModelScope.launch {
-            DatabaseManager.saveUser(id = "user1", name = "Fitness User", email = "user@fitnesslink.com")
-            DatabaseManager.user()?.let { needsPersonalization = !it.isPersonalized }
-        }
-        isAuthenticated = true
+        // TODO: Implement Google Sign-In via Firebase
     }
 
     fun loginWithFacebook() {
-        viewModelScope.launch {
-            DatabaseManager.saveUser(id = "user1", name = "Fitness User", email = "user@fitnesslink.com")
-            DatabaseManager.user()?.let { needsPersonalization = !it.isPersonalized }
-        }
-        isAuthenticated = true
+        // TODO: Implement Facebook Sign-In via Firebase
     }
 }

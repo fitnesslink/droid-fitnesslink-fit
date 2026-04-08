@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "864850452172",
+    "project_id": "fitneink-24d2b",
+    "storage_bucket": "fitneink-24d2b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:864850452172:android:6e248a08160d0002592c69",
+        "android_client_info": {
+          "package_name": "com.fitnesslink.fit"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "864850452172-16brbu630npi088vse4uj9udb652dr8h.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBeO9snBvBSP0FqTXHXipkRCdtlkBQvJyc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "864850452172-16brbu630npi088vse4uj9udb652dr8h.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "864850452172-7ecj0eglk61ourf0fdiarebnpuobg74b.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.fitnesslink.platform.fit"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

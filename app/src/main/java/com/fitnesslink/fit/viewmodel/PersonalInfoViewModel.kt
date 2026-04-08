@@ -6,7 +6,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.fitnesslink.fit.auth.AuthManager
+import com.fitnesslink.fit.model.api.FLUser
+import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.persistence.DatabaseManager
+import kotlinx.coroutines.launch
 import java.io.File
 
 class PersonalInfoViewModel : ViewModel() {
@@ -57,6 +62,20 @@ class PersonalInfoViewModel : ViewModel() {
         origFirstName = firstName; origLastName = lastName
         origUsername = username; origEmail = email
         origPhone = phone; origCountry = country
+        viewModelScope.launch {
+            try {
+                val current = AuthManager.currentUser.value ?: return@launch
+                val updated = current.copy(
+                    firstName = firstName,
+                    lastName = lastName,
+                    email = email,
+                    phone = phone,
+                    username = username,
+                    country = country
+                )
+                ApiClient.userApi.update(current.id.toString(), updated)
+            } catch (_: Exception) {}
+        }
     }
 
     fun saveProfileImage(bytes: ByteArray, filesDir: File) {

@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import com.fitnesslink.fit.model.FoodEntry
 import com.fitnesslink.fit.model.MealType
 import com.fitnesslink.fit.model.NutritionGoal
+import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.persistence.DatabaseManager
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -39,6 +41,9 @@ class NutritionViewModel : ViewModel() {
             DatabaseManager.saveFoodEntry(entry)
             todayEntries = DatabaseManager.allFoodEntries()
         }
+        viewModelScope.launch {
+            try { ApiClient.nutritionApi.addFoodEntry(entry) } catch (_: Exception) {}
+        }
     }
 
     fun deleteEntry(id: String) {
@@ -46,10 +51,28 @@ class NutritionViewModel : ViewModel() {
             DatabaseManager.deleteFoodEntry(id)
             todayEntries = DatabaseManager.allFoodEntries()
         }
+        viewModelScope.launch {
+            try { ApiClient.nutritionApi.deleteFoodEntry(id) } catch (_: Exception) {}
+        }
     }
 
     fun loadData() {
         todayEntries = DatabaseManager.allFoodEntries()
         goal = DatabaseManager.nutritionGoal()
+        viewModelScope.launch { refreshFromServer() }
+    }
+
+    private suspend fun refreshFromServer() {
+        if (!NetworkMonitor.isConnected.value) return
+        try {
+            val remoteEntries = ApiClient.nutritionApi.getFoodEntries()
+            remoteEntries.forEach { DatabaseManager.saveFoodEntry(it) }
+            todayEntries = DatabaseManager.allFoodEntries()
+        } catch (_: Exception) { /* use cached */ }
+        try {
+            val remoteGoal = ApiClient.nutritionApi.getGoal()
+            DatabaseManager.insertNutritionGoal(remoteGoal)
+            goal = DatabaseManager.nutritionGoal()
+        } catch (_: Exception) { /* use cached */ }
     }
 }

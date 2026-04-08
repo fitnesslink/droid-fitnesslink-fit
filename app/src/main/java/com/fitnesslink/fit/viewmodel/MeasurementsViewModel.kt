@@ -4,8 +4,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.*
+import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.NetworkMonitor
+import kotlinx.coroutines.launch
 import java.util.Date
 
 class MeasurementsViewModel : ViewModel() {
@@ -20,6 +24,15 @@ class MeasurementsViewModel : ViewModel() {
 
     fun loadData() {
         entries = MockDataProvider.measurementEntries.sortedByDescending { it.date }
+        viewModelScope.launch { refreshFromServer() }
+    }
+
+    private suspend fun refreshFromServer() {
+        if (!NetworkMonitor.isConnected.value) return
+        try {
+            val remote = ApiClient.bodyTrackingApi.getMeasurements()
+            entries = remote.sortedByDescending { it.date }
+        } catch (_: Exception) { /* use cached */ }
     }
 
     val latestEntry: MeasurementEntry? get() = entries.firstOrNull()
