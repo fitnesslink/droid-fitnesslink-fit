@@ -1,6 +1,8 @@
 package com.fitnesslink.fit
 
 import android.app.Application
+import com.fitnesslink.fit.media.MediaCacheStore
+import com.fitnesslink.fit.media.MediaPrefetcher
 import com.fitnesslink.fit.network.ApiConfiguration
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.persistence.DatabaseManager
@@ -15,6 +17,8 @@ class FitnessLinkApp : Application() {
         DatabaseManager.initialize(this)
         ApiConfiguration.initialize(this)
         NetworkMonitor.initialize(this)
+        MediaCacheStore.initialize(this)
+        MediaPrefetcher.initialize(this)
         SyncManager.initialize(this)
         SyncScheduler.start(this)
     }

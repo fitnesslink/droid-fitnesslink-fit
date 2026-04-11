@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.R
+import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.model.TaskRow
 import com.fitnesslink.fit.model.WorkoutPhase
 import com.fitnesslink.fit.model.WorkoutTask
@@ -65,7 +66,7 @@ fun WorkoutDetailScreen(
             .background(BackgroundColor)
     ) {
         Box {
-            FLImageView(url = viewModel.workout.imageUrl, height = 250.dp)
+            FLImageView(ref = MediaRef.WorkoutThumbnail(viewModel.workout.id), height = 250.dp)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

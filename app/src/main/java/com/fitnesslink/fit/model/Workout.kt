@@ -5,7 +5,6 @@ import com.fitnesslink.fit.model.api.EntityID
 
 data class Workout(
     val id: String = "",
-    val imageUrl: String = "",
     val name: String = "",
     val time: String = "",
     val location: String = "",

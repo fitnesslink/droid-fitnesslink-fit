@@ -5,6 +5,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.*
+import com.fitnesslink.fit.media.MediaPrefetcher
 import com.fitnesslink.fit.network.NetworkMonitor
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
@@ -46,6 +47,7 @@ object SyncScheduler {
     fun triggerSync() {
         scope?.launch {
             SyncManager.performFullSync()
+            MediaPrefetcher.runIfNeeded()
         }
     }
 

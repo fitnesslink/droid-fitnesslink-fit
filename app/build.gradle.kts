@@ -69,6 +69,18 @@ dependencies {
     implementation(libs.okhttp.logging)
     implementation(libs.gson)
 
+    // Barcode scanning + CameraX
+    implementation(libs.mlkit.barcode)
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+
+    // Media
+    implementation(libs.coil.compose)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
+
     // Firebase
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth.ktx)

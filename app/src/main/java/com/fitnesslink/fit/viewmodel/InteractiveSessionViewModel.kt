@@ -47,6 +47,11 @@ class InteractiveSessionViewModel : ViewModel() {
     val exerciseCount: Int get() = workoutTasks.count { it.isMovement }
     val totalSets: Int get() = workoutTasks.filter { it.isMovement }.sumOf { maxOf(it.sets, 1) }
 
+    /** Movement ID of the next exercise. The renderer builds a MediaRef
+     *  from this for the "next exercise" preview thumbnail. */
+    val nextMovementId: String?
+        get() = workoutTasks.getOrNull(position + 1)?.movementId
+
     fun loadData(workoutId: String) {
         this.workoutId = workoutId
         val detail = DatabaseManager.workout(workoutId) ?: com.fitnesslink.fit.model.Workout()
@@ -193,10 +198,6 @@ class InteractiveSessionViewModel : ViewModel() {
             restSecondsElapsed = workoutTask.restSeconds
             rest = formatRestTime(restSecondsElapsed)
             setRestTimer()
-        }
-
-        if (position + 1 < workoutTasks.size) {
-            workoutTask = workoutTask.copy(nextImageUrl = workoutTasks[position + 1].iconUrl)
         }
 
         setWorkoutProgress()

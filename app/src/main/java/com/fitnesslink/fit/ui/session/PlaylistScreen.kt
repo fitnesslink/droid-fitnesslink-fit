@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.R
+import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.model.TaskRow
 import com.fitnesslink.fit.model.WorkoutPhase
 import com.fitnesslink.fit.model.WorkoutTask
@@ -60,7 +61,7 @@ fun PlaylistScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
         // Background image
-        FLImageView(url = viewModel.workout.imageUrl, height = 370.dp)
+        FLImageView(ref = MediaRef.WorkoutThumbnail(viewModel.workout.id), height = 370.dp)
 
         // Gradient overlay
         Box(

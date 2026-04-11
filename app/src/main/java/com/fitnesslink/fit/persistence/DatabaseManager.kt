@@ -28,7 +28,7 @@ object DatabaseManager {
 
     // MARK: - Schema
 
-    private const val DB_VERSION = 6
+    private const val DB_VERSION = 7
 
     private class DatabaseHelper(context: Context) :
         SQLiteOpenHelper(context, "fitnesslink.db", null, DB_VERSION) {
@@ -39,6 +39,7 @@ object DatabaseManager {
             migrateToV4(db)
             migrateToV5(db)
             migrateToV6(db)
+            // V7 schema is already applied by createAllTables (no imageUrl columns).
         }
         override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) {
             if (old < 2) migrateToV2(db)
@@ -46,6 +47,7 @@ object DatabaseManager {
             if (old < 4) migrateToV4(db)
             if (old < 5) migrateToV5(db)
             if (old < 6) migrateToV6(db)
+            if (old < 7) migrateToV7(db)
         }
     }
 
@@ -57,12 +59,12 @@ object DatabaseManager {
             id TEXT PRIMARY KEY, name TEXT NOT NULL, progress TEXT NOT NULL,
             unit TEXT NOT NULL, goals TEXT NOT NULL)""")
         db.execSQL("""CREATE TABLE IF NOT EXISTS programs (
-            id TEXT PRIMARY KEY, imageUrl TEXT NOT NULL DEFAULT '',
+            id TEXT PRIMARY KEY,
             name TEXT NOT NULL, time TEXT NOT NULL DEFAULT '',
             location TEXT NOT NULL DEFAULT '', trainingLevel TEXT NOT NULL DEFAULT '',
             description TEXT NOT NULL DEFAULT '')""")
         db.execSQL("""CREATE TABLE IF NOT EXISTS workouts (
-            id TEXT PRIMARY KEY, imageUrl TEXT NOT NULL DEFAULT '',
+            id TEXT PRIMARY KEY,
             name TEXT NOT NULL, time TEXT NOT NULL DEFAULT '',
             location TEXT NOT NULL DEFAULT '', trainingLevel TEXT NOT NULL DEFAULT '',
             description TEXT NOT NULL DEFAULT '', phasesJson TEXT NOT NULL DEFAULT '[]')""")
@@ -271,6 +273,14 @@ object DatabaseManager {
         for (table in tablesToAlter) {
             try { db.execSQL("ALTER TABLE $table ADD COLUMN lastSyncedAt INTEGER") } catch (_: Exception) {}
         }
+    }
+
+    private fun migrateToV7(db: SQLiteDatabase) {
+        // Drop persisted blob URL columns. URLs are now resolved at render
+        // time via MediaURLProvider against stable entity IDs, so caching
+        // them in SQLite makes the cache go stale every time a SAS rotates.
+        try { db.execSQL("ALTER TABLE programs DROP COLUMN imageUrl") } catch (_: Exception) {}
+        try { db.execSQL("ALTER TABLE workouts DROP COLUMN imageUrl") } catch (_: Exception) {}
     }
 
     // MARK: - Nutrition Report Queries
@@ -490,22 +500,22 @@ object DatabaseManager {
 
     // MARK: - Read Queries
 
-    fun allWorkouts(): List<WorkoutList> = db().rawQuery("SELECT id, imageUrl, name, time FROM workouts", null).use { c ->
-        buildList { while (c.moveToNext()) add(WorkoutList(c.str(0), c.str(1), c.str(2), c.str(3), false)) }
+    fun allWorkouts(): List<WorkoutList> = db().rawQuery("SELECT id, name, time FROM workouts", null).use { c ->
+        buildList { while (c.moveToNext()) add(WorkoutList(c.str(0), c.str(1), c.str(2), false)) }
     }
 
-    fun workout(id: String): Workout? = db().rawQuery("SELECT id, imageUrl, name, time, location, trainingLevel, description, phasesJson FROM workouts WHERE id=?", arrayOf(id)).use { c ->
+    fun workout(id: String): Workout? = db().rawQuery("SELECT id, name, time, location, trainingLevel, description, phasesJson FROM workouts WHERE id=?", arrayOf(id)).use { c ->
         if (!c.moveToFirst()) return null
-        Workout(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.str(5), c.str(6), phasesFromJson(c.str(7)))
+        Workout(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.str(5), phasesFromJson(c.str(6)))
     }
 
-    fun allPrograms(): List<ProgramList> = db().rawQuery("SELECT id, imageUrl, name, time FROM programs", null).use { c ->
-        buildList { while (c.moveToNext()) add(ProgramList(c.str(0), c.str(1), c.str(2), c.str(3), false)) }
+    fun allPrograms(): List<ProgramList> = db().rawQuery("SELECT id, name, time FROM programs", null).use { c ->
+        buildList { while (c.moveToNext()) add(ProgramList(c.str(0), c.str(1), c.str(2), false)) }
     }
 
-    fun program(id: String): Program? = db().rawQuery("SELECT id, imageUrl, name, time, location, trainingLevel, description FROM programs WHERE id=?", arrayOf(id)).use { c ->
+    fun program(id: String): Program? = db().rawQuery("SELECT id, name, time, location, trainingLevel, description FROM programs WHERE id=?", arrayOf(id)).use { c ->
         if (!c.moveToFirst()) return null
-        Program(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.str(5), c.str(6))
+        Program(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.str(5))
     }
 
     fun allFoodEntries(): List<FoodEntry> = db().rawQuery("SELECT id, name, calories, protein, fat, carbs, servingSize, servingUnit, mealType, loggedAt, isCustomTemplate FROM food_entries", null).use { c ->
@@ -589,12 +599,12 @@ object DatabaseManager {
         db().execSQL("UPDATE users SET profileImageId=? WHERE id=?", arrayOf(imageId, userId))
     }
 
-    fun catalogPrograms(): List<CatalogItem> = db().rawQuery("SELECT id, name, imageUrl, time FROM programs", null).use { c ->
-        buildList { while (c.moveToNext()) add(CatalogItem(c.str(0), c.str(1), c.str(2), c.str(3))) }
+    fun catalogPrograms(): List<CatalogItem> = db().rawQuery("SELECT id, name, time FROM programs", null).use { c ->
+        buildList { while (c.moveToNext()) add(CatalogItem(c.str(0), c.str(1), CatalogItem.Kind.PROGRAM, c.str(2))) }
     }
 
-    fun catalogWorkouts(): List<CatalogItem> = db().rawQuery("SELECT id, name, imageUrl, time FROM workouts", null).use { c ->
-        buildList { while (c.moveToNext()) add(CatalogItem(c.str(0), c.str(1), c.str(2), c.str(3))) }
+    fun catalogWorkouts(): List<CatalogItem> = db().rawQuery("SELECT id, name, time FROM workouts", null).use { c ->
+        buildList { while (c.moveToNext()) add(CatalogItem(c.str(0), c.str(1), CatalogItem.Kind.WORKOUT, c.str(2))) }
     }
 
     // MARK: - Write Methods
@@ -677,7 +687,7 @@ object DatabaseManager {
 
     fun insertProgram(p: Program) {
         db().insertWithOnConflict("programs", null, ContentValues().apply {
-            put("id", p.id); put("imageUrl", p.imageUrl); put("name", p.name)
+            put("id", p.id); put("name", p.name)
             put("time", p.time); put("location", p.location)
             put("trainingLevel", p.trainingLevel); put("description", p.description)
         }, SQLiteDatabase.CONFLICT_REPLACE)
@@ -685,7 +695,7 @@ object DatabaseManager {
 
     fun insertWorkout(w: Workout) {
         db().insertWithOnConflict("workouts", null, ContentValues().apply {
-            put("id", w.id); put("imageUrl", w.imageUrl); put("name", w.name)
+            put("id", w.id); put("name", w.name)
             put("time", w.time); put("location", w.location)
             put("trainingLevel", w.trainingLevel); put("description", w.description)
             put("phasesJson", phasesToJson(w.phases))
@@ -797,7 +807,6 @@ object DatabaseManager {
 
     private fun taskToJson(t: WorkoutTask): JSONObject = JSONObject().apply {
         put("id", t.id); put("name", t.name); put("metric", t.metric)
-        put("iconUrl", t.iconUrl); put("videoUrl", t.videoUrl); put("nextImageUrl", t.nextImageUrl)
         put("isMovement", t.isMovement); put("isRest", t.isRest); put("isAdvanced", t.isAdvanced)
         put("isSuperset", t.isSuperset); put("isCircuit", t.isCircuit); put("isInterval", t.isInterval)
         put("reps", t.reps); put("sets", t.sets); put("restSeconds", t.restSeconds)
@@ -831,8 +840,7 @@ object DatabaseManager {
 
     private fun taskFromJson(o: JSONObject): WorkoutTask = WorkoutTask(
         id = o.optString("id", ""), name = o.optString("name", ""),
-        metric = o.optString("metric", ""), iconUrl = o.optString("iconUrl", ""),
-        videoUrl = o.optString("videoUrl", ""), nextImageUrl = o.optString("nextImageUrl", ""),
+        metric = o.optString("metric", ""),
         isMovement = o.optBoolean("isMovement"), isRest = o.optBoolean("isRest"),
         isAdvanced = o.optBoolean("isAdvanced"), isSuperset = o.optBoolean("isSuperset"),
         isCircuit = o.optBoolean("isCircuit"), isInterval = o.optBoolean("isInterval"),

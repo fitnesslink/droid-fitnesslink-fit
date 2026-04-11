@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.ui.components.BackCircleButton
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.PrimaryButtonView
@@ -50,7 +51,7 @@ fun ProgramDetailScreen(
             .background(BackgroundColor)
     ) {
         Box {
-            FLImageView(url = viewModel.program.imageUrl, height = 250.dp)
+            FLImageView(ref = MediaRef.ProgramThumbnail(viewModel.program.id), height = 250.dp)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -66,6 +66,7 @@ object ApiClient {
     val reportApi: ReportApi by lazy { retrofit(ApiService.CORE).create(ReportApi::class.java) }
     val contentApi: ContentApi by lazy { retrofit(ApiService.CORE).create(ContentApi::class.java) }
     val syncApi: SyncApi by lazy { retrofit(ApiService.CORE).create(SyncApi::class.java) }
+    val mediaApi: MediaApi by lazy { retrofit(ApiService.CORE).create(MediaApi::class.java) }
 
     // Nutrition API services
     val nutritionApi: NutritionApi by lazy { retrofit(ApiService.NUTRITION).create(NutritionApi::class.java) }

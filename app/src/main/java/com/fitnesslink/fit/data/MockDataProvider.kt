@@ -67,11 +67,11 @@ object MockDataProvider {
     }
 
     val programs: List<ProgramList> = listOf(
-        ProgramList(id = "p1", imageUrl = "", name = "Strength Builder", time = "8 weeks", isFavorite = true),
-        ProgramList(id = "p2", imageUrl = "", name = "Lean & Tone", time = "6 weeks", isFavorite = false),
-        ProgramList(id = "p3", imageUrl = "", name = "HIIT Cardio Blast", time = "4 weeks", isFavorite = true),
-        ProgramList(id = "p4", imageUrl = "", name = "Full Body Transform", time = "12 weeks", isFavorite = false),
-        ProgramList(id = "p5", imageUrl = "", name = "Core & Flexibility", time = "6 weeks", isFavorite = false)
+        ProgramList(id = "p1", name = "Strength Builder", time = "8 weeks", isFavorite = true),
+        ProgramList(id = "p2", name = "Lean & Tone", time = "6 weeks", isFavorite = false),
+        ProgramList(id = "p3", name = "HIIT Cardio Blast", time = "4 weeks", isFavorite = true),
+        ProgramList(id = "p4", name = "Full Body Transform", time = "12 weeks", isFavorite = false),
+        ProgramList(id = "p5", name = "Core & Flexibility", time = "6 weeks", isFavorite = false)
     )
 
     fun programDetail(id: String): Program {
@@ -79,7 +79,6 @@ object MockDataProvider {
         return Program(
             id = id,
             name = name,
-            imageUrl = "",
             time = "8 weeks",
             location = "Gym",
             trainingLevel = "Intermediate",
@@ -88,12 +87,12 @@ object MockDataProvider {
     }
 
     val workouts: List<WorkoutList> = listOf(
-        WorkoutList(id = "w1", imageUrl = "", name = "Upper Body Push", time = "45 min", isFavorite = true),
-        WorkoutList(id = "w2", imageUrl = "", name = "Lower Body Strength", time = "50 min", isFavorite = false),
-        WorkoutList(id = "w3", imageUrl = "", name = "Full Body HIIT", time = "30 min", isFavorite = true),
-        WorkoutList(id = "w4", imageUrl = "", name = "Core & Abs", time = "25 min", isFavorite = false),
-        WorkoutList(id = "w5", imageUrl = "", name = "Cardio Endurance", time = "40 min", isFavorite = false),
-        WorkoutList(id = "w6", imageUrl = "", name = "Back & Biceps", time = "45 min", isFavorite = true)
+        WorkoutList(id = "w1", name = "Upper Body Push", time = "45 min", isFavorite = true),
+        WorkoutList(id = "w2", name = "Lower Body Strength", time = "50 min", isFavorite = false),
+        WorkoutList(id = "w3", name = "Full Body HIIT", time = "30 min", isFavorite = true),
+        WorkoutList(id = "w4", name = "Core & Abs", time = "25 min", isFavorite = false),
+        WorkoutList(id = "w5", name = "Cardio Endurance", time = "40 min", isFavorite = false),
+        WorkoutList(id = "w6", name = "Back & Biceps", time = "45 min", isFavorite = true)
     )
 
     fun workoutDetail(id: String): Workout {
@@ -130,7 +129,6 @@ object MockDataProvider {
         return Workout(
             id = id,
             name = name,
-            imageUrl = "",
             time = "45 min",
             location = "Gym",
             trainingLevel = "Intermediate",
@@ -140,20 +138,20 @@ object MockDataProvider {
     }
 
     val catalogPrograms: List<CatalogItem> = listOf(
-        CatalogItem(id = "cp1", title = "Strength Builder", imageUrl = "", caption = "8 weeks"),
-        CatalogItem(id = "cp2", title = "Lean & Tone", imageUrl = "", caption = "6 weeks"),
-        CatalogItem(id = "cp3", title = "HIIT Cardio Blast", imageUrl = "", caption = "4 weeks")
+        CatalogItem(id = "cp1", title = "Strength Builder", kind = CatalogItem.Kind.PROGRAM, caption = "8 weeks"),
+        CatalogItem(id = "cp2", title = "Lean & Tone", kind = CatalogItem.Kind.PROGRAM, caption = "6 weeks"),
+        CatalogItem(id = "cp3", title = "HIIT Cardio Blast", kind = CatalogItem.Kind.PROGRAM, caption = "4 weeks")
     )
 
     val catalogWorkouts: List<CatalogItem> = listOf(
-        CatalogItem(id = "cw1", title = "Upper Body Push", imageUrl = "", caption = "45 min"),
-        CatalogItem(id = "cw2", title = "Lower Body Strength", imageUrl = "", caption = "50 min"),
-        CatalogItem(id = "cw3", title = "Full Body HIIT", imageUrl = "", caption = "30 min")
+        CatalogItem(id = "cw1", title = "Upper Body Push", kind = CatalogItem.Kind.WORKOUT, caption = "45 min"),
+        CatalogItem(id = "cw2", title = "Lower Body Strength", kind = CatalogItem.Kind.WORKOUT, caption = "50 min"),
+        CatalogItem(id = "cw3", title = "Full Body HIIT", kind = CatalogItem.Kind.WORKOUT, caption = "30 min")
     )
 
     val myWorkouts: List<CatalogItem> = listOf(
-        CatalogItem(id = "mw1", title = "Morning Routine", imageUrl = "", caption = "20 min"),
-        CatalogItem(id = "mw2", title = "Evening Stretch", imageUrl = "", caption = "15 min")
+        CatalogItem(id = "mw1", title = "Morning Routine", kind = CatalogItem.Kind.WORKOUT, caption = "20 min"),
+        CatalogItem(id = "mw2", title = "Evening Stretch", kind = CatalogItem.Kind.WORKOUT, caption = "15 min")
     )
 
     val personalizations: List<Personalization> = listOf(

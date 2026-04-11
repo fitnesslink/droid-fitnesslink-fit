@@ -3,6 +3,7 @@ package com.fitnesslink.fit.network.api
 import com.fitnesslink.fit.model.api.FLUser
 import com.fitnesslink.fit.model.api.UserPreference
 import com.fitnesslink.fit.network.dto.CreateUserRequest
+import okhttp3.MultipartBody
 import retrofit2.http.*
 
 interface UserApi {
@@ -20,4 +21,8 @@ interface UserApi {
 
     @PUT("users/{id}/preferences")
     suspend fun updatePreferences(@Path("id") id: String, @Body prefs: UserPreference)
+
+    @Multipart
+    @POST("users/me/profile-photo")
+    suspend fun uploadProfilePhoto(@Part file: MultipartBody.Part): FLUser
 }

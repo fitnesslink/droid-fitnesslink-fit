@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.R
+import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.model.ExerciseProgress
 import com.fitnesslink.fit.model.WorkoutProgress
 import com.fitnesslink.fit.model.WorkoutTask
@@ -83,7 +84,10 @@ fun InteractiveSessionScreen(
         }
         // Background
         if (viewModel.isRest) {
-            FLImageView(url = viewModel.workoutTask.iconUrl, height = 400.dp)
+            FLImageView(
+                ref = viewModel.workoutTask.movementId?.let { MediaRef.MovementThumbnail(it) },
+                height = 400.dp
+            )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -146,7 +150,10 @@ fun InteractiveSessionScreen(
                     .clip(RoundedCornerShape(6.dp))
                     .background(White)
             ) {
-                FLImageView(url = viewModel.workoutTask.nextImageUrl, height = 88.dp)
+                FLImageView(
+                    ref = viewModel.nextMovementId?.let { MediaRef.MovementThumbnail(it) },
+                    height = 88.dp
+                )
             }
         }
 

@@ -1,18 +1,19 @@
 package com.fitnesslink.fit.viewmodel
 
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitnesslink.fit.auth.AuthManager
-import com.fitnesslink.fit.model.api.FLUser
+import com.fitnesslink.fit.media.MediaRef
+import com.fitnesslink.fit.media.MediaURLProvider
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.persistence.DatabaseManager
 import kotlinx.coroutines.launch
-import java.io.File
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 class PersonalInfoViewModel : ViewModel() {
     var firstName by mutableStateOf("")
@@ -22,10 +23,13 @@ class PersonalInfoViewModel : ViewModel() {
     var phone by mutableStateOf("")
     var country by mutableStateOf("")
     var isActive by mutableStateOf(true)
-    var profileImage by mutableStateOf<Bitmap?>(null)
     var showDeleteConfirmation by mutableStateOf(false)
+    var isUploadingPhoto by mutableStateOf(false)
+    var photoUploadError by mutableStateOf<String?>(null)
 
-    private var userId = ""
+    var userId by mutableStateOf("")
+        private set
+
     private var origFirstName = ""
     private var origLastName = ""
     private var origUsername = ""
@@ -43,6 +47,10 @@ class PersonalInfoViewModel : ViewModel() {
         val l = lastName.firstOrNull()?.uppercase() ?: ""
         return "$f$l"
     }
+
+    /** MediaRef for the user's profile photo, used by FLImageView. */
+    val profilePhotoRef: MediaRef?
+        get() = if (userId.isEmpty()) null else MediaRef.UserPhoto(userId)
 
     fun loadData() {
         val user = DatabaseManager.user() ?: return
@@ -78,20 +86,27 @@ class PersonalInfoViewModel : ViewModel() {
         }
     }
 
-    fun saveProfileImage(bytes: ByteArray, filesDir: File) {
-        val imageId = "profile_$userId.jpg"
-        val file = File(filesDir, imageId)
-        file.writeBytes(bytes)
-        profileImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-        DatabaseManager.updateProfileImage(userId, imageId)
-    }
+    fun uploadProfilePhoto(bytes: ByteArray) {
+        if (userId.isEmpty()) return
+        viewModelScope.launch {
+            isUploadingPhoto = true
+            photoUploadError = null
+            try {
+                val filename = "$userId.jpg"
+                val mediaType = "image/jpeg".toMediaTypeOrNull()
+                val requestBody = bytes.toRequestBody(mediaType, 0, bytes.size)
+                val part = MultipartBody.Part.createFormData("file", filename, requestBody)
+                val updated = ApiClient.userApi.uploadProfilePhoto(part)
 
-    fun loadProfileImage(filesDir: File) {
-        val user = DatabaseManager.user() ?: return
-        if (user.profileImageId.isNotEmpty()) {
-            val file = File(filesDir, user.profileImageId)
-            if (file.exists()) {
-                profileImage = BitmapFactory.decodeFile(file.absolutePath)
+                updated.profileImageId?.toString()?.let { imageId ->
+                    DatabaseManager.updateProfileImage(userId, imageId)
+                }
+                // Same UserPhoto MediaRef keys for this user - force a refresh.
+                MediaURLProvider.invalidate(MediaRef.UserPhoto(userId))
+            } catch (_: Exception) {
+                photoUploadError = "Upload failed. Please try again."
+            } finally {
+                isUploadingPhoto = false
             }
         }
     }

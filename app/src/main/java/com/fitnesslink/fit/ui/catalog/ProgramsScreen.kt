@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.R
+import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.model.ProgramList
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.HeaderBackView
@@ -81,7 +82,7 @@ fun ProgramItemView(
             .clickable(onClick = onClick)
     ) {
         FLImageView(
-            url = program.imageUrl,
+            ref = MediaRef.ProgramThumbnail(program.id),
             height = 140.dp,
             modifier = Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
         )

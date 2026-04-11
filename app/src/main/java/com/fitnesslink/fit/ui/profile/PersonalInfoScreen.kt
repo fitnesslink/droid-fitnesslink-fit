@@ -1,9 +1,7 @@
 package com.fitnesslink.fit.ui.profile
 
-import android.graphics.Bitmap
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -19,14 +17,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.theme.*
 import com.fitnesslink.fit.viewmodel.PersonalInfoViewModel
@@ -45,14 +42,13 @@ fun PersonalInfoScreen(
         uri?.let {
             val bytes = context.contentResolver.openInputStream(it)?.readBytes()
             if (bytes != null) {
-                viewModel.saveProfileImage(bytes, context.filesDir)
+                viewModel.uploadProfilePhoto(bytes)
             }
         }
     }
 
     LaunchedEffect(Unit) {
         viewModel.loadData()
-        viewModel.loadProfileImage(context.filesDir)
     }
 
     Column(
@@ -71,30 +67,40 @@ fun PersonalInfoScreen(
         ) {
             // Avatar
             Box(
-                modifier = Modifier
-                    .clickable { photoLauncher.launch("image/*") }
+                modifier = Modifier.clickable { photoLauncher.launch("image/*") }
             ) {
-                val bitmap = viewModel.profileImage
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Profile",
+                Box(
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .background(FLPrimary.copy(alpha = 0.15f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(viewModel.initials, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
+                }
+
+                viewModel.profilePhotoRef?.let { ref ->
+                    FLImageView(
+                        ref = ref,
+                        height = 100.dp,
                         modifier = Modifier
                             .size(100.dp)
-                            .clip(CircleShape),
-                        contentScale = ContentScale.Crop
+                            .clip(CircleShape)
                     )
-                } else {
+                }
+
+                if (viewModel.isUploadingPhoto) {
                     Box(
                         modifier = Modifier
                             .size(100.dp)
                             .clip(CircleShape)
-                            .background(FLPrimary.copy(alpha = 0.15f)),
+                            .background(Black.copy(alpha = 0.4f)),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(viewModel.initials, fontSize = 32.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
+                        CircularProgressIndicator(color = White)
                     }
                 }
+
                 // Camera badge
                 Box(
                     modifier = Modifier

@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.WorkoutList
+import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SearchView
@@ -97,7 +98,7 @@ fun WorkoutItemView(
             .clickable(onClick = onClick)
     ) {
         FLImageView(
-            url = workout.imageUrl,
+            ref = MediaRef.WorkoutThumbnail(workout.id),
             height = 140.dp,
             modifier = Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
         )
