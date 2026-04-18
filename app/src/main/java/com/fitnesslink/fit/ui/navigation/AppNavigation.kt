@@ -27,6 +27,7 @@ import com.fitnesslink.fit.ui.auth.WelcomeScreen
 import com.fitnesslink.fit.ui.calendar.CalendarScreen
 import com.fitnesslink.fit.ui.catalog.CatalogScreen
 import com.fitnesslink.fit.ui.catalog.ProgramDetailScreen
+import com.fitnesslink.fit.ui.catalog.ProgramEditorScreen
 import com.fitnesslink.fit.ui.catalog.ProgramsScreen
 import com.fitnesslink.fit.ui.catalog.WorkoutsScreen
 import com.fitnesslink.fit.ui.home.HomeScreen
@@ -204,7 +205,8 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             composable("programs") {
                 ProgramsScreen(
                     onBack = { navController.popBackStack() },
-                    onNavigateToProgramDetail = { navController.navigate("programDetail/$it") }
+                    onNavigateToProgramDetail = { navController.navigate("programDetail/$it") },
+                    onNavigateToProgramEditor = { navController.navigate("programEditor") }
                 )
             }
             composable(
@@ -213,6 +215,24 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             ) { backStackEntry ->
                 ProgramDetailScreen(
                     programId = backStackEntry.arguments?.getString("programId") ?: "",
+                    onBack = { navController.popBackStack() },
+                    onNavigateToEditor = { id -> navController.navigate("programEditor/$id") }
+                )
+            }
+
+            // Program Editor
+            composable("programEditor") {
+                ProgramEditorScreen(
+                    programId = null,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(
+                AppRoute.ProgramEditor.ROUTE,
+                arguments = listOf(navArgument("programId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                ProgramEditorScreen(
+                    programId = backStackEntry.arguments?.getString("programId"),
                     onBack = { navController.popBackStack() }
                 )
             }

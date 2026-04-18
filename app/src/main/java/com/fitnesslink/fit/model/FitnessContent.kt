@@ -6,5 +6,6 @@ data class FitnessContent(
     val programId: String,
     val workoutId: String,
     val mealPlanId: String,
-    val status: String
+    val status: String,
+    val scheduledDate: Long? = null
 )

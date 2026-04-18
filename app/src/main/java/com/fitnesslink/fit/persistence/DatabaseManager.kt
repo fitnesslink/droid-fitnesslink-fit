@@ -6,9 +6,11 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import com.fitnesslink.fit.model.*
+import com.fitnesslink.fit.model.api.ProgramSchedule
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Date
+import java.util.UUID
 
 object DatabaseManager {
     private lateinit var database: SQLiteDatabase
@@ -28,7 +30,7 @@ object DatabaseManager {
 
     // MARK: - Schema
 
-    private const val DB_VERSION = 7
+    private const val DB_VERSION = 8
 
     private class DatabaseHelper(context: Context) :
         SQLiteOpenHelper(context, "fitnesslink.db", null, DB_VERSION) {
@@ -48,6 +50,7 @@ object DatabaseManager {
             if (old < 5) migrateToV5(db)
             if (old < 6) migrateToV6(db)
             if (old < 7) migrateToV7(db)
+            if (old < 8) migrateToV8(db)
         }
     }
 
@@ -276,11 +279,13 @@ object DatabaseManager {
     }
 
     private fun migrateToV7(db: SQLiteDatabase) {
-        // Drop persisted blob URL columns. URLs are now resolved at render
-        // time via MediaURLProvider against stable entity IDs, so caching
-        // them in SQLite makes the cache go stale every time a SAS rotates.
         try { db.execSQL("ALTER TABLE programs DROP COLUMN imageUrl") } catch (_: Exception) {}
         try { db.execSQL("ALTER TABLE workouts DROP COLUMN imageUrl") } catch (_: Exception) {}
+    }
+
+    private fun migrateToV8(db: SQLiteDatabase) {
+        db.execSQL("ALTER TABLE calendar_content ADD COLUMN scheduledDate INTEGER")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_calendar_content_date ON calendar_content(scheduledDate)")
     }
 
     // MARK: - Nutrition Report Queries
@@ -556,8 +561,61 @@ object DatabaseManager {
         buildList { while (c.moveToNext()) add(HomeDashboard(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4))) }
     }
 
-    fun calendarContent(): List<FitnessContent> = db().rawQuery("SELECT id, title, programId, workoutId, mealPlanId, status FROM calendar_content", null).use { c ->
-        buildList { while (c.moveToNext()) add(FitnessContent(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.str(5))) }
+    fun calendarContent(): List<FitnessContent> = db().rawQuery("SELECT id, title, programId, workoutId, mealPlanId, status, scheduledDate FROM calendar_content ORDER BY scheduledDate", null).use { c ->
+        buildList {
+            while (c.moveToNext()) {
+                val dateIdx = 6
+                val scheduledDate = if (c.isNull(dateIdx)) null else c.getLong(dateIdx)
+                add(FitnessContent(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.str(5), scheduledDate))
+            }
+        }
+    }
+
+    fun calendarContent(forDate: Long): List<FitnessContent> {
+        val cal = java.util.Calendar.getInstance().apply {
+            timeInMillis = forDate
+            set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val startOfDay = cal.timeInMillis
+        cal.add(java.util.Calendar.DAY_OF_MONTH, 1)
+        val endOfDay = cal.timeInMillis
+        return db().rawQuery(
+            "SELECT id, title, programId, workoutId, mealPlanId, status, scheduledDate FROM calendar_content WHERE scheduledDate >= ? AND scheduledDate < ? ORDER BY scheduledDate",
+            arrayOf(startOfDay.toString(), endOfDay.toString())
+        ).use { c ->
+            buildList {
+                while (c.moveToNext()) {
+                    val scheduledDate = if (c.isNull(6)) null else c.getLong(6)
+                    add(FitnessContent(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.str(5), scheduledDate))
+                }
+            }
+        }
+    }
+
+    fun calendarScheduledDays(year: Int, month: Int): Set<Int> {
+        val cal = java.util.Calendar.getInstance().apply {
+            set(year, month - 1, 1, 0, 0, 0); set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val startOfMonth = cal.timeInMillis
+        cal.add(java.util.Calendar.MONTH, 1)
+        val endOfMonth = cal.timeInMillis
+        return db().rawQuery(
+            "SELECT scheduledDate FROM calendar_content WHERE scheduledDate >= ? AND scheduledDate < ? AND scheduledDate IS NOT NULL",
+            arrayOf(startOfMonth.toString(), endOfMonth.toString())
+        ).use { c ->
+            val days = mutableSetOf<Int>()
+            val dayCal = java.util.Calendar.getInstance()
+            while (c.moveToNext()) {
+                dayCal.timeInMillis = c.getLong(0)
+                days.add(dayCal.get(java.util.Calendar.DAY_OF_MONTH))
+            }
+            days
+        }
+    }
+
+    fun deleteCalendarContent(id: String) {
+        db().delete("calendar_content", "id=?", arrayOf(id))
     }
 
     fun personalizations(): List<Personalization> = db().rawQuery("SELECT id, name, singleSelection, optionsJson FROM personalizations", null).use { c ->
@@ -693,6 +751,55 @@ object DatabaseManager {
         }, SQLiteDatabase.CONFLICT_REPLACE)
     }
 
+    // Program Schedules
+
+    fun schedulesForProgram(id: String): List<ProgramSchedule> =
+        db().rawQuery(
+            "SELECT id, programId, workoutId, weekNumber, dayNumber FROM program_schedules WHERE programId=? ORDER BY weekNumber, dayNumber",
+            arrayOf(id)
+        ).use { c ->
+            buildList {
+                while (c.moveToNext()) add(
+                    ProgramSchedule(
+                        id = UUID.fromString(c.str(0)),
+                        programId = UUID.fromString(c.str(1)),
+                        workoutId = UUID.fromString(c.str(2)),
+                        weekNumber = c.getInt(3),
+                        dayNumber = c.getInt(4)
+                    )
+                )
+            }
+        }
+
+    fun insertProgramSchedule(s: ProgramSchedule) {
+        db().insertWithOnConflict("program_schedules", null, ContentValues().apply {
+            put("id", s.id.toString()); put("programId", s.programId.toString())
+            put("workoutId", s.workoutId.toString()); put("weekNumber", s.weekNumber)
+            put("dayNumber", s.dayNumber)
+        }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun deleteSchedulesForProgram(id: String) {
+        db().delete("program_schedules", "programId=?", arrayOf(id))
+    }
+
+    fun replaceSchedulesForProgram(programId: String, schedules: List<ProgramSchedule>) {
+        val database = db()
+        database.beginTransaction()
+        try {
+            database.delete("program_schedules", "programId=?", arrayOf(programId))
+            schedules.forEach { insertProgramSchedule(it) }
+            database.setTransactionSuccessful()
+        } finally {
+            database.endTransaction()
+        }
+    }
+
+    fun deleteProgram(id: String) {
+        deleteSchedulesForProgram(id)
+        db().delete("programs", "id=?", arrayOf(id))
+    }
+
     fun insertWorkout(w: Workout) {
         db().insertWithOnConflict("workouts", null, ContentValues().apply {
             put("id", w.id); put("name", w.name)
@@ -752,6 +859,7 @@ object DatabaseManager {
         db().insertWithOnConflict("calendar_content", null, ContentValues().apply {
             put("id", c.id); put("title", c.title); put("programId", c.programId)
             put("workoutId", c.workoutId); put("mealPlanId", c.mealPlanId); put("status", c.status)
+            if (c.scheduledDate != null) put("scheduledDate", c.scheduledDate) else putNull("scheduledDate")
         }, SQLiteDatabase.CONFLICT_REPLACE)
     }
 

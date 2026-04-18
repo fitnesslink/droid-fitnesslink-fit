@@ -16,9 +16,18 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -42,6 +51,12 @@ import com.fitnesslink.fit.ui.components.SecondaryButtonView
 import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.components.TimeInfoView
 import com.fitnesslink.fit.ui.components.TrainingLevelInfoView
+import com.fitnesslink.fit.model.FitnessContent
+import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.NetworkMonitor
+import com.fitnesslink.fit.persistence.DatabaseManager
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.ImagePlaceholder
@@ -49,6 +64,7 @@ import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutDetailViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WorkoutDetailScreen(
     workoutId: String,
@@ -57,6 +73,44 @@ fun WorkoutDetailScreen(
     onStartInteractive: (String) -> Unit = {}
 ) {
     val viewModel: WorkoutDetailViewModel = viewModel()
+    var showDatePicker by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    // Schedule date picker
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = System.currentTimeMillis())
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    val millis = datePickerState.selectedDateMillis
+                    if (millis != null) {
+                        val entry = FitnessContent(
+                            id = java.util.UUID.randomUUID().toString(),
+                            title = viewModel.workout.name,
+                            programId = "",
+                            workoutId = workoutId,
+                            mealPlanId = "",
+                            status = "scheduled",
+                            scheduledDate = millis
+                        )
+                        DatabaseManager.insertCalendarContent(entry)
+                        scope.launch {
+                            if (NetworkMonitor.isConnected.value) {
+                                try { ApiClient.calendarApi.create(entry) } catch (_: Exception) {}
+                            }
+                        }
+                    }
+                    showDatePicker = false
+                }) { Text("Schedule") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) { Text("Cancel") }
+            }
+        ) {
+            DatePicker(state = datePickerState)
+        }
+    }
 
     LaunchedEffect(workoutId) { viewModel.loadData(workoutId) }
 
@@ -126,7 +180,7 @@ fun WorkoutDetailScreen(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clickable { }
+                        .clickable { showDatePicker = true }
                 ) {
                     SecondaryButtonView(text = "Add to Calendar")
                 }
