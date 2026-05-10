@@ -135,6 +135,15 @@ fun WorkoutDetailScreen(
                 onClick = onBack,
                 modifier = Modifier.padding(top = 60.dp, start = 20.dp)
             )
+            // FA-97 — favorite + share actions on the top-right.
+            com.fitnesslink.fit.ui.components.ContentActionsRow(
+                contentId = viewModel.workout.id,
+                contentKind = com.fitnesslink.fit.ui.components.ContentKind.Workout,
+                contentTitle = viewModel.workout.name,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 60.dp, end = 20.dp)
+            )
         }
 
         Column(

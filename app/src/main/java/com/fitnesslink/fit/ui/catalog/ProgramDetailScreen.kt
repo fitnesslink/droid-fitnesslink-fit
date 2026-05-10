@@ -137,6 +137,11 @@ fun ProgramDetailScreen(
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete", tint = Color.White, modifier = Modifier.size(16.dp))
                     }
+                    com.fitnesslink.fit.ui.components.ContentActionsRow(
+                        contentId = viewModel.program.id,
+                        contentKind = com.fitnesslink.fit.ui.components.ContentKind.Program,
+                        contentTitle = viewModel.program.name
+                    )
                 }
             }
         }
