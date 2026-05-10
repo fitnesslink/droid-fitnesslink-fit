@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.R
+import com.fitnesslink.fit.model.FitnessContent
 import com.fitnesslink.fit.model.HomeDashboard
 import com.fitnesslink.fit.model.HorizontalCalendar
 import com.fitnesslink.fit.ui.components.HeaderView
@@ -50,7 +51,10 @@ import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.HomeViewModel
 
 @Composable
-fun HomeScreen(onNavigateToNotifications: () -> Unit = {}) {
+fun HomeScreen(
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigateToWorkout: (String) -> Unit = {}
+) {
     val viewModel: HomeViewModel = viewModel()
 
     LaunchedEffect(Unit) { viewModel.loadData() }
@@ -74,7 +78,13 @@ fun HomeScreen(onNavigateToNotifications: () -> Unit = {}) {
                 onSelectDay = viewModel::selectDay
             )
             Spacer(modifier = Modifier.height(16.dp))
-            TodayWorkoutView(dateLabel = viewModel.selectedDateLabel)
+            TodayWorkoutView(
+                dateLabel = viewModel.selectedDateLabel,
+                workouts = viewModel.todayWorkouts,
+                exerciseCount = viewModel::exerciseCount,
+                durationMinutes = viewModel::workoutDuration,
+                onStartWorkout = onNavigateToWorkout
+            )
             Spacer(modifier = Modifier.height(16.dp))
             HomeDashboardView(dashboards = viewModel.dashboards)
             Spacer(modifier = Modifier.height(16.dp))
@@ -167,7 +177,13 @@ private fun StatusDot(status: String) {
 }
 
 @Composable
-fun TodayWorkoutView(dateLabel: String = "Today") {
+fun TodayWorkoutView(
+    dateLabel: String = "Today",
+    workouts: List<FitnessContent> = emptyList(),
+    exerciseCount: (String) -> Int = { 0 },
+    durationMinutes: (String) -> Int? = { null },
+    onStartWorkout: (String) -> Unit = {}
+) {
     val title = if (dateLabel == "Today") "Today's Workout" else "$dateLabel · Workout"
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Text(
@@ -176,8 +192,93 @@ fun TodayWorkoutView(dateLabel: String = "Today") {
             fontWeight = FontWeight.Bold
         )
         Spacer(modifier = Modifier.height(10.dp))
-        RestView()
+        if (workouts.isEmpty()) {
+            RestView()
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                workouts.forEach { entry ->
+                    TodayWorkoutCard(
+                        entry = entry,
+                        exerciseCount = exerciseCount(entry.workoutId),
+                        durationMinutes = durationMinutes(entry.workoutId),
+                        onStart = { onStartWorkout(entry.workoutId) }
+                    )
+                }
+            }
+        }
     }
+}
+
+@Composable
+private fun TodayWorkoutCard(
+    entry: FitnessContent,
+    exerciseCount: Int,
+    durationMinutes: Int?,
+    onStart: () -> Unit
+) {
+    val isCompleted = entry.status.equals("completed", ignoreCase = true)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(White, RoundedCornerShape(12.dp))
+            .clickable(onClick = onStart)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Image(
+            painter = painterResource(R.drawable.dumbbell),
+            contentDescription = null,
+            modifier = Modifier
+                .size(44.dp)
+                .background(FLPrimary.copy(alpha = 0.10f), RoundedCornerShape(10.dp))
+                .padding(10.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = entry.title.ifBlank { "Workout" },
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = if (isCompleted) TextSecondaryColor else Color(0xFF1F2933),
+                maxLines = 2
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = workoutMeta(isCompleted, exerciseCount, durationMinutes),
+                fontSize = 12.sp,
+                color = TextSecondaryColor
+            )
+        }
+        if (isCompleted) {
+            Image(
+                painter = painterResource(R.drawable.completedstate),
+                contentDescription = "Completed",
+                modifier = Modifier.size(16.dp)
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .background(FLPrimary, RoundedCornerShape(8.dp))
+                    .padding(horizontal = 12.dp, vertical = 6.dp)
+            ) {
+                Text(
+                    text = "Start",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = White
+                )
+            }
+        }
+    }
+}
+
+private fun workoutMeta(isCompleted: Boolean, exerciseCount: Int, durationMinutes: Int?): String {
+    if (isCompleted) return "Completed"
+    val parts = buildList {
+        if (exerciseCount > 0) add("$exerciseCount exercise${if (exerciseCount == 1) "" else "s"}")
+        durationMinutes?.takeIf { it > 0 }?.let { add("~$it min") }
+    }
+    return if (parts.isEmpty()) "Scheduled" else parts.joinToString(" · ")
 }
 
 @Composable

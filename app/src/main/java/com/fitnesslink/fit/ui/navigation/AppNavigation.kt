@@ -173,7 +173,10 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable("home") {
-                HomeScreen(onNavigateToNotifications = { navController.navigate("notifications") })
+                HomeScreen(
+                    onNavigateToNotifications = { navController.navigate("notifications") },
+                    onNavigateToWorkout = { workoutId -> navController.navigate("workoutDetail/$workoutId") }
+                )
             }
             composable("catalog") {
                 CatalogScreen(

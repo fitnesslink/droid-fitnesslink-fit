@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitnesslink.fit.data.MockDataProvider
+import com.fitnesslink.fit.model.FitnessContent
 import com.fitnesslink.fit.model.GoalSummary
 import com.fitnesslink.fit.model.HabitLog
 import com.fitnesslink.fit.model.HomeDashboard
@@ -26,6 +27,8 @@ class HomeViewModel : ViewModel() {
     var goalSummaries by mutableStateOf<List<GoalSummary>>(emptyList())
     var scrollToDay by mutableIntStateOf(1)
     var selectedDate by mutableStateOf(Date())
+        private set
+    var todayWorkouts by mutableStateOf<List<FitnessContent>>(emptyList())
         private set
 
     val isSelectedDateToday: Boolean
@@ -48,6 +51,7 @@ class HomeViewModel : ViewModel() {
         selectedDate = Date()
         calendarItems = MockDataProvider.calendarItems(totalDays, currentDay)
         dashboards = DatabaseManager.dashboards()
+        loadWorkoutsForSelectedDate()
         viewModelScope.launch { refreshFromServer() }
     }
 
@@ -65,7 +69,32 @@ class HomeViewModel : ViewModel() {
         cal.set(Calendar.MILLISECOND, 0)
         selectedDate = cal.time
         calendarItems = calendarItems.map { it.copy(selected = it.dayNumber == day) }
+        loadWorkoutsForSelectedDate()
     }
+
+    /**
+     * Refresh the list of workouts scheduled for `selectedDate`. Reads from
+     * the local calendar_content cache so swiping between days is instant;
+     * SyncManager keeps that cache fresh in the background.
+     */
+    private fun loadWorkoutsForSelectedDate() {
+        todayWorkouts = DatabaseManager.calendarContent(selectedDate.time)
+            .filter { it.workoutId.isNotEmpty() }
+    }
+
+    /**
+     * Number of exercises (tasks) across all phases in a cached workout, or
+     * 0 if the workout isn't cached locally.
+     */
+    fun exerciseCount(workoutId: String): Int =
+        DatabaseManager.workout(workoutId)
+            ?.phases
+            ?.sumOf { it.taskRows.size }
+            ?: 0
+
+    /** Cached workout duration in minutes (or null if unknown). */
+    fun workoutDuration(workoutId: String): Int? =
+        DatabaseManager.workout(workoutId)?.estimatedTime
 
     fun completeHabit(habitId: String) {
         viewModelScope.launch {
