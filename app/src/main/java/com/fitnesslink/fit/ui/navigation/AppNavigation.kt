@@ -526,8 +526,10 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                 AppRoute.MovementAggregateDetail.ROUTE,
                 arguments = listOf(navArgument("exerciseName") { type = NavType.StringType })
             ) { backStackEntry ->
-                // TODO: MovementAggregateDetailScreen
-                ProfileStubScreen(title = backStackEntry.arguments?.getString("exerciseName") ?: "Movement", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.profile.MovementAggregateDetailScreen(
+                    exerciseName = backStackEntry.arguments?.getString("exerciseName") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }
