@@ -55,6 +55,8 @@ import com.fitnesslink.fit.ui.workout.WorkoutEditorScreen
 import com.fitnesslink.fit.ui.notifications.NotificationsScreen
 import com.fitnesslink.fit.ui.goals.AchievementsScreen
 import com.fitnesslink.fit.ui.goals.GoalCreationScreen
+import com.fitnesslink.fit.ui.goals.GoalDetailScreen
+import com.fitnesslink.fit.ui.goals.GoalsListScreen
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
@@ -452,12 +454,23 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                 ProfileStubScreen(title = "Billing", onBack = { navController.popBackStack() })
             }
             composable("goals") {
-                // Until a goals-list screen lands, the Profile menu entry
-                // routes straight into the goal-setup flow.
-                GoalCreationScreen(onClose = { navController.popBackStack() })
+                GoalsListScreen(
+                    onBack = { navController.popBackStack() },
+                    onCreateGoal = { navController.navigate("goalCreation") },
+                    onOpenGoal = { id -> navController.navigate(AppRoute.GoalDetail.createRoute(id)) }
+                )
             }
             composable("goalCreation") {
                 GoalCreationScreen(onClose = { navController.popBackStack() })
+            }
+            composable(
+                AppRoute.GoalDetail.ROUTE,
+                arguments = listOf(navArgument("goalId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                GoalDetailScreen(
+                    goalId = backStackEntry.arguments?.getString("goalId") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable("achievements") {
                 AchievementsScreen(onBack = { navController.popBackStack() })

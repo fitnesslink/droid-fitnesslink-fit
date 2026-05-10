@@ -23,6 +23,32 @@ class GoalDetailViewModel : ViewModel() {
         viewModelScope.launch { refreshFromServer(goalId) }
     }
 
+    /** Optimistic milestone create — appends locally, posts to API. */
+    fun addMilestone(goalId: String, title: String, targetValue: Double) {
+        val draft = Milestone(
+            id = java.util.UUID.randomUUID().toString(),
+            goalId = goalId,
+            title = title.trim(),
+            targetValue = targetValue,
+            achievedAt = null
+        )
+        milestones = milestones + draft
+        viewModelScope.launch {
+            try { ApiClient.goalApi.createMilestone(draft) } catch (_: Exception) {}
+        }
+    }
+
+    /** Mark milestone reached locally and on the server. */
+    fun achieveMilestone(milestoneId: String) {
+        val now = System.currentTimeMillis()
+        milestones = milestones.map {
+            if (it.id == milestoneId) it.copy(achievedAt = now) else it
+        }
+        viewModelScope.launch {
+            try { ApiClient.goalApi.achieveMilestone(milestoneId) } catch (_: Exception) {}
+        }
+    }
+
     private suspend fun refreshFromServer(goalId: String) {
         if (!NetworkMonitor.isConnected.value) return
         try {
