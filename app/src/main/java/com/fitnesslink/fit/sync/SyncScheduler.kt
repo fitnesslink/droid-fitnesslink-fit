@@ -5,6 +5,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.*
+import com.fitnesslink.fit.calendar.CalendarSyncService
 import com.fitnesslink.fit.media.MediaPrefetcher
 import com.fitnesslink.fit.network.NetworkMonitor
 import kotlinx.coroutines.*
@@ -14,9 +15,11 @@ import java.util.concurrent.TimeUnit
 object SyncScheduler {
     private var scope: CoroutineScope? = null
     private var wasOffline = false
+    private var appContext: Context? = null
 
     fun start(context: Context) {
         scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+        appContext = context.applicationContext
 
         // Sync on app foreground
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
@@ -48,6 +51,12 @@ object SyncScheduler {
         scope?.launch {
             SyncManager.performFullSync()
             MediaPrefetcher.runIfNeeded()
+            // FA-96: piggy-back the calendar mirror on the data sync. The
+            // service no-ops cheaply when sync is disabled or permission
+            // hasn't been granted, so this is safe to call every tick.
+            appContext?.let { ctx ->
+                withContext(Dispatchers.IO) { CalendarSyncService.syncAll(ctx) }
+            }
         }
     }
 

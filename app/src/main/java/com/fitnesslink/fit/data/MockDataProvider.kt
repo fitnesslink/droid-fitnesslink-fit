@@ -203,7 +203,8 @@ object MockDataProvider {
         ProfileMenu(id = 9, text = "Weight"),
         ProfileMenu(id = 10, text = "Workout Report"),
         ProfileMenu(id = 11, text = "Achievements"),
-        ProfileMenu(id = 12, text = "Notifications")
+        ProfileMenu(id = 12, text = "Notifications"),
+        ProfileMenu(id = 13, text = "Calendar sync")
     )
 
     fun workoutSession(workoutId: String): WorkoutSession {

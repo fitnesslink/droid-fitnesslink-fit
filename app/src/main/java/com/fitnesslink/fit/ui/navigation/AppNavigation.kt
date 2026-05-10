@@ -496,6 +496,11 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                     onBack = { navController.popBackStack() }
                 )
             }
+            composable("calendarSyncSettings") {
+                com.fitnesslink.fit.ui.profile.CalendarSyncSettingsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable("measurements") {
                 com.fitnesslink.fit.ui.progress.MeasurementsLogScreen(
                     onBack = { navController.popBackStack() }
