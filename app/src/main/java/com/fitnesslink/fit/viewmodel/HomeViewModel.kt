@@ -15,21 +15,56 @@ import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.persistence.DatabaseManager
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 class HomeViewModel : ViewModel() {
     var calendarItems by mutableStateOf<List<HorizontalCalendar>>(emptyList())
     var dashboards by mutableStateOf<List<HomeDashboard>>(emptyList())
     var goalSummaries by mutableStateOf<List<GoalSummary>>(emptyList())
     var scrollToDay by mutableIntStateOf(1)
+    var selectedDate by mutableStateOf(Date())
+        private set
+
+    val isSelectedDateToday: Boolean
+        get() {
+            val cal = Calendar.getInstance()
+            val today = cal.get(Calendar.DAY_OF_YEAR) to cal.get(Calendar.YEAR)
+            cal.time = selectedDate
+            val sel = cal.get(Calendar.DAY_OF_YEAR) to cal.get(Calendar.YEAR)
+            return today == sel
+        }
+
+    /** Display label for the selected day — "Today" or "Mon, Mar 5". */
+    val selectedDateLabel: String
+        get() = if (isSelectedDateToday) "Today" else dateLabelFormat.format(selectedDate)
 
     fun loadData() {
         val totalDays = getTotalDaysOfMonth()
         val currentDay = getCurrentDay()
         scrollToDay = maxOf(1, currentDay - 3)
+        selectedDate = Date()
         calendarItems = MockDataProvider.calendarItems(totalDays, currentDay)
         dashboards = DatabaseManager.dashboards()
         viewModelScope.launch { refreshFromServer() }
+    }
+
+    /**
+     * User tapped a day in the horizontal date strip. Update the selected
+     * date and rebuild the strip so the highlight moves. Date-sensitive
+     * sections read from `selectedDate` to refresh their content.
+     */
+    fun selectDay(day: Int) {
+        val cal = Calendar.getInstance()
+        cal.set(Calendar.DAY_OF_MONTH, day)
+        cal.set(Calendar.HOUR_OF_DAY, 0)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        selectedDate = cal.time
+        calendarItems = calendarItems.map { it.copy(selected = it.dayNumber == day) }
     }
 
     fun completeHabit(habitId: String) {
@@ -67,5 +102,9 @@ class HomeViewModel : ViewModel() {
 
     private fun getCurrentDay(): Int {
         return Calendar.getInstance().get(Calendar.DAY_OF_MONTH)
+    }
+
+    companion object {
+        private val dateLabelFormat = SimpleDateFormat("EEE, MMM d", Locale.getDefault())
     }
 }

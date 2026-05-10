@@ -2,6 +2,7 @@ package com.fitnesslink.fit.ui.home
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,10 +70,11 @@ fun HomeScreen(onNavigateToNotifications: () -> Unit = {}) {
             Spacer(modifier = Modifier.height(10.dp))
             DateScrollView(
                 calendarItems = viewModel.calendarItems,
-                scrollTo = viewModel.scrollToDay
+                scrollTo = viewModel.scrollToDay,
+                onSelectDay = viewModel::selectDay
             )
             Spacer(modifier = Modifier.height(16.dp))
-            TodayWorkoutView()
+            TodayWorkoutView(dateLabel = viewModel.selectedDateLabel)
             Spacer(modifier = Modifier.height(16.dp))
             HomeDashboardView(dashboards = viewModel.dashboards)
             Spacer(modifier = Modifier.height(16.dp))
@@ -83,13 +85,17 @@ fun HomeScreen(onNavigateToNotifications: () -> Unit = {}) {
 @Composable
 fun DateScrollView(
     calendarItems: List<HorizontalCalendar>,
-    scrollTo: Int
+    scrollTo: Int,
+    onSelectDay: (Int) -> Unit = {}
 ) {
     val listState = rememberLazyListState()
 
-    LaunchedEffect(scrollTo) {
+    // Center on `scrollTo` when the strip is first populated. Tapping a
+    // different day later updates `selected` but should not scroll the
+    // strip out from under the user, so we don't re-key on selection.
+    LaunchedEffect(scrollTo, calendarItems.isNotEmpty()) {
         if (scrollTo > 0 && calendarItems.isNotEmpty()) {
-            listState.scrollToItem(maxOf(0, scrollTo - 1))
+            listState.animateScrollToItem(maxOf(0, scrollTo - 1))
         }
     }
 
@@ -102,14 +108,20 @@ fun DateScrollView(
             .background(White)
             .padding(vertical = 10.dp)
     ) {
-        items(calendarItems) { item ->
-            DateCellView(item = item)
+        items(calendarItems, key = { it.dayNumber }) { item ->
+            DateCellView(
+                item = item,
+                onClick = { onSelectDay(item.dayNumber) }
+            )
         }
     }
 }
 
 @Composable
-fun DateCellView(item: HorizontalCalendar) {
+fun DateCellView(
+    item: HorizontalCalendar,
+    onClick: () -> Unit = {}
+) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
@@ -119,6 +131,7 @@ fun DateCellView(item: HorizontalCalendar) {
                 if (item.selected) HighlightState else Color.Transparent,
                 RoundedCornerShape(8.dp)
             )
+            .clickable(onClick = onClick)
             .padding(vertical = 8.dp)
     ) {
         Text(
@@ -132,19 +145,33 @@ fun DateCellView(item: HorizontalCalendar) {
             color = TextSecondaryColor
         )
         Spacer(modifier = Modifier.height(7.dp))
-        Image(
-            painter = painterResource(R.drawable.scheduledstate),
-            contentDescription = "Scheduled",
-            modifier = Modifier.size(10.dp)
-        )
+        StatusDot(status = item.status)
     }
 }
 
 @Composable
-fun TodayWorkoutView() {
+private fun StatusDot(status: String) {
+    when (status) {
+        "completed" -> Image(
+            painter = painterResource(R.drawable.completedstate),
+            contentDescription = "Completed",
+            modifier = Modifier.size(10.dp)
+        )
+        "scheduled" -> Image(
+            painter = painterResource(R.drawable.scheduledstate),
+            contentDescription = "Scheduled",
+            modifier = Modifier.size(10.dp)
+        )
+        else -> Spacer(modifier = Modifier.size(10.dp))
+    }
+}
+
+@Composable
+fun TodayWorkoutView(dateLabel: String = "Today") {
+    val title = if (dateLabel == "Today") "Today's Workout" else "$dateLabel · Workout"
     Column(modifier = Modifier.padding(horizontal = 20.dp)) {
         Text(
-            text = "Today's Workout",
+            text = title,
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold
         )
