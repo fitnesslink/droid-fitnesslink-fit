@@ -6,6 +6,10 @@ import java.util.UUID
 
 object DatabaseSeeder {
     fun seedIfNeeded() {
+        // Profile menu is upserted on every launch so newly added entries
+        // (e.g. Achievements) appear without re-seeding the whole DB.
+        MockDataProvider.profileMenuItems.forEach { DatabaseManager.insertProfileMenu(it) }
+
         if (DatabaseManager.user() != null) return
 
         // User
