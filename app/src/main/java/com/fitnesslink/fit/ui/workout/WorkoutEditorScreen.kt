@@ -416,6 +416,21 @@ private fun PhaseSection(phase: WorkoutPhase, index: Int, viewModel: WorkoutEdit
 @Composable
 private fun MovementEditorRow(task: WorkoutTask, phaseIndex: Int, viewModel: WorkoutEditorViewModel) {
     val isSelected = viewModel.selectedTaskIds.contains(task.id)
+    var showSetDialog by remember(task.id) { mutableStateOf(false) }
+
+    if (showSetDialog) {
+        SetEditorDialog(
+            initialSets = task.sets.coerceAtLeast(1),
+            initialReps = task.reps.coerceAtLeast(1),
+            initialWeightKg = task.weightKg?.toDouble(),
+            onConfirm = { sets, reps, weightKg ->
+                viewModel.updateTaskSets(task.id, sets, reps, weightKg)
+                showSetDialog = false
+            },
+            onDismiss = { showSetDialog = false }
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -441,9 +456,17 @@ private fun MovementEditorRow(task: WorkoutTask, phaseIndex: Int, viewModel: Wor
         Icon(Icons.Default.DragHandle, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
         Spacer(modifier = Modifier.width(8.dp))
 
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .clickable { if (!viewModel.isMultiSelectMode) showSetDialog = true }
+        ) {
             Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-            Text(task.metric, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(
+                text = task.metric.ifBlank { "Tap to set reps · sets · weight" },
+                fontSize = 12.sp,
+                color = if (task.metric.isBlank()) FLPrimary else TextSecondaryColor
+            )
         }
 
         // Actions
@@ -463,12 +486,26 @@ private fun MovementEditorRow(task: WorkoutTask, phaseIndex: Int, viewModel: Wor
 
 @Composable
 private fun RestEditorRow(task: WorkoutTask, phaseIndex: Int, viewModel: WorkoutEditorViewModel) {
+    var showRestDialog by remember(task.id) { mutableStateOf(false) }
+
+    if (showRestDialog) {
+        RestEditorDialog(
+            initialSeconds = task.restSeconds.coerceAtLeast(0),
+            onConfirm = { seconds ->
+                viewModel.updateRest(task.id, seconds)
+                showRestDialog = false
+            },
+            onDismiss = { showRestDialog = false }
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp, vertical = 2.dp)
             .clip(RoundedCornerShape(6.dp))
             .background(BackgroundColor)
+            .clickable { showRestDialog = true }
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -600,4 +637,106 @@ private fun MultiSelectBar(viewModel: WorkoutEditorViewModel) {
             Text("Cancel", fontSize = 14.sp, color = TextSecondaryColor)
         }
     }
+}
+
+@Composable
+private fun SetEditorDialog(
+    initialSets: Int,
+    initialReps: Int,
+    initialWeightKg: Double?,
+    onConfirm: (sets: Int, reps: Int, weightKg: Double?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var setsText by remember { mutableStateOf(initialSets.toString()) }
+    var repsText by remember { mutableStateOf(initialReps.toString()) }
+    var weightText by remember {
+        mutableStateOf(
+            initialWeightKg?.let { if (it % 1.0 == 0.0) it.toInt().toString() else it.toString() } ?: ""
+        )
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Set details") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = setsText,
+                        onValueChange = { setsText = it.filter(Char::isDigit) },
+                        label = { Text("Sets") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                    OutlinedTextField(
+                        value = repsText,
+                        onValueChange = { repsText = it.filter(Char::isDigit) },
+                        label = { Text("Reps") },
+                        singleLine = true,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+                OutlinedTextField(
+                    value = weightText,
+                    onValueChange = { weightText = it.filter { ch -> ch.isDigit() || ch == '.' } },
+                    label = { Text("Weight (kg, optional)") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Text(
+                    text = "Sets share these values for now — per-set customization is coming.",
+                    fontSize = 11.sp,
+                    color = TextSecondaryColor
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val sets = setsText.toIntOrNull()?.coerceAtLeast(1) ?: 1
+                val reps = repsText.toIntOrNull()?.coerceAtLeast(1) ?: 1
+                val weight = weightText.toDoubleOrNull()
+                onConfirm(sets, reps, weight)
+            }) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
+}
+
+@Composable
+private fun RestEditorDialog(
+    initialSeconds: Int,
+    onConfirm: (seconds: Int) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var secondsText by remember { mutableStateOf(initialSeconds.toString()) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Rest duration") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = secondsText,
+                    onValueChange = { secondsText = it.filter(Char::isDigit) },
+                    label = { Text("Seconds") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    listOf(30, 60, 90, 120).forEach { secs ->
+                        TextButton(onClick = { secondsText = secs.toString() }) {
+                            Text("${secs}s", fontSize = 12.sp)
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val seconds = secondsText.toIntOrNull()?.coerceAtLeast(0) ?: 0
+                onConfirm(seconds)
+            }) { Text("Save") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+    )
 }
