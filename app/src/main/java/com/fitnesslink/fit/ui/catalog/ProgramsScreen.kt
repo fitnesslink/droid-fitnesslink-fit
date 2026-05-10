@@ -2,9 +2,12 @@ package com.fitnesslink.fit.ui.catalog
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,6 +19,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.ui.Alignment
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -76,15 +80,89 @@ fun ProgramsScreen(
             modifier = Modifier
                 .padding(horizontal = 20.dp, vertical = 10.dp)
         )
+
+        // Training-level filter strip — null entry means "All".
+        FilterChipRow(
+            label = "Level",
+            options = listOf(null, "Beginner", "Intermediate", "Advanced"),
+            selected = viewModel.levelFilter,
+            onSelect = { viewModel.levelFilter = it },
+            displayName = { it ?: "All" }
+        )
+        // Length filter strip — buckets aligned to common program durations.
+        FilterChipRow(
+            label = "Length",
+            options = listOf(null, 1..4, 5..8, 9..12, 13..Int.MAX_VALUE),
+            selected = viewModel.lengthFilter,
+            onSelect = { viewModel.lengthFilter = it },
+            displayName = { range ->
+                when {
+                    range == null -> "Any"
+                    range.last == Int.MAX_VALUE -> "13+ wk"
+                    else -> "${range.first}–${range.last} wk"
+                }
+            }
+        )
+
         LazyColumn(
             modifier = Modifier.padding(horizontal = 20.dp)
         ) {
-            items(viewModel.programs) { program ->
+            items(viewModel.visiblePrograms) { program ->
                 ProgramItemView(
                     program = program,
                     onClick = { onNavigateToProgramDetail(program.id) }
                 )
                 Spacer(modifier = Modifier.height(12.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun <T> FilterChipRow(
+    label: String,
+    options: List<T>,
+    selected: T,
+    onSelect: (T) -> Unit,
+    displayName: (T) -> String
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = label,
+            fontSize = 12.sp,
+            color = TextSecondaryColor,
+            modifier = Modifier.padding(end = 8.dp)
+        )
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(end = 16.dp)
+        ) {
+            items(options) { option ->
+                val isSelected = option == selected
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(if (isSelected) FLPrimary else White)
+                        .border(
+                            1.dp,
+                            if (isSelected) FLPrimary else TextSecondaryColor.copy(alpha = 0.3f),
+                            RoundedCornerShape(16.dp)
+                        )
+                        .clickable { onSelect(option) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = displayName(option),
+                        fontSize = 12.sp,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                        color = if (isSelected) White else TextSecondaryColor
+                    )
+                }
             }
         }
     }
@@ -119,7 +197,7 @@ fun ProgramItemView(
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = program.time,
+                    text = programMeta(program),
                     fontSize = 13.sp,
                     color = TextSecondaryColor
                 )
@@ -133,4 +211,13 @@ fun ProgramItemView(
             )
         }
     }
+}
+
+private fun programMeta(p: ProgramList): String {
+    val parts = buildList {
+        p.weeks?.takeIf { it > 0 }?.let { add("$it wk") }
+        if (p.trainingLevel.isNotBlank()) add(p.trainingLevel)
+        if (p.time.isNotBlank()) add(p.time)
+    }
+    return parts.joinToString(" · ")
 }

@@ -30,7 +30,7 @@ object DatabaseManager {
 
     // MARK: - Schema
 
-    private const val DB_VERSION = 9
+    private const val DB_VERSION = 10
 
     private class DatabaseHelper(context: Context) :
         SQLiteOpenHelper(context, "fitnesslink.db", null, DB_VERSION) {
@@ -43,6 +43,7 @@ object DatabaseManager {
             migrateToV6(db)
             // V7 schema is already applied by createAllTables (no imageUrl columns).
             migrateToV9(db)
+            migrateToV10(db)
         }
         override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) {
             if (old < 2) migrateToV2(db)
@@ -53,6 +54,7 @@ object DatabaseManager {
             if (old < 7) migrateToV7(db)
             if (old < 8) migrateToV8(db)
             if (old < 9) migrateToV9(db)
+            if (old < 10) migrateToV10(db)
         }
     }
 
@@ -301,6 +303,11 @@ object DatabaseManager {
             unit TEXT NOT NULL DEFAULT 'OZ')""")
     }
 
+    /** FA-74: surface program week count for the library list + filters. */
+    private fun migrateToV10(db: SQLiteDatabase) {
+        try { db.execSQL("ALTER TABLE programs ADD COLUMN weeks INTEGER") } catch (_: Exception) {}
+    }
+
     // MARK: - Nutrition Report Queries
 
     fun dailyNutritionRows(since: Long): List<DailyNutritionRow> {
@@ -527,8 +534,24 @@ object DatabaseManager {
         Workout(c.str(0), c.str(1), c.str(2), c.str(3), c.str(4), c.str(5), phasesFromJson(c.str(6)))
     }
 
-    fun allPrograms(): List<ProgramList> = db().rawQuery("SELECT id, name, time FROM programs", null).use { c ->
-        buildList { while (c.moveToNext()) add(ProgramList(c.str(0), c.str(1), c.str(2), false)) }
+    fun allPrograms(): List<ProgramList> = db().rawQuery(
+        "SELECT id, name, time, trainingLevel, weeks FROM programs", null
+    ).use { c ->
+        buildList {
+            while (c.moveToNext()) {
+                val weeks = if (c.isNull(4)) null else c.getInt(4)
+                add(
+                    ProgramList(
+                        id = c.str(0),
+                        name = c.str(1),
+                        time = c.str(2),
+                        isFavorite = false,
+                        weeks = weeks,
+                        trainingLevel = c.str(3)
+                    )
+                )
+            }
+        }
     }
 
     fun program(id: String): Program? = db().rawQuery("SELECT id, name, time, location, trainingLevel, description FROM programs WHERE id=?", arrayOf(id)).use { c ->
@@ -815,6 +838,7 @@ object DatabaseManager {
             put("id", p.id); put("name", p.name)
             put("time", p.time); put("location", p.location)
             put("trainingLevel", p.trainingLevel); put("description", p.description)
+            if (p.weeks != null) put("weeks", p.weeks) else putNull("weeks")
         }, SQLiteDatabase.CONFLICT_REPLACE)
     }
 

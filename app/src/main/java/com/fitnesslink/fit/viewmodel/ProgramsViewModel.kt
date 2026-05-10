@@ -13,6 +13,19 @@ import kotlinx.coroutines.launch
 
 class ProgramsViewModel : ViewModel() {
     var programs by mutableStateOf<List<ProgramList>>(emptyList())
+        private set
+
+    /** Selected training-level filter ("Beginner", "Intermediate", "Advanced", or null = all). */
+    var levelFilter by mutableStateOf<String?>(null)
+
+    /** Selected length filter as a (minWeeks..maxWeeks) range, or null = any length. */
+    var lengthFilter by mutableStateOf<IntRange?>(null)
+
+    val visiblePrograms: List<ProgramList>
+        get() = programs.filter { p ->
+            (levelFilter == null || p.trainingLevel.equals(levelFilter, ignoreCase = true)) &&
+                (lengthFilter == null || (p.weeks != null && p.weeks in lengthFilter!!))
+        }
 
     fun loadData() {
         programs = DatabaseManager.allPrograms()
