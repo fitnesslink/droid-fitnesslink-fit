@@ -488,6 +488,11 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             composable("achievements") {
                 AchievementsScreen(onBack = { navController.popBackStack() })
             }
+            composable("notificationSettings") {
+                com.fitnesslink.fit.ui.profile.NotificationSettingsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
             composable("measurements") {
                 com.fitnesslink.fit.ui.progress.MeasurementsLogScreen(
                     onBack = { navController.popBackStack() }

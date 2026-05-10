@@ -33,6 +33,7 @@ class ProfileViewModel : ViewModel() {
             9 -> "weight"
             10 -> "workoutReport"
             11 -> "achievements"
+            12 -> "notificationSettings"
             else -> null
         }
     }
