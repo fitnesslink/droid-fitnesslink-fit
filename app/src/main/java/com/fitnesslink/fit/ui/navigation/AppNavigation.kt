@@ -52,6 +52,7 @@ import com.fitnesslink.fit.ui.session.PlaylistScreen
 import com.fitnesslink.fit.ui.workout.WorkoutDetailScreen
 import com.fitnesslink.fit.ui.workout.WorkoutEditorScreen
 import com.fitnesslink.fit.ui.notifications.NotificationsScreen
+import com.fitnesslink.fit.ui.goals.AchievementsScreen
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
@@ -441,6 +442,9 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             }
             composable("goals") {
                 ProfileStubScreen(title = "Goals", onBack = { navController.popBackStack() })
+            }
+            composable("achievements") {
+                AchievementsScreen(onBack = { navController.popBackStack() })
             }
             composable("measurements") {
                 com.fitnesslink.fit.ui.progress.MeasurementsLogScreen(

@@ -32,6 +32,7 @@ class ProfileViewModel : ViewModel() {
             8 -> "photos"
             9 -> "weight"
             10 -> "workoutReport"
+            11 -> "achievements"
             else -> null
         }
     }
