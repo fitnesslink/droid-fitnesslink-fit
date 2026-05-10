@@ -440,7 +440,10 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                 )
             }
             composable("nutritionMetricDetail/{metric}", arguments = listOf(navArgument("metric") { type = NavType.StringType })) { backStackEntry ->
-                ProfileStubScreen(title = backStackEntry.arguments?.getString("metric") ?: "Detail", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.profile.NutritionMetricDetailScreen(
+                    metricKey = backStackEntry.arguments?.getString("metric") ?: "calories",
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable("mealTypeDetail/{mealType}", arguments = listOf(navArgument("mealType") { type = NavType.StringType })) { backStackEntry ->
                 ProfileStubScreen(title = backStackEntry.arguments?.getString("mealType") ?: "Meal", onBack = { navController.popBackStack() })
