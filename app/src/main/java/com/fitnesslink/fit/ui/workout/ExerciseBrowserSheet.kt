@@ -34,8 +34,21 @@ fun ExerciseBrowserSheet(
 ) {
     val viewModel: ExerciseBrowserViewModel = viewModel()
     var addedIds by remember { mutableStateOf(emptySet<String>()) }
+    var previewMovement by remember { mutableStateOf<MovementLibraryItem?>(null) }
 
     LaunchedEffect(Unit) { viewModel.loadData() }
+
+    previewMovement?.let { mv ->
+        MovementPreviewSheet(
+            movement = mv,
+            onAdd = {
+                onSelect(mv)
+                addedIds = addedIds + mv.id
+                previewMovement = null
+            },
+            onDismiss = { previewMovement = null }
+        )
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -220,6 +233,14 @@ fun ExerciseBrowserSheet(
                                         Text("·", color = TextSecondaryColor)
                                         Text(movement.equipment, fontSize = 11.sp, color = TextSecondaryColor)
                                     }
+                                }
+                                IconButton(onClick = { previewMovement = movement }, modifier = Modifier.size(32.dp)) {
+                                    Icon(
+                                        Icons.Default.Info,
+                                        contentDescription = "Preview",
+                                        tint = MediumGray,
+                                        modifier = Modifier.size(16.dp)
+                                    )
                                 }
                                 IconButton(onClick = { viewModel.toggleFavorite(movement.id) }, modifier = Modifier.size(32.dp)) {
                                     Icon(
