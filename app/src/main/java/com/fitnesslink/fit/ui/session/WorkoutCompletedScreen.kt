@@ -1,7 +1,9 @@
 package com.fitnesslink.fit.ui.session
 
+import android.content.Intent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -59,6 +62,22 @@ fun WorkoutCompletedScreen(
     onDismiss: () -> Unit
 ) {
     var animateIn by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    // Resolve once so the Share row can hide if no app can handle the
+    // intent (rare on phones, common on stripped-down emulators).
+    val shareIntent = remember(workoutName, duration, exerciseCount, totalSets) {
+        Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "Crushed a workout on FitnessLink")
+            putExtra(
+                Intent.EXTRA_TEXT,
+                buildShareText(workoutName, duration, exerciseCount, totalSets)
+            )
+        }
+    }
+    val canShare = remember(shareIntent) {
+        shareIntent.resolveActivity(context.packageManager) != null
+    }
 
     LaunchedEffect(Unit) { animateIn = true }
 
@@ -192,22 +211,31 @@ fun WorkoutCompletedScreen(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            // Share button
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(FLPrimary)
-                    .padding(bottom = 0.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Share",
-                    fontSize = 17.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = White
-                )
+            // Share button — opens the system share sheet with a text
+            // summary of the session. Hidden gracefully if no app on the
+            // device can handle the intent.
+            if (canShare) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .clip(RoundedCornerShape(28.dp))
+                        .background(FLPrimary)
+                        .clickable {
+                            context.startActivity(
+                                Intent.createChooser(shareIntent, "Share workout")
+                            )
+                        }
+                        .padding(bottom = 0.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Share",
+                        fontSize = 17.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = White
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(40.dp))
@@ -356,4 +384,20 @@ private fun RPESlider() {
             Text("10", fontSize = 11.sp, color = White.copy(alpha = 0.4f))
         }
     }
+}
+
+private fun buildShareText(
+    workoutName: String,
+    duration: String,
+    exerciseCount: Int,
+    totalSets: Int
+): String = buildString {
+    append("Just crushed ")
+    append(workoutName.ifBlank { "a workout" })
+    append(" on FitnessLink 💪\n")
+    append("• ").append(duration).append("\n")
+    append("• ").append(exerciseCount).append(" exercise")
+        .append(if (exerciseCount == 1) "" else "s").append("\n")
+    append("• ").append(totalSets).append(" total set")
+        .append(if (totalSets == 1) "" else "s")
 }
