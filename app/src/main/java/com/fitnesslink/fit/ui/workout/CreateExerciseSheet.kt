@@ -26,6 +26,7 @@ fun CreateExerciseSheet(
 ) {
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var videoUrl by remember { mutableStateOf("") }
     var selectedMuscle by remember { mutableStateOf(MuscleGroup.Chest) }
     var selectedEquipment by remember { mutableStateOf(EquipmentType.Bodyweight) }
     var muscleExpanded by remember { mutableStateOf(false) }
@@ -57,6 +58,15 @@ fun CreateExerciseSheet(
                 modifier = Modifier.fillMaxWidth(),
                 minLines = 2,
                 maxLines = 3
+            )
+
+            OutlinedTextField(
+                value = videoUrl,
+                onValueChange = { videoUrl = it },
+                label = { Text("Video URL (optional)") },
+                placeholder = { Text("https://…") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true
             )
 
             // Muscle Group dropdown
@@ -111,12 +121,23 @@ fun CreateExerciseSheet(
                 Button(
                     onClick = {
                         val id = UUID.randomUUID().toString()
+                        // Fold the video URL into description for now —
+                        // the local movements schema doesn't have a
+                        // dedicated url column, but a "Video: …" prefix
+                        // keeps the link reachable until that lands.
+                        val finalDescription = buildString {
+                            if (videoUrl.isNotBlank()) {
+                                append("Video: ").append(videoUrl.trim())
+                                if (description.isNotBlank()) append("\n\n")
+                            }
+                            append(description)
+                        }
                         DatabaseManager.insertMovementFull(
-                            id, name, description,
+                            id, name, finalDescription,
                             selectedMuscle.label, selectedEquipment.label
                         )
                         onCreated(MovementLibraryItem(
-                            id = id, name = name, description = description,
+                            id = id, name = name, description = finalDescription,
                             muscleGroup = selectedMuscle.label,
                             equipment = selectedEquipment.label,
                             isFavorite = false
