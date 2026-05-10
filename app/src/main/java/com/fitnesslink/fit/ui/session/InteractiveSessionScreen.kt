@@ -262,19 +262,24 @@ fun WorkoutControlTopView(
                     .padding(horizontal = 10.dp, vertical = 5.dp)
             )
         }
-        if (task.isSuperset || task.isCircuit) {
+        if (task.isSuperset || task.isCircuit || task.isInterval) {
+            val (label, color) = when {
+                task.isSuperset -> "SUPERSET" to PurpleTheme
+                task.isCircuit -> "CIRCUIT" to BlueTheme
+                else -> "INTERVAL" to FLPrimary
+            }
             Text(
-                text = task.advancedMovement,
+                text = if (task.advancedMovement.isNotBlank()) task.advancedMovement else label,
                 fontSize = 14.sp,
                 color = White,
                 modifier = Modifier
-                    .background(
-                        if (task.isSuperset) PurpleTheme else BlueTheme,
-                        RoundedCornerShape(5.dp)
-                    )
+                    .background(color, RoundedCornerShape(5.dp))
                     .padding(horizontal = 10.dp, vertical = 5.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
+            // Intervals run as work/rest cycles rather than rounds, but
+            // currentRound + totalRounds still describe progress, so the
+            // same chip works.
             Text(
                 text = "$currentRound/${task.totalRounds} ROUNDS",
                 fontSize = 14.sp,
