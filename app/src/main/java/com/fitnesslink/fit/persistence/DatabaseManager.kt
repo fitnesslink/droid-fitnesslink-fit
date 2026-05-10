@@ -525,8 +525,22 @@ object DatabaseManager {
 
     // MARK: - Read Queries
 
-    fun allWorkouts(): List<WorkoutList> = db().rawQuery("SELECT id, name, time FROM workouts", null).use { c ->
-        buildList { while (c.moveToNext()) add(WorkoutList(c.str(0), c.str(1), c.str(2), false)) }
+    fun allWorkouts(): List<WorkoutList> = db().rawQuery(
+        "SELECT id, name, time, trainingLevel FROM workouts", null
+    ).use { c ->
+        buildList {
+            while (c.moveToNext()) {
+                add(
+                    WorkoutList(
+                        id = c.str(0),
+                        name = c.str(1),
+                        time = c.str(2),
+                        isFavorite = false,
+                        trainingLevel = c.str(3)
+                    )
+                )
+            }
+        }
     }
 
     fun workout(id: String): Workout? = db().rawQuery("SELECT id, name, time, location, trainingLevel, description, phasesJson FROM workouts WHERE id=?", arrayOf(id)).use { c ->

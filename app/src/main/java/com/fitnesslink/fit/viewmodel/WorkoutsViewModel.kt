@@ -13,6 +13,15 @@ import kotlinx.coroutines.launch
 
 class WorkoutsViewModel : ViewModel() {
     var workouts by mutableStateOf<List<WorkoutList>>(emptyList())
+        private set
+
+    /** Selected training-level filter, or null = all levels. */
+    var levelFilter by mutableStateOf<String?>(null)
+
+    val visibleWorkouts: List<WorkoutList>
+        get() = workouts.filter {
+            levelFilter == null || it.trainingLevel.equals(levelFilter, ignoreCase = true)
+        }
 
     fun loadData() {
         workouts = DatabaseManager.allWorkouts()
