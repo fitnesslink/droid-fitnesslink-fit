@@ -57,6 +57,7 @@ import com.fitnesslink.fit.ui.goals.AchievementsScreen
 import com.fitnesslink.fit.ui.goals.GoalCreationScreen
 import com.fitnesslink.fit.ui.goals.GoalDetailScreen
 import com.fitnesslink.fit.ui.goals.GoalsListScreen
+import com.fitnesslink.fit.ui.goals.HabitDetailScreen
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
@@ -469,6 +470,18 @@ fun MainTabNavigation(onLogout: () -> Unit) {
             ) { backStackEntry ->
                 GoalDetailScreen(
                     goalId = backStackEntry.arguments?.getString("goalId") ?: "",
+                    onBack = { navController.popBackStack() },
+                    onOpenHabit = { id ->
+                        navController.navigate(AppRoute.HabitDetail.createRoute(id))
+                    }
+                )
+            }
+            composable(
+                AppRoute.HabitDetail.ROUTE,
+                arguments = listOf(navArgument("habitId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                HabitDetailScreen(
+                    habitId = backStackEntry.arguments?.getString("habitId") ?: "",
                     onBack = { navController.popBackStack() }
                 )
             }

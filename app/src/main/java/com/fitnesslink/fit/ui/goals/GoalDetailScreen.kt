@@ -58,7 +58,8 @@ import java.util.Locale
 @Composable
 fun GoalDetailScreen(
     goalId: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    onOpenHabit: (String) -> Unit = {}
 ) {
     val viewModel: GoalDetailViewModel = viewModel()
     LaunchedEffect(goalId) { viewModel.loadData(goalId) }
@@ -96,7 +97,11 @@ fun GoalDetailScreen(
                 SectionHeader("Habits")
                 viewModel.habits.forEach { habit ->
                     val streak = viewModel.streaks[habit.id]
-                    HabitRow(habit = habit, streakDays = streak?.currentCount ?: 0)
+                    HabitRow(
+                        habit = habit,
+                        streakDays = streak?.currentCount ?: 0,
+                        onClick = { onOpenHabit(habit.id) }
+                    )
                 }
             }
 
@@ -123,11 +128,12 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun HabitRow(habit: Habit, streakDays: Int) {
+private fun HabitRow(habit: Habit, streakDays: Int, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .background(White, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)

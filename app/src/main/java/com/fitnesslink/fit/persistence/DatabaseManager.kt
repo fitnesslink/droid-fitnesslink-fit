@@ -1247,6 +1247,30 @@ object DatabaseManager {
         }
     }
 
+    /**
+     * FA-92: distinct local-day completion timestamps for a habit, returned
+     * as start-of-day millis. Driven from habit_logs.completedAt; used by
+     * the habit detail heatmap.
+     */
+    fun habitLogDates(habitId: String, since: Long): Set<Long> {
+        return db().rawQuery(
+            "SELECT completedAt FROM habit_logs WHERE habitId=? AND completedAt>=?",
+            arrayOf(habitId, since.toString())
+        ).use { c ->
+            val cal = java.util.Calendar.getInstance()
+            val days = mutableSetOf<Long>()
+            while (c.moveToNext()) {
+                cal.timeInMillis = c.getLong(0)
+                cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+                cal.set(java.util.Calendar.MINUTE, 0)
+                cal.set(java.util.Calendar.SECOND, 0)
+                cal.set(java.util.Calendar.MILLISECOND, 0)
+                days.add(cal.timeInMillis)
+            }
+            days
+        }
+    }
+
     // MARK: - Sync Queue
 
     fun enqueueSyncEntry(entityType: String, entityId: String, action: String, payload: String) {

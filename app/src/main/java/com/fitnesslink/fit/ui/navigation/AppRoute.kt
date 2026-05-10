@@ -80,6 +80,12 @@ sealed class AppRoute(val route: String) {
             fun createRoute(goalId: String) = "goalDetail/$goalId"
         }
     }
+    data class HabitDetail(val habitId: String) : AppRoute("habitDetail/{habitId}") {
+        companion object {
+            const val ROUTE = "habitDetail/{habitId}"
+            fun createRoute(habitId: String) = "habitDetail/$habitId"
+        }
+    }
     data object ProgramEditorNew : AppRoute("programEditor")
     data class ProgramEditor(val programId: String) : AppRoute("programEditor/{programId}") {
         companion object {
