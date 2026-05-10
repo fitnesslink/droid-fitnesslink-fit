@@ -26,6 +26,16 @@ object MediaPrefetcher {
     private val runMutex = Mutex()
     private var lastRunDay: Long? = null
 
+    /**
+     * Did the last run actually pull every item in the manifest, or did
+     * we skip videos because we were on a metered connection? If the run
+     * was incomplete, we want every subsequent foreground/reconnect tick
+     * to retry rather than short-circuit on `lastRunDay`. This makes the
+     * prefetcher self-healing: a user who started on cellular and later
+     * switched to Wi-Fi will pick up the missing videos automatically.
+     */
+    private var lastRunWasComplete: Boolean = false
+
     private val httpClient = OkHttpClient.Builder()
         .connectTimeout(60, TimeUnit.SECONDS)
         .readTimeout(600, TimeUnit.SECONDS)
@@ -49,7 +59,9 @@ object MediaPrefetcher {
         try {
             if (!force) {
                 val last = lastRunDay
-                if (last != null && isSameDay(last, System.currentTimeMillis())) return
+                // Only short-circuit when the prior run actually finished
+                // every item — partial runs need to retry on the next tick.
+                if (last != null && isSameDay(last, System.currentTimeMillis()) && lastRunWasComplete) return
             }
 
             val offsetMinutes = TimeZone.getDefault().getOffset(System.currentTimeMillis()) / 60000
@@ -68,28 +80,40 @@ object MediaPrefetcher {
                 }
                 .toMap()
 
-            downloadMissing(context, refByItemId)
+            val complete = downloadMissing(context, refByItemId)
             MediaCacheStore.sweep(refs.toSet())
             lastRunDay = System.currentTimeMillis()
+            lastRunWasComplete = complete
         } finally {
             runMutex.unlock()
         }
     }
 
+    /**
+     * Returns true if every manifest item that was missing got downloaded
+     * (or was already on disk). Returns false if any item was skipped due
+     * to metering — the next trigger should retry rather than treat the
+     * day as done.
+     */
     private suspend fun downloadMissing(
         context: Context,
         items: Map<MediaRef, ResolvedMediaItem>
-    ) = coroutineScope {
+    ): Boolean = coroutineScope {
         val onMetered = isOnMetered(context)
+        var skippedAny = false
         for ((ref, item) in items) {
             val url = item.url ?: continue
             if (MediaCacheStore.localFile(ref) != null) continue
 
             // Defer videos on metered connections to avoid burning user data.
-            if (onMetered && ref is MediaRef.MovementVideo) continue
+            if (onMetered && ref is MediaRef.MovementVideo) {
+                skippedAny = true
+                continue
+            }
 
             launch { download(url, ref) }
         }
+        !skippedAny
     }
 
     private suspend fun download(url: String, ref: MediaRef) {
