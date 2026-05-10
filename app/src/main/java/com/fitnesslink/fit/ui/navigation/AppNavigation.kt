@@ -452,7 +452,7 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                 ProfileStubScreen(title = "Preferences", onBack = { navController.popBackStack() })
             }
             composable("billing") {
-                ProfileStubScreen(title = "Billing", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.profile.BillingScreen(onBack = { navController.popBackStack() })
             }
             composable("goals") {
                 GoalsListScreen(
