@@ -73,6 +73,7 @@ sealed class AppRoute(val route: String) {
     data object DeveloperSettings : AppRoute("developerSettings")
     data object LogWater : AppRoute("logWater")
     data object Achievements : AppRoute("achievements")
+    data object GoalCreation : AppRoute("goalCreation")
     data object ProgramEditorNew : AppRoute("programEditor")
     data class ProgramEditor(val programId: String) : AppRoute("programEditor/{programId}") {
         companion object {
