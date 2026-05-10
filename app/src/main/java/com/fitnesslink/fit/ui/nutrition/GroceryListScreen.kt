@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.nutrition
 
+import android.content.Intent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,9 +21,12 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -33,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
@@ -56,9 +61,22 @@ fun GroceryListScreen(
     onBack: () -> Unit
 ) {
     val viewModel: MealPlanViewModel = viewModel()
+    val context = LocalContext.current
     var searchText by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) { viewModel.loadData() }
+
+    val shareIntent = remember(viewModel.groceryItems) {
+        if (viewModel.groceryItems.isEmpty()) null
+        else Intent(Intent.ACTION_SEND).apply {
+            type = "text/plain"
+            putExtra(Intent.EXTRA_SUBJECT, "Grocery list from FitnessLink")
+            putExtra(Intent.EXTRA_TEXT, buildShareText(viewModel.groceryItems))
+        }
+    }
+    val canShare = remember(shareIntent) {
+        shareIntent?.resolveActivity(context.packageManager) != null
+    }
 
     val filtered = if (searchText.isBlank()) {
         viewModel.groceryItems
@@ -88,14 +106,49 @@ fun GroceryListScreen(
     ) {
         HeaderBackView(onBack = onBack)
 
-        // Title
-        Text(
-            text = "Grocery List",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = TextPrimaryColor,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
-        )
+        // Title row with Regenerate + Share actions.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Grocery List",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                color = TextPrimaryColor,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(
+                onClick = { viewModel.regenerateGroceryList() },
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Refresh,
+                    contentDescription = "Regenerate from meal plan",
+                    tint = FLPrimary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            if (canShare && shareIntent != null) {
+                IconButton(
+                    onClick = {
+                        context.startActivity(
+                            Intent.createChooser(shareIntent, "Share grocery list")
+                        )
+                    },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Share,
+                        contentDescription = "Share list",
+                        tint = FLPrimary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
 
         // Progress bar
         Column(
@@ -265,4 +318,28 @@ private fun categoryEmoji(category: GroceryCategory): String = when (category) {
     GroceryCategory.PANTRY -> "\uD83C\uDFE0"
     GroceryCategory.FROZEN -> "\u2744\uFE0F"
     GroceryCategory.OTHER -> "\uD83E\uDDFA"
+}
+
+private fun buildShareText(items: List<GroceryItem>): String = buildString {
+    append("Grocery list\n")
+    val byCategory = GroceryCategory.entries.mapNotNull { cat ->
+        val rows = items.filter { it.category == cat && !it.isChecked }
+        if (rows.isEmpty()) null else cat to rows
+    }
+    if (byCategory.isEmpty()) {
+        append("\nAll items checked off — nice!")
+        return@buildString
+    }
+    for ((cat, rows) in byCategory) {
+        append("\n").append(cat.displayName).append("\n")
+        for (item in rows) {
+            append("  • ").append(item.name)
+            if (item.quantity.isNotBlank()) {
+                append(" (").append(item.quantity)
+                if (item.unit.isNotBlank()) append(" ").append(item.unit)
+                append(")")
+            }
+            append("\n")
+        }
+    }
 }
