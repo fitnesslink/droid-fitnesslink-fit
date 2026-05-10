@@ -20,7 +20,15 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -60,6 +68,21 @@ fun InteractiveSessionScreen(
 
     LaunchedEffect(workoutId) { viewModel.loadData(workoutId) }
 
+    // Cycle through OVERLAY → TEXT → IMAGE on each tap. Persisted across
+    // configuration changes so the user's last pick survives a rotate.
+    var restMode by rememberSaveable { mutableStateOf(RestDisplayMode.OVERLAY) }
+
+    // Haptic + visual cue when a rest period flips back to active. Only
+    // fires on the false transition so it doesn't double-tap on resume.
+    val haptics = LocalHapticFeedback.current
+    var wasResting by remember { mutableStateOf(viewModel.isRest) }
+    LaunchedEffect(viewModel.isRest) {
+        if (wasResting && !viewModel.isRest) {
+            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
+        }
+        wasResting = viewModel.isRest
+    }
+
     DisposableEffect(Unit) {
         onDispose {
             viewModel.stop()
@@ -84,37 +107,13 @@ fun InteractiveSessionScreen(
         }
         // Background
         if (viewModel.isRest) {
-            FLImageView(
-                ref = viewModel.workoutTask.movementId?.let { MediaRef.MovementThumbnail(it) },
-                height = 400.dp
+            RestView(
+                mode = restMode,
+                rest = viewModel.rest,
+                nextMovementId = viewModel.workoutTask.movementId,
+                onCycleMode = { restMode = restMode.next() },
+                onSkip = { viewModel.removeRestTimer() }
             )
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp)
-                    .background(Color.Black.copy(alpha = 0.8f))
-            )
-            // Rest text
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 150.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = "REST TIME",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = White
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = viewModel.rest,
-                    fontSize = 46.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = White
-                )
-            }
         } else {
             Box(
                 modifier = Modifier
@@ -359,5 +358,117 @@ fun ExerciseProgressBarView(progress: List<ExerciseProgress>) {
                 )
             }
         }
+    }
+}
+
+/** Three rest-screen variants for FA-83. Cycle on tap. */
+enum class RestDisplayMode {
+    /** Translucent dark veil over the upcoming exercise's thumbnail. */
+    OVERLAY,
+    /** Plain dark background with a giant centered MM:SS countdown. */
+    TEXT,
+    /** Curated rest illustration with the timer below it. */
+    IMAGE;
+
+    fun next(): RestDisplayMode = when (this) {
+        OVERLAY -> TEXT
+        TEXT -> IMAGE
+        IMAGE -> OVERLAY
+    }
+}
+
+@Composable
+private fun RestView(
+    mode: RestDisplayMode,
+    rest: String,
+    nextMovementId: String?,
+    onCycleMode: () -> Unit,
+    onSkip: () -> Unit
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp)
+            .clickable(onClick = onCycleMode)
+    ) {
+        when (mode) {
+            RestDisplayMode.OVERLAY -> OverlayRestBackground(nextMovementId)
+            RestDisplayMode.TEXT -> Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black)
+            )
+            RestDisplayMode.IMAGE -> ImageRestBackground()
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = if (mode == RestDisplayMode.IMAGE) 200.dp else 150.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "REST TIME",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = White
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = rest,
+                fontSize = if (mode == RestDisplayMode.TEXT) 92.sp else 46.sp,
+                fontWeight = FontWeight.Bold,
+                color = White
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(White.copy(alpha = 0.18f))
+                    .clickable(onClick = onSkip)
+                    .padding(horizontal = 18.dp, vertical = 8.dp)
+            ) {
+                Text(
+                    text = "Skip rest",
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = White
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun OverlayRestBackground(nextMovementId: String?) {
+    FLImageView(
+        ref = nextMovementId?.let { MediaRef.MovementThumbnail(it) },
+        height = 400.dp
+    )
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp)
+            .background(Color.Black.copy(alpha = 0.8f))
+    )
+}
+
+@Composable
+private fun ImageRestBackground() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(400.dp)
+            .background(Color.Black)
+    ) {
+        Image(
+            painter = painterResource(R.drawable.rest),
+            contentDescription = null,
+            contentScale = ContentScale.Fit,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(160.dp)
+                .padding(top = 30.dp)
+        )
     }
 }
