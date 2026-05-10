@@ -18,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
@@ -58,6 +60,20 @@ fun InteractivePlayerView(
     val player = remember(sourceUri) {
         if (sourceUri != null) {
             ExoPlayer.Builder(context).build().apply {
+                // Don't request audio focus — exercise demo videos are
+                // silent, and we want Spotify / Apple Music for Android /
+                // YouTube Music to keep playing during the workout.
+                setAudioAttributes(
+                    AudioAttributes.Builder()
+                        .setUsage(C.USAGE_MEDIA)
+                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+                        .build(),
+                    /* handleAudioFocus = */ false
+                )
+                // Belt-and-braces: also mute, since the source files have
+                // no soundtrack and any unexpected audio would step on the
+                // user's music.
+                volume = 0f
                 setMediaItem(MediaItem.fromUri(sourceUri!!))
                 prepare()
                 playWhenReady = !isPaused
