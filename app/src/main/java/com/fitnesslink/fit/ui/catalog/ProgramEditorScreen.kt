@@ -100,11 +100,21 @@ fun ProgramEditorScreen(
                 fontWeight = FontWeight.SemiBold
             )
             Spacer(modifier = Modifier.weight(1f))
-            TextButton(onClick = {
-                viewModel.save()
-                onBack()
-            }) {
-                Text("Save", color = FLPrimary, fontWeight = FontWeight.SemiBold)
+            // Save is disabled until at least one workout has been assigned —
+            // otherwise the program is just metadata with no schedule.
+            val canSave = viewModel.assignedWorkoutCount > 0
+            TextButton(
+                enabled = canSave,
+                onClick = {
+                    viewModel.save()
+                    onBack()
+                }
+            ) {
+                Text(
+                    text = "Save",
+                    color = if (canSave) FLPrimary else FLPrimary.copy(alpha = 0.4f),
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 
