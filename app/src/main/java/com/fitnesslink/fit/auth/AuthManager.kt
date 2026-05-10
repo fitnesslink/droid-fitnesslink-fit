@@ -4,8 +4,11 @@ import com.fitnesslink.fit.model.api.FLUser
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.dto.CreateUserRequest
 import com.fitnesslink.fit.persistence.DatabaseManager
+import com.google.firebase.auth.AuthCredential
+import com.google.firebase.auth.FacebookAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.google.firebase.auth.GoogleAuthProvider
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +45,50 @@ object AuthManager {
         try {
             auth.signInWithEmailAndPassword(email, password).await()
             fetchPlatformUser()
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    /**
+     * Exchange a Google ID token for a Firebase credential and sign in.
+     * Token acquisition is the caller's responsibility — typically via
+     * Credential Manager + Google Identity Services. The token is wrapped
+     * in [GoogleAuthProvider.getCredential] and handed to Firebase Auth.
+     */
+    suspend fun loginWithGoogle(idToken: String) {
+        val credential = GoogleAuthProvider.getCredential(idToken, null)
+        signInWithCredential(credential)
+    }
+
+    /**
+     * Exchange a Facebook access token for a Firebase credential and sign
+     * in. Acquired via the Facebook Login SDK on the caller side; we stay
+     * provider-agnostic past the credential boundary.
+     */
+    suspend fun loginWithFacebook(accessToken: String) {
+        val credential = FacebookAuthProvider.getCredential(accessToken)
+        signInWithCredential(credential)
+    }
+
+    private suspend fun signInWithCredential(credential: AuthCredential) {
+        _isLoading.value = true
+        try {
+            auth.signInWithCredential(credential).await()
+            // Try to fetch a platform user; if the server doesn't have one
+            // yet (first OAuth sign-in), provision it from the Firebase
+            // user's metadata.
+            try {
+                fetchPlatformUser()
+            } catch (_: Exception) {
+                val user = auth.currentUser
+                    ?: throw IllegalStateException("Firebase sign-in succeeded but currentUser is null")
+                val email = user.email ?: ""
+                val displayName = user.displayName.orEmpty().split(" ", limit = 2)
+                val first = displayName.getOrNull(0).orEmpty()
+                val last = displayName.getOrNull(1).orEmpty()
+                createPlatformUser(user.uid, email, first, last)
+            }
         } finally {
             _isLoading.value = false
         }

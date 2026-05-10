@@ -59,6 +59,15 @@ fun LoginScreen(
 
     LaunchedEffect(Unit) { animating = true }
 
+    // Hoisted so auth flips on either tab (email/password on Login, OAuth
+    // on either) trigger navigation. Safe with key = isAuthenticated since
+    // it only refires on transition.
+    LaunchedEffect(viewModel.isAuthenticated) {
+        if (viewModel.isAuthenticated) {
+            onLogin(viewModel.needsPersonalization)
+        }
+    }
+
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -118,7 +127,7 @@ fun LoginScreen(
                     if (selectedTab == 1) {
                         LoginContent(viewModel = viewModel, onLogin = onLogin)
                     } else {
-                        SignUpContent(onLogin = onLogin)
+                        SignUpContent(viewModel = viewModel, onLogin = onLogin)
                     }
                 }
             }
@@ -198,8 +207,12 @@ private fun LoginContent(
                 .fillMaxWidth()
                 .padding(top = 20.dp)
         ) {
-            if (viewModel.isInvalidCredentials) {
-                Text("Invalid email or password", fontSize = 11.sp, color = Color.Red)
+            if (viewModel.errorMessage != null) {
+                Text(
+                    text = viewModel.errorMessage ?: "",
+                    fontSize = 11.sp,
+                    color = Color.Red
+                )
             }
             Spacer(modifier = Modifier.weight(1f))
             Text(
@@ -216,20 +229,8 @@ private fun LoginContent(
             text = "Login",
             isEnabled = viewModel.isFormValid,
             isLoading = viewModel.isLoading,
-            onClick = {
-                viewModel.login()
-                if (viewModel.isAuthenticated) {
-                    onLogin(viewModel.needsPersonalization)
-                }
-            }
+            onClick = { viewModel.login() }
         )
-
-        // Check auth after delay
-        LaunchedEffect(viewModel.isAuthenticated) {
-            if (viewModel.isAuthenticated) {
-                onLogin(viewModel.needsPersonalization)
-            }
-        }
 
         Spacer(modifier = Modifier.height(20.dp))
 
@@ -237,16 +238,20 @@ private fun LoginContent(
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // Social sign-in buttons. Click handlers kick off the auth flow on
+        // the VM; navigation happens inside the LaunchedEffect above when
+        // isAuthenticated flips, so a failed/unconfigured provider stays on
+        // this screen with errorMessage surfaced.
         Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            SocialSignInButton(icon = "google", onClick = {
-                viewModel.loginWithGoogle()
-                onLogin(viewModel.needsPersonalization)
-            })
+            SocialSignInButton(
+                icon = "google",
+                onClick = { viewModel.loginWithGoogle() }
+            )
             Spacer(modifier = Modifier.width(10.dp))
-            SocialSignInButton(icon = "facebook", onClick = {
-                viewModel.loginWithFacebook()
-                onLogin(viewModel.needsPersonalization)
-            })
+            SocialSignInButton(
+                icon = "facebook",
+                onClick = { viewModel.loginWithFacebook() }
+            )
         }
 
         Spacer(modifier = Modifier.height(30.dp))
@@ -254,7 +259,10 @@ private fun LoginContent(
 }
 
 @Composable
-private fun SignUpContent(onLogin: (Boolean) -> Unit) {
+private fun SignUpContent(
+    viewModel: LoginViewModel,
+    onLogin: (Boolean) -> Unit
+) {
     Column(
         modifier = Modifier.padding(horizontal = 20.dp)
     ) {
@@ -328,10 +336,29 @@ private fun SignUpContent(onLogin: (Boolean) -> Unit) {
 
         Spacer(modifier = Modifier.height(10.dp))
 
+        // Same handlers as the Login tab — successful OAuth lands us on
+        // home regardless of which tab kicked it off, and a fresh user
+        // will be routed into personalization by the parent LaunchedEffect.
         Row(modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            SocialSignInButton(icon = "google", onClick = {})
+            SocialSignInButton(
+                icon = "google",
+                onClick = { viewModel.loginWithGoogle() }
+            )
             Spacer(modifier = Modifier.width(10.dp))
-            SocialSignInButton(icon = "facebook", onClick = {})
+            SocialSignInButton(
+                icon = "facebook",
+                onClick = { viewModel.loginWithFacebook() }
+            )
+        }
+
+        if (viewModel.errorMessage != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = viewModel.errorMessage ?: "",
+                fontSize = 11.sp,
+                color = Color.Red,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
         }
 
         Spacer(modifier = Modifier.height(30.dp))

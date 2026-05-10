@@ -42,11 +42,57 @@ class LoginViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Sign in via Google. The Firebase plumbing lives in AuthManager; what
+     * we still owe is the token acquisition step (Credential Manager +
+     * Google Identity Services) which requires a Web Client ID configured
+     * in google-services.json. Until that's wired, surface a clear inline
+     * error instead of silently succeeding.
+     */
     fun loginWithGoogle() {
-        // TODO: Implement Google Sign-In via Firebase
+        val idToken = acquireGoogleIdToken()
+        if (idToken == null) {
+            errorMessage = "Google sign-in is not yet configured for this build."
+            return
+        }
+        signInWithCredential { AuthManager.loginWithGoogle(idToken) }
     }
 
     fun loginWithFacebook() {
-        // TODO: Implement Facebook Sign-In via Firebase
+        val accessToken = acquireFacebookAccessToken()
+        if (accessToken == null) {
+            errorMessage = "Facebook sign-in is not yet configured for this build."
+            return
+        }
+        signInWithCredential { AuthManager.loginWithFacebook(accessToken) }
     }
+
+    private fun signInWithCredential(block: suspend () -> Unit) {
+        viewModelScope.launch {
+            isLoading = true
+            errorMessage = null
+            isInvalidCredentials = false
+            try {
+                block()
+                needsPersonalization = AuthManager.currentUser.value?.requirePersonalization ?: true
+                isAuthenticated = true
+                SyncManager.performInitialSync()
+            } catch (e: Exception) {
+                isInvalidCredentials = true
+                errorMessage = AuthManager.mapFirebaseError(e)
+            } finally {
+                isLoading = false
+            }
+        }
+    }
+
+    /**
+     * TODO: integrate Credential Manager + Google Identity Services.
+     * Until then this returns null so the UI surfaces a configuration
+     * error rather than logging the user in with no auth.
+     */
+    private fun acquireGoogleIdToken(): String? = null
+
+    /** TODO: integrate Facebook Login SDK and return its access token. */
+    private fun acquireFacebookAccessToken(): String? = null
 }
