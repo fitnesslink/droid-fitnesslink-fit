@@ -11,11 +11,17 @@ import com.fitnesslink.fit.persistence.DatabaseManager
 class CatalogViewModel : ViewModel() {
     var programs by mutableStateOf<List<CatalogItem>>(emptyList())
     var workouts by mutableStateOf<List<CatalogItem>>(emptyList())
-    var myWorkouts by mutableStateOf<List<CatalogItem>>(emptyList())
+
+    /**
+     * Workouts and programs the current user authored, mixed into a
+     * single carousel matching iOS's "My Content" layout. Programs come
+     * first since they're typically the bigger commitment.
+     */
+    var myContent by mutableStateOf<List<CatalogItem>>(emptyList())
 
     fun loadData() {
         programs = DatabaseManager.catalogPrograms()
         workouts = DatabaseManager.catalogWorkouts()
-        myWorkouts = MockDataProvider.myWorkouts
+        myContent = MockDataProvider.myPrograms + MockDataProvider.myWorkouts
     }
 }

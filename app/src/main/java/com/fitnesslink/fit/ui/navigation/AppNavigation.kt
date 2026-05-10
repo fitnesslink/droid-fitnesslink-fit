@@ -183,7 +183,9 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                     onNavigateToPrograms = { navController.navigate("programs") },
                     onNavigateToWorkouts = { navController.navigate("workouts") },
                     onNavigateToProgramDetail = { navController.navigate("programDetail/$it") },
-                    onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") }
+                    onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") },
+                    onNavigateToWorkoutEditor = { navController.navigate("workoutEditor") },
+                    onNavigateToProgramEditor = { navController.navigate("programEditor") }
                 )
             }
             composable("nutrition") {

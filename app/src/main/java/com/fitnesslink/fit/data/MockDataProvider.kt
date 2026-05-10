@@ -154,6 +154,11 @@ object MockDataProvider {
         CatalogItem(id = "mw2", title = "Evening Stretch", kind = CatalogItem.Kind.WORKOUT, caption = "15 min")
     )
 
+    val myPrograms: List<CatalogItem> = listOf(
+        CatalogItem(id = "mp1", title = "12-Week Strength Builder", kind = CatalogItem.Kind.PROGRAM, caption = "12 wk"),
+        CatalogItem(id = "mp2", title = "Couch to 5K", kind = CatalogItem.Kind.PROGRAM, caption = "9 wk")
+    )
+
     val personalizations: List<Personalization> = listOf(
         Personalization(id = "1", name = "What is your fitness goal?", singleSelection = true, options = listOf(
             PersonalizationItem(id = "1a", text = "Lose Weight"),

@@ -47,7 +47,9 @@ fun CatalogScreen(
     onNavigateToPrograms: () -> Unit = {},
     onNavigateToWorkouts: () -> Unit = {},
     onNavigateToProgramDetail: (String) -> Unit = {},
-    onNavigateToWorkoutDetail: (String) -> Unit = {}
+    onNavigateToWorkoutDetail: (String) -> Unit = {},
+    onNavigateToWorkoutEditor: () -> Unit = {},
+    onNavigateToProgramEditor: () -> Unit = {}
 ) {
     val viewModel: CatalogViewModel = viewModel()
 
@@ -66,11 +68,26 @@ fun CatalogScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             Spacer(modifier = Modifier.height(16.dp))
-            CatalogSection(
-                title = "My Workouts",
-                items = viewModel.myWorkouts,
-                onItemClick = {}
-            )
+            // FA-76 — user-authored workouts and programs in one strip.
+            // Tap routes by item.kind so a custom program opens the program
+            // editor while a custom workout opens the workout editor.
+            if (viewModel.myContent.isEmpty()) {
+                MyContentEmptyState(
+                    onCreateWorkout = onNavigateToWorkoutEditor,
+                    onCreateProgram = onNavigateToProgramEditor
+                )
+            } else {
+                CatalogSection(
+                    title = "My Content",
+                    items = viewModel.myContent,
+                    onItemClick = { item ->
+                        when (item.kind) {
+                            CatalogItem.Kind.WORKOUT -> onNavigateToWorkoutDetail(item.id)
+                            CatalogItem.Kind.PROGRAM -> onNavigateToProgramDetail(item.id)
+                        }
+                    }
+                )
+            }
             Spacer(modifier = Modifier.height(24.dp))
             CatalogSection(
                 title = "Programs",
@@ -181,4 +198,63 @@ fun CatalogItemView(
             )
         }
     }
+}
+
+@Composable
+private fun MyContentEmptyState(
+    onCreateWorkout: () -> Unit,
+    onCreateProgram: () -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+    ) {
+        Text(
+            text = "My Content",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(White)
+                .padding(20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "Nothing here yet",
+                fontSize = 15.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Build your first custom workout or program.",
+                fontSize = 13.sp,
+                color = TextSecondaryColor
+            )
+            Spacer(modifier = Modifier.height(14.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CtaPill(label = "+ Workout", onClick = onCreateWorkout)
+                CtaPill(label = "+ Program", onClick = onCreateProgram)
+            }
+        }
+    }
+}
+
+@Composable
+private fun CtaPill(label: String, onClick: () -> Unit) {
+    Text(
+        text = label,
+        fontSize = 13.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = White,
+        modifier = Modifier
+            .clip(RoundedCornerShape(20.dp))
+            .background(FLPrimary)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    )
 }
