@@ -35,6 +35,7 @@ import com.fitnesslink.fit.ui.nutrition.BarcodeScannerScreen
 import com.fitnesslink.fit.ui.nutrition.CustomFoodFormScreen
 import com.fitnesslink.fit.ui.nutrition.FoodEntryDetailScreen
 import com.fitnesslink.fit.ui.nutrition.GroceryListScreen
+import com.fitnesslink.fit.ui.nutrition.LogWaterScreen
 import com.fitnesslink.fit.ui.nutrition.MealPlanScreen
 import com.fitnesslink.fit.ui.nutrition.MealSlotDetailScreen
 import com.fitnesslink.fit.ui.nutrition.NutritionGoalSettingsScreen
@@ -186,7 +187,8 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                     onNavigateToMealPlan = { navController.navigate("mealPlan") },
                     onNavigateToNutritionSummary = { navController.navigate("nutritionSummary") },
                     onNavigateToGroceryList = { navController.navigate("groceryList") },
-                    onNavigateToGoalSettings = { navController.navigate("nutritionGoalSettings") }
+                    onNavigateToGoalSettings = { navController.navigate("nutritionGoalSettings") },
+                    onNavigateToLogWater = { navController.navigate("logWater") }
                 )
             }
             composable("calendar") {
@@ -349,6 +351,9 @@ fun MainTabNavigation(onLogout: () -> Unit) {
                 NutritionGoalSettingsScreen(
                     onBack = { navController.popBackStack() }
                 )
+            }
+            composable("logWater") {
+                LogWaterScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 "quickAdd/{mealType}",

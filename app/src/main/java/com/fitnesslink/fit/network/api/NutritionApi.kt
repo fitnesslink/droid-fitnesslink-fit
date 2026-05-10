@@ -60,4 +60,24 @@ interface NutritionApi {
     // Barcode
     @GET("barcode/{barcode}")
     suspend fun lookupBarcode(@Path("barcode") barcode: String): BarcodeProduct
+
+    // Water Entries
+    @GET("water-entries/me")
+    suspend fun getWaterEntries(@Query("date") date: String? = null): List<WaterIntakeEntry>
+
+    @POST("water-entries")
+    suspend fun addWaterEntry(@Body entry: WaterIntakeEntry): WaterIntakeEntry
+
+    @PUT("water-entries/{id}")
+    suspend fun updateWaterEntry(@Path("id") id: String, @Body entry: WaterIntakeEntry): WaterIntakeEntry
+
+    @DELETE("water-entries/{id}")
+    suspend fun deleteWaterEntry(@Path("id") id: String)
+
+    // Hydration Goals
+    @GET("hydration-goals/me")
+    suspend fun getHydrationGoal(): HydrationGoal
+
+    @POST("hydration-goals")
+    suspend fun upsertHydrationGoal(@Body goal: HydrationGoal)
 }

@@ -50,7 +50,8 @@ fun NutritionHomeScreen(
     onNavigateToMealPlan: () -> Unit = {},
     onNavigateToNutritionSummary: () -> Unit = {},
     onNavigateToGroceryList: () -> Unit = {},
-    onNavigateToGoalSettings: () -> Unit = {}
+    onNavigateToGoalSettings: () -> Unit = {},
+    onNavigateToLogWater: () -> Unit = {}
 ) {
     val viewModel: MealPlanViewModel = viewModel()
 
@@ -86,6 +87,12 @@ fun NutritionHomeScreen(
                     color = TextSecondaryColor
                 )
             }
+
+            // Hydration Card
+            HydrationCard(
+                onLogClick = onNavigateToLogWater,
+                modifier = Modifier.padding(horizontal = 20.dp)
+            )
 
             // Calorie Tracking Card
             FeatureCard(

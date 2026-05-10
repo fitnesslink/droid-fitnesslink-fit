@@ -21,6 +21,9 @@ object SyncManager {
     private const val KEY_CURSOR = "fl_sync_cursor"
     private const val KEY_LAST_SYNC = "fl_last_sync"
 
+    const val WATER_ENTRIES_TYPE = "water_entries"
+    const val HYDRATION_GOALS_TYPE = "hydration_goals"
+
     private val _status = MutableStateFlow(SyncStatus.IDLE)
     val status: StateFlow<SyncStatus> = _status.asStateFlow()
 

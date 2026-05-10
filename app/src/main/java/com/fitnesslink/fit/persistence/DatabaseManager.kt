@@ -30,7 +30,7 @@ object DatabaseManager {
 
     // MARK: - Schema
 
-    private const val DB_VERSION = 8
+    private const val DB_VERSION = 9
 
     private class DatabaseHelper(context: Context) :
         SQLiteOpenHelper(context, "fitnesslink.db", null, DB_VERSION) {
@@ -42,6 +42,7 @@ object DatabaseManager {
             migrateToV5(db)
             migrateToV6(db)
             // V7 schema is already applied by createAllTables (no imageUrl columns).
+            migrateToV9(db)
         }
         override fun onUpgrade(db: SQLiteDatabase, old: Int, new: Int) {
             if (old < 2) migrateToV2(db)
@@ -51,6 +52,7 @@ object DatabaseManager {
             if (old < 6) migrateToV6(db)
             if (old < 7) migrateToV7(db)
             if (old < 8) migrateToV8(db)
+            if (old < 9) migrateToV9(db)
         }
     }
 
@@ -286,6 +288,17 @@ object DatabaseManager {
     private fun migrateToV8(db: SQLiteDatabase) {
         db.execSQL("ALTER TABLE calendar_content ADD COLUMN scheduledDate INTEGER")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_calendar_content_date ON calendar_content(scheduledDate)")
+    }
+
+    private fun migrateToV9(db: SQLiteDatabase) {
+        db.execSQL("""CREATE TABLE IF NOT EXISTS water_entries (
+            id TEXT PRIMARY KEY, amount REAL NOT NULL DEFAULT 0,
+            unit TEXT NOT NULL DEFAULT 'OZ', loggedAt INTEGER NOT NULL,
+            notes TEXT NOT NULL DEFAULT '')""")
+        db.execSQL("CREATE INDEX IF NOT EXISTS idx_water_entries_logged ON water_entries(loggedAt)")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS hydration_goals (
+            id TEXT PRIMARY KEY, dailyGoal REAL NOT NULL DEFAULT 64,
+            unit TEXT NOT NULL DEFAULT 'OZ')""")
     }
 
     // MARK: - Nutrition Report Queries
@@ -679,6 +692,60 @@ object DatabaseManager {
 
     suspend fun deleteFoodEntry(id: String) {
         db().delete("food_entries", "id=?", arrayOf(id))
+    }
+
+    fun waterEntries(forDate: Date): List<WaterIntakeEntry> {
+        val cal = java.util.Calendar.getInstance().apply {
+            time = forDate
+            set(java.util.Calendar.HOUR_OF_DAY, 0); set(java.util.Calendar.MINUTE, 0)
+            set(java.util.Calendar.SECOND, 0); set(java.util.Calendar.MILLISECOND, 0)
+        }
+        val startOfDay = cal.timeInMillis
+        cal.add(java.util.Calendar.DAY_OF_MONTH, 1)
+        val endOfDay = cal.timeInMillis
+        return db().rawQuery(
+            "SELECT id, amount, unit, loggedAt, notes FROM water_entries WHERE loggedAt >= ? AND loggedAt < ? ORDER BY loggedAt DESC",
+            arrayOf(startOfDay.toString(), endOfDay.toString())
+        ).use { c ->
+            buildList {
+                while (c.moveToNext()) {
+                    add(
+                        WaterIntakeEntry(
+                            id = c.str(0),
+                            amount = c.getDouble(1),
+                            unit = WaterUnit.fromRaw(c.str(2)),
+                            loggedAt = Date(c.getLong(3)),
+                            notes = c.str(4)
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    fun saveWaterEntry(entry: WaterIntakeEntry) {
+        db().insertWithOnConflict("water_entries", null, ContentValues().apply {
+            put("id", entry.id); put("amount", entry.amount)
+            put("unit", entry.unit.name); put("loggedAt", entry.loggedAt.time)
+            put("notes", entry.notes)
+        }, SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun deleteWaterEntry(id: String) {
+        db().delete("water_entries", "id=?", arrayOf(id))
+    }
+
+    fun hydrationGoal(): HydrationGoal = db().rawQuery(
+        "SELECT id, dailyGoal, unit FROM hydration_goals LIMIT 1", null
+    ).use { c ->
+        if (!c.moveToFirst()) return HydrationGoal()
+        HydrationGoal(c.str(0), c.getDouble(1), WaterUnit.fromRaw(c.str(2)))
+    }
+
+    fun saveHydrationGoal(goal: HydrationGoal) {
+        db().insertWithOnConflict("hydration_goals", null, ContentValues().apply {
+            put("id", goal.id); put("dailyGoal", goal.dailyGoal); put("unit", goal.unit.name)
+        }, SQLiteDatabase.CONFLICT_REPLACE)
     }
 
     suspend fun saveMealSlot(slot: MealSlot) {
@@ -1135,7 +1202,8 @@ object DatabaseManager {
             "recent_movements", "notifications",
             "goals", "habits", "habit_logs", "streaks", "milestones",
             "achievements", "weight_entries", "measurement_entries",
-            "progress_photo_entries", "notification_preferences", "sync_queue")
+            "progress_photo_entries", "notification_preferences", "sync_queue",
+            "water_entries", "hydration_goals")
         for (table in tables) {
             try { db().execSQL("DELETE FROM $table") } catch (_: Exception) {}
         }
