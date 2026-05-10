@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.fitnesslink.fit.model.Personalization
 import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.network.dto.UserPersonalizationRequest
 import com.fitnesslink.fit.persistence.DatabaseManager
 import androidx.lifecycle.viewModelScope
@@ -39,6 +40,46 @@ class PersonalizationViewModel : ViewModel() {
 
     fun loadData() {
         personalizations = DatabaseManager.personalizations()
+        viewModelScope.launch { refreshFromServer() }
+    }
+
+    /**
+     * Pull authoritative question list and the user's saved selections from
+     * the server, merge them, persist locally, and update state. Falls back
+     * to whatever was already in `personalizations` on any failure so the
+     * Profile-edit entry still pre-fills from cache when offline.
+     */
+    private suspend fun refreshFromServer() {
+        if (!NetworkMonitor.isConnected.value) return
+
+        val remoteQuestions = runCatching { ApiClient.personalizationApi.getAll() }.getOrNull()
+            ?: return
+        if (remoteQuestions.isEmpty()) return
+
+        // Selected option ids the server has on file for this user. Used as
+        // source of truth — fresh sign-ins on a new device will pick these
+        // up and pre-fill the form.
+        val serverSelectedIds = runCatching {
+            ApiClient.personalizationApi.getMySelections()
+                .map { it.personalizationOptionId.toString() }
+                .toSet()
+        }.getOrElse { emptySet() }
+
+        // Locally selected ids in case the server doesn't yet know about
+        // changes the user made offline. Server wins on overlap.
+        val localSelectedIds = personalizations.flatMap { page ->
+            page.options.filter { it.selected }.map { it.id }
+        }.toSet()
+
+        val effectiveSelected = serverSelectedIds.ifEmpty { localSelectedIds }
+
+        val merged = remoteQuestions.map { page ->
+            page.copy(options = page.options.map {
+                it.copy(selected = it.id in effectiveSelected)
+            })
+        }
+        personalizations = merged
+        DatabaseManager.savePersonalizations(merged)
     }
 
     fun toggleSelection(item: PersonalizationItem) {
