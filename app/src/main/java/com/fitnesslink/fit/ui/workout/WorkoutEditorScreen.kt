@@ -322,6 +322,19 @@ private fun WorkoutHeaderSection(viewModel: WorkoutEditorViewModel) {
 
 @Composable
 private fun PhaseSection(phase: WorkoutPhase, index: Int, viewModel: WorkoutEditorViewModel) {
+    var showAddRestDialog by remember(phase.id) { mutableStateOf(false) }
+
+    if (showAddRestDialog) {
+        RestEditorDialog(
+            initialSeconds = 60,
+            onConfirm = { seconds ->
+                viewModel.addRestToPhase(index, seconds)
+                showAddRestDialog = false
+            },
+            onDismiss = { showAddRestDialog = false }
+        )
+    }
+
     Column(
         modifier = Modifier.padding(vertical = 8.dp)
     ) {
@@ -368,24 +381,46 @@ private fun PhaseSection(phase: WorkoutPhase, index: Int, viewModel: WorkoutEdit
             }
         }
 
-        // Add exercise button
+        // Add task buttons
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 4.dp)
-                .clip(RoundedCornerShape(8.dp))
-                .background(FLPrimary.copy(alpha = 0.06f))
-                .clickable {
-                    viewModel.activePhaseIndex = index
-                    viewModel.showExerciseBrowser = true
-                }
-                .padding(vertical = 10.dp),
-            horizontalArrangement = Arrangement.Center,
+                .padding(horizontal = 20.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.AddCircleOutline, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(14.dp))
-            Spacer(modifier = Modifier.width(4.dp))
-            Text("Add Exercise", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(FLPrimary.copy(alpha = 0.06f))
+                    .clickable {
+                        viewModel.activePhaseIndex = index
+                        viewModel.showExerciseBrowser = true
+                    }
+                    .padding(vertical = 10.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.AddCircleOutline, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add Exercise", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
+            }
+
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MediumGray.copy(alpha = 0.12f))
+                    .clickable { showAddRestDialog = true }
+                    .padding(vertical = 10.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Default.Timer, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add Rest", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+            }
         }
 
         // Group buttons

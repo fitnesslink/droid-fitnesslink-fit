@@ -222,19 +222,31 @@ class WorkoutEditorViewModel : ViewModel() {
         val idx = rows.indexOfFirst { it.task?.id == afterTaskId }
         if (idx < 0) return
 
-        val restTask = WorkoutTask(
-            id = UUID.randomUUID().toString(),
-            name = "Rest",
-            isRest = true,
-            restSeconds = seconds,
-            rest = formatRest(seconds)
-        )
-        rows.add(idx + 1, TaskRow(task = restTask))
+        rows.add(idx + 1, TaskRow(task = newRestTask(seconds)))
         val phases = workout.phases.toMutableList()
         phases[phaseIndex] = phases[phaseIndex].copy(taskRows = rows)
         workout = workout.copy(phases = phases)
         isDirty = true
     }
+
+    fun addRestToPhase(phaseIndex: Int, seconds: Int = 60) {
+        if (phaseIndex >= workout.phases.size) return
+        val phases = workout.phases.toMutableList()
+        phases[phaseIndex] = phases[phaseIndex].copy(
+            taskRows = phases[phaseIndex].taskRows + TaskRow(task = newRestTask(seconds))
+        )
+        workout = workout.copy(phases = phases)
+        isDirty = true
+    }
+
+    private fun newRestTask(seconds: Int) = WorkoutTask(
+        id = UUID.randomUUID().toString(),
+        name = "Rest",
+        isRest = true,
+        restSeconds = seconds,
+        rest = formatRest(seconds),
+        workoutTaskTypeId = WORKOUT_TASK_TYPE_REST_ID
+    )
 
     fun updateRest(taskId: String, seconds: Int) {
         forTask(taskId) { task ->
@@ -376,5 +388,9 @@ class WorkoutEditorViewModel : ViewModel() {
         val m = seconds / 60
         val s = seconds % 60
         return "%d:%02d".format(m, s)
+    }
+
+    companion object {
+        private const val WORKOUT_TASK_TYPE_REST_ID = "99D9354B-C3FF-4D15-9578-1D6813C16116"
     }
 }
