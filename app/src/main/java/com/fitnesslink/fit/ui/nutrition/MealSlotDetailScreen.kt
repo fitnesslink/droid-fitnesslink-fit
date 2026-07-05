@@ -174,7 +174,7 @@ fun MealSlotDetailScreen(
                     color = TextPrimaryColor
                 )
 
-                FormField("Recipe Name", recipeName, { recipeName = it }, "e.g., Grilled Chicken Salad")
+                FormField("Meal Name", recipeName, { recipeName = it }, "e.g., Grilled Chicken Salad")
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     FormField("Calories", calories, { calories = it }, "0", KeyboardType.Number, Modifier.weight(1f))
