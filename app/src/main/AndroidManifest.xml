@@ -8,6 +8,8 @@
     <!-- FA-96: mirror scheduled workouts to the device Calendar Provider. -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <!-- FTNSSLNK-260: push notifications (runtime-requested on Android 13+). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -21,15 +23,36 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FitnessLink"
         tools:targetApi="35">
+        <!-- singleTask so a notification tap while the app is alive arrives
+             via onNewIntent instead of stacking a second MainActivity. -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:theme="@style/Theme.FitnessLink">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- FTNSSLNK-260/261: FCM token + message delivery. -->
+        <service
+            android:name=".push.FitnessLinkMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+
+        <!-- Background notification messages rendered by FCM land on our
+             channel (created in PushNotificationManager.start). -->
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="fitnesslink_default" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/ic_launcher_foreground" />
     </application>
 
 </manifest>

@@ -1,9 +1,12 @@
 package com.fitnesslink.fit.network.api
 
 import com.fitnesslink.fit.model.*
+import com.fitnesslink.fit.network.dto.AchievementDefinition
 import com.fitnesslink.fit.network.dto.GoalProgressRequest
+import com.fitnesslink.fit.network.dto.UnlockAchievementRequest
 import retrofit2.http.*
 
+/** Mirrors iOS `GoalService` / `HabitService` / `MilestoneService` / `AchievementService`. */
 interface GoalApi {
     @GET("goals")
     suspend fun list(): List<Goal>
@@ -20,6 +23,7 @@ interface GoalApi {
     @DELETE("goals/{id}")
     suspend fun delete(@Path("id") id: String)
 
+    /** 204. */
     @PUT("goals/{id}/progress")
     suspend fun updateProgress(@Path("id") id: String, @Body request: GoalProgressRequest)
 
@@ -39,6 +43,7 @@ interface GoalApi {
     @DELETE("habits/{id}")
     suspend fun deleteHabit(@Path("id") id: String)
 
+    /** 204. */
     @POST("habits/{id}/log")
     suspend fun logHabit(@Path("id") id: String, @Body log: HabitLog)
 
@@ -52,6 +57,7 @@ interface GoalApi {
     @POST("milestones")
     suspend fun createMilestone(@Body milestone: Milestone): Milestone
 
+    /** 204. */
     @PUT("milestones/{id}/achieve")
     suspend fun achieveMilestone(@Path("id") id: String)
 
@@ -59,6 +65,11 @@ interface GoalApi {
     @GET("achievements/me")
     suspend fun getMyAchievements(): List<Achievement>
 
+    /** Every achievement definition the server knows; `id` is what [unlockAchievement] posts. */
+    @GET("achievements")
+    suspend fun getAchievementDefinitions(): List<AchievementDefinition>
+
+    /** `{ achievementId }` → 201 with the new user-achievement id as a bare string. Duplicates are the caller's to avoid. */
     @POST("achievements")
-    suspend fun unlockAchievement(@Body achievement: Achievement)
+    suspend fun unlockAchievement(@Body request: UnlockAchievementRequest): String
 }

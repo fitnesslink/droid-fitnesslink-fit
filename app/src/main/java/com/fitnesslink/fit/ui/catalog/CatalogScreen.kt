@@ -84,6 +84,7 @@ fun CatalogScreen(
                         when (item.kind) {
                             CatalogItem.Kind.WORKOUT -> onNavigateToWorkoutDetail(item.id)
                             CatalogItem.Kind.PROGRAM -> onNavigateToProgramDetail(item.id)
+                            CatalogItem.Kind.MOVEMENT -> {}
                         }
                     }
                 )
@@ -179,6 +180,7 @@ fun CatalogItemView(
             ref = when (item.kind) {
                 CatalogItem.Kind.PROGRAM -> MediaRef.ProgramThumbnail(item.id)
                 CatalogItem.Kind.WORKOUT -> MediaRef.WorkoutThumbnail(item.id)
+                CatalogItem.Kind.MOVEMENT -> MediaRef.MovementThumbnail(item.id)
             },
             height = 120.dp,
             modifier = Modifier.clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))

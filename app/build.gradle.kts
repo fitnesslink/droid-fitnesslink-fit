@@ -80,6 +80,15 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)
+    implementation(libs.media3.exoplayer.hls)
+
+    // Sign-in
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services)
+    implementation(libs.googleid)
+
+    // Billing
+    implementation(libs.billing.ktx)
 
     // Firebase
     implementation(platform(libs.firebase.bom))

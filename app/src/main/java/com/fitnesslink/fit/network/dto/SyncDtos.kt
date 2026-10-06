@@ -10,45 +10,61 @@ data class PaginatedResponse<T>(
     val totalPages: Int
 )
 
-// Sync Pull
+// MARK: - Sync (contract mirrors iOS Services/Sync/SyncManager.swift)
+
+/**
+ * `GET core/sync/pull?cursor=&entities=a,b`.
+ *
+ * Gson skips Kotlin default values for absent keys, so every collection is
+ * nullable and the reader (`SyncManager.pull`) coalesces to empty.
+ */
 data class SyncPullResponse(
-    val changes: Map<String, List<SyncChange>>,
-    val cursor: String,
-    val hasMore: Boolean
+    val cursor: String?,
+    val changes: List<SyncChange>?,
+    val hasMore: Boolean = false
 )
 
+/**
+ * One pulled row. `payload` is the entity encoded as a JSON *string*
+ * (not an object) — it is handed verbatim to
+ * `DatabaseManager.applySyncPayload(entityType, entityId, payload)`.
+ */
 data class SyncChange(
-    val entityId: String,
     val entityType: String,
-    val operation: String,
-    val changedAt: String,
-    val data: Map<String, Any?>?
+    val entityId: String,
+    val isDeleted: Boolean = false,
+    val payload: String?
 )
 
-// Sync Push
+/** `POST core/sync/push` body. */
 data class SyncPushRequest(
     val changes: List<SyncPushChange>
 )
 
+/** One queued local write. `payload` is the `sync_queue.payload` JSON string. */
 data class SyncPushChange(
-    val entityId: String,
     val entityType: String,
-    val operation: String,
-    val data: Map<String, Any?>?,
-    val idempotencyKey: String,
-    val clientTimestamp: String
-)
-
-data class SyncPushResponse(
-    val accepted: List<String>,
-    val rejected: List<SyncRejection>,
-    val cursor: String
-)
-
-data class SyncRejection(
     val entityId: String,
-    val reason: String,
-    val serverVersion: String?
+    val action: String,
+    val payload: String
+)
+
+/**
+ * `POST core/sync/push` response. The backend returns `{success, syncedAt}`
+ * and only sometimes echoes `idMappings`; every field is optional so an
+ * absent array cannot fail the decode (the iOS contract originally
+ * required it and crashed when it was missing).
+ */
+data class SyncPushResponse(
+    val success: Boolean = false,
+    val syncedAt: String? = null,
+    val idMappings: List<SyncIdMapping>? = null
+)
+
+data class SyncIdMapping(
+    val entityType: String,
+    val localId: String,
+    val serverId: String
 )
 
 // Auth

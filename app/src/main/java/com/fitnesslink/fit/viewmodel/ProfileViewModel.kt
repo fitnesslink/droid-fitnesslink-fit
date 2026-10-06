@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import com.fitnesslink.fit.auth.AuthManager
 import com.fitnesslink.fit.model.ProfileMenu
 import com.fitnesslink.fit.persistence.DatabaseManager
 
@@ -18,6 +19,11 @@ class ProfileViewModel : ViewModel() {
             userName = it.name
             userEmail = it.email
         }
+    }
+
+    /** Full logout (iOS `AuthManager.logout` order); fire-and-forget. */
+    fun logout() {
+        AuthManager.logout()
     }
 
     fun routeForMenuItem(item: ProfileMenu): String? {

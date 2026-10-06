@@ -197,7 +197,7 @@ fun MealSlotDetailScreen(
                     )
                     .clickable(enabled = isValid) {
                         val slot = MealSlot(
-                            day = day,
+                            date = day.dateStringInWeek(),
                             mealType = mealType,
                             recipeName = recipeName,
                             calories = calories.toIntOrNull() ?: 0,

@@ -100,7 +100,14 @@ fun ProfileScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .background(White, RoundedCornerShape(12.dp))
-                    .clickable(onClick = onLogout)
+                    .clickable {
+                        // AuthManager.logout runs the ordered teardown (push
+                        // unregister → Firebase signOut → clear DB → sync reset);
+                        // AppNavigation reacts via auth state. The callback only
+                        // lets the root reset its own gating flags.
+                        viewModel.logout()
+                        onLogout()
+                    }
                     .padding(vertical = 14.dp),
                 horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
             ) {

@@ -300,88 +300,88 @@ object MockDataProvider {
 
     val weeklyMealSlots: List<MealSlot> = listOf(
         // Monday
-        MealSlot(id = "ms1", day = DayOfWeek.MONDAY, mealType = MealType.BREAKFAST, recipeName = "Oatmeal with Berries", calories = 320, protein = 12.0, fat = 8.0, carbs = 52.0, ingredients = listOf(
+        MealSlot(id = "ms1", date = DayOfWeek.MONDAY.dateStringInWeek(), mealType = MealType.BREAKFAST, recipeName = "Oatmeal with Berries", calories = 320, protein = 12.0, fat = 8.0, carbs = 52.0, ingredients = listOf(
             GroceryItem(name = "Rolled Oats", quantity = "1", unit = "cup", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Mixed Berries", quantity = "0.5", unit = "cup", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Honey", quantity = "1", unit = "tbsp", category = GroceryCategory.PANTRY)
         )),
-        MealSlot(id = "ms2", day = DayOfWeek.MONDAY, mealType = MealType.LUNCH, recipeName = "Grilled Chicken Salad", calories = 420, protein = 45.0, fat = 18.0, carbs = 22.0, ingredients = listOf(
+        MealSlot(id = "ms2", date = DayOfWeek.MONDAY.dateStringInWeek(), mealType = MealType.LUNCH, recipeName = "Grilled Chicken Salad", calories = 420, protein = 45.0, fat = 18.0, carbs = 22.0, ingredients = listOf(
             GroceryItem(name = "Chicken Breast", quantity = "6", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Mixed Greens", quantity = "2", unit = "cups", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Cherry Tomatoes", quantity = "0.5", unit = "cup", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Olive Oil", quantity = "1", unit = "tbsp", category = GroceryCategory.PANTRY)
         )),
-        MealSlot(id = "ms3", day = DayOfWeek.MONDAY, mealType = MealType.DINNER, recipeName = "Salmon with Sweet Potato", calories = 470, protein = 36.0, fat = 22.0, carbs = 30.0, ingredients = listOf(
+        MealSlot(id = "ms3", date = DayOfWeek.MONDAY.dateStringInWeek(), mealType = MealType.DINNER, recipeName = "Salmon with Sweet Potato", calories = 470, protein = 36.0, fat = 22.0, carbs = 30.0, ingredients = listOf(
             GroceryItem(name = "Salmon Fillet", quantity = "6", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Sweet Potato", quantity = "1", unit = "medium", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Broccoli", quantity = "1", unit = "cup", category = GroceryCategory.PRODUCE)
         )),
-        MealSlot(id = "ms4", day = DayOfWeek.MONDAY, mealType = MealType.SNACK, recipeName = "Greek Yogurt & Almonds", calories = 200, protein = 18.0, fat = 10.0, carbs = 12.0, ingredients = listOf(
+        MealSlot(id = "ms4", date = DayOfWeek.MONDAY.dateStringInWeek(), mealType = MealType.SNACK, recipeName = "Greek Yogurt & Almonds", calories = 200, protein = 18.0, fat = 10.0, carbs = 12.0, ingredients = listOf(
             GroceryItem(name = "Greek Yogurt", quantity = "1", unit = "cup", category = GroceryCategory.DAIRY),
             GroceryItem(name = "Almonds", quantity = "1", unit = "oz", category = GroceryCategory.PANTRY)
         )),
         // Tuesday
-        MealSlot(id = "ms5", day = DayOfWeek.TUESDAY, mealType = MealType.BREAKFAST, recipeName = "Scrambled Eggs & Toast", calories = 350, protein = 22.0, fat = 18.0, carbs = 26.0, ingredients = listOf(
+        MealSlot(id = "ms5", date = DayOfWeek.TUESDAY.dateStringInWeek(), mealType = MealType.BREAKFAST, recipeName = "Scrambled Eggs & Toast", calories = 350, protein = 22.0, fat = 18.0, carbs = 26.0, ingredients = listOf(
             GroceryItem(name = "Eggs", quantity = "3", unit = "large", category = GroceryCategory.DAIRY),
             GroceryItem(name = "Whole Wheat Bread", quantity = "2", unit = "slices", category = GroceryCategory.GRAINS)
         )),
-        MealSlot(id = "ms6", day = DayOfWeek.TUESDAY, mealType = MealType.LUNCH, recipeName = "Turkey Wrap", calories = 380, protein = 32.0, fat = 14.0, carbs = 36.0, ingredients = listOf(
+        MealSlot(id = "ms6", date = DayOfWeek.TUESDAY.dateStringInWeek(), mealType = MealType.LUNCH, recipeName = "Turkey Wrap", calories = 380, protein = 32.0, fat = 14.0, carbs = 36.0, ingredients = listOf(
             GroceryItem(name = "Turkey Breast", quantity = "4", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Whole Wheat Tortilla", quantity = "1", unit = "large", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Avocado", quantity = "0.5", unit = "medium", category = GroceryCategory.PRODUCE)
         )),
-        MealSlot(id = "ms7", day = DayOfWeek.TUESDAY, mealType = MealType.DINNER, recipeName = "Chicken Stir Fry", calories = 450, protein = 40.0, fat = 16.0, carbs = 38.0, ingredients = listOf(
+        MealSlot(id = "ms7", date = DayOfWeek.TUESDAY.dateStringInWeek(), mealType = MealType.DINNER, recipeName = "Chicken Stir Fry", calories = 450, protein = 40.0, fat = 16.0, carbs = 38.0, ingredients = listOf(
             GroceryItem(name = "Chicken Breast", quantity = "6", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Brown Rice", quantity = "1", unit = "cup", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Bell Peppers", quantity = "1", unit = "cup", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Soy Sauce", quantity = "2", unit = "tbsp", category = GroceryCategory.PANTRY)
         )),
         // Wednesday
-        MealSlot(id = "ms8", day = DayOfWeek.WEDNESDAY, mealType = MealType.BREAKFAST, recipeName = "Protein Smoothie", calories = 280, protein = 30.0, fat = 6.0, carbs = 32.0, ingredients = listOf(
+        MealSlot(id = "ms8", date = DayOfWeek.WEDNESDAY.dateStringInWeek(), mealType = MealType.BREAKFAST, recipeName = "Protein Smoothie", calories = 280, protein = 30.0, fat = 6.0, carbs = 32.0, ingredients = listOf(
             GroceryItem(name = "Protein Powder", quantity = "1", unit = "scoop", category = GroceryCategory.PANTRY),
             GroceryItem(name = "Banana", quantity = "1", unit = "medium", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Almond Milk", quantity = "1", unit = "cup", category = GroceryCategory.DAIRY)
         )),
-        MealSlot(id = "ms9", day = DayOfWeek.WEDNESDAY, mealType = MealType.LUNCH, recipeName = "Tuna Poke Bowl", calories = 440, protein = 38.0, fat = 14.0, carbs = 42.0, ingredients = listOf(
+        MealSlot(id = "ms9", date = DayOfWeek.WEDNESDAY.dateStringInWeek(), mealType = MealType.LUNCH, recipeName = "Tuna Poke Bowl", calories = 440, protein = 38.0, fat = 14.0, carbs = 42.0, ingredients = listOf(
             GroceryItem(name = "Ahi Tuna", quantity = "5", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Sushi Rice", quantity = "1", unit = "cup", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Edamame", quantity = "0.5", unit = "cup", category = GroceryCategory.FROZEN),
             GroceryItem(name = "Avocado", quantity = "0.5", unit = "medium", category = GroceryCategory.PRODUCE)
         )),
-        MealSlot(id = "ms10", day = DayOfWeek.WEDNESDAY, mealType = MealType.DINNER, recipeName = "Lean Beef Tacos", calories = 480, protein = 36.0, fat = 20.0, carbs = 40.0, ingredients = listOf(
+        MealSlot(id = "ms10", date = DayOfWeek.WEDNESDAY.dateStringInWeek(), mealType = MealType.DINNER, recipeName = "Lean Beef Tacos", calories = 480, protein = 36.0, fat = 20.0, carbs = 40.0, ingredients = listOf(
             GroceryItem(name = "Lean Ground Beef", quantity = "5", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Corn Tortillas", quantity = "3", unit = "small", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Lettuce", quantity = "1", unit = "cup", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Salsa", quantity = "2", unit = "tbsp", category = GroceryCategory.PANTRY)
         )),
         // Thursday
-        MealSlot(id = "ms11", day = DayOfWeek.THURSDAY, mealType = MealType.BREAKFAST, recipeName = "Avocado Toast", calories = 310, protein = 10.0, fat = 18.0, carbs = 30.0, ingredients = listOf(
+        MealSlot(id = "ms11", date = DayOfWeek.THURSDAY.dateStringInWeek(), mealType = MealType.BREAKFAST, recipeName = "Avocado Toast", calories = 310, protein = 10.0, fat = 18.0, carbs = 30.0, ingredients = listOf(
             GroceryItem(name = "Whole Wheat Bread", quantity = "2", unit = "slices", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Avocado", quantity = "1", unit = "medium", category = GroceryCategory.PRODUCE)
         )),
-        MealSlot(id = "ms12", day = DayOfWeek.THURSDAY, mealType = MealType.LUNCH, recipeName = "Chicken Caesar Wrap", calories = 410, protein = 38.0, fat = 16.0, carbs = 32.0, ingredients = listOf(
+        MealSlot(id = "ms12", date = DayOfWeek.THURSDAY.dateStringInWeek(), mealType = MealType.LUNCH, recipeName = "Chicken Caesar Wrap", calories = 410, protein = 38.0, fat = 16.0, carbs = 32.0, ingredients = listOf(
             GroceryItem(name = "Chicken Breast", quantity = "5", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Romaine Lettuce", quantity = "1", unit = "cup", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Whole Wheat Tortilla", quantity = "1", unit = "large", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Caesar Dressing", quantity = "1", unit = "tbsp", category = GroceryCategory.PANTRY)
         )),
-        MealSlot(id = "ms13", day = DayOfWeek.THURSDAY, mealType = MealType.DINNER, recipeName = "Baked Cod with Quinoa", calories = 390, protein = 34.0, fat = 10.0, carbs = 40.0, ingredients = listOf(
+        MealSlot(id = "ms13", date = DayOfWeek.THURSDAY.dateStringInWeek(), mealType = MealType.DINNER, recipeName = "Baked Cod with Quinoa", calories = 390, protein = 34.0, fat = 10.0, carbs = 40.0, ingredients = listOf(
             GroceryItem(name = "Cod Fillet", quantity = "6", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Quinoa", quantity = "1", unit = "cup", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Asparagus", quantity = "6", unit = "spears", category = GroceryCategory.PRODUCE)
         )),
         // Friday
-        MealSlot(id = "ms14", day = DayOfWeek.FRIDAY, mealType = MealType.BREAKFAST, recipeName = "Banana Pancakes", calories = 340, protein = 14.0, fat = 10.0, carbs = 50.0, ingredients = listOf(
+        MealSlot(id = "ms14", date = DayOfWeek.FRIDAY.dateStringInWeek(), mealType = MealType.BREAKFAST, recipeName = "Banana Pancakes", calories = 340, protein = 14.0, fat = 10.0, carbs = 50.0, ingredients = listOf(
             GroceryItem(name = "Banana", quantity = "1", unit = "large", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Eggs", quantity = "2", unit = "large", category = GroceryCategory.DAIRY),
             GroceryItem(name = "Oat Flour", quantity = "0.5", unit = "cup", category = GroceryCategory.GRAINS)
         )),
-        MealSlot(id = "ms15", day = DayOfWeek.FRIDAY, mealType = MealType.LUNCH, recipeName = "Shrimp Rice Bowl", calories = 430, protein = 35.0, fat = 12.0, carbs = 48.0, ingredients = listOf(
+        MealSlot(id = "ms15", date = DayOfWeek.FRIDAY.dateStringInWeek(), mealType = MealType.LUNCH, recipeName = "Shrimp Rice Bowl", calories = 430, protein = 35.0, fat = 12.0, carbs = 48.0, ingredients = listOf(
             GroceryItem(name = "Shrimp", quantity = "6", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Brown Rice", quantity = "1", unit = "cup", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Zucchini", quantity = "1", unit = "medium", category = GroceryCategory.PRODUCE)
         )),
-        MealSlot(id = "ms16", day = DayOfWeek.FRIDAY, mealType = MealType.DINNER, recipeName = "Grilled Steak & Veggies", calories = 520, protein = 44.0, fat = 28.0, carbs = 22.0, ingredients = listOf(
+        MealSlot(id = "ms16", date = DayOfWeek.FRIDAY.dateStringInWeek(), mealType = MealType.DINNER, recipeName = "Grilled Steak & Veggies", calories = 520, protein = 44.0, fat = 28.0, carbs = 22.0, ingredients = listOf(
             GroceryItem(name = "Sirloin Steak", quantity = "6", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Bell Peppers", quantity = "1", unit = "cup", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Mushrooms", quantity = "1", unit = "cup", category = GroceryCategory.PRODUCE)
@@ -389,19 +389,19 @@ object MockDataProvider {
     )
 
     val aiSuggestedMeals: List<MealSlot> = listOf(
-        MealSlot(id = "ai1", day = DayOfWeek.MONDAY, mealType = MealType.BREAKFAST, recipeName = "High-Protein Overnight Oats", calories = 380, protein = 28.0, fat = 12.0, carbs = 44.0, isAISuggestion = true, ingredients = listOf(
+        MealSlot(id = "ai1", date = DayOfWeek.MONDAY.dateStringInWeek(), mealType = MealType.BREAKFAST, recipeName = "High-Protein Overnight Oats", calories = 380, protein = 28.0, fat = 12.0, carbs = 44.0, isAISuggestion = true, ingredients = listOf(
             GroceryItem(name = "Rolled Oats", quantity = "1", unit = "cup", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Protein Powder", quantity = "1", unit = "scoop", category = GroceryCategory.PANTRY),
             GroceryItem(name = "Chia Seeds", quantity = "1", unit = "tbsp", category = GroceryCategory.PANTRY),
             GroceryItem(name = "Almond Milk", quantity = "1", unit = "cup", category = GroceryCategory.DAIRY)
         )),
-        MealSlot(id = "ai2", day = DayOfWeek.MONDAY, mealType = MealType.LUNCH, recipeName = "Mediterranean Quinoa Bowl", calories = 460, protein = 32.0, fat = 18.0, carbs = 48.0, isAISuggestion = true, ingredients = listOf(
+        MealSlot(id = "ai2", date = DayOfWeek.MONDAY.dateStringInWeek(), mealType = MealType.LUNCH, recipeName = "Mediterranean Quinoa Bowl", calories = 460, protein = 32.0, fat = 18.0, carbs = 48.0, isAISuggestion = true, ingredients = listOf(
             GroceryItem(name = "Quinoa", quantity = "1", unit = "cup", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Chicken Breast", quantity = "5", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Cucumber", quantity = "0.5", unit = "medium", category = GroceryCategory.PRODUCE),
             GroceryItem(name = "Feta Cheese", quantity = "1", unit = "oz", category = GroceryCategory.DAIRY)
         )),
-        MealSlot(id = "ai3", day = DayOfWeek.MONDAY, mealType = MealType.DINNER, recipeName = "Teriyaki Salmon Bowl", calories = 490, protein = 38.0, fat = 20.0, carbs = 42.0, isAISuggestion = true, ingredients = listOf(
+        MealSlot(id = "ai3", date = DayOfWeek.MONDAY.dateStringInWeek(), mealType = MealType.DINNER, recipeName = "Teriyaki Salmon Bowl", calories = 490, protein = 38.0, fat = 20.0, carbs = 42.0, isAISuggestion = true, ingredients = listOf(
             GroceryItem(name = "Salmon Fillet", quantity = "6", unit = "oz", category = GroceryCategory.PROTEIN),
             GroceryItem(name = "Sushi Rice", quantity = "1", unit = "cup", category = GroceryCategory.GRAINS),
             GroceryItem(name = "Edamame", quantity = "0.5", unit = "cup", category = GroceryCategory.FROZEN),

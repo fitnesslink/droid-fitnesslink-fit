@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import com.fitnesslink.fit.model.DayOfWeek
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
+import com.fitnesslink.fit.network.dto.toGroceryItem
+import com.fitnesslink.fit.network.dto.toMealSlot
 import com.fitnesslink.fit.persistence.DatabaseManager
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
@@ -116,12 +118,12 @@ class MealPlanViewModel : ViewModel() {
         if (!NetworkMonitor.isConnected.value) return
         try {
             val remoteSlots = ApiClient.nutritionApi.getMealSlots()
-            remoteSlots.forEach { DatabaseManager.saveMealSlot(it) }
+            remoteSlots.forEach { DatabaseManager.saveMealSlot(it.toMealSlot()) }
             weekSlots = DatabaseManager.weeklyMealSlots()
         } catch (_: Exception) { /* use cached */ }
         try {
             val remoteGrocery = ApiClient.nutritionApi.getGroceryItems()
-            groceryItems = remoteGrocery.sortedBy { it.category.displayName }
+            groceryItems = remoteGrocery.map { it.toGroceryItem() }.sortedBy { it.category.displayName }
         } catch (_: Exception) { /* use cached */ }
     }
 }

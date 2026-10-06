@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.dto.ShareableContentKind
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.launch
@@ -67,9 +68,19 @@ fun ContentActionsRow(
     ) {
         ActionCircle(
             onClick = {
+                val previous = isFavorite
                 isFavorite = !isFavorite
                 scope.launch {
-                    try { ApiClient.contentApi.toggleFavorite(contentId) } catch (_: Exception) {}
+                    val kind = when (contentKind) {
+                        ContentKind.Workout -> ShareableContentKind.WORKOUT
+                        ContentKind.Program -> ShareableContentKind.PROGRAM
+                    }
+                    try {
+                        val response = ApiClient.contentApi.toggleFavorite(contentId, kind.serverName)
+                        isFavorite = response.isFavorited
+                    } catch (_: Exception) {
+                        isFavorite = previous
+                    }
                 }
             }
         ) {

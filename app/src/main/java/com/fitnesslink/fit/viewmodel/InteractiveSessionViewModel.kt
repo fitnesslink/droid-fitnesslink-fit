@@ -10,8 +10,8 @@ import com.fitnesslink.fit.model.ExerciseProgress
 import com.fitnesslink.fit.model.WorkoutProgress
 import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.network.ApiClient
-import com.fitnesslink.fit.network.dto.CompleteSessionRequest
-import com.fitnesslink.fit.network.dto.LogHistoryRequest
+import com.fitnesslink.fit.network.dto.SessionCompleteRequest
+import com.fitnesslink.fit.network.dto.SessionHistoryLogRequest
 import com.fitnesslink.fit.persistence.DatabaseManager
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -153,22 +153,21 @@ class InteractiveSessionViewModel : ViewModel() {
         // Fire-and-forget server sync
         viewModelScope.launch {
             try {
-                ApiClient.sessionApi.complete(sessionId, CompleteSessionRequest(rpeId = null))
+                ApiClient.sessionApi.complete(sessionId, SessionCompleteRequest.of(rpeId = null, rpeValue = rpe.toInt(), completionPercent = 100))
             } catch (_: Exception) {}
         }
-        val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
         for (task in movementTasks) {
             for (setNum in 1..maxOf(task.sets, 1)) {
                 viewModelScope.launch {
                     try {
-                        ApiClient.sessionApi.logHistory(sessionId, LogHistoryRequest(
+                        ApiClient.sessionApi.logHistory(sessionId, SessionHistoryLogRequest(
                             workoutTaskId = task.id,
                             workoutId = workoutId,
                             programId = null,
                             userId = userId,
-                            logDate = dateFormat.format(Date()),
+                            logDate = Date(),
                             reps = task.reps,
-                            setNumber = setNum,
+                            set = setNum,
                             intervalSeconds = null,
                             weightLifted = (task.weightKg ?: 0).toDouble()
                         ))

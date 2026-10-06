@@ -9,6 +9,8 @@ import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.*
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
+import com.fitnesslink.fit.network.dto.toMeasurementEntries
+import com.fitnesslink.fit.persistence.DatabaseManager
 import kotlinx.coroutines.launch
 import java.util.Date
 
@@ -31,7 +33,11 @@ class MeasurementsViewModel : ViewModel() {
         if (!NetworkMonitor.isConnected.value) return
         try {
             val remote = ApiClient.bodyTrackingApi.getMeasurements()
-            entries = remote.sortedByDescending { it.date }
+            val anatomyNames = DatabaseManager.allAnatomy().associate { it.id.toString().lowercase() to it.name }
+            entries = remote.toMeasurementEntries { anatomyId ->
+                val name = anatomyNames[anatomyId.lowercase()] ?: return@toMeasurementEntries null
+                BodyPart.entries.firstOrNull { it.displayName.equals(name, ignoreCase = true) }
+            }
         } catch (_: Exception) { /* use cached */ }
     }
 

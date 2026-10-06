@@ -26,6 +26,7 @@ class ExerciseBrowserViewModel : ViewModel() {
             BrowserTab.All -> {
                 DatabaseManager.searchMovements(searchText, selectedMuscleGroup?.label, selectedEquipment?.label)
             }
+            BrowserTab.Mine -> DatabaseManager.searchMovements(searchText, mineOnly = true)
             BrowserTab.Favorites -> DatabaseManager.favoriteMovements()
             BrowserTab.Recent -> DatabaseManager.recentMovements()
         }
@@ -45,6 +46,7 @@ class ExerciseBrowserViewModel : ViewModel() {
             // Re-read from DB to update UI
             movements = when (selectedTab) {
                 BrowserTab.All -> DatabaseManager.searchMovements(searchText, selectedMuscleGroup?.label, selectedEquipment?.label)
+                BrowserTab.Mine -> DatabaseManager.searchMovements(searchText, mineOnly = true)
                 BrowserTab.Favorites -> DatabaseManager.favoriteMovements()
                 BrowserTab.Recent -> DatabaseManager.recentMovements()
             }

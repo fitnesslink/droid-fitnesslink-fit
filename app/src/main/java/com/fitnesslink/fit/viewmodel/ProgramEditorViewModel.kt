@@ -96,9 +96,9 @@ class ProgramEditorViewModel : ViewModel() {
         if (!NetworkMonitor.isConnected.value) return
         try {
             if (isNew) {
-                ApiClient.programApi.create(program)
+                ApiClient.programApi.create(com.fitnesslink.fit.model.ProgramWriteRequest(program))
             } else {
-                ApiClient.programApi.update(program.id, program)
+                ApiClient.programApi.update(program.id, com.fitnesslink.fit.model.ProgramWriteRequest(program))
             }
             schedules.forEach { s ->
                 ApiClient.programApi.addWeeklyWorkout(

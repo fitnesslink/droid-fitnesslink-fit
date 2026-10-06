@@ -28,6 +28,8 @@ data class AnglePhoto(
     val angle: PhotoAngle = PhotoAngle.FRONT,
     val imageData: ByteArray? = null,
     val imageName: String = "",
+    /** Server media asset id (`beforeImageId`) — render with `MediaRef.ProgressPhoto`. */
+    val imageId: String? = null,
     val notes: String = "",
     val createdAt: Date = Date()
 ) {

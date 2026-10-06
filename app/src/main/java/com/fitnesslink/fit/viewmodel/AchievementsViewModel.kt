@@ -22,7 +22,7 @@ class AchievementsViewModel : ViewModel() {
 
     val lockedTypes: List<AchievementType>
         get() {
-            val earnedTypes = achievements.map { it.achievementType }.toSet()
+            val earnedTypes = achievements.mapNotNull { it.achievementType }.toSet()
             return AchievementType.entries.filter { it !in earnedTypes }
         }
 

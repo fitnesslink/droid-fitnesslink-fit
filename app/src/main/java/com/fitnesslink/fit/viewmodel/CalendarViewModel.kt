@@ -9,6 +9,8 @@ import com.fitnesslink.fit.model.CalendarCell
 import com.fitnesslink.fit.model.FitnessContent
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
+import com.fitnesslink.fit.network.dto.toCreateRequest
+import com.fitnesslink.fit.network.dto.toFitnessContent
 import com.fitnesslink.fit.persistence.DatabaseManager
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -52,7 +54,7 @@ class CalendarViewModel : ViewModel() {
         DatabaseManager.insertCalendarContent(entry)
         viewModelScope.launch {
             if (NetworkMonitor.isConnected.value) {
-                try { ApiClient.calendarApi.create(entry) } catch (_: Exception) {}
+                try { ApiClient.calendarApi.create(entry.toCreateRequest()) } catch (_: Exception) {}
             }
         }
         loadScheduledDays()
@@ -123,7 +125,9 @@ class CalendarViewModel : ViewModel() {
         if (!NetworkMonitor.isConnected.value) return
         try {
             val remote = ApiClient.calendarApi.getEntries()
-            remote.forEach { DatabaseManager.insertCalendarContent(it) }
+            val pending = DatabaseManager.pendingCalendarMutationIds()
+            remote.filter { it.id.lowercase() !in pending }
+                .forEach { DatabaseManager.insertCalendarContent(it.toFitnessContent()) }
             loadScheduledDays()
             loadContentForSelectedDate()
             buildCalendarCells()

@@ -2,36 +2,31 @@ package com.fitnesslink.fit.network
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.content.pm.ApplicationInfo
 
-enum class ApiService { CORE, NUTRITION, NOTIFICATION }
+/**
+ * The four backend services. Mirrors iOS `APIService`: every service is
+ * served from the single production host under its own path prefix
+ * (`https://api.fitnesslink.fit/{prefix}/api/v1/`).
+ */
+enum class ApiService(val pathPrefix: String, val localPort: Int) {
+    CORE("core", 5100),
+    NUTRITION("nutrition", 5200),
+    NOTIFICATION("notifications", 5300),
+    BILLING("billing", 5400)
+}
 
 enum class ApiEnvironment {
-    LOCAL, NGROK, STAGING, PRODUCTION;
+    /** Emulator → host machine. Each service runs on its own port. */
+    LOCAL,
+    /** A tunnel in front of the local gateway; same `/{prefix}/api/v1/` layout as prod. */
+    NGROK,
+    PRODUCTION;
 
     fun baseUrl(service: ApiService, ngrokUrl: String = ""): String = when (this) {
-        LOCAL -> when (service) {
-            ApiService.CORE -> "http://10.0.2.2:5100/api/v1/"
-            ApiService.NUTRITION -> "http://10.0.2.2:5200/api/v1/"
-            ApiService.NOTIFICATION -> "http://10.0.2.2:5300/api/v1/"
-        }
-        NGROK -> {
-            val base = ngrokUrl.trimEnd('/')
-            when (service) {
-                ApiService.CORE -> "$base/core/api/v1/"
-                ApiService.NUTRITION -> "$base/nutrition/api/v1/"
-                ApiService.NOTIFICATION -> "$base/notifications/api/v1/"
-            }
-        }
-        STAGING -> when (service) {
-            ApiService.CORE -> "https://staging-core.fitnesslink.app/api/v1/"
-            ApiService.NUTRITION -> "https://staging-nutrition.fitnesslink.app/api/v1/"
-            ApiService.NOTIFICATION -> "https://staging-notifications.fitnesslink.app/api/v1/"
-        }
-        PRODUCTION -> when (service) {
-            ApiService.CORE -> "https://core.fitnesslink.app/api/v1/"
-            ApiService.NUTRITION -> "https://nutrition.fitnesslink.app/api/v1/"
-            ApiService.NOTIFICATION -> "https://notifications.fitnesslink.app/api/v1/"
-        }
+        LOCAL -> "http://10.0.2.2:${service.localPort}/api/v1/"
+        NGROK -> "${ngrokUrl.trimEnd('/')}/${service.pathPrefix}/api/v1/"
+        PRODUCTION -> "https://api.fitnesslink.fit/${service.pathPrefix}/api/v1/"
     }
 }
 
@@ -42,16 +37,36 @@ object ApiConfiguration {
 
     private lateinit var prefs: SharedPreferences
 
-    var environment: ApiEnvironment = ApiEnvironment.LOCAL
+    /**
+     * True when the installed APK is debuggable. The project does not
+     * generate `BuildConfig` (AGP 8 default), so the debug/release split is
+     * read from the application flags instead.
+     */
+    var isDebugBuild: Boolean = false
+        private set
+
+    /** PRODUCTION for release builds, LOCAL for debug builds. */
+    val defaultEnvironment: ApiEnvironment
+        get() = if (isDebugBuild) ApiEnvironment.LOCAL else ApiEnvironment.PRODUCTION
+
+    var environment: ApiEnvironment = ApiEnvironment.PRODUCTION
         private set
     var ngrokUrl: String = ""
         private set
 
     fun initialize(context: Context) {
+        isDebugBuild = (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val envName = prefs.getString(KEY_ENV, "LOCAL") ?: "LOCAL"
-        environment = try { ApiEnvironment.valueOf(envName) } catch (_: Exception) { ApiEnvironment.LOCAL }
         ngrokUrl = prefs.getString(KEY_NGROK_URL, "") ?: ""
+        val stored = prefs.getString(KEY_ENV, null)
+        environment = stored
+            ?.let { name -> ApiEnvironment.entries.firstOrNull { it.name == name } }
+            ?: defaultEnvironment
+        // Release builds never talk to an emulator-only host, whatever an
+        // old preference says.
+        if (!isDebugBuild && environment == ApiEnvironment.LOCAL) {
+            environment = ApiEnvironment.PRODUCTION
+        }
     }
 
     fun setEnvironment(env: ApiEnvironment) {

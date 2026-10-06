@@ -1,6 +1,15 @@
 package com.fitnesslink.fit.ui.navigation
 
+import android.net.Uri
+
 sealed class AppRoute(val route: String) {
+    // Bottom-tab roots (see AppRouter.TAB_ROUTES)
+    data object Home : AppRoute("home")
+    data object Catalog : AppRoute("catalog")
+    data object Calendar : AppRoute("calendar")
+    data object Nutrition : AppRoute("nutrition")
+    data object Profile : AppRoute("profile")
+
     data object Login : AppRoute("login")
     data object SignUp : AppRoute("signUp")
     data object Personalization : AppRoute("personalization")
@@ -8,22 +17,39 @@ sealed class AppRoute(val route: String) {
     data class ProgramDetail(val programId: String) : AppRoute("programDetail/{programId}") {
         companion object {
             const val ROUTE = "programDetail/{programId}"
+            fun createRoute(programId: String) = "programDetail/$programId"
         }
     }
     data object Workouts : AppRoute("workouts")
     data class WorkoutDetail(val workoutId: String) : AppRoute("workoutDetail/{workoutId}") {
         companion object {
             const val ROUTE = "workoutDetail/{workoutId}"
+            fun createRoute(workoutId: String) = "workoutDetail/$workoutId"
         }
     }
+    /**
+     * Movement library + detail. Not built on Android yet (Wave 1.9); the
+     * routes exist so deep links and the router have a stable target name.
+     */
+    data object Movements : AppRoute("movements")
+    data class MovementDetail(val movementId: String) : AppRoute("movementDetail/{movementId}") {
+        companion object {
+            const val ROUTE = "movementDetail/{movementId}"
+            fun createRoute(movementId: String) = "movementDetail/$movementId"
+        }
+    }
+    data object MealPlan : AppRoute("mealPlan")
+    data object GroceryList : AppRoute("groceryList")
     data class PlaylistSession(val workoutId: String) : AppRoute("playlistSession/{workoutId}") {
         companion object {
             const val ROUTE = "playlistSession/{workoutId}"
+            fun createRoute(workoutId: String) = "playlistSession/$workoutId"
         }
     }
     data class InteractiveSession(val workoutId: String) : AppRoute("interactiveSession/{workoutId}") {
         companion object {
             const val ROUTE = "interactiveSession/{workoutId}"
+            fun createRoute(workoutId: String) = "interactiveSession/$workoutId"
         }
     }
     data object PersonalInfo : AppRoute("personalInfo")
@@ -96,6 +122,19 @@ sealed class AppRoute(val route: String) {
         }
     }
     data object WorkoutEditorNew : AppRoute("workoutEditor")
+    /**
+     * New-workout editor that should immediately open the AI generation
+     * sheet with the prompt pre-seeded (FTNSSLNK-357: Get Started's "Build
+     * with AI", seeded from the questionnaire answers). The seed rides as an
+     * optional query arg; the editor consumes it once Wave 1.8 lands.
+     */
+    data class WorkoutEditorGenerate(val seedPrompt: String) : AppRoute("workoutEditorGenerate?seedPrompt={seedPrompt}") {
+        companion object {
+            const val ROUTE = "workoutEditorGenerate?seedPrompt={seedPrompt}"
+            const val ARG_SEED_PROMPT = "seedPrompt"
+            fun createRoute(seedPrompt: String) = "workoutEditorGenerate?seedPrompt=${Uri.encode(seedPrompt)}"
+        }
+    }
     data class WorkoutEditor(val workoutId: String) : AppRoute("workoutEditor/{workoutId}") {
         companion object {
             const val ROUTE = "workoutEditor/{workoutId}"

@@ -43,6 +43,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.fitnesslink.fit.model.BarcodeProduct
+import com.fitnesslink.fit.network.dto.toBarcodeProduct
 import com.fitnesslink.fit.model.FoodEntry
 import com.fitnesslink.fit.model.MealType
 import com.fitnesslink.fit.network.ApiClient
@@ -88,9 +89,9 @@ fun BarcodeScannerScreen(
         scope.launch {
             try {
                 // Try server API first
-                val product = if (NetworkMonitor.isConnected.value) {
+                val product: BarcodeProduct? = if (NetworkMonitor.isConnected.value) {
                     try {
-                        ApiClient.nutritionApi.lookupBarcode(barcode)
+                        ApiClient.nutritionApi.lookupBarcode(barcode).toBarcodeProduct(barcode)
                     } catch (_: Exception) {
                         null
                     }

@@ -33,9 +33,17 @@ sealed class MediaRef {
             is ProgressPhoto -> "ProgressPhoto"
         }
 
-    /** File extension hint used by the local prefetch cache. */
+    /**
+     * File extension for the single-file prefetch cache (thumbnails / images).
+     * Movement videos are NOT cached through this path — `MediaCacheStore`
+     * keeps them under their own playback-id-stamped names
+     * (`movement-video-mp4/{entityId}.{playbackId}.mp4`) — so a
+     * `MovementVideo` ref never reaches it.
+     */
     val fileExtensionHint: String
-        get() = if (this is MovementVideo) "mp4" else "img"
+        get() = "img"
+
+    val isVideo: Boolean get() = this is MovementVideo
 
     companion object {
         fun fromWire(type: String, id: String): MediaRef? = when (type) {

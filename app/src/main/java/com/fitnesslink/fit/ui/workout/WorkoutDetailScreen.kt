@@ -52,6 +52,7 @@ import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.components.TimeInfoView
 import com.fitnesslink.fit.ui.components.TrainingLevelInfoView
 import com.fitnesslink.fit.model.FitnessContent
+import com.fitnesslink.fit.network.dto.toCreateRequest
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.persistence.DatabaseManager
@@ -97,7 +98,7 @@ fun WorkoutDetailScreen(
                         DatabaseManager.insertCalendarContent(entry)
                         scope.launch {
                             if (NetworkMonitor.isConnected.value) {
-                                try { ApiClient.calendarApi.create(entry) } catch (_: Exception) {}
+                                try { ApiClient.calendarApi.create(entry.toCreateRequest()) } catch (_: Exception) {}
                             }
                         }
                     }

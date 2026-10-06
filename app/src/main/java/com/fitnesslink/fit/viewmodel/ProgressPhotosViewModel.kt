@@ -9,6 +9,7 @@ import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.*
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
+import com.fitnesslink.fit.network.dto.toProgressPhotoEntries
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import java.util.Date
@@ -27,7 +28,7 @@ class ProgressPhotosViewModel : ViewModel() {
         if (!NetworkMonitor.isConnected.value) return
         try {
             val remote = ApiClient.bodyTrackingApi.getProgressPhotos()
-            entries = remote.sortedByDescending { it.date }
+            entries = remote.toProgressPhotoEntries()
         } catch (_: Exception) { /* use cached */ }
     }
 

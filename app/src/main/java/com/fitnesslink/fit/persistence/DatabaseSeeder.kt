@@ -4,31 +4,38 @@ import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.TaskRow
 import java.util.UUID
 
+/**
+ * Mock-data seeding. Like iOS, nothing is seeded by default — every table
+ * is filled from the server so gaps in server-driven functionality surface
+ * as empty states instead of fake content. [seedForDemo] keeps the old demo
+ * fixtures available for a debug "mock data" switch.
+ */
 object DatabaseSeeder {
-    fun seedIfNeeded() {
-        // Profile menu is upserted on every launch so newly added entries
-        // (e.g. Achievements) appear without re-seeding the whole DB.
+    /** Intentionally a no-op (iOS parity): user tables are server-driven. */
+    fun seedIfNeeded() { }
+
+    /**
+     * Demo fixtures: a local user, dashboards, programs / workouts, food,
+     * meal slots, barcode products, personalizations, calendar, sessions,
+     * movements and notifications. Only call from a debug mock-data toggle.
+     */
+    fun seedForDemo() {
         MockDataProvider.profileMenuItems.forEach { DatabaseManager.insertProfileMenu(it) }
 
         if (DatabaseManager.user() != null) return
 
-        // User
         DatabaseManager.insertFullUser(
             "user1", "Fitness", "User", "user@fitnesslink.com",
             "+1 (555) 123-4567", "fitnessuser", "United States"
         )
 
-        // Dashboards
         MockDataProvider.dashboards.forEach { DatabaseManager.insertDashboard(it) }
 
-        // Programs
         MockDataProvider.programs.forEach {
-            val detail = MockDataProvider.programDetail(it.id)
-            DatabaseManager.insertProgram(detail)
+            DatabaseManager.insertProgram(MockDataProvider.programDetail(it.id))
         }
 
-        // Workouts - assign unique UUIDs to phases/tasks since
-        // workoutDetail() reuses the same IDs across workouts
+        // Assign unique ids to phases / tasks since workoutDetail() reuses them across workouts.
         MockDataProvider.workouts.forEach {
             val detail = MockDataProvider.workoutDetail(it.id)
             val uniqueDetail = detail.copy(
@@ -36,10 +43,10 @@ object DatabaseSeeder {
                     phase.copy(
                         id = UUID.randomUUID().toString(),
                         taskRows = phase.taskRows.map { row ->
-                            val task = row.task?.copy(id = UUID.randomUUID().toString())
-                            TaskRow(task = task, advanced = row.advanced, rounds = row.rounds,
-                                totalRounds = row.totalRounds, isSuperset = row.isSuperset,
-                                isCircuit = row.isCircuit, advancedTasks = row.advancedTasks)
+                            TaskRow(task = row.task?.copy(id = UUID.randomUUID().toString()), advanced = row.advanced,
+                                rounds = row.rounds, totalRounds = row.totalRounds, isSuperset = row.isSuperset,
+                                isCircuit = row.isCircuit, isInterval = row.isInterval, intervalMode = row.intervalMode,
+                                advancedTasks = row.advancedTasks)
                         }
                     )
                 }
@@ -47,29 +54,14 @@ object DatabaseSeeder {
             DatabaseManager.insertWorkout(uniqueDetail)
         }
 
-        // Food Entries (today + historical)
         MockDataProvider.todayFoodEntries.forEach { DatabaseManager.insertFoodEntry(it) }
         MockDataProvider.historicalFoodEntries.forEach { DatabaseManager.insertFoodEntry(it) }
-
-        // Nutrition Goal
         DatabaseManager.insertNutritionGoal(MockDataProvider.nutritionGoal)
-
-        // Meal Slots
         MockDataProvider.weeklyMealSlots.forEach { DatabaseManager.insertMealSlot(it) }
-
-        // Barcode Products
         MockDataProvider.mockBarcodeProducts.values.forEach { DatabaseManager.insertBarcodeProduct(it) }
-
-        // Personalizations
         MockDataProvider.personalizations.forEach { DatabaseManager.insertPersonalization(it) }
-
-        // Calendar Content
         MockDataProvider.calendarContent.forEach { DatabaseManager.insertCalendarContent(it) }
 
-        // Profile Menus
-        MockDataProvider.profileMenuItems.forEach { DatabaseManager.insertProfileMenu(it) }
-
-        // Workout Sessions (for Report)
         val now = System.currentTimeMillis()
         val dayMs = 86400000L
         MockDataProvider.mockSessions.forEach { s ->
@@ -83,16 +75,13 @@ object DatabaseSeeder {
         }
         MockDataProvider.mockSessionHistory.forEach { h ->
             DatabaseManager.insertSessionHistory(
-                java.util.UUID.randomUUID().toString(), h.sessionId,
-                java.util.UUID.randomUUID().toString(), h.workoutId, null, "user1",
+                UUID.randomUUID().toString(), h.sessionId,
+                UUID.randomUUID().toString(), h.workoutId, null, "user1",
                 now - h.daysAgo * dayMs, h.reps, h.setNumber, null, h.weightLifted, h.taskName
             )
         }
 
-        // Movements (exercise library with muscle group & equipment)
         seedMovementLibrary()
-
-        // Notifications
         seedNotifications(now, dayMs)
     }
 
@@ -132,9 +121,7 @@ object DatabaseSeeder {
             M("Band Pull-Apart", "Upper back activation", "Back", "Band")
         )
         library.forEach { m ->
-            DatabaseManager.insertMovementFull(
-                UUID.randomUUID().toString(), m.name, m.desc, m.muscle, m.equip
-            )
+            DatabaseManager.insertMovementFull(UUID.randomUUID().toString(), m.name, m.desc, m.muscle, m.equip)
         }
     }
 
@@ -155,21 +142,16 @@ object DatabaseSeeder {
         val deepLinks = listOf(null, "workoutReport", "programs", "workouts", "nutritionReport",
             null, null, null, "workoutReport", "nutritionReport")
         val timeOffsets = listOf(
-            2 * hourMs, 5 * hourMs,                     // Today
-            dayMs + 3 * hourMs, dayMs + 8 * hourMs,     // Yesterday
-            2 * dayMs, 3 * dayMs, 4 * dayMs,            // Earlier
+            2 * hourMs, 5 * hourMs,
+            dayMs + 3 * hourMs, dayMs + 8 * hourMs,
+            2 * dayMs, 3 * dayMs, 4 * dayMs,
             5 * dayMs, 6 * dayMs, 7 * dayMs
         )
 
         notifications.forEachIndexed { i, (type, title, body) ->
             DatabaseManager.insertNotification(
-                id = UUID.randomUUID().toString(),
-                type = type,
-                title = title,
-                body = body,
-                isRead = i >= 4,
-                createdAt = now - timeOffsets[i],
-                deepLink = deepLinks[i]
+                id = UUID.randomUUID().toString(), type = type, title = title, body = body,
+                isRead = i >= 4, createdAt = now - timeOffsets[i], deepLink = deepLinks[i]
             )
         }
     }

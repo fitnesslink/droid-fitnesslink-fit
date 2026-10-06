@@ -1,12 +1,15 @@
 package com.fitnesslink.fit.network.api
 
-import com.fitnesslink.fit.model.MeasurementEntry
-import com.fitnesslink.fit.model.ProgressPhotoEntry
 import com.fitnesslink.fit.model.WeightEntry
+import com.fitnesslink.fit.network.dto.BodyMeasurementDto
+import com.fitnesslink.fit.network.dto.CreateMeasurementRequest
+import com.fitnesslink.fit.network.dto.CreateProgressPhotoRequest
+import com.fitnesslink.fit.network.dto.ProgressPhotoDto
 import retrofit2.http.*
 
+/** Mirrors iOS `BodyTrackingService`. */
 interface BodyTrackingApi {
-    // Weight
+    // Weight — the model is the wire shape on both platforms.
     @GET("weight/me")
     suspend fun getWeightEntries(
         @Query("since") since: String? = null,
@@ -22,19 +25,26 @@ interface BodyTrackingApi {
     @DELETE("weight/{id}")
     suspend fun deleteWeightEntry(@Path("id") id: String)
 
-    // Measurements
+    // Measurements — ONE server row per (anatomy, value). A multi-part
+    // entry fans out N POSTs; reads group rows by `logDate` day.
     @GET("measurements/me")
-    suspend fun getMeasurements(): List<MeasurementEntry>
+    suspend fun getMeasurements(): List<BodyMeasurementDto>
 
+    /** 204. */
     @POST("measurements")
-    suspend fun addMeasurement(@Body entry: MeasurementEntry): MeasurementEntry
+    suspend fun addMeasurement(@Body request: CreateMeasurementRequest)
 
     @DELETE("measurements/{id}")
     suspend fun deleteMeasurement(@Path("id") id: String)
 
-    // Progress Photos
+    // Progress photos — one image per row; upload bytes to `POST /media`
+    // first (MediaApi), then create the row with the returned media id.
     @GET("progress-photos/me")
-    suspend fun getProgressPhotos(): List<ProgressPhotoEntry>
+    suspend fun getProgressPhotos(): List<ProgressPhotoDto>
+
+    /** Returns the new row id as a bare JSON string. */
+    @POST("progress-photos")
+    suspend fun createProgressPhoto(@Body request: CreateProgressPhotoRequest): String
 
     @DELETE("progress-photos/{id}")
     suspend fun deleteProgressPhoto(@Path("id") id: String)

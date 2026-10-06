@@ -34,6 +34,12 @@ enum class CoachingTone(val displayName: String) {
     DataNerd("Data Nerd")
 }
 
+/**
+ * Server `AchievementType` names (core CoreEnums.cs) plus the habit-side
+ * types. Gson tolerates unknown values: an unfamiliar server string decodes
+ * to null (see [Adapter]) instead of failing the whole achievements fetch.
+ */
+@com.google.gson.annotations.JsonAdapter(AchievementType.Adapter::class)
 enum class AchievementType(val title: String, val description: String) {
     FirstStep("First Step", "Complete your first habit"),
     WeekOne("Week One!", "7-day streak achieved"),
@@ -42,7 +48,31 @@ enum class AchievementType(val title: String, val description: String) {
     CenturyClub("Century Club", "100-day streak"),
     FullCircle("Full Circle", "Complete a goal start to finish"),
     DataDriven("Data Driven", "Log food, workout, and sleep in one day"),
-    ConsistencyRoyalty("Consistency Royalty", "90%+ completion rate for 30 days")
+    ConsistencyRoyalty("Consistency Royalty", "90%+ completion rate for 30 days"),
+    // Server-side values the workout summary unlocks (FTNSSLNK-413).
+    FirstWorkout("First Workout", "Complete your first workout"),
+    ConsistencyKing("Consistency King", "Train consistently week after week"),
+    StreakMaster("Streak Master", "Keep a multi-day training streak"),
+    PersonalRecord("Personal Record", "Set a new personal record"),
+    GoalCrusher("Goal Crusher", "Crush a goal you set"),
+    EarlyBird("Early Bird", "Train before the day starts"),
+    Centurion("Centurion", "100 workouts completed");
+
+    companion object {
+        fun fromWire(raw: String?): AchievementType? =
+            raw?.let { r -> entries.firstOrNull { it.name.equals(r, ignoreCase = true) } }
+    }
+
+    class Adapter : com.google.gson.TypeAdapter<AchievementType>() {
+        override fun write(out: com.google.gson.stream.JsonWriter, value: AchievementType?) {
+            if (value == null) out.nullValue() else out.value(value.name)
+        }
+
+        override fun read(reader: com.google.gson.stream.JsonReader): AchievementType? {
+            if (reader.peek() == com.google.gson.stream.JsonToken.NULL) { reader.nextNull(); return null }
+            return fromWire(reader.nextString())
+        }
+    }
 }
 
 // MARK: - Data classes
@@ -114,12 +144,45 @@ data class Milestone(
     val achievedAt: Long? = null
 )
 
+@com.google.gson.annotations.JsonAdapter(Achievement.Adapter::class)
 data class Achievement(
     val id: String = UUID.randomUUID().toString(),
     val userId: String = "",
-    val achievementType: AchievementType = AchievementType.FirstStep,
+    /** Null when the server sent a type this build doesn't know. */
+    val achievementType: AchievementType? = AchievementType.FirstStep,
     val title: String = "",
-    val earnedAt: Long = System.currentTimeMillis()
+    val description: String = "",
+    val iconName: String = "",
+    val earnedAt: Long = System.currentTimeMillis(),
+    val sharedToFeed: Boolean = false
+) {
+    /** The server sends `earnedAt` as an ISO string; the local model keeps millis. */
+    class Adapter : TolerantAdapterFactory<Achievement>(Achievement::class.java) {
+        override fun preprocess(raw: com.google.gson.JsonObject) {
+            val e = raw.get("earnedAt") ?: return
+            if (e.isJsonPrimitive && e.asJsonPrimitive.isString) {
+                val millis = ModelGson.LenientDateAdapter().parse(e.asString)?.time
+                if (millis == null) raw.remove("earnedAt") else raw.addProperty("earnedAt", millis)
+            }
+        }
+
+        override fun postwrite(tree: com.google.gson.JsonObject) {
+            val e = tree.get("earnedAt") ?: return
+            if (e.isJsonPrimitive && e.asJsonPrimitive.isNumber) {
+                tree.addProperty("earnedAt", FitnessContent.formatIsoDate(e.asLong))
+            }
+        }
+    }
+}
+
+/** An achievement definition from `GET /achievements`: the id is what `POST /achievements` unlocks. */
+data class AchievementDefinition(
+    val id: String = "",
+    val name: String = "",
+    val description: String? = null,
+    val iconUrl: String? = null,
+    val category: String = "",
+    val achievementType: String = ""
 )
 
 data class GoalNotificationPreference(
@@ -127,12 +190,22 @@ data class GoalNotificationPreference(
     val userId: String = "",
     var coachingTone: CoachingTone = CoachingTone.EncouragingCoach,
     var maxDailyNotifications: Int = 5,
+    /** "HH:mm" local quiet-hours window; null = none. */
+    var quietHoursStart: String? = null,
+    var quietHoursEnd: String? = null,
     var enableHabitReminders: Boolean = true,
     var enableStreakAlerts: Boolean = true,
     var enableMilestones: Boolean = true,
     var enableAiCoaching: Boolean = true,
     var enableReengagement: Boolean = true,
-    var enableGoalCheckIns: Boolean = true
+    var enableGoalCheckIns: Boolean = true,
+    // FTNSSLNK-233: per-category inbox toggles gating whole producers
+    // (System / Goals / Content / Calendar) server-side. Missing on older
+    // backends → default true, matching the server.
+    var enableSystem: Boolean = true,
+    var enableGoals: Boolean = true,
+    var enableContent: Boolean = true,
+    var enableCalendar: Boolean = true
 )
 
 data class GoalSummary(

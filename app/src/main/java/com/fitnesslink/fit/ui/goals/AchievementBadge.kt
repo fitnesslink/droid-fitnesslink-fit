@@ -82,4 +82,11 @@ val AchievementType.iconVector: ImageVector
         AchievementType.FullCircle -> Icons.Filled.CheckCircle
         AchievementType.DataDriven -> Icons.Filled.BarChart
         AchievementType.ConsistencyRoyalty -> Icons.Filled.WorkspacePremium
+        AchievementType.FirstWorkout -> Icons.Filled.Star
+        AchievementType.ConsistencyKing -> Icons.Filled.WorkspacePremium
+        AchievementType.StreakMaster -> Icons.Filled.LocalFireDepartment
+        AchievementType.PersonalRecord -> Icons.Filled.MilitaryTech
+        AchievementType.GoalCrusher -> Icons.Filled.CheckCircle
+        AchievementType.EarlyBird -> Icons.Filled.Star
+        AchievementType.Centurion -> Icons.Filled.MilitaryTech
     }

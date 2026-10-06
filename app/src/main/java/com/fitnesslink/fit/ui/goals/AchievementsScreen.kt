@@ -46,7 +46,7 @@ fun AchievementsScreen(
     LaunchedEffect(Unit) { viewModel.loadData() }
 
     var selected by remember { mutableStateOf<AchievementSelection?>(null) }
-    val earned = viewModel.earnedAchievements
+    val earned = viewModel.earnedAchievements.filter { it.achievementType != null }
     val locked = viewModel.lockedTypes
 
     Column(
@@ -85,12 +85,13 @@ fun AchievementsScreen(
                     SectionHeader(text = "Earned", color = TextPrimaryColor)
                 }
                 items(earned, key = { it.id }) { achievement ->
+                    val earnedType = achievement.achievementType ?: return@items
                     AchievementBadge(
-                        type = achievement.achievementType,
+                        type = earnedType,
                         isEarned = true,
                         onClick = {
                             selected = AchievementSelection(
-                                type = achievement.achievementType,
+                                type = earnedType,
                                 isEarned = true,
                                 earnedAt = Date(achievement.earnedAt)
                             )

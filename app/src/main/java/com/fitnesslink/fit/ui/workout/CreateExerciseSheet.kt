@@ -138,8 +138,6 @@ fun CreateExerciseSheet(
                         )
                         onCreated(MovementLibraryItem(
                             id = id, name = name, description = finalDescription,
-                            muscleGroup = selectedMuscle.label,
-                            equipment = selectedEquipment.label,
                             isFavorite = false
                         ))
                     },
