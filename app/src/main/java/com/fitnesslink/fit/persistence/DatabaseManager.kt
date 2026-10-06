@@ -49,6 +49,9 @@ object DatabaseManager {
 
     private fun db(): SQLiteDatabase = database
 
+    /** Raw handle for domain DAO extension files under persistence (the Dao.kt files). Prefer the typed helpers. */
+    internal fun rawDatabase(): SQLiteDatabase = database
+
     private val gson get() = ModelGson.instance
 
     // MARK: - Schema

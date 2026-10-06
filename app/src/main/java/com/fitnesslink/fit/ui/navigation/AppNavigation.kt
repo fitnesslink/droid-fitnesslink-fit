@@ -707,6 +707,8 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                     onBack = { navController.popBackStack() }
                 )
             }
+            // Feature modules register their own routes here (ui/navigation/*Routes.kt).
+            featureRoutes(navController)
         }
     }
 }

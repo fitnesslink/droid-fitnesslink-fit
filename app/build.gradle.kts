@@ -96,4 +96,5 @@ dependencies {
     implementation(libs.firebase.messaging.ktx)
 
     debugImplementation(libs.androidx.ui.tooling)
+    testImplementation(libs.junit)
 }
