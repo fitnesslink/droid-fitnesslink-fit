@@ -5,6 +5,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -51,5 +54,24 @@ fun ExercisesInfoView(count: Int, modifier: Modifier = Modifier) {
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(text = "$count exercises", fontSize = 13.sp, color = TextSecondaryColor)
+    }
+}
+
+/**
+ * Location line for workout/program detail (iOS `LocationInfoView`): a pin
+ * glyph + the location name in secondary text. Renders nothing when blank.
+ */
+@Composable
+fun LocationInfoView(location: String, modifier: Modifier = Modifier) {
+    if (location.isBlank()) return
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = Icons.Default.Place,
+            contentDescription = "Location",
+            tint = TextSecondaryColor,
+            modifier = Modifier.size(14.dp)
+        )
+        Spacer(modifier = Modifier.width(6.dp))
+        Text(text = location, fontSize = 13.sp, color = TextSecondaryColor)
     }
 }

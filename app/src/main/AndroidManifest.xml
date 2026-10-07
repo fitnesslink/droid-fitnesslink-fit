@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
     <!-- FTNSSLNK-260: push notifications (runtime-requested on Android 13+). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 

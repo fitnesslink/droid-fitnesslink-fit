@@ -13,8 +13,11 @@ import androidx.navigation.NavHostController
  * `composable(...)` is removed from `AppNavigation.kt` at integration time.
  */
 fun NavGraphBuilder.featureRoutes(navController: NavHostController) {
-    // sessionRoutes(navController)
-    // workoutRoutes(navController)
-    // movementRoutes(navController)
-    // reportRoutes(navController)
+    sessionRoutes(navController)
+    workoutRoutes(navController)
+    movementRoutes(navController)
+    reportRoutes(navController)
+    calendarRoutes(navController)
+    catalogRoutes(navController)
+    programRoutes(navController)
 }

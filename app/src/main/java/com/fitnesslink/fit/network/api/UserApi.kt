@@ -2,6 +2,7 @@ package com.fitnesslink.fit.network.api
 
 import com.fitnesslink.fit.model.api.FLUser
 import com.fitnesslink.fit.model.api.UserPreference
+import com.fitnesslink.fit.model.api.UserSummary
 import com.fitnesslink.fit.network.dto.CreateUserBody
 import com.fitnesslink.fit.network.dto.PasswordResetRequest
 import com.fitnesslink.fit.network.dto.UsernameAvailability
@@ -38,6 +39,10 @@ interface UserApi {
     /** FTNSSLNK-438: branded password-reset email. 202 whether or not the account exists. */
     @POST("auth/password-reset")
     suspend fun requestPasswordReset(@Body request: PasswordResetRequest)
+
+    /** Mirrors iOS `UserService.search` — live user lookup for the share sheet. */
+    @GET("users/search")
+    suspend fun searchUsers(@Query("q") q: String, @Query("limit") limit: Int = 20): List<UserSummary>
 
     /** FTNSSLNK-285: anonymous handle check used by the signup form. */
     @GET("users/username-available")

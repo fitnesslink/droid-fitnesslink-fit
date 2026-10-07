@@ -375,9 +375,12 @@ object DatabaseManager {
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_movement_anatomy_anatomy ON movement_anatomy(anatomyId)")
         db.execSQL("CREATE INDEX IF NOT EXISTS idx_movement_equipment_equipment ON movement_equipment(equipmentId)")
         db.execSQL("""CREATE TABLE IF NOT EXISTS anatomy (
-            id TEXT PRIMARY KEY, name TEXT NOT NULL, sortOrder INTEGER)""")
+            id TEXT PRIMARY KEY, name TEXT NOT NULL, sortOrder INTEGER, isPrimary INTEGER, category TEXT)""")
         db.execSQL("""CREATE TABLE IF NOT EXISTS equipment (
-            id TEXT PRIMARY KEY, name TEXT NOT NULL)""")
+            id TEXT PRIMARY KEY, name TEXT NOT NULL, sortOrder INTEGER, isPrimary INTEGER, category TEXT)""")
+        // Dev DBs created earlier at v11 lack the taxonomy flag columns.
+        listOf("isPrimary INTEGER", "category TEXT").forEach { addColumn(db, "anatomy", it) }
+        listOf("sortOrder INTEGER", "isPrimary INTEGER", "category TEXT").forEach { addColumn(db, "equipment", it) }
 
         // calendar_content
         listOf(
@@ -2003,22 +2006,28 @@ object DatabaseManager {
         }
     }
 
-    fun allAnatomy(): List<Anatomy> = db().rawQuery("SELECT id, name, sortOrder FROM anatomy ORDER BY CASE WHEN sortOrder IS NULL THEN 1 ELSE 0 END, sortOrder, name", null).use { c ->
-        buildList { while (c.moveToNext()) { uuidOrNull(c.str(0))?.let { add(Anatomy(it, c.str(1), c.intOrNull(2))) } } }
+    fun allAnatomy(): List<Anatomy> = db().rawQuery("SELECT id, name, sortOrder, isPrimary, category FROM anatomy ORDER BY CASE WHEN sortOrder IS NULL THEN 1 ELSE 0 END, sortOrder, name", null).use { c ->
+        buildList { while (c.moveToNext()) { uuidOrNull(c.str(0))?.let { add(Anatomy(it, c.str(1), c.intOrNull(2), isPrimary = c.intOrNull(3)?.let { v -> v != 0 }, category = if (c.isNull(4)) null else c.str(4))) } } }
     }
 
-    fun allEquipment(): List<Equipment> = db().rawQuery("SELECT id, name FROM equipment ORDER BY name", null).use { c ->
-        buildList { while (c.moveToNext()) { uuidOrNull(c.str(0))?.let { add(Equipment(it, c.str(1))) } } }
+    fun allEquipment(): List<Equipment> = db().rawQuery("SELECT id, name, sortOrder, isPrimary, category FROM equipment ORDER BY CASE WHEN sortOrder IS NULL THEN 1 ELSE 0 END, sortOrder, name", null).use { c ->
+        buildList { while (c.moveToNext()) { uuidOrNull(c.str(0))?.let { add(Equipment(it, c.str(1), c.intOrNull(2), isPrimary = c.intOrNull(3)?.let { v -> v != 0 }, category = if (c.isNull(4)) null else c.str(4))) } } }
     }
 
     fun replaceAnatomy(rows: List<Anatomy>) = transaction {
         db().delete("anatomy", null, null)
-        rows.forEach { db().insert("anatomy", null, ContentValues().apply { put("id", lc(it.id.toString())); put("name", it.name); putOpt("sortOrder", it.sortOrder) }) }
+        rows.forEach { db().insert("anatomy", null, ContentValues().apply {
+            put("id", lc(it.id.toString())); put("name", it.name); putOpt("sortOrder", it.sortOrder)
+            putOpt("isPrimary", it.isPrimary?.let { b -> if (b) 1 else 0 }); putOpt("category", it.category)
+        }) }
     }
 
     fun replaceEquipment(rows: List<Equipment>) = transaction {
         db().delete("equipment", null, null)
-        rows.forEach { db().insert("equipment", null, ContentValues().apply { put("id", lc(it.id.toString())); put("name", it.name) }) }
+        rows.forEach { db().insert("equipment", null, ContentValues().apply {
+            put("id", lc(it.id.toString())); put("name", it.name); putOpt("sortOrder", it.sortOrder)
+            putOpt("isPrimary", it.isPrimary?.let { b -> if (b) 1 else 0 }); putOpt("category", it.category)
+        }) }
     }
 
     // MARK: - Workout phases catalog

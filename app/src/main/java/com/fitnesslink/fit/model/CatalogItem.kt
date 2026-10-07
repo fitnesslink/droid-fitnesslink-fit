@@ -27,6 +27,20 @@ data class CatalogItem(
 
     val isSharedWithMe: Boolean get() = sharedByUserId != null
 
+    /** "Workout" / "Program" / "Movement" — the My Content kind badge text. */
+    val kindLabel: String
+        get() = when (kind) {
+            Kind.WORKOUT -> "Workout"
+            Kind.PROGRAM -> "Program"
+            Kind.MOVEMENT -> "Movement"
+        }
+
+    /**
+     * The media ASSET id to render — `thumbnailId ?: imageId` (iOS
+     * `CatalogItemView.catalogRef`). Never the entity id.
+     */
+    val mediaAssetId: String? get() = thumbnailId ?: imageId
+
     /** Localized creation date for display, or null so the view can omit the label. */
     val formattedCreatedAt: String?
         get() = createdAt?.let { DateFormat.getDateInstance(DateFormat.MEDIUM).format(it) }

@@ -226,13 +226,79 @@ data class HabitTodayItem(
     val habitType: HabitType = HabitType.ActionBased,
     val tier: HabitTier = HabitTier.Seedling,
     var isCompletedToday: Boolean = false,
-    val streak: Streak = Streak()
+    val streak: Streak = Streak(),
+    // iOS `HabitTodayItem` fields the Home checklist renders (HabitCard).
+    val anchorBehavior: String? = null,
+    val targetValue: Double? = null,
+    val targetUnit: String? = null,
+    /** Live sensor reading for `PassiveSensor` habits; null when no provider is wired. */
+    val currentSensorValue: Double? = null,
+    val goalTitle: String? = null,
+    val sortOrder: Int = 0
 )
 
 data class DailyProgress(
     val completedToday: Int = 0,
     val totalToday: Int = 0,
     val streakAtRisk: Boolean = false
+) {
+    /** 0–100, 0 when there are no habits today (iOS `DailyProgress.completionPercent`). */
+    val completionPercent: Double
+        get() = if (totalToday <= 0) 0.0 else completedToday.toDouble() / totalToday * 100.0
+}
+
+/**
+ * iOS `HomeViewModel.updateDailyProgress`: counts today's completions and
+ * flags "streak at risk" when an unfinished habit carries a streak longer
+ * than a week.
+ */
+fun dailyProgressFor(habits: List<HabitTodayItem>): DailyProgress = DailyProgress(
+    completedToday = habits.count { it.isCompletedToday },
+    totalToday = habits.size,
+    streakAtRisk = habits.any { !it.isCompletedToday && it.streak.currentCount > 7 }
+)
+
+/**
+ * iOS `HomeViewModel.advanceStreak`: roll a habit's streak forward after a
+ * completion at [nowMillis]. A one-day gap extends the count; any larger gap
+ * resets to 1 and rebases `streakStartDate`; the same day returns [prior]
+ * unchanged. `longestCount` only ever grows.
+ */
+fun advanceHabitStreak(prior: Streak, habitId: String, userId: String, nowMillis: Long = System.currentTimeMillis()): Streak {
+    val today = ProgramDates.startOfDay(nowMillis)
+    val keyedHabitId = prior.habitId.ifEmpty { habitId }
+    val keyedUserId = prior.userId.ifEmpty { userId }
+    val priorDate = prior.lastCompletedDate
+    val currentCount: Int
+    var streakStart = prior.streakStartDate
+    if (priorDate != null) {
+        when (ProgramDates.daysBetween(priorDate, today)) {
+            0 -> return prior
+            1 -> currentCount = prior.currentCount + 1
+            else -> { currentCount = 1; streakStart = today }
+        }
+    } else {
+        currentCount = 1
+        streakStart = today
+    }
+    return prior.copy(
+        habitId = keyedHabitId,
+        userId = keyedUserId,
+        currentCount = currentCount,
+        longestCount = maxOf(prior.longestCount, currentCount),
+        lastCompletedDate = nowMillis,
+        streakStartDate = streakStart
+    )
+}
+
+/**
+ * iOS `uncompleteHabit` fallback when no pre-completion snapshot exists:
+ * drop the count by one and clear `lastCompletedDate` so a follow-up tap
+ * doesn't think today already counts. `longestCount` is historical — kept.
+ */
+fun rollBackHabitStreak(streak: Streak): Streak = streak.copy(
+    currentCount = maxOf(0, streak.currentCount - 1),
+    lastCompletedDate = null
 )
 
 data class HabitCalendarDay(

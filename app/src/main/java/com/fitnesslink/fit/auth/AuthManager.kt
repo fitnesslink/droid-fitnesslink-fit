@@ -8,7 +8,10 @@ import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
 import androidx.credentials.exceptions.NoCredentialException
+import com.fitnesslink.fit.classification.ClassificationStore
+import com.fitnesslink.fit.contributors.ContributorStore
 import com.fitnesslink.fit.media.MediaPrefetcher
+import com.fitnesslink.fit.media.MediaURLProvider
 import com.fitnesslink.fit.model.api.FLUser
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.dto.CreateUserBody
@@ -567,6 +570,12 @@ object AuthManager {
                 .onFailure { Log.w(TAG, "initial sync failed: ${it.message}") }
             runCatching { MediaPrefetcher.runNow() }
                 .onFailure { Log.w(TAG, "media prefetch failed: ${it.message}") }
+            runCatching { MediaURLProvider.primeCatalog() }
+                .onFailure { Log.w(TAG, "catalog URL prime failed: ${it.message}") }
+            runCatching { ClassificationStore.refresh(force = true) }
+                .onFailure { Log.w(TAG, "classification refresh failed: ${it.message}") }
+            runCatching { ContributorStore.refresh(force = true) }
+                .onFailure { Log.w(TAG, "contributor refresh failed: ${it.message}") }
         }
     }
 

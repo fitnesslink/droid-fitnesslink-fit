@@ -1,30 +1,101 @@
 package com.fitnesslink.fit.ui.profile
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DirectionsRun
+import androidx.compose.material.icons.filled.FitnessCenter
+import androidx.compose.material.icons.filled.Layers
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitnesslink.fit.model.DistanceUnit
+import com.fitnesslink.fit.model.DistanceValue
 import com.fitnesslink.fit.model.SessionExerciseRow
 import com.fitnesslink.fit.model.SessionRow
+import com.fitnesslink.fit.model.SessionRpeRule
+import com.fitnesslink.fit.model.WeightUnit
+import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.persistence.DatabaseManager
+import com.fitnesslink.fit.persistence.fullSessionRow
+import com.fitnesslink.fit.persistence.sessionSetDistances
+import com.fitnesslink.fit.persistence.sessionSetDurations
+import com.fitnesslink.fit.persistence.sessionSetKey
+import com.fitnesslink.fit.session.SessionRecorder
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.*
-import java.text.SimpleDateFormat
+import com.fitnesslink.fit.ui.profile.charts.ReportMiniStat
+import com.fitnesslink.fit.ui.profile.charts.ReportStatCard
+import com.fitnesslink.fit.ui.profile.charts.formatReportDate
+import com.fitnesslink.fit.ui.profile.charts.formatReportDuration
+import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.BlueTheme
+import com.fitnesslink.fit.ui.theme.FLPrimary
+import com.fitnesslink.fit.ui.theme.MediumGray
+import com.fitnesslink.fit.ui.theme.OrangeTheme
+import com.fitnesslink.fit.ui.theme.PurpleTheme
+import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.White
+import kotlinx.coroutines.launch
+import java.util.Date
 import java.util.Locale
+import kotlin.math.roundToInt
 
+/**
+ * Port of iOS `SessionDetailView`: one saved session. Stats grid, exercise
+ * breakdown grouped by exercise with per-set reps / weight / volume in the
+ * display unit, timed-set windows (FTNSSLNK-326) and logged distances
+ * (FTNSSLNK-409), a toolbar delete with confirmation, and the RPE edit
+ * sheet (FTNSSLNK-411: one change within 24 h of completion).
+ */
 @Composable
 fun SessionDetailScreen(
     sessionId: String,
@@ -32,142 +103,341 @@ fun SessionDetailScreen(
 ) {
     var session by remember { mutableStateOf<SessionRow?>(null) }
     var exercises by remember { mutableStateOf<List<SessionExerciseRow>>(emptyList()) }
-    val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
+    var setDurations by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
+    var setDistances by remember { mutableStateOf<Map<String, DistanceValue>>(emptyMap()) }
+    var showRpeEditor by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var busy by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(sessionId) {
-        session = DatabaseManager.sessionById(sessionId)
+    fun reload() {
+        session = DatabaseManager.fullSessionRow(sessionId)
         exercises = DatabaseManager.sessionExercises(sessionId)
+        setDurations = DatabaseManager.sessionSetDurations(sessionId)
+        setDistances = DatabaseManager.sessionSetDistances(sessionId)
     }
+
+    LaunchedEffect(sessionId) { reload() }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundColor)
     ) {
-        HeaderBackView(onBack = onBack)
-
-        val s = session
-        if (s != null) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(top = 10.dp, bottom = 30.dp)
-            ) {
-                // Header
-                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                    Text(s.workoutName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(Icons.Default.CalendarToday, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
-                        Text(dateFormat.format(s.date), fontSize = 14.sp, color = TextSecondaryColor)
-                        if (s.isCompleted) {
-                            Text("Completed", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
-                        } else {
-                            Text("Incomplete", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = OrangeTheme)
-                        }
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Stats grid
-                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        StatCard("Duration", formatDur(s.durationSeconds), Icons.Default.AccessTime, BlueTheme, Modifier.weight(1f))
-                        StatCard("RPE", s.rpeValue?.let { String.format("%.1f", it) } ?: "--", Icons.Default.Speed, PurpleTheme, Modifier.weight(1f))
-                        StatCard("Exercises", "${s.exerciseCount}", Icons.Default.DirectionsRun, FLPrimary, Modifier.weight(1f))
-                    }
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        StatCard("Weight", formatW(s.totalWeightLifted), Icons.Default.FitnessCenter, BlueTheme, Modifier.weight(1f))
-                        val totalVol = exercises.sumOf { it.reps.toDouble() * it.weightLifted }
-                        StatCard("Volume", formatW(totalVol), Icons.Default.BarChart, PurpleTheme, Modifier.weight(1f))
-                        StatCard("Calories", "${s.totalCaloriesBurned.toInt()}", Icons.Default.LocalFireDepartment, OrangeTheme, Modifier.weight(1f))
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                // Exercise breakdown
-                Text("Exercises", fontSize = 18.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 20.dp))
-                Spacer(modifier = Modifier.height(12.dp))
-
-                val grouped = exercises.groupBy { it.taskName }
-                val sortedExercises = grouped.entries.sortedBy { entry ->
-                    entry.value.minOfOrNull { it.logDate } ?: java.util.Date()
-                }
-
-                sortedExercises.forEach { (name, sets) ->
-                    val sortedSets = sets.sortedBy { it.setNumber }
-                    val totalVol = sortedSets.sumOf { it.reps.toDouble() * it.weightLifted }
-
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp, vertical = 4.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(White)
-                            .padding(14.dp)
-                    ) {
-                        Row {
-                            Text(name, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                            if (totalVol > 0) {
-                                Text("${totalVol.toInt()} lbs vol", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PurpleTheme)
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                            Column { Text("${sortedSets.size}", fontSize = 14.sp, fontWeight = FontWeight.Bold); Text("Sets", fontSize = 10.sp, color = TextSecondaryColor) }
-                            val maxW = sortedSets.maxOfOrNull { it.weightLifted } ?: 0.0
-                            if (maxW > 0) { Column { Text("${maxW.toInt()} lbs", fontSize = 14.sp, fontWeight = FontWeight.Bold); Text("Max Weight", fontSize = 10.sp, color = TextSecondaryColor) } }
-                            Column { Text("${sortedSets.sumOf { it.reps }}", fontSize = 14.sp, fontWeight = FontWeight.Bold); Text("Total Reps", fontSize = 10.sp, color = TextSecondaryColor) }
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        HorizontalDivider()
-                        Spacer(modifier = Modifier.height(8.dp))
-                        sortedSets.forEach { set ->
-                            Row(modifier = Modifier.padding(vertical = 2.dp)) {
-                                Text("Set ${set.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.width(50.dp))
-                                Text("${set.reps} reps", fontSize = 13.sp)
-                                Spacer(modifier = Modifier.weight(1f))
-                                if (set.weightLifted > 0) {
-                                    Text("${set.weightLifted.toInt()} lbs", fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                                }
-                            }
-                        }
-                    }
+        Box(modifier = Modifier.fillMaxWidth()) {
+            HeaderBackView(onBack = onBack)
+            if (session != null) {
+                IconButton(
+                    onClick = { showDeleteConfirm = true },
+                    enabled = !busy,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 8.dp)
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete session", tint = TextSecondaryColor)
                 }
             }
-        } else {
+        }
+
+        val s = session
+        if (s == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator(color = FLPrimary)
             }
+            return@Column
+        }
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(top = 10.dp, bottom = 30.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Header
+            Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(s.workoutName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(13.dp))
+                    Text(formatReportDate(s.displayDate), fontSize = 14.sp, color = TextSecondaryColor)
+                    if (s.isCompleted) {
+                        Icon(Icons.Default.CheckCircle, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(12.dp))
+                        Text(s.statusLabel, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
+                    } else {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = OrangeTheme, modifier = Modifier.size(12.dp))
+                        Text("Incomplete", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = OrangeTheme)
+                    }
+                }
+            }
+
+            StatsGrid(
+                session = s,
+                exercises = exercises,
+                onEditRpe = { showRpeEditor = true }
+            )
+
+            ExerciseBreakdown(exercises, setDurations, setDistances)
+        }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete this session?") },
+            text = { Text("This removes the workout and its logged sets from your history and reports. This can't be undone.") },
+            confirmButton = {
+                TextButton(
+                    enabled = !busy,
+                    onClick = {
+                        showDeleteConfirm = false
+                        busy = true
+                        scope.launch {
+                            try {
+                                SessionRecorder.delete(sessionId)
+                            } catch (_: Exception) {
+                                // Local row is gone either way; the queue retries the server call.
+                            } finally {
+                                busy = false
+                            }
+                            onBack()
+                        }
+                    }
+                ) { Text("Delete Session", color = Color(0xFFE53935), fontWeight = FontWeight.SemiBold) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel", color = TextSecondaryColor) }
+            }
+        )
+    }
+
+    val editing = session
+    if (showRpeEditor && editing != null) {
+        SessionRpeEditSheet(
+            session = editing,
+            onDismiss = { showRpeEditor = false },
+            onSave = { value ->
+                showRpeEditor = false
+                busy = true
+                scope.launch {
+                    try {
+                        SessionRecorder.updateRpe(sessionId, value)
+                    } catch (_: Exception) {
+                        // Engine owns the error path; the row reload below shows whatever landed.
+                    } finally {
+                        busy = false
+                    }
+                    reload()
+                }
+            }
+        )
+    }
+}
+
+// MARK: - Stats grid
+
+@Composable
+private fun StatsGrid(session: SessionRow, exercises: List<SessionExerciseRow>, onEditRpe: () -> Unit) {
+    val totalVolume = exercises.sumOf { it.reps.toDouble() * it.weightLifted }
+    // FTNSSLNK-319 — rows written before the totals writer hold 0s; derive from the sets.
+    val totalSets = if (session.totalSets > 0) session.totalSets else exercises.size
+    val totalReps = if (session.totalReps > 0) session.totalReps else exercises.sumOf { it.reps }
+    val canEdit = session.canEditRpe()
+
+    Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ReportStatCard(Icons.Default.AccessTime, formatReportDuration(session.durationSeconds), "Duration", BlueTheme, Modifier.weight(1f))
+            ReportStatCard(
+                Icons.Default.Speed, session.rpeText ?: "--", "RPE", PurpleTheme, Modifier.weight(1f),
+                annotation = if (canEdit) "Tap to edit" else null,
+                onClick = if (canEdit) onEditRpe else null
+            )
+            ReportStatCard(Icons.Default.DirectionsRun, "${session.exerciseCount}", "Exercises", FLPrimary, Modifier.weight(1f))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ReportStatCard(Icons.Default.Layers, "$totalSets", "Sets Completed", OrangeTheme, Modifier.weight(1f))
+            ReportStatCard(Icons.Default.Repeat, "$totalReps", "Reps Completed", BlueTheme, Modifier.weight(1f))
+            ReportStatCard(Icons.Default.FitnessCenter, compactWeight(session.totalWeightLifted), "Weight Lifted", BlueTheme, Modifier.weight(1f))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            ReportStatCard(Icons.Default.BarChart, compactWeight(totalVolume), "Volume", PurpleTheme, Modifier.weight(1f))
+            ReportStatCard(Icons.Default.LocalFireDepartment, "${session.totalCaloriesBurned.toInt()}", "Calories", OrangeTheme, Modifier.weight(1f))
+            Spacer(modifier = Modifier.weight(1f))
+        }
+    }
+}
+
+/** Stored lbs → display unit, k-formatted. */
+private fun compactWeight(lbs: Double): String {
+    val value = WeightUnit.displayValue(lbs)
+    return if (value >= 1000) String.format(Locale.US, "%.1fk", value / 1000) else "${value.roundToInt()}"
+}
+
+// MARK: - Exercise breakdown
+
+private data class GroupedExercise(val name: String, val sets: List<SessionExerciseRow>) {
+    val totalReps: Int get() = sets.sumOf { it.reps }
+    val maxWeight: Double get() = sets.maxOfOrNull { it.weightLifted } ?: 0.0
+    val totalVolume: Double get() = sets.sumOf { it.reps.toDouble() * it.weightLifted }
+}
+
+@Composable
+private fun ExerciseBreakdown(
+    exercises: List<SessionExerciseRow>,
+    setDurations: Map<String, Int>,
+    setDistances: Map<String, DistanceValue>
+) {
+    val grouped = exercises.groupBy { it.taskName }
+        .map { (name, sets) -> GroupedExercise(name, sets.sortedBy { it.setNumber }) }
+        .sortedBy { it.sets.firstOrNull()?.logDate ?: Date(0) }
+
+    Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("Exercises", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        if (grouped.isEmpty()) {
+            Text("No exercise data recorded", fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.padding(top = 8.dp))
+        } else {
+            grouped.forEach { exercise -> ExerciseCard(exercise, setDurations, setDistances) }
         }
     }
 }
 
 @Composable
-private fun StatCard(label: String, value: String, icon: androidx.compose.ui.graphics.vector.ImageVector, color: androidx.compose.ui.graphics.Color, modifier: Modifier) {
+private fun ExerciseCard(
+    exercise: GroupedExercise,
+    setDurations: Map<String, Int>,
+    setDistances: Map<String, DistanceValue>
+) {
+    val unit = WeightUnit.current.label
     Column(
-        modifier = modifier
+        modifier = Modifier
+            .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
             .background(White)
-            .padding(vertical = 14.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+            .padding(14.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(exercise.name.ifBlank { "Exercise" }, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            if (exercise.totalVolume > 0) {
+                Text(
+                    "${WeightUnit.displayWholeNumber(exercise.totalVolume)} $unit vol",
+                    fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PurpleTheme
+                )
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            ReportMiniStat("Sets", "${exercise.sets.size}")
+            if (exercise.maxWeight > 0) ReportMiniStat("Max Weight", WeightUnit.displayString(exercise.maxWeight))
+            ReportMiniStat("Total Reps", "${exercise.totalReps}")
+        }
+        HorizontalDivider(color = MediumGray.copy(alpha = 0.3f))
+        exercise.sets.forEach { set ->
+            val key = sessionSetKey(set.taskName, set.setNumber)
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
+                Text("Set ${set.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.width(50.dp))
+                Text(setMetricText(set, setDurations[key], setDistances[key]), fontSize = 13.sp)
+                Spacer(modifier = Modifier.weight(1f))
+                if (set.weightLifted > 0) {
+                    Text(WeightUnit.displayString(set.weightLifted), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                    Text(" · ", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text(
+                        "${WeightUnit.displayWholeNumber(set.reps * set.weightLifted)} $unit vol",
+                        fontSize = 12.sp, color = TextSecondaryColor
+                    )
+                }
+            }
+        }
     }
 }
 
-private fun formatDur(seconds: Int): String {
-    val h = seconds / 3600
-    val m = (seconds % 3600) / 60
-    return if (h > 0) "${h}h ${m}m" else "${m}m"
+/**
+ * Per-set metric line. Timed sets show the window alongside the reps
+ * completed inside it ("30s · 12 reps"); a timed set with no reps shows
+ * just the window; a logged distance is appended in the user's unit;
+ * rep sets are unchanged.
+ */
+private fun setMetricText(set: SessionExerciseRow, durationSeconds: Int?, distance: DistanceValue?): String {
+    val parts = mutableListOf<String>()
+    if (durationSeconds != null && durationSeconds > 0) {
+        parts += WorkoutTask.humanizeDuration(durationSeconds)
+        if (set.reps > 0) parts += "${set.reps} reps"
+    } else if (distance == null || set.reps > 0) {
+        parts += "${set.reps} reps"
+    }
+    if (distance != null) parts += DistanceUnit.displayInCurrent(distance.value, distance.unit)
+    return parts.joinToString(" · ")
 }
 
-private fun formatW(value: Double): String =
-    if (value >= 1000) String.format("%.1fk", value / 1000) else "${value.toInt()}"
+// MARK: - RPE edit (FTNSSLNK-411)
+
+/**
+ * One-time RPE change for a saved session, offered within 24 h of
+ * completion. Dark surface, 0–10 slider, Cancel / Save.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SessionRpeEditSheet(
+    session: SessionRow,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit
+) {
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var value by remember { mutableIntStateOf(session.rpeValue?.roundToInt()?.let { SessionRpeRule.clamp(it) } ?: 5) }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        containerColor = Color.Black,
+        contentColor = Color.White
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp)
+                .padding(top = 12.dp, bottom = 32.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            Text(session.workoutName, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = Color.White.copy(alpha = 0.85f))
+            Text(SessionRpeRule.PROMPT, fontSize = 14.sp, color = Color.White.copy(alpha = 0.7f))
+            Text("$value", fontSize = 56.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
+            Text(SessionRpeRule.label(value), fontSize = 15.sp, color = Color.White)
+            Slider(
+                value = value.toFloat(),
+                onValueChange = { value = it.roundToInt() },
+                valueRange = SessionRpeRule.range.first.toFloat()..SessionRpeRule.range.last.toFloat(),
+                steps = SessionRpeRule.range.last - SessionRpeRule.range.first - 1,
+                colors = SliderDefaults.colors(
+                    thumbColor = FLPrimary,
+                    activeTrackColor = FLPrimary,
+                    inactiveTrackColor = Color.White.copy(alpha = 0.2f),
+                    activeTickColor = Color.Transparent,
+                    inactiveTickColor = Color.Transparent
+                )
+            )
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text(SessionRpeRule.MIN_ANCHOR, fontSize = 11.sp, color = Color.White.copy(alpha = 0.55f), modifier = Modifier.weight(1f))
+                Text(SessionRpeRule.MAX_ANCHOR, fontSize = 11.sp, color = Color.White.copy(alpha = 0.55f), textAlign = TextAlign.End)
+            }
+            Text(
+                "You can change this rating once, within 24 hours of finishing.",
+                fontSize = 12.sp, color = Color.White.copy(alpha = 0.55f), textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                Button(
+                    onClick = onDismiss,
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    shape = RoundedCornerShape(25.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.12f), contentColor = Color.White)
+                ) { Text("Cancel", fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
+                Button(
+                    onClick = { onSave(value) },
+                    modifier = Modifier.weight(1f).height(50.dp),
+                    shape = RoundedCornerShape(25.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = FLPrimary, contentColor = Color.White)
+                ) { Text("Save", fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
+            }
+        }
+    }
+}

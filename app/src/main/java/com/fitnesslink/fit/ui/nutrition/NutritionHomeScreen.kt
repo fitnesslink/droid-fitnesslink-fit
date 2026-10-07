@@ -51,7 +51,8 @@ fun NutritionHomeScreen(
     onNavigateToNutritionSummary: () -> Unit = {},
     onNavigateToGroceryList: () -> Unit = {},
     onNavigateToGoalSettings: () -> Unit = {},
-    onNavigateToLogWater: () -> Unit = {}
+    onNavigateToLogWater: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     val viewModel: MealPlanViewModel = viewModel()
 
@@ -62,7 +63,7 @@ fun NutritionHomeScreen(
             .fillMaxSize()
             .background(BackgroundColor)
     ) {
-        HeaderView()
+        HeaderView(onNotificationsTap = onNavigateToNotifications)
 
         Column(
             modifier = Modifier

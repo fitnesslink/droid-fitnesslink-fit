@@ -1,6 +1,5 @@
 package com.fitnesslink.fit.ui.session
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,9 +12,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -23,457 +29,341 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fitnesslink.fit.R
 import com.fitnesslink.fit.media.MediaRef
-import com.fitnesslink.fit.model.ExerciseProgress
-import com.fitnesslink.fit.model.WorkoutProgress
+import com.fitnesslink.fit.model.IntervalPhase
+import com.fitnesslink.fit.model.MovementLibraryItem
+import com.fitnesslink.fit.model.RestType
 import com.fitnesslink.fit.model.WorkoutTask
-import com.fitnesslink.fit.ui.components.BackCircleButton
-import com.fitnesslink.fit.ui.components.ContextCircleButton
+import com.fitnesslink.fit.session.AudioCueService
+import com.fitnesslink.fit.session.IntervalRunner
+import com.fitnesslink.fit.session.SessionSettings
+import com.fitnesslink.fit.session.SummaryRPEMode
 import com.fitnesslink.fit.ui.components.FLImageView
-import com.fitnesslink.fit.ui.components.PauseButtonView
-import com.fitnesslink.fit.ui.components.PlayButtonView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.BlueTheme
-import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
-import com.fitnesslink.fit.ui.theme.InfoColor
-import com.fitnesslink.fit.ui.theme.ProgressBG
-import com.fitnesslink.fit.ui.theme.ProgressHighlight
-import com.fitnesslink.fit.ui.theme.PurpleTheme
+import com.fitnesslink.fit.ui.navigation.AppRouter
+import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.workout.CreateExerciseSheet
+import com.fitnesslink.fit.ui.workout.ExerciseBrowserSheet
 import com.fitnesslink.fit.viewmodel.InteractiveSessionViewModel
+import com.fitnesslink.fit.viewmodel.SessionEditAction
+import com.fitnesslink.fit.viewmodel.SessionWorkoutEditor
 
+/**
+ * Interactive Mode (port of iOS `InteractiveSessionView`): full-bleed demo video with the prep /
+ * rest overlay, the info strip or interval strip, the transport bar and the dock. The completion
+ * screen renders exclusively once the workout ends so the player unmounts.
+ */
 @Composable
 fun InteractiveSessionScreen(
     workoutId: String,
-    onBack: () -> Unit
+    onBack: () -> Unit,
+    programId: String? = null,
+    viewModel: InteractiveSessionViewModel = viewModel()
 ) {
-    val viewModel: InteractiveSessionViewModel = viewModel()
+    val context = LocalContext.current
+    val view = LocalView.current
+    val lifecycleOwner = LocalLifecycleOwner.current
+    @Suppress("UNUSED_VARIABLE") val tick = viewModel.tick
 
-    LaunchedEffect(workoutId) { viewModel.loadData(workoutId) }
+    var showMovementInfo by remember { mutableStateOf(false) }
+    var editAction by remember { mutableStateOf<SessionEditAction?>(null) }
+    var createAction by remember { mutableStateOf<SessionEditAction?>(null) }
+    var pendingMovement by remember { mutableStateOf<MovementLibraryItem?>(null) }
+    var pendingScopeAction by remember { mutableStateOf<SessionEditAction?>(null) }
+    var showSetsSheet by remember { mutableStateOf(false) }
+    var showRemoveConfirm by remember { mutableStateOf(false) }
+    var showSaveVersionConfirm by remember { mutableStateOf(false) }
+    var showDiscardConfirm by remember { mutableStateOf(false) }
+    var savedVersionMessage by remember { mutableStateOf<String?>(null) }
 
-    // Cycle through OVERLAY → TEXT → IMAGE on each tap. Persisted across
-    // configuration changes so the user's last pick survives a rotate.
-    var restMode by rememberSaveable { mutableStateOf(RestDisplayMode.OVERLAY) }
+    LaunchedEffect(workoutId) {
+        AudioCueService.attach(context)
+        SessionSettings.attach(context)
+        viewModel.loadData(workoutId, programId)
+    }
+    LaunchedEffect(viewModel.workoutNotFound) { if (viewModel.workoutNotFound) onBack() }
 
-    // Haptic + visual cue when a rest period flips back to active. Only
-    // fires on the false transition so it doesn't double-tap on resume.
-    val haptics = LocalHapticFeedback.current
-    var wasResting by remember { mutableStateOf(viewModel.isRest) }
-    LaunchedEffect(viewModel.isRest) {
-        if (wasResting && !viewModel.isRest) {
-            haptics.performHapticFeedback(HapticFeedbackType.LongPress)
-        }
-        wasResting = viewModel.isRest
+    // Keep the screen awake while the workout runs; paused sessions may auto-lock.
+    DisposableEffect(viewModel.isVideoPaused, viewModel.isWorkoutComplete) {
+        view.keepScreenOn = !viewModel.isVideoPaused && !viewModel.isWorkoutComplete
+        onDispose { view.keepScreenOn = false }
+    }
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event -> if (event == Lifecycle.Event.ON_RESUME && !viewModel.isWorkoutComplete) viewModel.resyncClocks() }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer); viewModel.stop() }
     }
 
-    DisposableEffect(Unit) {
-        onDispose {
-            viewModel.stop()
-            viewModel.removeRestTimer()
+    fun goHome() { if (AppRouter.resetStackHandler != null) AppRouter.resetStack(AppRouter.HOME_TAB) else onBack() }
+
+    fun applyEdit(action: SessionEditAction, movement: MovementLibraryItem?, scope: SessionWorkoutEditor.Scope) {
+        when (action) {
+            SessionEditAction.AddAfterCurrent -> movement?.let { viewModel.addExercise(it, InteractiveSessionViewModel.AddPlacement.AfterCurrent, scope) }
+            SessionEditAction.AddAtEnd -> movement?.let { viewModel.addExercise(it, InteractiveSessionViewModel.AddPlacement.End, scope) }
+            is SessionEditAction.AddToPhase -> movement?.let { viewModel.addExercise(it, InteractiveSessionViewModel.AddPlacement.Phase(action.phaseId), scope) }
+            SessionEditAction.Swap -> movement?.let { viewModel.swapCurrentMovement(it, scope) }
+            SessionEditAction.Remove -> viewModel.removeCurrentExercise(scope)
+            SessionEditAction.EditSets, SessionEditAction.SaveMyVersion -> Unit
         }
     }
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black)
-    ) {
-        if (viewModel.isWorkoutComplete) {
-            WorkoutCompletedScreen(
-                workoutName = viewModel.workoutName,
-                exerciseCount = viewModel.exerciseCount,
-                totalSets = viewModel.totalSets,
-                duration = viewModel.timerText,
-                onDismiss = onBack
-            )
-            return@Box
-        }
-        // Background
-        if (viewModel.isRest) {
-            RestView(
-                mode = restMode,
-                rest = viewModel.rest,
-                nextMovementId = viewModel.workoutTask.movementId,
-                onCycleMode = { restMode = restMode.next() },
-                onSkip = { viewModel.removeRestTimer() }
-            )
+    fun movementPicked(movement: MovementLibraryItem, action: SessionEditAction) {
+        if (viewModel.isWorkoutEditable) applyEdit(action, movement, SessionWorkoutEditor.Scope.PERMANENT)
+        else { pendingMovement = movement; pendingScopeAction = action }
+    }
+
+    if (viewModel.isWorkoutComplete) {
+        WorkoutCompletedScreen(
+            sessionId = viewModel.sessionId,
+            workoutName = viewModel.workoutName,
+            stats = viewModel.summaryStats,
+            achievements = viewModel.summaryAchievements,
+            rpeMode = SummaryRPEMode.Editable,
+            onComplete = { rpe -> viewModel.saveSession(rpe); goHome() },
+            onDismiss = { viewModel.saveSession(null); goHome() }
+        )
+        return
+    }
+
+    Box(Modifier.fillMaxSize().background(Color.Black)) {
+        if (viewModel.isLoadingWorkout && viewModel.workoutTask.id.isEmpty()) {
+            Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                CircularProgressIndicator(color = White)
+                Text("Loading workout…", color = White.copy(alpha = 0.8f), fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp))
+            }
         } else {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(400.dp)
-                    .background(ImagePlaceholder)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.3f))
-                )
-            }
-        }
-
-        // Next exercise preview
-        Column(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 250.dp, end = 20.dp)
-                .clickable { viewModel.getNextExercise() }
-        ) {
-            Text(
-                text = "Next Exercise",
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = White
-            )
-            Spacer(modifier = Modifier.height(4.dp))
-            Box(
-                modifier = Modifier
-                    .size(88.dp)
-                    .clip(RoundedCornerShape(6.dp))
-                    .background(White)
-            ) {
-                FLImageView(
-                    ref = viewModel.nextMovementId?.let { MediaRef.MovementThumbnail(it) },
-                    height = 88.dp
-                )
-            }
-        }
-
-        // Controls panel
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.BottomCenter)
-                .background(BackgroundColor, RoundedCornerShape(topStart = 30.dp, topEnd = 30.dp))
-                .padding(20.dp)
-        ) {
-            // Top tags
-            WorkoutControlTopView(
-                task = viewModel.workoutTask,
-                currentRound = viewModel.currentRound
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Workout progress bar
-            WorkoutProgressBarView(progress = viewModel.workoutProgress)
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Timer
-            Text(
-                text = viewModel.timerText,
-                fontSize = 46.sp,
-                fontWeight = FontWeight.SemiBold,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Exercise info + progress
-            WorkoutExerciseView(
-                task = viewModel.workoutTask,
-                exerciseProgress = viewModel.exerciseProgress
-            )
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Controls
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "PREV",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = FLPrimary,
-                    modifier = Modifier.clickable { viewModel.getPrevious() }
-                )
-                Spacer(modifier = Modifier.width(25.dp))
-                Box(modifier = Modifier.clickable { viewModel.toggleVideoState() }) {
-                    if (viewModel.isVideoPaused) PlayButtonView() else PauseButtonView()
+            SessionContent(viewModel, onInfo = { showMovementInfo = true }, onEdit = { action ->
+                when (action) {
+                    SessionEditAction.EditSets -> showSetsSheet = true
+                    SessionEditAction.Remove -> showRemoveConfirm = true
+                    SessionEditAction.SaveMyVersion -> showSaveVersionConfirm = true
+                    else -> editAction = action
                 }
-                Spacer(modifier = Modifier.width(25.dp))
-                Text(
-                    text = "NEXT",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = FLPrimary,
-                    modifier = Modifier.clickable { viewModel.getNext() }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
+            })
         }
 
-        // Top bar
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 20.dp, top = 50.dp, end = 20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            BackCircleButton(onClick = onBack)
-            Spacer(modifier = Modifier.weight(1f))
-            ContextCircleButton(onClick = {})
-        }
-    }
-}
-
-@Composable
-fun WorkoutControlTopView(
-    task: WorkoutTask,
-    currentRound: Int
-) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        if (task.phaseName.uppercase() == "WARM UP" || task.phaseName.uppercase() == "COOL DOWN") {
-            Text(
-                text = task.phaseName,
-                fontSize = 14.sp,
-                color = if (task.phaseName.uppercase() == "WARM UP") Color.Black else White,
-                modifier = Modifier
-                    .background(
-                        if (task.phaseName.uppercase() == "WARM UP") ProgressHighlight else BlueTheme,
-                        RoundedCornerShape(5.dp)
-                    )
-                    .padding(horizontal = 10.dp, vertical = 5.dp)
-            )
-        }
-        if (task.isSuperset || task.isCircuit || task.isInterval) {
-            val (label, color) = when {
-                task.isSuperset -> "SUPERSET" to PurpleTheme
-                task.isCircuit -> "CIRCUIT" to BlueTheme
-                else -> "INTERVAL" to FLPrimary
-            }
-            Text(
-                text = if (task.advancedMovement.isNotBlank()) task.advancedMovement else label,
-                fontSize = 14.sp,
-                color = White,
-                modifier = Modifier
-                    .background(color, RoundedCornerShape(5.dp))
-                    .padding(horizontal = 10.dp, vertical = 5.dp)
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            // Intervals run as work/rest cycles rather than rounds, but
-            // currentRound + totalRounds still describe progress, so the
-            // same chip works.
-            Text(
-                text = "$currentRound/${task.totalRounds} ROUNDS",
-                fontSize = 14.sp,
-                modifier = Modifier
-                    .background(InfoColor, RoundedCornerShape(5.dp))
-                    .padding(horizontal = 10.dp, vertical = 5.dp)
-            )
-        }
-        Spacer(modifier = Modifier.weight(1f))
-        Image(
-            painter = painterResource(R.drawable.kettlebell),
-            contentDescription = "Kettlebell",
-            modifier = Modifier.size(24.dp)
+        SessionTopBar(
+            timerText = viewModel.timerText,
+            onPlaylist = onBack,
+            isMuted = viewModel.isMuted,
+            onToggleMute = { viewModel.setMasterMuted(!viewModel.isMuted) },
+            audioChannels = listOf(
+                SessionAudioChannel("video", "Exercise Video Audio", viewModel.isVideoAudioEnabled) { viewModel.setVideoAudioEnabled(!viewModel.isVideoAudioEnabled) },
+                SessionAudioChannel("voice", "Voice Cues", SessionSettings.intervalVoiceCuesEnabled) { SessionSettings.intervalVoiceCuesEnabled = !SessionSettings.intervalVoiceCuesEnabled },
+                SessionAudioChannel("beeps", "Countdown Beeps", SessionSettings.intervalCuesEnabled) { SessionSettings.intervalCuesEnabled = !SessionSettings.intervalCuesEnabled }
+            ),
+            onDiscard = { showDiscardConfirm = true },
+            modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(horizontal = 20.dp, vertical = 8.dp)
         )
     }
-}
 
-@Composable
-fun WorkoutProgressBarView(progress: List<WorkoutProgress>) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(2.dp)
-    ) {
-        progress.forEach { item ->
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(10.dp)
-                    .clip(RoundedCornerShape(100.dp))
-                    .background(if (item.progress > 0) ProgressHighlight else ProgressBG)
-            )
-        }
+    if (viewModel.showLogSheet) SetLogSheet(viewModel) { viewModel.showLogSheet = false }
+    if (showMovementInfo) MovementInfoSheet(viewModel.workoutTask) { showMovementInfo = false }
+    editAction?.let { action ->
+        ExerciseBrowserSheet(
+            onSelect = { movement -> editAction = null; movementPicked(movement, action) },
+            onCreateNew = { editAction = null; createAction = action },
+            onDismiss = { editAction = null },
+            pendingGroupType = null, pendingCount = 0
+        )
     }
-}
-
-@Composable
-fun WorkoutExerciseView(
-    task: WorkoutTask,
-    exerciseProgress: List<ExerciseProgress>
-) {
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = task.name,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = task.metric,
-                fontSize = 14.sp
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        ExerciseProgressBarView(progress = exerciseProgress)
+    createAction?.let { action ->
+        CreateExerciseSheet(onCreated = { movement -> createAction = null; movementPicked(movement, action) }, onDismiss = { createAction = null })
     }
+    if (showSetsSheet) {
+        SessionSetsSheet(maxOf(viewModel.workoutTask.sets, 1), viewModel.workoutTask.reps, viewModel.workoutTask.name,
+            onSave = { s, r -> viewModel.updateCurrentSets(s, r, if (viewModel.isWorkoutEditable) SessionWorkoutEditor.Scope.PERMANENT else SessionWorkoutEditor.Scope.SESSION_ONLY) },
+            onDismiss = { showSetsSheet = false })
+    }
+    val scopeAction = pendingScopeAction
+    if (scopeAction != null) {
+        EditScopeDialog(
+            onSessionOnly = { applyEdit(scopeAction, pendingMovement, SessionWorkoutEditor.Scope.SESSION_ONLY); pendingMovement = null; pendingScopeAction = null },
+            onSessionAndSave = {
+                applyEdit(scopeAction, pendingMovement, SessionWorkoutEditor.Scope.SESSION_ONLY); pendingMovement = null; pendingScopeAction = null
+                if (viewModel.saveMyVersion() != null) savedVersionMessage = "Saved to My Workouts. This session keeps running on the original."
+            },
+            onDismiss = { pendingMovement = null; pendingScopeAction = null }
+        )
+    }
+    if (showRemoveConfirm) {
+        ConfirmDialog("Remove this exercise?",
+            if (viewModel.isWorkoutEditable) "${viewModel.workoutTask.name} will be removed from this workout." else "${viewModel.workoutTask.name} will be skipped for this session.",
+            "Remove", destructive = true,
+            onConfirm = {
+                showRemoveConfirm = false
+                if (viewModel.isWorkoutEditable) viewModel.removeCurrentExercise(SessionWorkoutEditor.Scope.PERMANENT) else pendingScopeAction = SessionEditAction.Remove
+            },
+            onDismiss = { showRemoveConfirm = false })
+    }
+    if (showSaveVersionConfirm) {
+        ConfirmDialog("Save as my workout?", "Creates a personal copy of ${viewModel.workoutName} with your session changes.", "Save",
+            onConfirm = { showSaveVersionConfirm = false; if (viewModel.saveMyVersion() != null) savedVersionMessage = "Saved to My Workouts. This session keeps running on the original." },
+            onDismiss = { showSaveVersionConfirm = false })
+    }
+    savedVersionMessage?.let { msg -> ConfirmDialog("Saved", msg, "OK", onConfirm = { savedVersionMessage = null }, onDismiss = { savedVersionMessage = null }) }
+    if (viewModel.showFinishConfirmation) FinishConfirmationDialog(viewModel.finishConfirmationMessage, onFinishAnyway = { viewModel.finishAnyway() }, onContinue = { viewModel.continueWorkout() })
+    if (showDiscardConfirm) SessionDiscardDialog(viewModel.workoutName, onConfirm = { showDiscardConfirm = false; viewModel.discardSession { goHome() } }, onDismiss = { showDiscardConfirm = false })
 }
 
 @Composable
-fun ExerciseProgressBarView(progress: List<ExerciseProgress>) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(3.dp)
-    ) {
-        progress.forEach { item ->
-            if (item.isRest) {
-                Box(
-                    modifier = Modifier
-                        .size(10.dp)
-                        .background(ProgressBG, CircleShape)
+private fun SessionContent(viewModel: InteractiveSessionViewModel, onInfo: () -> Unit, onEdit: (SessionEditAction) -> Unit) {
+    Box(Modifier.fillMaxSize()) {
+        VideoLayer(viewModel)
+        if (viewModel.shouldHoldVideo && !viewModel.isRest) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)))
+        Column(Modifier.fillMaxSize()) {
+            Box(Modifier.fillMaxWidth().height(160.dp).background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.55f), Color.Transparent))))
+            Spacer(Modifier.weight(1f))
+            Box(Modifier.fillMaxWidth().height(420.dp).background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)))))
+        }
+        if (viewModel.isVideoPaused) PausedBadge(Modifier.align(Alignment.TopCenter).padding(top = 118.dp))
+
+        if (viewModel.isRest) {
+            Box(Modifier.fillMaxSize().padding(top = 96.dp, bottom = 300.dp).verticalScroll(rememberScrollState()), contentAlignment = Alignment.TopCenter) {
+                RestTextView(
+                    task = viewModel.workoutTask,
+                    isTransientRest = viewModel.activeRestKind != null,
+                    isGetReady = viewModel.isPreparing,
+                    upNext = viewModel.upNext,
+                    prescription = if (viewModel.isPreparing) viewModel.preparationPrescription else null,
+                    coachingCue = if (viewModel.isPreparing) viewModel.workoutTask.instructions else null,
+                    phaseChange = if (viewModel.isPreparing) viewModel.pendingPhaseChange else viewModel.restPhaseChange,
+                    block = viewModel.preparationBlock,
+                    secondsRemaining = viewModel.countdownSecondsRemaining,
+                    totalSeconds = viewModel.countdownTotalSeconds,
+                    phaseName = if (viewModel.isPreparing) viewModel.currentPhaseName else null,
+                    structureLabel = viewModel.preparationStructureLabel,
+                    upNextStructureLabel = if (viewModel.isPreparing) null else viewModel.restUpNextStructureLabel,
+                    upNextPrescription = if (viewModel.isPreparing) null else viewModel.restUpNextPrescription,
+                    upNextNote = if (viewModel.isPreparing) null else viewModel.restUpNextNote
                 )
-            } else {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(10.dp)
-                        .clip(RoundedCornerShape(100.dp))
-                        .background(if (item.progress > 0) FLPrimary else ProgressBG)
+            }
+        }
+
+        Column(Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp).padding(bottom = 34.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            viewModel.phaseLabelText?.let { phase ->
+                Text(phase, color = White.copy(alpha = 0.9f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
+                    modifier = Modifier.clip(CircleShape).background(Color.Black.copy(alpha = 0.45f)).padding(horizontal = 10.dp, vertical = 5.dp))
+            }
+            val runner = viewModel.intervalRunner
+            if (!viewModel.isPreparing) {
+                if (runner != null) IntervalOverlayView(runner, viewModel.tick) { viewModel.resyncClocks() }
+                else if (!viewModel.isRest) SessionInfoStrip(viewModel, onInfo, onEdit)
+            }
+            val upNext = viewModel.upNext
+            if (viewModel.showsUpNextCard && upNext != null) UpNextCard(upNext) { viewModel.getNextExercise() }
+            SessionTransportBar(
+                isPaused = viewModel.isVideoPaused,
+                canSkipSet = viewModel.canSkipSet,
+                canSkipExercise = viewModel.canSkipExercise,
+                skipExerciseLabel = viewModel.skipExerciseLabel,
+                showSkipBlock = runner != null,
+                onPrevious = { viewModel.getPrevious() },
+                onTogglePause = { viewModel.toggleVideoState() },
+                onSkipSet = { viewModel.skipCurrentSet() },
+                onSkipExercise = { viewModel.skipCurrentExercise() },
+                onSkipBlock = { viewModel.exitIntervalGroup() },
+                onNext = { viewModel.getNext() }
+            )
+            if (runner == null) {
+                SessionDockView(
+                    isPreparing = viewModel.isPreparing, isRest = viewModel.isRest, isMovement = viewModel.workoutTask.isMovement,
+                    logLabel = viewModel.logSetCTALabel, isLogged = viewModel.currentSetIsLogged, hasUpNext = upNext != null,
+                    onStartNow = { viewModel.startWork() }, onSkipRest = { viewModel.getNext() }, onLogSet = { viewModel.showLogSheet = true },
+                    onContinue = { viewModel.getNext() }, onFinish = { viewModel.getNext() }
                 )
             }
         }
     }
 }
 
-/** Three rest-screen variants for FA-83. Cycle on tap. */
-enum class RestDisplayMode {
-    /** Translucent dark veil over the upcoming exercise's thumbnail. */
-    OVERLAY,
-    /** Plain dark background with a giant centered MM:SS countdown. */
-    TEXT,
-    /** Curated rest illustration with the timer below it. */
-    IMAGE;
-
-    fun next(): RestDisplayMode = when (this) {
-        OVERLAY -> TEXT
-        TEXT -> IMAGE
-        IMAGE -> OVERLAY
+/** Full-bleed background: the demo video (held per `shouldHoldVideo`), the rest thumbnail, or the recovery movement. */
+@Composable
+private fun VideoLayer(viewModel: InteractiveSessionViewModel) {
+    val runner = viewModel.intervalRunner
+    val task = viewModel.workoutTask
+    if (runner != null) {
+        val lead = runner.leadTask
+        val recovery = runner.phase == IntervalPhase.REST && lead?.restType == RestType.ACTIVE_RECOVERY
+        val recoveryVideo = lead?.effectiveRestMovementVideoId
+        val exercise = runner.currentExercise
+        when {
+            recovery && lead != null && recoveryVideo != null && lead.isEffectiveRestMovementVideoReady ->
+                MovementPlayer(recoveryVideo, lead.effectiveRestMovementVideoStatus, lead.restMovementThumbnailId, paused = viewModel.isVideoPaused, muted = viewModel.isVideoMuted)
+            recovery && lead?.restMovementThumbnailId != null -> FLImageView(ref = MediaRef.MovementThumbnail(lead.restMovementThumbnailId), modifier = Modifier.fillMaxSize())
+            exercise?.effectiveMovementVideoId != null ->
+                MovementPlayer(exercise.effectiveMovementVideoId!!, exercise.effectiveMovementVideoStatus, exercise.movementThumbnailId, paused = viewModel.shouldHoldVideo, muted = viewModel.isVideoMuted)
+            else -> Box(Modifier.fillMaxSize().background(Color(0xFF1F2937)))
+        }
+        return
     }
+    if (viewModel.isRest && !viewModel.isPreparing) {
+        FLImageView(ref = viewModel.restBackgroundMediaId?.let { MediaRef.MovementThumbnail(it) }, modifier = Modifier.fillMaxSize())
+        return
+    }
+    val videoId = task.effectiveMovementVideoId
+    if (videoId != null) MovementPlayer(videoId, task.effectiveMovementVideoStatus, task.movementThumbnailId, paused = viewModel.shouldHoldVideo, muted = viewModel.isVideoMuted)
+    else Box(Modifier.fillMaxSize().background(Color(0xFF1F2937)))
 }
 
 @Composable
-private fun RestView(
-    mode: RestDisplayMode,
-    rest: String,
-    nextMovementId: String?,
-    onCycleMode: () -> Unit,
-    onSkip: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp)
-            .clickable(onClick = onCycleMode)
-    ) {
-        when (mode) {
-            RestDisplayMode.OVERLAY -> OverlayRestBackground(nextMovementId)
-            RestDisplayMode.TEXT -> Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
-            )
-            RestDisplayMode.IMAGE -> ImageRestBackground()
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = if (mode == RestDisplayMode.IMAGE) 200.dp else 150.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "REST TIME",
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = White
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = rest,
-                fontSize = if (mode == RestDisplayMode.TEXT) 92.sp else 46.sp,
-                fontWeight = FontWeight.Bold,
-                color = White
-            )
-            Spacer(modifier = Modifier.height(20.dp))
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(White.copy(alpha = 0.18f))
-                    .clickable(onClick = onSkip)
-                    .padding(horizontal = 18.dp, vertical = 8.dp)
-            ) {
-                Text(
-                    text = "Skip rest",
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = White
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun OverlayRestBackground(nextMovementId: String?) {
-    FLImageView(
-        ref = nextMovementId?.let { MediaRef.MovementThumbnail(it) },
-        height = 400.dp
-    )
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp)
-            .background(Color.Black.copy(alpha = 0.8f))
+private fun MovementPlayer(videoId: String, status: com.fitnesslink.fit.model.api.MuxStatus?, thumbnailId: String?, paused: Boolean, muted: Boolean) {
+    MuxVideoPlayer(
+        ref = MediaRef.MovementVideo(videoId),
+        modifier = Modifier.fillMaxSize(),
+        loop = true, fill = true, muted = muted, paused = paused,
+        videoStatus = status?.let { com.fitnesslink.fit.media.MuxStatus.valueOf(it.name) },
+        posterRef = thumbnailId?.let { MediaRef.MovementThumbnail(it) }
     )
 }
 
+/** Slim translucent info card above the dock: meter row, identity row, target, previous weight, position, note. */
 @Composable
-private fun ImageRestBackground() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp)
-            .background(Color.Black)
+private fun SessionInfoStrip(viewModel: InteractiveSessionViewModel, onInfo: () -> Unit, onEdit: (SessionEditAction) -> Unit) {
+    val task = viewModel.workoutTask
+    val isGrouped = task.isSuperset || task.isCircuit || task.isInterval
+    val previous = remember(task.id, viewModel.actualSetLogs[task.id]?.size) { viewModel.previousWeight }
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Color.Black.copy(alpha = 0.45f)).padding(horizontal = 14.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Image(
-            painter = painterResource(R.drawable.rest),
-            contentDescription = null,
-            contentScale = ContentScale.Fit,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(160.dp)
-                .padding(top = 30.dp)
-        )
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (isGrouped) WorkoutControlTopView(task, viewModel.currentRound)
+            else viewModel.setHeadlineText?.let { Text(it, color = White, fontSize = 22.sp, fontWeight = FontWeight.Black, maxLines = 1) }
+            Spacer(Modifier.weight(1f))
+            if (task.isMovement) SetTimerLabel(viewModel.setTimerText, viewModel.setTimerCountsDown)
+            SessionEditMenu(viewModel.phaseOptions, task.isMovement, viewModel.canSwapCurrentMovement, viewModel.canEditCurrentSets, viewModel.canRemoveCurrentExercise,
+                viewModel.isWorkoutEditable, viewModel.hasSessionOnlyEdits, onEdit)
+        }
+        if (task.isMovement) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(task.name, color = White, fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                if (task.movementId != null) Icon(Icons.Filled.Info, contentDescription = "Movement info", tint = White.copy(alpha = 0.9f), modifier = Modifier.size(20.dp).clickable { onInfo() })
+            }
+            viewModel.currentTargetText?.let { Text(it, color = OrangeTheme, fontSize = 17.sp, fontWeight = FontWeight.Black, maxLines = 1) }
+            previous?.let { Text(it.previousLine, color = White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+        }
+        val progress = viewModel.workoutProgressText
+        if (progress.isNotEmpty()) Text(progress, color = White.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        if (task.isMovement && !task.instructions.isNullOrBlank()) {
+            HorizontalDivider(color = White.copy(alpha = 0.2f))
+            SessionNoteCard(task.instructions, label = "NOTES", maxLines = 2, isBordered = false)
+        }
     }
 }

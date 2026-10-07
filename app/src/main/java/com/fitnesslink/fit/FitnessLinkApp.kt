@@ -5,15 +5,25 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.fitnesslink.fit.auth.AuthManager
+import com.fitnesslink.fit.calendar.CalendarService
+import com.fitnesslink.fit.calendar.CalendarSyncService
+import com.fitnesslink.fit.classification.ClassificationStore
+import com.fitnesslink.fit.contributors.ContributorStore
+import com.fitnesslink.fit.ui.components.ContentLayoutPrefs
 import com.fitnesslink.fit.media.MediaCacheStore
 import com.fitnesslink.fit.media.MediaPrefetcher
 import com.fitnesslink.fit.network.ApiConfiguration
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.persistence.DatabaseManager
+import com.fitnesslink.fit.programs.ProgramEnrollmentService
 import com.fitnesslink.fit.push.NotificationBadge
+import com.fitnesslink.fit.session.ActiveWorkoutSession
+import com.fitnesslink.fit.session.SessionSettings
 import com.fitnesslink.fit.push.PushNotificationManager
 import com.fitnesslink.fit.sync.SyncManager
 import com.fitnesslink.fit.sync.SyncScheduler
+import com.fitnesslink.fit.workouts.WorkoutStore
+import com.fitnesslink.fit.workouts.WorkoutPhaseStore
 import com.google.firebase.FirebaseApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,6 +42,15 @@ class FitnessLinkApp : Application() {
         MediaCacheStore.initialize(this)
         MediaPrefetcher.initialize(this)
         SyncManager.initialize(this)
+        // Register offline drains before the first sync pass can run.
+        WorkoutPhaseStore.ensureRegistered()
+        WorkoutStore.ensureRegistered()
+        CalendarSyncService.attach(this)
+        CalendarService.ensureRegistered()
+        ProgramEnrollmentService.ensureRegistered()
+        SessionSettings.attach(this)
+        ActiveWorkoutSession.ensureRegistered()
+        ContentLayoutPrefs.initialize(this)
         // Auth state listener must attach after the DB exists (it hydrates
         // the cached user) and before the first frame (splash gating).
         AuthManager.initialize(this)
@@ -46,6 +65,10 @@ class FitnessLinkApp : Application() {
             override fun onStart(owner: LifecycleOwner) {
                 if (AuthManager.isAuthenticated.value) {
                     appScope.launch { NotificationBadge.refreshFromServer() }
+                    // iOS reconciles the classification taxonomy on every foreground; the store
+                    // itself de-dups to one fetch per process.
+                    appScope.launch { runCatching { ClassificationStore.refresh() } }
+                    appScope.launch { runCatching { ContributorStore.refresh() } }
                 }
             }
         })

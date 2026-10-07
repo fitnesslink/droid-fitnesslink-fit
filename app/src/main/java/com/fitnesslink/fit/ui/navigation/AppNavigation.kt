@@ -298,7 +298,8 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
             composable(AppRouter.HOME_TAB) {
                 HomeScreen(
                     onNavigateToNotifications = { navController.navigate("notifications") },
-                    onNavigateToWorkout = { workoutId -> navController.navigate("workoutDetail/$workoutId") }
+                    onNavigateToWorkout = { workoutId -> navController.navigate("workoutDetail/$workoutId") },
+                    onNavigate = { navController.navigate(it) }
                 )
             }
             composable(AppRouter.CATALOG_TAB) {
@@ -308,7 +309,9 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                     onNavigateToProgramDetail = { navController.navigate("programDetail/$it") },
                     onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") },
                     onNavigateToWorkoutEditor = { navController.navigate("workoutEditor") },
-                    onNavigateToProgramEditor = { navController.navigate("programEditor") }
+                    onNavigateToProgramEditor = { navController.navigate("programEditor") },
+                    onNavigateToNotifications = { navController.navigate("notifications") },
+                    onNavigate = { navController.navigate(it) }
                 )
             }
             composable(AppRouter.NUTRITION_TAB) {
@@ -318,12 +321,15 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                     onNavigateToNutritionSummary = { navController.navigate("nutritionSummary") },
                     onNavigateToGroceryList = { navController.navigate("groceryList") },
                     onNavigateToGoalSettings = { navController.navigate("nutritionGoalSettings") },
-                    onNavigateToLogWater = { navController.navigate("logWater") }
+                    onNavigateToLogWater = { navController.navigate("logWater") },
+                    onNavigateToNotifications = { navController.navigate("notifications") }
                 )
             }
             composable(AppRouter.CALENDAR_TAB) {
                 CalendarScreen(
-                    onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") }
+                    onNavigateToWorkoutDetail = { navController.navigate("workoutDetail/$it") },
+                    onNavigateToNotifications = { navController.navigate("notifications") },
+                    onNavigate = { navController.navigate(it) }
                 )
             }
             composable(AppRouter.PROFILE_TAB) {
@@ -415,11 +421,11 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
             ) { backStackEntry ->
                 // TODO(Wave 1.8): hand `seedPrompt` to the editor so it opens the
                 // AI generation sheet pre-seeded (iOS `workoutEditorGenerate`).
-                @Suppress("UNUSED_VARIABLE")
                 val seedPrompt = backStackEntry.arguments?.getString(AppRoute.WorkoutEditorGenerate.ARG_SEED_PROMPT)
                 WorkoutEditorScreen(
                     workoutId = null,
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    seedPrompt = seedPrompt
                 )
             }
 
@@ -676,13 +682,6 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                 )
             }
             composable(
-                AppRoute.ReportDetail.ROUTE,
-                arguments = listOf(navArgument("metric") { type = NavType.StringType })
-            ) { backStackEntry ->
-                // TODO: ReportDetailScreen
-                ProfileStubScreen(title = backStackEntry.arguments?.getString("metric") ?: "Detail", onBack = { navController.popBackStack() })
-            }
-            composable(
                 AppRoute.SessionDetail.ROUTE,
                 arguments = listOf(navArgument("sessionId") { type = NavType.StringType })
             ) { backStackEntry ->
@@ -690,13 +689,6 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                     sessionId = backStackEntry.arguments?.getString("sessionId") ?: "",
                     onBack = { navController.popBackStack() }
                 )
-            }
-            composable(
-                AppRoute.WorkoutAggregateDetail.ROUTE,
-                arguments = listOf(navArgument("workoutName") { type = NavType.StringType })
-            ) { backStackEntry ->
-                // TODO: WorkoutAggregateDetailScreen
-                ProfileStubScreen(title = backStackEntry.arguments?.getString("workoutName") ?: "Workout", onBack = { navController.popBackStack() })
             }
             composable(
                 AppRoute.MovementAggregateDetail.ROUTE,

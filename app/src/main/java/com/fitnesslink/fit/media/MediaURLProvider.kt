@@ -252,18 +252,15 @@ object MediaURLProvider {
     }
 
     /**
-     * Android's catalog screens key thumbnails by ENTITY id
-     * (`MediaRef.WorkoutThumbnail(workout.id)`), and the local `workouts` /
-     * `programs` tables carry no `thumbnailId` column, so that's what we
-     * prime. iOS keys by `thumbnailId ?? imageId`; when the Android models
-     * and DB grow those columns, switch this to the asset ids.
+     * Primes every catalog thumbnail the local DB knows about. Keyed by ASSET id
+     * (`thumbnailId ?: imageId`) exactly like iOS; rows with no asset id are skipped.
      */
     private fun collectCatalogRefs(): List<MediaRef> {
         val refs = ArrayList<MediaRef>()
         try {
-            for (w in DatabaseManager.allWorkouts()) if (w.id.isNotEmpty()) refs.add(MediaRef.WorkoutThumbnail(w.id))
-            for (p in DatabaseManager.allPrograms()) if (p.id.isNotEmpty()) refs.add(MediaRef.ProgramThumbnail(p.id))
-            for (m in DatabaseManager.allMovements()) if (m.id.isNotEmpty()) refs.add(MediaRef.MovementThumbnail(m.id))
+            for (w in DatabaseManager.allWorkouts()) (w.thumbnailId ?: w.imageId)?.takeIf { it.isNotBlank() }?.let { refs.add(MediaRef.WorkoutThumbnail(it)) }
+            for (p in DatabaseManager.allPrograms()) (p.thumbnailId ?: p.imageId)?.takeIf { it.isNotBlank() }?.let { refs.add(MediaRef.ProgramThumbnail(it)) }
+            for (m in DatabaseManager.allMovements()) (m.thumbnailId ?: m.imageId)?.takeIf { it.isNotBlank() }?.let { refs.add(MediaRef.MovementThumbnail(it)) }
         } catch (_: Exception) {
             // DB not initialized (tests) — prime whatever we gathered.
         }

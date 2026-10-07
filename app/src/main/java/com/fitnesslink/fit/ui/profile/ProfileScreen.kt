@@ -37,7 +37,8 @@ import com.fitnesslink.fit.viewmodel.ProfileViewModel
 @Composable
 fun ProfileScreen(
     onNavigate: (String) -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onNavigateToNotifications: () -> Unit = { onNavigate("notifications") }
 ) {
     val viewModel: ProfileViewModel = viewModel()
 
@@ -48,7 +49,7 @@ fun ProfileScreen(
             .fillMaxSize()
             .background(BackgroundColor)
     ) {
-        HeaderView()
+        HeaderView(onNotificationsTap = onNavigateToNotifications)
 
         Column(
             modifier = Modifier
