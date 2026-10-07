@@ -151,16 +151,6 @@ fun AppNavigation() {
     }
 }
 
-/**
- * FTNSSLNK-283 slot: nothing in FitnessLink is free, so the paywall sits
- * between auth and everything else. Wave 4.5 (Play Billing + entitlement
- * store + 402 gate) fills this in; until then it passes through.
- */
-@Composable
-fun EntitlementGate(content: @Composable () -> Unit) {
-    content()
-}
-
 @Composable
 fun AuthNavigation(onLogin: (Boolean) -> Unit) {
     val navController = rememberNavController()

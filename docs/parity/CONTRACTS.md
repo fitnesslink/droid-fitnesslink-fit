@@ -173,3 +173,63 @@ object CatalogStore { suspend fun refresh(); val changes: SharedFlow<Unit> }   /
 // Routes (ui/navigation/CatalogRoutes.kt): myContent
 // Home consumes: ResumeSessionBanner (session), MyProgramHomeCard (programs), CalendarService + tapRoute (calendar), goals/habits via ApiClient.goalApi + DatabaseManager (build HabitCard/GoalProgressCard/DailySummaryFooter locally in ui/home).
 ```
+
+## Wave 3 contracts — Nutrition (three agents)
+
+Ownership inside `ui/nutrition/` is split by file; `network/api/NutritionApi.kt` and
+`network/dto/NutritionDtos.kt` already carry every iOS route — do NOT edit them (report gaps).
+
+### A. Core: profile/onboarding/goals/dashboard/analytics/display settings/reports
+Owns: `ui/nutrition/NutritionScreen.kt` (dashboard, route `calorieTracking`), `NutritionHomeScreen.kt`, `NutritionGoalSettingsScreen.kt`, `WeeklyProgressScreen.kt`, new `NutritionOnboardingScreen.kt`, `NutritionProfileEditScreen.kt`, `NutritionAnalyticsScreen.kt`, `NutritionDisplaySettingsScreen.kt`, `NutritionWeekStrip.kt`, `NutritionCalendarSheet.kt`, `CalorieRingView.kt`, `MacroBarView.kt`, `MicronutrientCard.kt`, `MealSectionView.kt`; `ui/profile/NutritionReportScreen.kt`, `NutritionMetricDetailScreen.kt`, new `MealTypeDetailScreen.kt`, `FoodItemDetailScreen.kt`; `viewmodel/NutritionViewModel.kt`, `NutritionReportViewModel.kt`, new `NutritionOnboardingViewModel.kt`, `NutritionAnalyticsViewModel.kt`; new `nutrition/NutritionGoalsStore.kt`, `nutrition/DisplayedNutrientsStore.kt`, `nutrition/NutritionSummaryStore.kt`; `persistence/NutritionDao.kt`; `ui/navigation/NutritionCoreRoutes.kt`; `model/NutritionGoal.kt`, `NutritionReportModels.kt`, `DailyCalorieSummary.kt`, `model/api/NutritionProfileModels.kt` (additions).
+```kotlin
+object NutritionGoalsStore { val goal: StateFlow<NutritionGoal>; val targets: StateFlow<NutritionTargets?>; val profile: StateFlow<NutritionProfile?>
+    suspend fun refresh(); suspend fun overrideTargets(calories: Int, protein: Double, fat: Double, carbs: Double); suspend fun revertToCalculated(); fun calorieGoal(): Int; val changes: SharedFlow<Unit> }
+object DisplayedNutrientsStore { val displayed: StateFlow<Set<String>>; suspend fun refresh(); suspend fun set(keys: Set<String>) }   // keys: fiber, sugars, sodium, saturatedFat, cholesterol
+object NutritionSummaryStore { suspend fun daily(date: String): NutritionDailySummary?; suspend fun range(from: String, to: String): NutritionSummaryRange?; fun invalidate(date: String) }
+// Routes: nutritionOnboarding, nutritionProfileEdit, nutritionAnalytics, nutritionDisplaySettings; existing calorieTracking / nutritionGoalSettings / weeklyProgress / nutritionReport / mealTypeDetail/{mealType} / foodItemDetail/{foodName} keep their strings.
+// Dashboard embeds: HydrationCardView(date) (agent C), planned meals for the day via MealPlanStore.slots(date) (agent C), FoodLogStore.entries(date) (agent B); Add buttons navigate to FoodLoggingRoutes.foodSearch(mealType, date).
+```
+
+### B. Logging: search/detail/favorites/recents/templates/AI/barcode/custom/quick add
+Owns: `ui/nutrition/FoodEntryDetailScreen.kt` (→ becomes `FoodDetailScreen`), `QuickAddScreen.kt`, `RecentFoodsScreen.kt`, `CustomFoodFormScreen.kt`, `BarcodeScannerScreen.kt`, `ScannedFoodReviewScreen.kt`, new `FoodSearchScreen.kt`, `RecentMealsScreen.kt`, `RecentMealLogScreen.kt`, `MealTemplatesPickerScreen.kt`, `DescribeMealScreen.kt`, `SnapMealScreen.kt`, `AIFormChips.kt`, `PreviousMealsPickerSheet.kt`; new `viewmodel/FoodSearchViewModel.kt` etc.; new `nutrition/FoodLogStore.kt`, `nutrition/NutritionFavoritesStore.kt`, `nutrition/FoodPortionMath.kt`, `nutrition/BarcodeLookupService.kt` (OpenFoodFacts fallback); `persistence/FoodLogDao.kt`; `ui/navigation/FoodLoggingRoutes.kt`; `model/FoodEntry.kt`, `BarcodeProduct.kt` (additions).
+```kotlin
+object FoodLogStore { fun entries(date: String): List<FoodEntry>; suspend fun log(entry: FoodEntry); suspend fun logBatch(entries: List<FoodEntry>, source: String? = null, generationId: String? = null)
+    suspend fun update(entry: FoodEntry); suspend fun delete(id: String); suspend fun refresh(date: String); val changes: SharedFlow<Unit>; fun ensureRegistered() }   // SyncDomain.FOOD_ENTRIES drain
+object NutritionFavoritesStore { val foodIds: StateFlow<Set<String>>; suspend fun refresh(); suspend fun toggleFood(foodId: String): Boolean; fun isFavorite(foodId: String): Boolean }
+object FoodLoggingRoutes { fun foodSearch(mealType: MealType, date: String): String; fun foodDetail(foodId: String, mealType: MealType, date: String, mode: String = "log"): String   // mode: log | edit:{entryId} | addToMeal
+    const val RECENT_MEALS = "recentMeals"; const val MEAL_TEMPLATES = "mealTemplates"; const val DESCRIBE_MEAL = "describeMeal/{mealType}/{date}"; const val SNAP_MEAL = "snapMeal/{mealType}/{date}" }
+// FoodDetailScreen in mode "addToMeal" calls MealBuilderStore.add(MealBuilderItem(...)) (agent C) instead of logging.
+```
+
+### C. Meal plan / grocery / hydration
+Owns: `ui/nutrition/MealPlanScreen.kt`, `MealSlotDetailScreen.kt` (→ meal builder), `NutritionSummaryScreen.kt`, `GroceryListScreen.kt` (→ list detail), `LogWaterScreen.kt`, `HydrationCard.kt`, new `MealPlanIdeasSheet.kt`, `MealPlanIdeasReviewScreen.kt`, `MealSuggestionsSheet.kt`, `MealBuilderScreen.kt`, `GroceryListsScreen.kt`, `GroceryMealBuilderScreen.kt`; `viewmodel/MealPlanViewModel.kt`, `HydrationViewModel.kt`, new `MealPlanIdeasViewModel.kt`, `AIMealGeneratorViewModel.kt`, `GroceryListsViewModel.kt`, `GroceryListDetailViewModel.kt`, `GroceryMealBuilderViewModel.kt`; new `nutrition/MealPlanStore.kt`, `nutrition/MealBuilderStore.kt`, `nutrition/GroceryStore.kt`, `nutrition/HydrationStore.kt`; `persistence/MealPlanDao.kt`; `ui/navigation/MealPlanRoutes.kt`; `model/MealPlan.kt`, `HydrationModels.kt` (additions).
+```kotlin
+object MealPlanStore { fun slots(date: String): List<MealSlot>; fun week(sundayDate: String): List<MealSlot>; suspend fun refreshWeek(sundayDate: String); suspend fun upsert(slot: MealSlot); suspend fun delete(slot: MealSlot)
+    suspend fun replaceFoods(slotId: String, foods: List<MealSlotFood>); suspend fun copyWeek(...); suspend fun copyDay(...); val changes: SharedFlow<Unit>; fun ensureRegistered() }   // SyncDomain.MEAL_SLOTS drain
+data class MealBuilderItem(val foodId: String?, val name: String, val servings: Double, val servingSize: Double?, val servingUnit: String?, val calories: Double, val protein: Double, val fat: Double, val carbs: Double)
+object MealBuilderStore { val items: StateFlow<List<MealBuilderItem>>; var activeSlotId: String?; fun add(item: MealBuilderItem); fun remove(index: Int); fun clear() }
+@Composable fun HydrationCardView(date: String, modifier: Modifier = Modifier)   // +8/+16/+24 oz presets in goal unit, undo last tap
+object HydrationStore { val goal: StateFlow<HydrationGoal?>; val displayUnit: WaterUnit; suspend fun refresh(); suspend fun log(amount: Double, unit: WaterUnit, date: String, notes: String? = null); suspend fun undoLast(); suspend fun recentAmounts(): List<RecentWaterAmount>; suspend fun setPreferredUnit(unit: WaterUnit?) }
+// Routes: existing mealPlan / mealSlotDetail/{id} / nutritionSummary / groceryList / logWater keep their strings; new mealPlanIdeas, groceryLists, groceryList/{listId}, groceryMealBuilder/{listId}.
+```
+
+## Wave 4 contracts
+
+### D. Goals/habits/achievements + progress tracking
+Owns: `ui/goals/*`, `ui/progress/*`, `viewmodel/Goal*|Habit*|Achievements*|WeightLog*|Measurements*|ProgressPhotos*|PhotoCapture*|PhotoComparison*`, new `goals/GoalStore.kt`, `progress/BodyTrackingStore.kt`, `persistence/GoalsDao.kt`, `persistence/ProgressDao.kt`, `network/api/GoalApi.kt`, `BodyTrackingApi.kt` + their DTO files, `ui/navigation/GoalsProgressRoutes.kt`, `model/BodyMeasurement.kt`, `ProgressPhoto.kt`, `WeightEntry.kt`, `model/GoalModels.kt` (additions only; Home reads `HabitTodayItem`/`DailyProgress`).
+```kotlin
+object GoalStore { suspend fun refresh(); fun goals(): List<Goal>; fun habits(goalId: String?): List<Habit>; suspend fun create(goal, habits); suspend fun update(goal); suspend fun delete(goalId); suspend fun logHabit(habitId, completed: Boolean); val changes: SharedFlow<Unit>; fun ensureRegistered() }  // drains GOALS/HABITS/HABIT_LOGS
+object BodyTrackingStore { suspend fun refreshWeight(); suspend fun addWeight(entry); suspend fun deleteWeight(id); suspend fun refreshMeasurements(); suspend fun addMeasurements(entry: MeasurementEntry); suspend fun deleteMeasurements(entryId)
+    suspend fun refreshPhotos(); suspend fun uploadPhotos(photos: List<Pair<PhotoAngle, Uri>>, takenAt: Date, notes: String, perAngleNotes: Map<PhotoAngle,String>): ProgressPhotoEntry; suspend fun deletePhotoEntry(id); val changes: SharedFlow<Unit>; fun ensureRegistered() }  // drains WEIGHT_ENTRIES/MEASUREMENTS
+// Routes: existing goals/goalCreation/goalDetail/{id}/habitDetail/{id}/achievements/weightLog/measurementsLog/photos/photoEntryDetail/{id}/photoComparison keep strings; new measurementEntryDetail/{entryId}, photoCapture.
+```
+
+### E. Profile, preferences, billing/paywall, notifications, My Videos
+Owns: `ui/profile/ProfileScreen.kt`, `ProfileStubScreen.kt`, `PersonalInfoScreen.kt`, `BillingScreen.kt`, `NotificationSettingsScreen.kt`, `DeveloperSettingsScreen.kt`, `CalendarSyncSettingsScreen.kt`, new `PreferencesScreen.kt`; `ui/notifications/*`, new `ui/billing/PaywallScreen.kt`, new `ui/videos/MyVideosScreen.kt`, `ui/theme/*` (dark theme), `ui/navigation/EntitlementGate.kt`, `ui/navigation/ProfileRoutes.kt`; `viewmodel/Profile*|PersonalInfo*|Notification*`, new `NotificationPreferencesViewModel.kt`, `MyVideosViewModel.kt`; new `billing/EntitlementStore.kt`, `billing/PlayBillingManager.kt`, `settings/UserSettings.kt`; `network/api/BillingApi.kt`, `NotificationServiceApi.kt`, `UserApi.kt` + DTOs; `persistence/ProfileDao.kt`.
+```kotlin
+object UserSettings { var appearance: Appearance (SYSTEM/LIGHT/DARK); var weightUnit: WeightUnit; var distanceUnit: DistanceUnit; var useHealthConnectCalories: Boolean; fun attach(context) }   // writes WeightUnit.current / DistanceUnit.current on change and at startup
+object EntitlementStore { val state: StateFlow<EntitlementState> (Resolving / Entitled(entitlement) / NotEntitled / Error); suspend fun refresh(force = false); val isNearExpiry: Boolean; fun reset() }
+// EntitlementGate(content) renders Splash while Resolving, PaywallScreen when NotEntitled, content otherwise; ApiClient.onPaymentRequired = { EntitlementStore.refresh(true) }.
+// Session audio/voice settings live in session/SessionSettings.kt + AudioCueService.CoachVoicePrefs (read/write them; do not move them). Calendar target: CalendarSyncService.writableCalendars/targetCalendarId.
+// Routes: existing preferences / billing / notifications / notificationSettings / personalInfo / developerSettings / calendarSyncSettings keep strings; new myVideos, notificationPreferences.
+```
