@@ -15,9 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Card
@@ -25,6 +26,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,200 +39,179 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fitnesslink.fit.data.MockDataProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.PhotoAngle
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
+import com.fitnesslink.fit.ui.theme.TextPrimaryColor
+import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
-import java.text.SimpleDateFormat
+import com.fitnesslink.fit.viewmodel.ProgressPhotosViewModel
 import java.util.Locale
 
+/**
+ * iOS `PhotoEntryDetailView`: the date, each captured angle stacked
+ * vertically as a large `FLImageView` with its per-angle notes, entry
+ * notes, and linked "Body Weight" / "Measurements" cards. Reads the entry
+ * from the store-backed ViewModel (not `MockDataProvider`). Delete with
+ * confirmation is an Android addition.
+ */
 @Composable
 fun PhotoEntryDetailScreen(
     entryId: String,
     onBack: () -> Unit
 ) {
-    val entry = remember { MockDataProvider.photoEntry(entryId) }
-    val closestWeight = remember { entry?.let { MockDataProvider.closestWeight(it.date) } }
-    val closestMeasurements = remember { entry?.let { MockDataProvider.closestMeasurements(it.date) } }
-    var selectedAngle by remember { mutableStateOf(PhotoAngle.FRONT) }
-    val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
+    val viewModel: ProgressPhotosViewModel = viewModel()
+    var confirmDelete by remember { mutableStateOf(false) }
+    LaunchedEffect(entryId) { viewModel.loadData() }
+
+    val entry = viewModel.entry(entryId)
+    val closestWeight = entry?.let { viewModel.closestWeight(it.date) }
+    val closestMeasurements = entry?.let { viewModel.closestMeasurements(it.date) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundColor)
     ) {
-        HeaderBackView(onBack = onBack)
+        Box(modifier = Modifier.fillMaxWidth()) {
+            HeaderBackView(onBack = onBack)
+            if (entry != null) {
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .padding(end = 16.dp)
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(White)
+                        .clickable { confirmDelete = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Default.Delete, contentDescription = "Delete photos", tint = Color(0xFFE53935), modifier = Modifier.size(18.dp))
+                }
+            }
+        }
 
-        if (entry != null) {
-            LazyColumn(
-                contentPadding = PaddingValues(bottom = 30.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // Date
-                item {
-                    Text(
-                        dateFormat.format(entry.date),
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
+        if (entry == null) {
+            Text(
+                if (viewModel.entries.isEmpty()) "Loading…" else "These photos are no longer available.",
+                fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.padding(20.dp)
+            )
+            return
+        }
+
+        LazyColumn(
+            contentPadding = PaddingValues(bottom = 30.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
+        ) {
+            item {
+                Text(
+                    longDate.format(entry.date), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp, vertical = 4.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            PhotoAngle.entries.forEach { angle ->
+                val photo = entry.photo(angle) ?: return@forEach
+                item(key = "angle-${angle.name}") {
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-
-                // Angle selector
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 20.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(White)
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        PhotoAngle.entries.forEach { angle ->
-                            val isSelected = selectedAngle == angle
-                            val hasPhoto = entry.photo(angle) != null
-                            Box(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .clickable { selectedAngle = angle }
-                                    .background(if (isSelected) FLPrimary.copy(alpha = 0.1f) else Color.Transparent)
-                                    .padding(vertical = 10.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text(
-                                    angle.displayName,
-                                    fontSize = 14.sp,
-                                    fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) FLPrimary else if (hasPhoto) Color.Black else Color.LightGray
-                                )
-                            }
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            Icon(Icons.Default.Person, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
+                            Text(angle.displayName, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
                         }
-                    }
-                }
-
-                // Photo display
-                item {
-                    val photo = entry.photo(selectedAngle)
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(300.dp)
-                            .padding(horizontal = 20.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(Color(0xFFF0F0F0)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        if (photo != null) {
-                            Icon(
-                                Icons.Default.Person,
-                                contentDescription = selectedAngle.displayName,
-                                modifier = Modifier.size(64.dp),
-                                tint = MediumGray
-                            )
-                        } else {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(32.dp), tint = MediumGray)
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text("No ${selectedAngle.displayName.lowercase()} photo", fontSize = 14.sp, color = Color.Gray)
-                            }
-                        }
-                    }
-                }
-
-                // Angle notes
-                item {
-                    val photo = entry.photo(selectedAngle)
-                    photo?.notes?.takeIf { it.isNotEmpty() }?.let { notes ->
-                        Text(
-                            notes,
-                            fontSize = 14.sp,
-                            color = Color.Gray,
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                        ProgressPhotoThumb(
+                            photo = photo, angle = angle, height = 350.dp, showLabel = false,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(12.dp))
                         )
+                        if (photo.notes.isNotBlank()) Text(photo.notes, fontSize = 14.sp, color = TextSecondaryColor)
                     }
                 }
+            }
 
-                // Entry notes
-                if (entry.notes.isNotEmpty()) {
-                    item {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = White)
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Text("Notes", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(entry.notes, fontSize = 14.sp, color = Color.Gray)
-                            }
+            if (entry.notes.isNotEmpty()) {
+                item {
+                    DetailCard {
+                        Text("Notes", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(entry.notes, fontSize = 14.sp, color = TextSecondaryColor)
+                    }
+                }
+            }
+
+            closestWeight?.let { weight ->
+                item {
+                    DetailCard {
+                        Row {
+                            Text("Body Weight", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(longDate.format(weight.date), fontSize = 11.sp, color = TextSecondaryColor)
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.MonitorWeight, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(20.dp))
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("${String.format(Locale.US, "%.1f", weight.weight)} ${weight.unit.label}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
                         }
                     }
                 }
+            }
 
-                // Linked weight
-                closestWeight?.let { weight ->
-                    item {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = White)
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row {
-                                    Text("Body Weight", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    Text(dateFormat.format(weight.date), fontSize = 11.sp, color = Color.Gray)
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Default.MonitorWeight, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(20.dp))
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text("${"%.1f".format(weight.weight)} ${weight.unit.label}", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                                }
-                            }
+            closestMeasurements?.let { measurements ->
+                item {
+                    DetailCard {
+                        Row {
+                            Text("Measurements", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(longDate.format(measurements.date), fontSize = 11.sp, color = TextSecondaryColor)
                         }
-                    }
-                }
-
-                // Linked measurements
-                closestMeasurements?.let { measurements ->
-                    item {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = CardDefaults.cardColors(containerColor = White)
-                        ) {
-                            Column(modifier = Modifier.padding(16.dp)) {
-                                Row {
-                                    Text("Measurements", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    Text(dateFormat.format(measurements.date), fontSize = 11.sp, color = Color.Gray)
-                                }
-                                Spacer(modifier = Modifier.height(8.dp))
-                                measurements.measurements.forEach { m ->
-                                    Row(modifier = Modifier.padding(vertical = 2.dp)) {
-                                        Text(m.bodyPart.displayName, fontSize = 13.sp, color = Color.Gray)
-                                        Spacer(modifier = Modifier.weight(1f))
-                                        Text("${"%.1f".format(m.value)} ${m.unit.label}", fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                                    }
-                                }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        measurements.measurements.forEach { m ->
+                            Row(modifier = Modifier.padding(vertical = 2.dp)) {
+                                Text(m.bodyPart.displayName, fontSize = 13.sp, color = TextSecondaryColor)
+                                Spacer(modifier = Modifier.weight(1f))
+                                Text("${formatMeasurement(m.value)} ${m.unit.label}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
                             }
                         }
                     }
                 }
             }
         }
+    }
+
+    val deleting = entry
+    if (confirmDelete && deleting != null) {
+        ConfirmDeleteDialog(
+            title = "Delete photos?",
+            message = "Remove the ${deleting.photos.size} photo${if (deleting.photos.size == 1) "" else "s"} from ${longDate.format(deleting.date)}? This can't be undone.",
+            onConfirm = {
+                viewModel.deleteEntry(deleting.id)
+                onBack()
+            },
+            onDismiss = { confirmDelete = false }
+        )
+    }
+}
+
+@Composable
+private fun DetailCard(content: @Composable () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(containerColor = White)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) { content() }
     }
 }

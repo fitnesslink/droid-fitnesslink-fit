@@ -16,13 +16,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.TrackChanges
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -32,7 +35,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.R
+import com.fitnesslink.fit.model.MealPlanDay
+import com.fitnesslink.fit.nutrition.NutritionGoalsStore
 import com.fitnesslink.fit.ui.components.HeaderView
+import com.fitnesslink.fit.ui.navigation.AppRouter
+import com.fitnesslink.fit.ui.navigation.NutritionCoreRoutes
 import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
@@ -43,7 +50,15 @@ import com.fitnesslink.fit.ui.theme.TextPrimaryColor
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.MealPlanViewModel
+import java.util.Date
 
+/**
+ * Nutrition tab root (iOS `NutritionHomeView`): onboarding CTA until a
+ * profile exists, feature cards, the hydration card (agent C's
+ * `HydrationCardView` for today), This Week stats and quick actions.
+ * [onNavigate] carries route-string navigation (onboarding, grocery lists)
+ * and defaults to `AppRouter.push` until the integrator wires it.
+ */
 @Composable
 fun NutritionHomeScreen(
     onNavigateToCalorieTracking: () -> Unit = {},
@@ -52,11 +67,16 @@ fun NutritionHomeScreen(
     onNavigateToGroceryList: () -> Unit = {},
     onNavigateToGoalSettings: () -> Unit = {},
     onNavigateToLogWater: () -> Unit = {},
-    onNavigateToNotifications: () -> Unit = {}
+    onNavigateToNotifications: () -> Unit = {},
+    onNavigate: (String) -> Unit = { AppRouter.push(it) }
 ) {
     val viewModel: MealPlanViewModel = viewModel()
+    val goalsState by NutritionGoalsStore.state.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.loadData() }
+    LaunchedEffect(Unit) {
+        viewModel.loadData()
+        NutritionGoalsStore.refresh()
+    }
 
     Column(
         modifier = Modifier
@@ -89,9 +109,21 @@ fun NutritionHomeScreen(
                 )
             }
 
-            // Hydration Card
-            HydrationCard(
-                onLogClick = onNavigateToLogWater,
+            // Onboarding call-to-action (FTNSSLNK-190) — only until a nutrition profile exists.
+            if (goalsState == NutritionGoalsStore.State.NO_PROFILE) {
+                FeatureCard(
+                    icon = Icons.Default.AutoAwesome,
+                    iconTint = FLPrimary,
+                    title = "Build Your Nutrition Plan",
+                    subtitle = "Personalized calories & macros, with the why behind every number",
+                    onClick = { onNavigate(NutritionCoreRoutes.ONBOARDING) },
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
+            }
+
+            // Hydration Card (today) — agent C's dashboard tile, with presets + undo.
+            HydrationCardView(
+                date = MealPlanDay.string(Date()),
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
 
@@ -174,11 +206,11 @@ fun NutritionHomeScreen(
                         icon = Icons.Default.ShoppingCart,
                         title = "Groceries",
                         color = FLPrimary,
-                        onClick = onNavigateToGroceryList,
+                        onClick = { onNavigate("groceryLists") },
                         modifier = Modifier.weight(1f)
                     )
                     QuickActionCard(
-                        icon = Icons.Default.DateRange,
+                        icon = Icons.Default.TrackChanges,
                         title = "Goals",
                         color = OrangeTheme,
                         onClick = onNavigateToGoalSettings,
@@ -230,6 +262,46 @@ private fun FeatureCard(
                 color = TextSecondaryColor,
                 maxLines = 2
             )
+        }
+        Icon(
+            painter = painterResource(R.drawable.back),
+            contentDescription = "Go",
+            tint = MediumGray,
+            modifier = Modifier.size(16.dp)
+        )
+    }
+}
+
+@Composable
+private fun FeatureCard(
+    icon: ImageVector,
+    iconTint: androidx.compose.ui.graphics.Color,
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .background(White, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = title,
+            tint = iconTint,
+            modifier = Modifier
+                .size(48.dp)
+                .background(iconTint.copy(alpha = 0.12f), RoundedCornerShape(12.dp))
+                .padding(12.dp)
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(text = title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text(text = subtitle, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 2)
         }
         Icon(
             painter = painterResource(R.drawable.back),

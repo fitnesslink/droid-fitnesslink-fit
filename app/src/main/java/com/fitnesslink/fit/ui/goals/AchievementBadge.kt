@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Layers
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.MilitaryTech
@@ -38,6 +39,33 @@ fun AchievementBadge(
     isEarned: Boolean,
     onClick: () -> Unit = {},
     modifier: Modifier = Modifier
+) = AchievementBadge(title = type.title, icon = type.iconVector, isEarned = isEarned, onClick = onClick, modifier = modifier)
+
+/** Icon for a server achievement: the known type's glyph, else a guess from the name, else a trophy. */
+fun achievementIcon(type: AchievementType?, name: String): ImageVector {
+    if (type != null) return type.iconVector
+    val lc = name.lowercase()
+    return when {
+        "streak" in lc || "fire" in lc -> Icons.Filled.LocalFireDepartment
+        "record" in lc || "pr" == lc -> Icons.Filled.MilitaryTech
+        "goal" in lc || "complete" in lc -> Icons.Filled.CheckCircle
+        "king" in lc || "royal" in lc || "crown" in lc -> Icons.Filled.WorkspacePremium
+        else -> Icons.Filled.EmojiEvents
+    }
+}
+
+/**
+ * Badge for any earned row or `GET /achievements` definition (iOS
+ * `AchievementBadge(iconName:title:isEarned:)`): the client enum is only
+ * one source of titles / icons now.
+ */
+@Composable
+fun AchievementBadge(
+    title: String,
+    icon: ImageVector,
+    isEarned: Boolean,
+    onClick: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier.clickable(onClick = onClick),
@@ -54,14 +82,14 @@ fun AchievementBadge(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = type.iconVector,
-                contentDescription = type.title,
+                imageVector = icon,
+                contentDescription = title,
                 tint = if (isEarned) FLPrimary else MediumGray,
                 modifier = Modifier.size(28.dp)
             )
         }
         Text(
-            text = type.title,
+            text = title,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
             color = if (isEarned) TextPrimaryColor else TextSecondaryColor,

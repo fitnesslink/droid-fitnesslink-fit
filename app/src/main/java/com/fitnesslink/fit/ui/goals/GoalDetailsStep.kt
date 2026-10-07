@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitnesslink.fit.model.GoalType
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.TextPrimaryColor
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
@@ -76,6 +77,24 @@ fun GoalDetailsStep(viewModel: GoalCreationViewModel) {
             singleLine = false,
             minHeightDp = 90
         )
+
+        // Current Weight — only for the Lose Weight (body-composition) path,
+        // always optional: pre-filled from the latest weigh-in but skippable,
+        // and it never gates the button (iOS FTNSSLNK-158).
+        if (viewModel.selectedGoalType == GoalType.BodyComposition) {
+            FieldLabel("Current Weight (optional)")
+            TextFieldCard(
+                value = viewModel.currentValue,
+                onValueChange = { v -> viewModel.currentValue = v.filter { it.isDigit() || it == '.' } },
+                placeholder = "e.g., 185",
+                keyboardType = KeyboardType.Decimal
+            )
+            Text(
+                text = "Pre-filled from your latest weigh-in if available. You can skip this and log it later.",
+                fontSize = 12.sp,
+                color = TextSecondaryColor
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),

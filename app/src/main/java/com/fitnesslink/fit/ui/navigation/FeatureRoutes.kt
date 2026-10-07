@@ -20,4 +20,9 @@ fun NavGraphBuilder.featureRoutes(navController: NavHostController) {
     calendarRoutes(navController)
     catalogRoutes(navController)
     programRoutes(navController)
+    profileRoutes(navController)
+    goalsProgressRoutes(navController)
+    nutritionCoreRoutes(navController)
+    mealPlanRoutes(navController)
+    foodLoggingRoutes(navController)
 }

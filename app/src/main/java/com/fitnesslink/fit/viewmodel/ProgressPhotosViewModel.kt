@@ -5,50 +5,69 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fitnesslink.fit.data.MockDataProvider
-import com.fitnesslink.fit.model.*
-import com.fitnesslink.fit.network.ApiClient
-import com.fitnesslink.fit.network.NetworkMonitor
-import com.fitnesslink.fit.network.dto.toProgressPhotoEntries
+import com.fitnesslink.fit.model.MeasurementEntry
+import com.fitnesslink.fit.model.ProgramDates
+import com.fitnesslink.fit.model.ProgressPhotoEntry
+import com.fitnesslink.fit.model.WeightEntry
+import com.fitnesslink.fit.progress.BodyTrackingStore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Calendar
+import kotlinx.coroutines.withContext
 import java.util.Date
 
+/**
+ * iOS `ProgressPhotosViewModel`: cache-first list, server reconcile in the
+ * background, same-day search filter. Also backs `PhotoEntryDetailScreen`
+ * (which used to read `MockDataProvider`).
+ */
 class ProgressPhotosViewModel : ViewModel() {
     var entries by mutableStateOf<List<ProgressPhotoEntry>>(emptyList())
+        private set
     var searchDate by mutableStateOf<Date?>(null)
     var showDatePicker by mutableStateOf(false)
+    var isRefreshing by mutableStateOf(false)
+        private set
+
+    init {
+        BodyTrackingStore.ensureRegistered()
+        viewModelScope.launch { BodyTrackingStore.changes.collect { hydrateFromCache() } }
+    }
 
     fun loadData() {
-        entries = MockDataProvider.progressPhotoEntries.sortedByDescending { it.date }
-        viewModelScope.launch { refreshFromServer() }
+        hydrateFromCache()
+        viewModelScope.launch {
+            isRefreshing = true
+            try {
+                withContext(Dispatchers.IO) {
+                    BodyTrackingStore.refreshPhotos()
+                    // The linked chips need the latest weigh-ins / measurements too.
+                    BodyTrackingStore.refreshWeight()
+                    BodyTrackingStore.refreshMeasurements()
+                }
+            } finally {
+                isRefreshing = false
+            }
+            hydrateFromCache()
+        }
     }
 
-    private suspend fun refreshFromServer() {
-        if (!NetworkMonitor.isConnected.value) return
-        try {
-            val remote = ApiClient.bodyTrackingApi.getProgressPhotos()
-            entries = remote.toProgressPhotoEntries()
-        } catch (_: Exception) { /* use cached */ }
+    private fun hydrateFromCache() {
+        entries = BodyTrackingStore.photoEntries().sortedByDescending { it.date }
     }
+
+    fun entry(id: String): ProgressPhotoEntry? = entries.firstOrNull { it.id.equals(id, true) }
 
     val filteredEntries: List<ProgressPhotoEntry>
         get() {
             val sd = searchDate ?: return entries
-            val cal = Calendar.getInstance()
-            return entries.filter { entry ->
-                cal.time = sd
-                val searchDay = cal.get(Calendar.DAY_OF_YEAR)
-                val searchYear = cal.get(Calendar.YEAR)
-                cal.time = entry.date
-                cal.get(Calendar.DAY_OF_YEAR) == searchDay && cal.get(Calendar.YEAR) == searchYear
-            }
+            return entries.filter { ProgramDates.isSameDay(it.date.time, sd.time) }
         }
 
     fun deleteEntry(id: String) {
         entries = entries.filter { it.id != id }
+        viewModelScope.launch { BodyTrackingStore.deletePhotoEntry(id) }
     }
 
-    fun closestWeight(date: Date): WeightEntry? = MockDataProvider.closestWeight(date)
-    fun closestMeasurements(date: Date): MeasurementEntry? = MockDataProvider.closestMeasurements(date)
+    fun closestWeight(date: Date): WeightEntry? = BodyTrackingStore.closestWeight(date)
+    fun closestMeasurements(date: Date): MeasurementEntry? = BodyTrackingStore.closestMeasurements(date)
 }

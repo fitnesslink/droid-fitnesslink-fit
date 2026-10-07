@@ -437,3 +437,90 @@ object WhyExplanationText {
         return String.format(Locale.US, "%.2f", d)
     }
 }
+
+// MARK: - Micronutrients (FTNSSLNK-216/217, iOS `Micronutrient`)
+
+/**
+ * The five trackable micronutrients. [key] is the app-side identifier the
+ * `DisplayedNutrientsStore` contract exposes (`fiber`, `sugars`, `sodium`,
+ * `saturatedFat`, `cholesterol`); [wireName] is the backend's canonical name
+ * sent on the preference PUT and matched on GET.
+ */
+enum class Micronutrient(val key: String, val wireName: String, val displayName: String, val unit: String, val defaultTarget: Double?) {
+    FIBER("fiber", "Fiber", "Fiber", "g", 28.0),
+    SUGARS("sugars", "Sugars", "Sugars", "g", null),
+    SODIUM("sodium", "Sodium", "Sodium", "mg", 2300.0),
+    SATURATED_FAT("saturatedFat", "SaturatedFat", "Saturated Fat", "g", 20.0),
+    CHOLESTEROL("cholesterol", "Cholesterol", "Cholesterol", "mg", 300.0);
+
+    companion object {
+        /** The backend's default displayed set (mirrors `isDefault == true`). */
+        val defaultDisplayed: List<Micronutrient> = listOf(FIBER, SUGARS, SODIUM)
+
+        fun fromKey(key: String?): Micronutrient? = entries.firstOrNull { it.key == key }
+        fun fromWire(name: String?): Micronutrient? = entries.firstOrNull { it.wireName.equals(name, ignoreCase = true) || it.key.equals(name, ignoreCase = true) }
+
+        /** Canonical display order for a set of keys. */
+        fun ordered(keys: Set<String>): List<Micronutrient> = entries.filter { it.key in keys }
+    }
+}
+
+/** The summary's line for one micro (iOS `DailyMicrosSummary.line(for:)`). */
+fun com.fitnesslink.fit.network.dto.DailyMicrosSummary.line(micro: Micronutrient): com.fitnesslink.fit.network.dto.MicroSummaryLine? = when (micro) {
+    Micronutrient.FIBER -> fiber
+    Micronutrient.SUGARS -> sugars
+    Micronutrient.SODIUM -> sodium
+    Micronutrient.SATURATED_FAT -> saturatedFat
+    Micronutrient.CHOLESTEROL -> cholesterol
+}
+
+// MARK: - Bridges onto the wire DTOs
+//
+// `network/api/NutritionApi.kt` returns the shapes declared in
+// `network/dto/NutritionDtos.kt`; these extensions give those DTOs the same
+// typed accessors the models above carry, so screens can work directly off
+// the API's return types.
+
+fun com.fitnesslink.fit.network.dto.NutritionTargets.explanation(forMetric: String): com.fitnesslink.fit.network.dto.WhyExplanation? =
+    explanations.firstOrNull { it.metric.equals(forMetric, ignoreCase = true) }
+
+/** Rendered "why" copy for [metric], or null when the server sent no (known) explanation. */
+fun com.fitnesslink.fit.network.dto.NutritionTargets.whyText(metric: String): String? =
+    explanation(metric)?.let { WhyExplanationText.render(it) }
+
+val com.fitnesslink.fit.network.dto.NutritionTargets.estimatedGoalDateValue: Date?
+    get() = estimatedGoalDate?.let { MealPlanDay.date(it) }
+
+val com.fitnesslink.fit.network.dto.NutritionTargets.effectiveFromValue: Date?
+    get() = effectiveFrom.takeIf { it.isNotEmpty() }?.let { MealPlanDay.date(it) }
+
+fun WhyExplanationText.render(explanation: com.fitnesslink.fit.network.dto.WhyExplanation): String? =
+    render(WhyExplanation(metric = explanation.metric, key = explanation.key, inputs = explanation.inputs))
+
+val com.fitnesslink.fit.network.dto.NutritionProfile.sexValue: NutritionSex? get() = NutritionSex.fromRaw(sex)
+val com.fitnesslink.fit.network.dto.NutritionProfile.activityLevelValue: NutritionActivityLevel? get() = NutritionActivityLevel.fromRaw(activityLevel)
+val com.fitnesslink.fit.network.dto.NutritionProfile.workoutFrequencyValue: NutritionWorkoutFrequency? get() = NutritionWorkoutFrequency.fromRaw(workoutFrequency)
+val com.fitnesslink.fit.network.dto.NutritionProfile.primaryGoalValue: NutritionPrimaryGoal? get() = NutritionPrimaryGoal.fromRaw(primaryGoal)
+val com.fitnesslink.fit.network.dto.NutritionProfile.timelineValue: NutritionGoalTimeline? get() = NutritionGoalTimeline.fromRaw(timeline)
+val com.fitnesslink.fit.network.dto.NutritionProfile.dateOfBirthValue: Date? get() = MealPlanDay.date(dateOfBirth)
+
+/** The legacy flat goal row mirrored from a target set (iOS `NutritionGoalsStore.mirrorToLocalGoal`). */
+fun com.fitnesslink.fit.network.dto.NutritionTargets.toNutritionGoal(id: String): com.fitnesslink.fit.model.NutritionGoal =
+    com.fitnesslink.fit.model.NutritionGoal(
+        id = id,
+        calorieGoal = Math.round(dailyCalorieTarget).toInt(),
+        proteinTarget = Math.round(proteinGrams).toInt(),
+        fatTarget = Math.round(fatGrams).toInt(),
+        carbsTarget = Math.round(carbGrams).toInt()
+    )
+
+/** iOS `NutritionPrimaryGoal.systemImage` equivalent: a Material icon name the option card maps. */
+val NutritionPrimaryGoal.iconName: String
+    get() = when (this) {
+        NutritionPrimaryGoal.LOSE -> "trending_down"
+        NutritionPrimaryGoal.MAINTAIN -> "balance"
+        NutritionPrimaryGoal.GAIN -> "trending_up"
+        NutritionPrimaryGoal.BUILD_MUSCLE -> "fitness_center"
+        NutritionPrimaryGoal.RECOMP -> "swap_vert"
+        NutritionPrimaryGoal.HEALTH -> "favorite"
+    }

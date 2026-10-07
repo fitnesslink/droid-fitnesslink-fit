@@ -17,6 +17,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.R
+import com.fitnesslink.fit.auth.AuthManager
 import com.fitnesslink.fit.model.ProfileMenu
 import com.fitnesslink.fit.ui.components.HeaderView
 import com.fitnesslink.fit.ui.components.SeparatorView
@@ -41,8 +44,10 @@ fun ProfileScreen(
     onNavigateToNotifications: () -> Unit = { onNavigate("notifications") }
 ) {
     val viewModel: ProfileViewModel = viewModel()
+    val currentUser by AuthManager.currentUser.collectAsState()
 
-    LaunchedEffect(Unit) { viewModel.loadData() }
+    // Re-read whenever the signed-in user changes (login, profile refresh).
+    LaunchedEffect(currentUser) { viewModel.loadData() }
 
     Column(
         modifier = Modifier
@@ -62,15 +67,17 @@ fun ProfileScreen(
                     .padding(top = 10.dp)
             ) {
                 Text(
-                    text = viewModel.userName,
+                    text = viewModel.userName.ifBlank { "FitnessLink Member" },
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = viewModel.userEmail,
-                    fontSize = 14.sp,
-                    color = TextSecondaryColor
-                )
+                if (viewModel.userEmail.isNotBlank()) {
+                    Text(
+                        text = viewModel.userEmail,
+                        fontSize = 14.sp,
+                        color = TextSecondaryColor
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))

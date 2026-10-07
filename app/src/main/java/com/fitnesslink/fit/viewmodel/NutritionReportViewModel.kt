@@ -18,6 +18,9 @@ class NutritionReportViewModel : ViewModel() {
     var foodAggregates by mutableStateOf<List<FoodAggregate>>(emptyList())
     var goal by mutableStateOf(NutritionGoal())
     var calorieChartPoints by mutableStateOf<List<ChartPoint>>(emptyList())
+    var proteinChartPoints by mutableStateOf<List<ChartPoint>>(emptyList())
+    var carbsChartPoints by mutableStateOf<List<ChartPoint>>(emptyList())
+    var fatChartPoints by mutableStateOf<List<ChartPoint>>(emptyList())
 
     fun displayValue(metric: NutritionMetric): String = when (metric) {
         NutritionMetric.AVG_CALORIES -> "${reportData.avgCalories.toInt()}"
@@ -41,6 +44,14 @@ class NutritionReportViewModel : ViewModel() {
         NutritionMetric.CALORIE_SURPLUS -> "kcal vs goal"
     }
 
+    /** Points for the metric detail chart (calories for the calorie-based metrics, the macro for the rest). */
+    fun chartPoints(metric: NutritionMetric): List<ChartPoint> = when (metric) {
+        NutritionMetric.AVG_PROTEIN -> proteinChartPoints
+        NutritionMetric.AVG_CARBS -> carbsChartPoints
+        NutritionMetric.AVG_FAT -> fatChartPoints
+        else -> calorieChartPoints
+    }
+
     fun loadData() {
         val since = sinceMillis(selectedTimeRange)
         goal = DatabaseManager.nutritionGoal()
@@ -49,6 +60,9 @@ class NutritionReportViewModel : ViewModel() {
         foodAggregates = DatabaseManager.foodAggregates(since)
         computeReportData(since)
         calorieChartPoints = dailyRows.map { ChartPoint(it.date, it.calories.toDouble()) }.sortedBy { it.date }
+        proteinChartPoints = dailyRows.map { ChartPoint(it.date, it.protein) }.sortedBy { it.date }
+        carbsChartPoints = dailyRows.map { ChartPoint(it.date, it.carbs) }.sortedBy { it.date }
+        fatChartPoints = dailyRows.map { ChartPoint(it.date, it.fat) }.sortedBy { it.date }
     }
 
     private fun sinceMillis(range: ReportTimeRange): Long {

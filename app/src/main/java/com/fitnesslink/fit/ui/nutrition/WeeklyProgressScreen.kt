@@ -31,8 +31,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fitnesslink.fit.data.MockDataProvider
 import com.fitnesslink.fit.model.DailyCalorieSummary
+import com.fitnesslink.fit.model.MealPlanDay
+import com.fitnesslink.fit.nutrition.NutritionGoalsStore
+import com.fitnesslink.fit.nutrition.NutritionSummaryStore
+import com.fitnesslink.fit.persistence.DatabaseManager
+import com.fitnesslink.fit.persistence.foodEntries
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.theme.BackgroundColor
@@ -43,145 +47,112 @@ import com.fitnesslink.fit.ui.theme.PurpleTheme
 import com.fitnesslink.fit.ui.theme.TextPrimaryColor
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
+/**
+ * Trailing seven days (today inclusive) of calories + macro averages (iOS
+ * `WeeklyProgressView`). Online, the RANGE summary endpoint supplies each
+ * day's consumed totals and the goal in effect that day; offline, the same
+ * window is summed from the local food-entry cache against the current goal.
+ */
 @Composable
 fun WeeklyProgressScreen(onBack: () -> Unit) {
     var weeklyData by remember { mutableStateOf<List<DailyCalorieSummary>>(emptyList()) }
 
     LaunchedEffect(Unit) {
-        weeklyData = MockDataProvider.weeklyCalories
+        NutritionGoalsStore.hydrateFromCache()
+        val today = MealPlanDay.dayStart(Date())
+        val days = (6 downTo 0).map { MealPlanDay.addDays(today, -it) }
+        val weekday = SimpleDateFormat("EEE", Locale.getDefault())
+        val localGoal = NutritionGoalsStore.calorieGoal()
+
+        fun fromLocal(): List<DailyCalorieSummary> = days.map { day ->
+            val entries = DatabaseManager.foodEntries(day).filter { !it.isCustomTemplate }
+            DailyCalorieSummary(
+                dayLabel = weekday.format(day).take(3),
+                calories = entries.sumOf { it.calories },
+                protein = entries.sumOf { it.protein },
+                fat = entries.sumOf { it.fat },
+                carbs = entries.sumOf { it.carbs },
+                goal = localGoal
+            )
+        }
+        weeklyData = fromLocal()
+
+        val range = NutritionSummaryStore.range(MealPlanDay.string(days.first()), MealPlanDay.string(days.last()))
+        if (range != null) {
+            val byDay = range.days.associateBy { it.date }
+            weeklyData = days.map { day ->
+                val rollup = byDay[MealPlanDay.string(day)]
+                DailyCalorieSummary(
+                    dayLabel = weekday.format(day).take(3),
+                    calories = Math.round(rollup?.calorieConsumed ?: 0.0).toInt(),
+                    protein = rollup?.proteinConsumed ?: 0.0,
+                    fat = rollup?.fatConsumed ?: 0.0,
+                    carbs = rollup?.carbsConsumed ?: 0.0,
+                    goal = rollup?.calorieTarget?.let { Math.round(it).toInt() } ?: localGoal
+                )
+            }
+        }
     }
 
-    val weeklyAvgCalories = if (weeklyData.isNotEmpty()) weeklyData.sumOf { it.calories } / weeklyData.size else 0
-    val weeklyAvgProtein = if (weeklyData.isNotEmpty()) (weeklyData.sumOf { it.protein } / weeklyData.size).toInt() else 0
-    val weeklyAvgFat = if (weeklyData.isNotEmpty()) (weeklyData.sumOf { it.fat } / weeklyData.size).toInt() else 0
-    val weeklyAvgCarbs = if (weeklyData.isNotEmpty()) (weeklyData.sumOf { it.carbs } / weeklyData.size).toInt() else 0
-    val maxCalories = weeklyData.maxOfOrNull { it.calories } ?: 1
+    val count = weeklyData.size.coerceAtLeast(1)
+    val avgCalories = if (weeklyData.isEmpty()) 0 else weeklyData.sumOf { it.calories } / count
+    val avgProtein = if (weeklyData.isEmpty()) 0 else (weeklyData.sumOf { it.protein } / count).toInt()
+    val avgFat = if (weeklyData.isEmpty()) 0 else (weeklyData.sumOf { it.fat } / count).toInt()
+    val avgCarbs = if (weeklyData.isEmpty()) 0 else (weeklyData.sumOf { it.carbs } / count).toInt()
+    val maxCalories = weeklyData.maxOfOrNull { it.calories }?.takeIf { it > 0 } ?: 1
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundColor)
-    ) {
+    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
         HeaderBackView(onBack = onBack)
-
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 20.dp),
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Weekly Progress",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimaryColor,
-                modifier = Modifier
-                    .padding(horizontal = 20.dp)
-                    .padding(top = 10.dp)
-            )
+            Text("Weekly Progress", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp))
 
-            // Bar chart card
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .background(White, RoundedCornerShape(12.dp))
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = "Daily Calories",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimaryColor
-                )
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(160.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Bottom
-                ) {
+                Text("Daily Calories", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Row(modifier = Modifier.fillMaxWidth().height(160.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
                     weeklyData.forEach { day ->
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Bottom
-                        ) {
-                            Text(
-                                text = "${day.calories}",
-                                fontSize = 10.sp,
-                                color = TextSecondaryColor
-                            )
+                        Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
+                            Text("${day.calories}", fontSize = 10.sp, color = TextSecondaryColor)
                             Spacer(modifier = Modifier.height(4.dp))
                             Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(barHeight(day.calories, maxCalories))
-                                    .clip(RoundedCornerShape(4.dp))
-                                    .background(
-                                        if (day.calories >= day.goal) FLPrimary
-                                        else FLPrimary.copy(alpha = 0.5f)
-                                    )
+                                modifier = Modifier.fillMaxWidth().height(barHeight(day.calories, maxCalories)).clip(RoundedCornerShape(4.dp))
+                                    .background(if (day.calories >= day.goal) FLPrimary else FLPrimary.copy(alpha = 0.5f))
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = day.dayLabel,
-                                fontSize = 11.sp,
-                                color = TextSecondaryColor
-                            )
+                            Text(day.dayLabel, fontSize = 11.sp, color = TextSecondaryColor)
                         }
                     }
                 }
-
-                // Legend
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp, 4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(FLPrimary)
-                    )
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Box(modifier = Modifier.size(12.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(FLPrimary))
                     Text("At/above goal", fontSize = 11.sp, color = TextSecondaryColor)
                     Spacer(modifier = Modifier.width(4.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(12.dp, 4.dp)
-                            .clip(RoundedCornerShape(2.dp))
-                            .background(FLPrimary.copy(alpha = 0.5f))
-                    )
+                    Box(modifier = Modifier.size(12.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(FLPrimary.copy(alpha = 0.5f)))
                     Text("Below goal", fontSize = 11.sp, color = TextSecondaryColor)
                 }
             }
 
-            // Weekly averages card
             Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .background(White, RoundedCornerShape(12.dp))
-                    .padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = "Weekly Averages",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = TextPrimaryColor
-                )
-                AverageRow("Calories", "$weeklyAvgCalories cal", FLPrimary)
+                Text("Weekly Averages", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                AverageRow("Calories", "$avgCalories cal", FLPrimary)
                 SeparatorView()
-                AverageRow("Protein", "${weeklyAvgProtein}g", BlueTheme)
+                AverageRow("Protein", "${avgProtein}g", BlueTheme)
                 SeparatorView()
-                AverageRow("Fat", "${weeklyAvgFat}g", OrangeTheme)
+                AverageRow("Fat", "${avgFat}g", OrangeTheme)
                 SeparatorView()
-                AverageRow("Carbs", "${weeklyAvgCarbs}g", PurpleTheme)
+                AverageRow("Carbs", "${avgCarbs}g", PurpleTheme)
             }
         }
     }
@@ -189,20 +160,9 @@ fun WeeklyProgressScreen(onBack: () -> Unit) {
 
 @Composable
 private fun AverageRow(label: String, value: String, color: Color) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(8.dp)
-                    .background(color, CircleShape)
-            )
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Box(modifier = Modifier.size(8.dp).background(color, CircleShape))
             Text(label, fontSize = 14.sp, color = TextSecondaryColor)
         }
         Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)

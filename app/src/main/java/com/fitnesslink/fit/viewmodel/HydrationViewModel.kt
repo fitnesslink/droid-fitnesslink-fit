@@ -6,104 +6,137 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitnesslink.fit.model.HydrationGoal
+import com.fitnesslink.fit.model.MealPlanDay
+import com.fitnesslink.fit.model.RecentWaterAmount
 import com.fitnesslink.fit.model.WaterIntakeEntry
-import com.fitnesslink.fit.network.ApiClient
-import com.fitnesslink.fit.network.NetworkMonitor
-import com.fitnesslink.fit.persistence.DatabaseManager
-import com.fitnesslink.fit.sync.SyncManager
-import com.google.gson.GsonBuilder
+import com.fitnesslink.fit.model.WaterUnit
+import com.fitnesslink.fit.nutrition.HydrationStore
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Date
 
+/**
+ * Drives `LogWaterScreen` + `HydrationCardView` for ONE day (port of iOS
+ * `HydrationViewModel`): the selected [day] may be a past date (backfill),
+ * amounts display in the preferred unit, and every write goes through
+ * [HydrationStore] (offline-first, water drain).
+ */
 class HydrationViewModel : ViewModel() {
-    var todayEntries by mutableStateOf<List<WaterIntakeEntry>>(emptyList())
+    /** `yyyy-MM-dd` being viewed / logged to. */
+    var day by mutableStateOf(MealPlanDay.string(Date()))
+        private set
+    var dayEntries by mutableStateOf<List<WaterIntakeEntry>>(emptyList())
+        private set
     var goal by mutableStateOf(HydrationGoal())
+        private set
+    var recentAmounts by mutableStateOf<List<RecentWaterAmount>>(emptyList())
+        private set
     var isRefreshing by mutableStateOf(false)
         private set
+    /** Bumps whenever the undo stack may have changed so the card re-reads [canUndo]. */
+    var undoVersion by mutableStateOf(0)
+        private set
 
-    private val gson = GsonBuilder()
-        .setDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
-        .create()
+    private var observing = false
 
-    /**
-     * Total intake today expressed in the user's goal unit so the dashboard
-     * math stays in one unit regardless of which unit each entry was logged in.
-     */
-    val totalIntake: Double
-        get() = todayEntries.sumOf { it.unit.convert(it.amount, goal.unit) }
+    /** Legacy alias used by the pre-Wave-3 screens. */
+    val todayEntries: List<WaterIntakeEntry> get() = dayEntries
+
+    val isViewingToday: Boolean get() = day == MealPlanDay.string(Date())
+
+    /** Future days are plan-only — no logging. */
+    val canLog: Boolean get() = day <= MealPlanDay.string(Date())
+
+    val displayUnit: WaterUnit get() = goal.displayUnit
+
+    val dailyGoalDisplay: Double get() = goal.unit.convert(goal.dailyGoal, displayUnit)
+
+    /** Day total in the display unit regardless of each entry's logged unit. */
+    val totalIntake: Double get() = dayEntries.sumOf { it.unit.convert(it.amount, displayUnit) }
 
     val hydrationProgress: Double
         get() {
-            if (goal.dailyGoal <= 0) return 0.0
-            return (totalIntake / goal.dailyGoal).coerceAtMost(1.0)
+            if (dailyGoalDisplay <= 0) return 0.0
+            return (totalIntake / dailyGoalDisplay).coerceAtMost(1.0)
         }
 
-    val remainingIntake: Double
-        get() = (goal.dailyGoal - totalIntake).coerceAtLeast(0.0)
+    val remainingIntake: Double get() = (dailyGoalDisplay - totalIntake).coerceAtLeast(0.0)
 
-    fun loadData() {
-        todayEntries = DatabaseManager.waterEntries(Date())
-        goal = DatabaseManager.hydrationGoal()
-        viewModelScope.launch { refreshFromServer() }
-    }
+    val canUndo: Boolean get() { undoVersion; return HydrationStore.canUndo(day) }
 
-    private suspend fun refreshFromServer() {
-        if (!NetworkMonitor.isConnected.value) return
-        isRefreshing = true
-        try {
-            val remote = ApiClient.nutritionApi.getWaterEntries()
-            remote.forEach { DatabaseManager.saveWaterEntry(it) }
-            todayEntries = DatabaseManager.waterEntries(Date())
-        } catch (_: Exception) { /* use cached */ }
-        try {
-            val remoteGoal = ApiClient.nutritionApi.getHydrationGoal()
-            DatabaseManager.saveHydrationGoal(remoteGoal)
-            goal = remoteGoal
-        } catch (_: Exception) { /* use cached */ }
-        isRefreshing = false
-    }
+    // MARK: - Loading
 
-    fun addEntry(entry: WaterIntakeEntry) {
-        DatabaseManager.saveWaterEntry(entry)
-        todayEntries = DatabaseManager.waterEntries(Date())
-
-        // Mirror the food-entry pattern: enqueue first so the write survives
-        // a network failure or app kill, then try inline; if inline fails the
-        // SyncScheduler drains on the next connectivity pass.
-        DatabaseManager.enqueueSyncEntry(
-            entityType = SyncManager.WATER_ENTRIES_TYPE,
-            entityId = entry.id,
-            action = "create",
-            payload = gson.toJson(entry)
-        )
+    fun loadData(date: String = MealPlanDay.string(Date())) {
+        observe()
+        day = MealPlanDay.normalize(date)
+        hydrate()
         viewModelScope.launch {
-            if (!NetworkMonitor.isConnected.value) return@launch
-            try { ApiClient.nutritionApi.addWaterEntry(entry) } catch (_: Exception) {}
+            isRefreshing = true
+            val requested = day
+            try {
+                HydrationStore.refresh()
+                HydrationStore.refreshEntries(requested)
+            } finally {
+                isRefreshing = false
+            }
+            if (day == requested) hydrate()
         }
+    }
+
+    fun loadRecentAmounts() {
+        viewModelScope.launch { recentAmounts = HydrationStore.recentAmounts() }
+    }
+
+    private fun hydrate() {
+        goal = HydrationStore.currentGoal()
+        dayEntries = HydrationStore.entries(day)
+        undoVersion++
+    }
+
+    private fun observe() {
+        if (observing) return
+        observing = true
+        viewModelScope.launch { HydrationStore.changes.collectLatest { hydrate() } }
+        viewModelScope.launch { HydrationStore.goal.collectLatest { g -> if (g != null) goal = g } }
+    }
+
+    // MARK: - Writes
+
+    fun log(amount: Double, unit: WaterUnit, notes: String = "") {
+        if (amount <= 0 || !canLog) return
+        viewModelScope.launch {
+            HydrationStore.log(amount, unit, day, notes)
+            hydrate()
+            if (notes.isNotEmpty() || amount !in presetAmounts(unit)) recentAmounts = HydrationStore.recentAmounts()
+        }
+    }
+
+    /** Pre-Wave-3 API kept for callers that build the entry themselves. */
+    fun addEntry(entry: WaterIntakeEntry) = log(entry.amount, entry.unit, entry.notes)
+
+    /** +8 / +16 / +24 oz converted into the goal unit; undoable. */
+    fun logPreset(ounces: Double) {
+        if (!canLog) return
+        viewModelScope.launch { HydrationStore.logPreset(ounces, day); hydrate() }
+    }
+
+    fun undoLastTap() {
+        viewModelScope.launch { HydrationStore.undoLast(); hydrate() }
     }
 
     fun deleteEntry(id: String) {
-        DatabaseManager.deleteWaterEntry(id)
-        todayEntries = DatabaseManager.waterEntries(Date())
-
-        DatabaseManager.enqueueSyncEntry(
-            entityType = SyncManager.WATER_ENTRIES_TYPE,
-            entityId = id,
-            action = "delete",
-            payload = ""
-        )
-        viewModelScope.launch {
-            if (!NetworkMonitor.isConnected.value) return@launch
-            try { ApiClient.nutritionApi.deleteWaterEntry(id) } catch (_: Exception) {}
-        }
+        viewModelScope.launch { HydrationStore.delete(id, day); hydrate() }
     }
 
     fun updateGoal(newGoal: HydrationGoal) {
-        DatabaseManager.saveHydrationGoal(newGoal)
         goal = newGoal
-        viewModelScope.launch {
-            if (!NetworkMonitor.isConnected.value) return@launch
-            try { ApiClient.nutritionApi.upsertHydrationGoal(newGoal) } catch (_: Exception) {}
-        }
+        viewModelScope.launch { HydrationStore.updateGoal(newGoal) }
     }
+
+    fun setPreferredUnit(unit: WaterUnit?) {
+        viewModelScope.launch { HydrationStore.setPreferredUnit(unit); hydrate() }
+    }
+
+    /** The quick-add presets for [unit] (iOS `LogWaterView.quickAmounts`). */
+    fun presetAmounts(unit: WaterUnit): List<Double> = if (unit == WaterUnit.ML) listOf(250.0, 500.0, 750.0) else listOf(8.0, 16.0, 24.0)
 }

@@ -24,6 +24,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.NotificationItem
 import com.fitnesslink.fit.model.NotificationTab
 import com.fitnesslink.fit.model.NotificationType
+import com.fitnesslink.fit.push.NotificationBadge
+import com.fitnesslink.fit.ui.components.SearchView
+import com.fitnesslink.fit.ui.navigation.ProfileRouteNames
+import kotlinx.coroutines.flow.drop
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.theme.*
 import com.fitnesslink.fit.viewmodel.NotificationsViewModel
@@ -35,7 +39,18 @@ fun NotificationsScreen(
 ) {
     val viewModel: NotificationsViewModel = viewModel()
 
-    LaunchedEffect(Unit) { viewModel.loadData() }
+    LaunchedEffect(Unit) {
+        viewModel.loadData()
+        // Inbox opened: nothing is unread any more from the bell's point of view.
+        NotificationBadge.clear()
+    }
+    // A push landing while the inbox is open bumps the server badge
+    // (PushNotificationManager.onMessageReceived); reload so the new row shows.
+    LaunchedEffect(Unit) {
+        NotificationBadge.unread.drop(1).collect { count ->
+            if (count > 0) viewModel.loadData()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -59,7 +74,18 @@ fun NotificationsScreen(
                     Text("Mark All Read", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
                 }
             }
+            IconButton(onClick = { onNavigate(ProfileRouteNames.NOTIFICATION_PREFERENCES) }) {
+                Icon(Icons.Default.Settings, contentDescription = "Notification preferences", tint = TextPrimaryColor)
+            }
         }
+
+        // Wildcard search over title + body (see NotificationSearch).
+        SearchView(
+            text = viewModel.searchText,
+            onTextChange = { viewModel.searchText = it },
+            placeholder = "Search notifications",
+            modifier = Modifier.padding(horizontal = 20.dp).padding(top = 8.dp)
+        )
 
         // Tab picker
         LazyRow(
@@ -86,14 +112,18 @@ fun NotificationsScreen(
         }
 
         // Notification list
-        if (viewModel.notifications.isEmpty()) {
+        if (viewModel.visibleNotifications.isEmpty()) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.NotificationsOff, contentDescription = null,
+                    Icon(if (viewModel.isSearching) Icons.Default.Search else Icons.Default.NotificationsOff, contentDescription = null,
                         tint = MediumGray, modifier = Modifier.size(40.dp))
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("No notifications", fontSize = 16.sp, fontWeight = FontWeight.Medium,
-                        color = TextSecondaryColor)
+                    Text(
+                        if (viewModel.isSearching) "No notifications match \"${viewModel.searchText.trim()}\"" else "No notifications",
+                        fontSize = 16.sp, fontWeight = FontWeight.Medium,
+                        color = TextSecondaryColor,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
                 }
             }
         } else {

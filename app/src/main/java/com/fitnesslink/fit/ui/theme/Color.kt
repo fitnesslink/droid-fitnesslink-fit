@@ -22,3 +22,9 @@ val InfoColor = Color(0xFF6B7280)
 val HighlightState = Color(0xFFE8F5F1)
 val White = Color(0xFFFFFFFF)
 val Black = Color(0xFF000000)
+
+// Dark appearance (Preferences → Appearance → Dark). Brand teal is shared.
+val DarkBackground = Color(0xFF0F1716)
+val DarkSurface = Color(0xFF1B2422)
+val DarkTextPrimary = Color(0xFFF3F4F6)
+val DarkTextSecondary = Color(0xFF9CA3AF)

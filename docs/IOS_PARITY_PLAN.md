@@ -77,32 +77,42 @@ are grouped by the files they touch so they can be built in parallel.
 
 ### Wave 3 — Nutrition
 
-| # | Item |
-|---|------|
-| 3.1 | Fix broken basics: Save on goals/custom food/quick add/entry detail; today-filter bug; recent foods + weekly progress from server |
-| 3.2 | Profile + onboarding wizard (`/profile/calculate`, `/profile`), goals hub with provenance + override, profile edit |
-| 3.3 | Dashboard: date nav, week strip, calendar sheet, over-target states, micros card, planned meals, goals tile, shortcuts |
-| 3.4 | Food search + food detail (portion math, `/foods/{id}/convert`), favorites, recents, recent meals re-log, previous meals picker, quick-log copy, meal templates, batch log |
-| 3.5 | AI: Describe a Meal, estimate-macros prefill, Snap a Meal (flagged) |
-| 3.6 | Barcode: OpenFoodFacts fallback, catalog portions, barcode carried into manual entry |
-| 3.7 | Meal plan: date-anchored multi-week, copy week/day, meal builder (`/meal-slots/{id}/foods`), AI suggestion, AI week ideas + review/apply, server persistence |
-| 3.8 | Grocery: multiple lists, detail with add/edit/delete/reorder, analyze + merge, staples, build meal from grocery |
-| 3.9 | Hydration: recent amounts, backfill, preferred unit, undo; display settings |
-| 3.10 | Analytics (trends/consistency/weight progress), metric detail charts, meal-type + food-item detail |
+| # | Item | Status |
+|---|------|--------|
+| 3.1 | Fix broken basics: Save on goals/custom food/quick add/entry detail; today-filter bug; recent foods + weekly progress from server | ✅ 2026-10-06 |
+| 3.2 | Profile + onboarding wizard (`/profile/calculate`, `/profile`), goals hub with provenance + override, profile edit | ✅ 2026-10-06 |
+| 3.3 | Dashboard: date nav, week strip, calendar sheet, over-target states, micros card, planned meals, goals tile, shortcuts | ✅ 2026-10-06 |
+| 3.4 | Food search + food detail (portion math, `/foods/{id}/convert`), favorites, recents, recent meals re-log, previous meals picker, quick-log copy, meal templates, batch log | ✅ 2026-10-06 |
+| 3.5 | AI: Describe a Meal, estimate-macros prefill, Snap a Meal (flagged) | ✅ 2026-10-06 |
+| 3.6 | Barcode: OpenFoodFacts fallback, catalog portions, barcode carried into manual entry | ✅ 2026-10-06 |
+| 3.7 | Meal plan: date-anchored multi-week, copy week/day, meal builder (`/meal-slots/{id}/foods`), AI suggestion, AI week ideas + review/apply, server persistence | ✅ 2026-10-06 |
+| 3.8 | Grocery: multiple lists, detail with add/edit/delete/reorder, analyze + merge, staples, build meal from grocery | ✅ 2026-10-06 |
+| 3.9 | Hydration: recent amounts, backfill, preferred unit, undo; display settings | ✅ 2026-10-06 |
+| 3.10 | Analytics (trends/consistency/weight progress), metric detail charts, meal-type + food-item detail | ✅ 2026-10-06 |
 
 ### Wave 4 — Goals, progress, profile, billing
 
-| # | Item |
-|---|------|
-| 4.1 | Goals offline cache + drains; list cards with progress; detail header/trajectory/current-target/delete; habit detail stats + activity; achievement types; `GET /achievements` |
-| 4.2 | Weight: date picker, cache + queue. Measurements: server shape (per-part rows ↔ anatomy ids), sync, entry detail, icons |
-| 4.3 | Progress photos: capture flow (camera + picker, 3 angles, notes), two-step upload, real thumbnails everywhere, date search |
-| 4.4 | Preferences screen (appearance + dark theme, units, session audio/voice, calendar, Health Connect placeholder), profile photo via `POST /media` + `PUT /users/{id}` |
-| 4.5 | Billing: Play Billing, entitlement store + 402 gate, paywall, subscription screen from `/subscriptions/me`, restore |
-| 4.6 | Notifications: inbox search, server unread count, category prefs with full model, pre-prompt sheet, deep-link parity |
-| 4.7 | My Videos screen |
+| # | Item | Status |
+|---|------|--------|
+| 4.1 | Goals offline cache + drains; list cards with progress; detail header/trajectory/current-target/delete; habit detail stats + activity; achievement types; `GET /achievements` | ✅ 2026-10-06 |
+| 4.2 | Weight: date picker, cache + queue. Measurements: server shape (per-part rows ↔ anatomy ids), sync, entry detail, icons | ✅ 2026-10-06 |
+| 4.3 | Progress photos: capture flow (camera + picker, 3 angles, notes), two-step upload, real thumbnails everywhere, date search | ✅ 2026-10-06 |
+| 4.4 | Preferences screen (appearance + dark theme, units, session audio/voice, calendar, Health Connect placeholder), profile photo via `POST /media` + `PUT /users/{id}` | ✅ 2026-10-06 |
+| 4.5 | Billing: Play Billing, entitlement store + 402 gate, paywall, subscription screen from `/subscriptions/me`, restore | ✅ 2026-10-06 |
+| 4.6 | Notifications: inbox search, server unread count, category prefs with full model, pre-prompt sheet, deep-link parity | ✅ 2026-10-06 |
+| 4.7 | My Videos screen | ✅ 2026-10-06 |
 
 ## Status log
+
+- 2026-10-06 — **All waves (0–4) built and committed on local main.** Module compiles; 423 JVM unit tests green; debug APK assembles. Not yet verified on a device/emulator (none on this machine).
+
+### Open follow-ups after the port
+- **Backend (launch-blocking for Android billing):** no `POST billing/subscriptions/google/verify`, and `restore` rejects `source: "Google"` (400). Play purchases cannot be verified, so the client does not acknowledge them and Google auto-refunds after 3 days. Needs a Google verify command + Play RTDN webhook mapper; `obfuscatedAccountId` carries the FitnessLink user id.
+- **Backend:** `CreateGoalRequest` lacks `CurrentValue` (client works around with a follow-up progress PUT); `GET /progress-photos/me` omits per-row `notes`; no habit-log delete endpoint; rowVersion required on first delete of offline-created meal slots / grocery items.
+- **Schema:** fold the guarded side tables/columns created lazily by the Dao files into the versioned migration (`nutrition_cache`, `meal_slot_foods`, `movement_detail_cache`, `movement_pending_creates`, `habits.autoCompleteSource`, `streaks.freezes*`).
+- **Cleanup:** two parallel `ShareableContentKind` enums (`model.api` vs `network.dto`); duplicate `NutritionTargets`/`NutritionProfile` data classes in `model/api` vs `network/dto`; `MealMacroSummary` defined twice in `ui/nutrition`; `Plan*` vs `AI*` chip duplicates; dead `DatabaseManager.dashboards()/catalog*()`, `MockDataProvider` leftovers, `DatabaseSeeder` profile_menus seed, unused `HorizontalCalendar`.
+- **UI parity gaps left on purpose:** most screens hardcode light colours (dark theme only affects Material components until a colour-token sweep); in-app CameraX form-video capture (dep added, system intent used); drag-and-drop reorder uses move menus; `MovementInfoSheet` lacks "Your Performance"; Home re-centres on today after a pop-back; Quick Start (flagged off on iOS) and Apple-Health wearable slot not ported.
+- **Verification:** create an AVD in Android Studio and exercise sign-in → catalog → start a workout (Interactive + Playlist) → complete → report; nutrition logging; calendar add/move; Start Program. Then file FA tickets for anything found.
 
 - 2026-10-06 — Wave 0 (0.1–0.10), Wave 1 (1.1–1.11) and Wave 2 (2.1–2.9) built and committed; module compiles, 267 JVM unit tests green. Known follow-ups: in-app CameraX form-video capture (camera-video dep added, UI uses system intent), two parallel `ShareableContentKind` enums to collapse, `MovementInfoSheet` lacks "Your Performance", pop-back re-centres Home on today, Google Play verify endpoint missing on backend. Cross-agent signatures live in `docs/parity/CONTRACTS.md`.
 

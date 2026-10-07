@@ -1,7 +1,5 @@
 package com.fitnesslink.fit.ui.profile
 
-import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,171 +9,271 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CardGiftcard
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.CreditCard
+import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.PhoneIphone
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitnesslink.fit.billing.AppLinks
+import com.fitnesslink.fit.billing.BillingException
+import com.fitnesslink.fit.billing.BillingPresentation
+import com.fitnesslink.fit.billing.EntitlementStore
+import com.fitnesslink.fit.billing.PlayBillingManager
+import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.network.ApiError
+import com.fitnesslink.fit.network.dto.SubscriptionDto
+import com.fitnesslink.fit.ui.billing.openUrl
 import com.fitnesslink.fit.ui.components.HeaderBackView
+import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
+import com.fitnesslink.fit.ui.theme.MediumGray
+import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.TextPrimaryColor
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.Calendar
+import java.util.Date
 import java.util.Locale
 
 /**
- * FA-98 — Billing screen. The billing API isn't wired client-side yet,
- * so the page renders with a sensible default subscription summary.
- * The "Manage" button deep-links to the Play Store subscriptions hub
- * where Play-billed customers can change or cancel; if no app handles
- * the intent we fall back to the web URL.
+ * FTNSSLNK-284 port of iOS `BillingView`: subscription status and the
+ * controls each store allows. Play requires cancel / plan changes for a
+ * Play subscription to go through its own subscription centre; a Stripe
+ * (web) subscription can't be touched from here at all, so that case is
+ * read-only with a pointer to the web portal; comped access has nothing to
+ * manage.
  */
 @Composable
 fun BillingScreen(onBack: () -> Unit) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val entitlementState by EntitlementStore.state.collectAsState()
+    val entitlement = entitlementState.entitlement
+    var subscription by remember { mutableStateOf<SubscriptionDto?>(null) }
+    var isLoading by remember { mutableStateOf(true) }
+    var isRestoring by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf<String?>(null) }
+    val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
+    val dateText: (Date) -> String = { dateFormat.format(it) }
 
-    // Placeholder until BillingApi is plumbed. Renewal: 30 days out.
-    val plan = "FitnessLink Pro"
-    val status = "Active"
-    val renewalDate = remember30Days()
-    val price = "$9.99 / month"
+    suspend fun load() {
+        isLoading = true
+        EntitlementStore.attach(context)
+        EntitlementStore.refresh(force = true)
+        // 404 (never subscribed) is nil, not an error.
+        subscription = try { ApiClient.billingApi.getMySubscription() } catch (_: ApiError.NotFound) { null } catch (_: Exception) { subscription }
+        isLoading = false
+    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundColor)
-    ) {
+    LaunchedEffect(Unit) { load() }
+
+    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(
-                text = "Billing",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                color = TextPrimaryColor,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+            Text("Subscription", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(top = 8.dp))
 
-            // Plan card
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(White)
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = plan,
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = TextPrimaryColor,
-                        modifier = Modifier.weight(1f)
-                    )
-                    StatusPill(status = status)
+            if (isLoading && subscription == null) {
+                Box(modifier = Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = FLPrimary)
                 }
-                Text(
-                    text = price,
-                    fontSize = 14.sp,
-                    color = TextSecondaryColor
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                LabeledRow(label = "Next renewal", value = renewalDate)
-                LabeledRow(label = "Billing source", value = "Google Play")
-            }
-
-            // Manage CTA — Play Store first, web fallback if no Play app.
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(FLPrimary)
-                    .clickable {
-                        val playIntent = Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse("https://play.google.com/store/account/subscriptions")
-                        ).setPackage("com.android.vending")
-                        if (playIntent.resolveActivity(context.packageManager) != null) {
-                            context.startActivity(playIntent)
-                        } else {
-                            context.startActivity(
-                                Intent(
-                                    Intent.ACTION_VIEW,
-                                    Uri.parse("https://play.google.com/store/account/subscriptions")
-                                )
-                            )
+            } else {
+                val pill = BillingPresentation.statusPill(entitlement, subscription)
+                Column(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(18.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            BillingPresentation.planName(entitlement, subscription),
+                            fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
+                            modifier = Modifier.weight(1f)
+                        )
+                        StatusPill(pill)
+                    }
+                    BillingPresentation.renewalLine(entitlement, subscription, dateText)?.let {
+                        InfoLine(Icons.Default.CalendarToday, it)
+                    }
+                    if (entitlement.isTrial) {
+                        entitlement.trialEndsAt?.let {
+                            InfoLine(Icons.Default.Schedule, "Your free trial ends ${dateText(it)} — you'll be charged then unless you cancel.")
                         }
                     }
-                    .padding(vertical = 14.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "Manage subscription",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = White
-                )
-            }
+                    entitlement.source?.let {
+                        InfoLine(Icons.Default.CreditCard, "Billed through ${BillingPresentation.billingSourceName(it)}")
+                    }
+                }
 
-            Text(
-                text = "Server-billed plans manage from your account on the FitnessLink web app.",
-                fontSize = 11.sp,
-                color = TextSecondaryColor
-            )
+                if (entitlement.isGrace) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
+                            .background(OrangeTheme.copy(alpha = 0.12f)).padding(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Icon(Icons.Default.Warning, contentDescription = null, tint = OrangeTheme)
+                        Text("There's a problem with your payment method. Update it to keep your access.", fontSize = 13.sp, color = TextPrimaryColor)
+                    }
+                }
+
+                Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White)) {
+                    when (BillingPresentation.actions(entitlement)) {
+                        BillingPresentation.Actions.COMPED -> Row(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Icon(Icons.Default.CardGiftcard, contentDescription = null, tint = FLPrimary)
+                            Text("Your access is on us — there's nothing to manage or pay.", fontSize = 13.sp, color = TextSecondaryColor)
+                        }
+                        BillingPresentation.Actions.WEB -> ActionRow("Manage on the web", Icons.Default.Language) {
+                            context.openUrl(AppLinks.WEB_BILLING_PORTAL)
+                        }
+                        BillingPresentation.Actions.APPLE -> {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Icon(Icons.Default.PhoneIphone, contentDescription = null, tint = FLPrimary)
+                                Text("This subscription is billed through the App Store. Manage it from your iPhone or iPad.", fontSize = 13.sp, color = TextSecondaryColor)
+                            }
+                            SeparatorView(modifier = Modifier.padding(horizontal = 20.dp))
+                            RestoreRow(isRestoring) {
+                                restore(scope, onStart = { isRestoring = true; message = null }, onDone = { m -> isRestoring = false; message = m }) {
+                                    subscription = try { ApiClient.billingApi.getMySubscription() } catch (_: Exception) { subscription }
+                                }
+                            }
+                        }
+                        BillingPresentation.Actions.PLAY -> {
+                            ActionRow("Manage subscription", Icons.Default.Settings) {
+                                message = null
+                                PlayBillingManager.attach(context)
+                                PlayBillingManager.openManageSubscriptions(context, subscription?.externalSubscriptionId?.takeIf { it.isNotBlank() }?.let { PlayBillingManager.offer(it)?.productId })
+                            }
+                            SeparatorView(modifier = Modifier.padding(horizontal = 20.dp))
+                            RestoreRow(isRestoring) {
+                                PlayBillingManager.attach(context)
+                                restore(scope, onStart = { isRestoring = true; message = null }, onDone = { m -> isRestoring = false; message = m }) {
+                                    subscription = try { ApiClient.billingApi.getMySubscription() } catch (_: Exception) { subscription }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                message?.let {
+                    Text(it, fontSize = 13.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                }
+            }
+            Spacer(modifier = Modifier.size(16.dp))
         }
     }
 }
 
-@Composable
-private fun StatusPill(status: String) {
-    val (bg, fg) = when (status.lowercase()) {
-        "active" -> FLPrimary.copy(alpha = 0.12f) to FLPrimary
-        "trial" -> Color(0xFFFFEDD5) to Color(0xFFC2410C)
-        "cancelled" -> Color(0xFFFEE2E2) to Color(0xFFB91C1C)
-        else -> TextSecondaryColor.copy(alpha = 0.15f) to TextSecondaryColor
+private fun restore(
+    scope: kotlinx.coroutines.CoroutineScope,
+    onStart: () -> Unit,
+    onDone: (String?) -> Unit,
+    reloadSubscription: suspend () -> Unit
+) {
+    onStart()
+    scope.launch {
+        val result = try {
+            val restored = PlayBillingManager.restorePurchases()
+            reloadSubscription()
+            if (restored.isEntitled) "Your subscription has been restored." else BillingException.NoActiveSubscription.message
+        } catch (e: Exception) {
+            e.message
+        }
+        onDone(result)
     }
-    Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(12.dp))
-            .background(bg)
-            .padding(horizontal = 10.dp, vertical = 4.dp)
+}
+
+@Composable
+private fun StatusPill(pill: BillingPresentation.StatusPill) {
+    val bg = when (pill.tone) {
+        BillingPresentation.PillTone.BRAND -> FLPrimary
+        BillingPresentation.PillTone.WARNING -> OrangeTheme
+        BillingPresentation.PillTone.NEUTRAL -> MediumGray
+    }
+    Box(modifier = Modifier.clip(CircleShape).background(bg).padding(horizontal = 10.dp, vertical = 5.dp)) {
+        Text(pill.label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+    }
+}
+
+@Composable
+private fun InfoLine(icon: ImageVector, text: String) {
+    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Icon(icon, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
+        Text(text, fontSize = 14.sp, color = TextSecondaryColor)
+    }
+}
+
+@Composable
+private fun ActionRow(title: String, icon: ImageVector, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            text = status,
-            fontSize = 11.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = fg
-        )
+        Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(title, fontSize = 16.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
     }
 }
 
 @Composable
-private fun LabeledRow(label: String, value: String) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        Text(label, fontSize = 13.sp, color = TextSecondaryColor)
-        Spacer(modifier = Modifier.weight(1f))
-        Text(value, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+private fun RestoreRow(isRestoring: Boolean, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(enabled = !isRestoring, onClick = onClick).padding(horizontal = 20.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(Icons.Default.Refresh, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(if (isRestoring) "Restoring…" else "Restore Purchases", fontSize = 16.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+        if (isRestoring) CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(16.dp))
+        else Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
     }
-}
-
-private fun remember30Days(): String {
-    val cal = Calendar.getInstance()
-    cal.add(Calendar.DAY_OF_YEAR, 30)
-    return SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(cal.time)
 }

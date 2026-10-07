@@ -115,3 +115,58 @@ data class RecentWaterAmount(
     /** Typed unit; null if the server adds a unit this build doesn't know (chip hidden). */
     val waterUnit: WaterUnit? get() = WaterUnit.fromRawOrNull(unit)
 }
+
+// MARK: - Dashboard preset taps (FTNSSLNK-195 / 221)
+
+/**
+ * The hydration card's +8 / +16 / +24 oz presets. A tap is converted into
+ * the goal's unit so the server-side raw sum stays unit-consistent for
+ * metric users (iOS `NutritionViewModel.logWaterPreset`).
+ */
+object HydrationPresets {
+    val presetOunces: List<Double> = listOf(8.0, 16.0, 24.0)
+
+    /** [ounces] expressed in [unit]; millilitres are rounded to a whole number. */
+    fun amount(ounces: Double, unit: WaterUnit): Double {
+        val converted = WaterUnit.OZ.convert(ounces, unit)
+        return if (unit == WaterUnit.ML) Math.rint(converted) else converted
+    }
+}
+
+/**
+ * Undo stack for preset taps (iOS `WaterTapUndoStack`): only taps made this
+ * session on the currently-viewed day are undoable; switching days clears
+ * the stack. Pure value semantics so it is unit-testable.
+ */
+class WaterTapUndoStack {
+    var dayKey: String = ""
+        private set
+    private val entryIds = ArrayDeque<String>()
+
+    val canUndo: Boolean get() = entryIds.isNotEmpty()
+
+    fun canUndo(dayKey: String): Boolean = canUndo && this.dayKey == dayKey
+
+    fun recordTap(entryId: String, dayKey: String) {
+        if (dayKey != this.dayKey) {
+            entryIds.clear()
+            this.dayKey = dayKey
+        }
+        entryIds.addLast(entryId)
+    }
+
+    /** The most recent tap's entry id for [dayKey], or null (and a reset) when the day changed. */
+    fun popLastTap(dayKey: String): String? {
+        if (dayKey != this.dayKey) {
+            entryIds.clear()
+            this.dayKey = dayKey
+            return null
+        }
+        return entryIds.removeLastOrNull()
+    }
+
+    fun clear() {
+        entryIds.clear()
+        dayKey = ""
+    }
+}

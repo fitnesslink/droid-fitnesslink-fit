@@ -9,65 +9,59 @@ import com.fitnesslink.fit.model.CoachingTone
 import com.fitnesslink.fit.model.GoalNotificationPreference
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
+import com.fitnesslink.fit.persistence.DatabaseManager
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+/**
+ * Goal reminder settings (iOS `NotificationSettingsViewModel`): coaching
+ * tone, the six reminder toggles and the daily cap. Every save is a
+ * full-object PUT so the category flags and quiet hours ride along
+ * untouched; a failed save reverts and reports.
+ */
 class NotificationSettingsViewModel : ViewModel() {
     var preferences by mutableStateOf(GoalNotificationPreference())
+        private set
+    var saveErrorMessage by mutableStateOf<String?>(null)
 
     fun loadData() {
+        runCatching { DatabaseManager.notificationPreference() }.getOrNull()?.let { preferences = it }
         viewModelScope.launch { refreshFromServer() }
     }
 
-    fun updateCoachingTone(tone: CoachingTone) {
-        preferences = preferences.copy(coachingTone = tone)
-        syncPreferences()
-    }
+    fun updateCoachingTone(tone: CoachingTone) = save { it.copy(coachingTone = tone) }
+    fun updateMaxDailyNotifications(count: Int) = save { it.copy(maxDailyNotifications = count) }
+    fun toggleHabitReminders() = save { it.copy(enableHabitReminders = !it.enableHabitReminders) }
+    fun toggleStreakAlerts() = save { it.copy(enableStreakAlerts = !it.enableStreakAlerts) }
+    fun toggleMilestones() = save { it.copy(enableMilestones = !it.enableMilestones) }
+    fun toggleAiCoaching() = save { it.copy(enableAiCoaching = !it.enableAiCoaching) }
+    fun toggleReengagement() = save { it.copy(enableReengagement = !it.enableReengagement) }
+    fun toggleGoalCheckIns() = save { it.copy(enableGoalCheckIns = !it.enableGoalCheckIns) }
 
-    fun updateMaxDailyNotifications(count: Int) {
-        preferences = preferences.copy(maxDailyNotifications = count)
-        syncPreferences()
-    }
-
-    fun toggleHabitReminders() {
-        preferences = preferences.copy(enableHabitReminders = !preferences.enableHabitReminders)
-        syncPreferences()
-    }
-
-    fun toggleStreakAlerts() {
-        preferences = preferences.copy(enableStreakAlerts = !preferences.enableStreakAlerts)
-        syncPreferences()
-    }
-
-    fun toggleMilestones() {
-        preferences = preferences.copy(enableMilestones = !preferences.enableMilestones)
-        syncPreferences()
-    }
-
-    fun toggleAiCoaching() {
-        preferences = preferences.copy(enableAiCoaching = !preferences.enableAiCoaching)
-        syncPreferences()
-    }
-
-    fun toggleReengagement() {
-        preferences = preferences.copy(enableReengagement = !preferences.enableReengagement)
-        syncPreferences()
-    }
-
-    fun toggleGoalCheckIns() {
-        preferences = preferences.copy(enableGoalCheckIns = !preferences.enableGoalCheckIns)
-        syncPreferences()
-    }
-
-    private fun syncPreferences() {
+    /** Optimistic: apply, PUT the full object, revert on failure. */
+    private fun save(transform: (GoalNotificationPreference) -> GoalNotificationPreference) {
+        val previous = preferences
+        val updated = transform(previous)
+        preferences = updated
+        saveErrorMessage = null
         viewModelScope.launch {
-            try { ApiClient.notificationApi.updatePreferences(preferences) } catch (_: Exception) {}
+            try {
+                ApiClient.notificationApi.updatePreferences(updated)
+                withContext(Dispatchers.IO) { runCatching { DatabaseManager.saveNotificationPreference(updated) } }
+            } catch (_: Exception) {
+                preferences = previous
+                saveErrorMessage = "Couldn't save your change. Check your connection and try again."
+            }
         }
     }
 
     private suspend fun refreshFromServer() {
         if (!NetworkMonitor.isConnected.value) return
         try {
-            preferences = ApiClient.notificationApi.getPreferences()
+            val fresh = ApiClient.notificationApi.getPreferences()
+            preferences = fresh
+            withContext(Dispatchers.IO) { runCatching { DatabaseManager.saveNotificationPreference(fresh) } }
         } catch (_: Exception) { /* use cached */ }
     }
 }

@@ -27,6 +27,8 @@ import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.theme.*
 import com.fitnesslink.fit.viewmodel.PersonalInfoViewModel
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 @Composable
 fun PersonalInfoScreen(
@@ -40,11 +42,14 @@ fun PersonalInfoScreen(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
-            val bytes = context.contentResolver.openInputStream(it)?.readBytes()
+            val bytes = context.contentResolver.openInputStream(it)?.use { stream -> stream.readBytes() }
             if (bytes != null) {
-                viewModel.uploadProfilePhoto(bytes)
+                viewModel.uploadProfilePhoto(bytes, context.contentResolver.getType(it) ?: "image/jpeg")
             }
         }
+    }
+    val memberSinceText = remember(viewModel.memberSince) {
+        viewModel.memberSince?.let { SimpleDateFormat("MMMM yyyy", Locale.getDefault()).format(it) }
     }
 
     LaunchedEffect(Unit) {
@@ -157,16 +162,28 @@ fun PersonalInfoScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Member since
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Icon(Icons.Default.CalendarToday, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
-                Text("Member since March 2026", fontSize = 14.sp, color = TextSecondaryColor)
+            // Member since (server audit timestamp; hidden when unknown)
+            if (memberSinceText != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 20.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
+                    Text("Member since $memberSinceText", fontSize = 14.sp, color = TextSecondaryColor)
+                }
+            }
+
+            (viewModel.saveError ?: viewModel.photoUploadError)?.let { error ->
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    error,
+                    fontSize = 13.sp,
+                    color = androidx.compose.ui.graphics.Color.Red,
+                    modifier = Modifier.padding(horizontal = 20.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -174,7 +191,7 @@ fun PersonalInfoScreen(
             // Save button
             Button(
                 onClick = { viewModel.saveChanges() },
-                enabled = viewModel.hasChanges,
+                enabled = viewModel.hasChanges && !viewModel.isSaving,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
@@ -185,7 +202,11 @@ fun PersonalInfoScreen(
                     disabledContainerColor = DisabledButton
                 )
             ) {
-                Text("Save Changes", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                if (viewModel.isSaving) {
+                    CircularProgressIndicator(color = White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Save Changes", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                }
             }
 
             Spacer(modifier = Modifier.height(20.dp))

@@ -26,12 +26,19 @@ interface UserApi {
     @POST("users")
     suspend fun create(@Body request: CreateUserBody): ResponseBody
 
+    /** Full-body update. The server answers 204 No Content — callers re-read [getMe] afterwards. */
     @PUT("users/{id}")
-    suspend fun update(@Path("id") id: String, @Body user: FLUser): FLUser
+    suspend fun update(@Path("id") id: String, @Body user: FLUser)
 
     @PUT("users/{id}/preferences")
     suspend fun updatePreferences(@Path("id") id: String, @Body prefs: UserPreference)
 
+    /**
+     * Legacy. iOS never calls this; the profile photo flow is `POST media`
+     * (container `photos`) followed by a full-body [update] carrying
+     * `profileImageId`. Kept only so nothing else breaks at compile time.
+     */
+    @Deprecated("Use MediaApi.upload(container = \"photos\") + UserApi.update with profileImageId")
     @Multipart
     @POST("users/me/profile-photo")
     suspend fun uploadProfilePhoto(@Part file: MultipartBody.Part): FLUser

@@ -6,15 +6,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fitnesslink.fit.goals.GoalStore
 import com.fitnesslink.fit.model.Goal
 import com.fitnesslink.fit.model.GoalType
 import com.fitnesslink.fit.model.Habit
 import com.fitnesslink.fit.model.HabitType
-import com.fitnesslink.fit.network.ApiClient
+import com.fitnesslink.fit.model.WeightUnit
+import com.fitnesslink.fit.progress.BodyTrackingStore
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import java.util.Locale
 import java.util.UUID
 
+/**
+ * iOS `GoalCreationViewModel`: three steps (direction → details → habits).
+ * The body-composition path carries an optional "Current Weight" pre-filled
+ * from the latest weigh-in (FTNSSLNK-158) and sent as the goal's
+ * `currentValue`. Save is local-first through `GoalStore.create` — the
+ * network send is fire-and-forget, so the flow closes at once.
+ */
 class GoalCreationViewModel : ViewModel() {
 
     // Step 1
@@ -25,6 +35,8 @@ class GoalCreationViewModel : ViewModel() {
     var description by mutableStateOf("")
     var targetValue by mutableStateOf("")
     var targetUnit by mutableStateOf("")
+    /** Optional current body weight (lbs) for the Lose Weight path; never required. */
+    var currentValue by mutableStateOf("")
     var targetDate by mutableStateOf(defaultTargetDate())
     var identityStatement by mutableStateOf("")
 
@@ -47,6 +59,9 @@ class GoalCreationViewModel : ViewModel() {
     fun selectGoalType(type: GoalType) {
         selectedGoalType = type
         title = type.displayName
+        // Current weight only applies to the body-composition path; clear it
+        // for every other type so a stale pre-fill can't leak across a change.
+        currentValue = ""
         when (type) {
             GoalType.Performance -> {
                 targetUnit = "km"
@@ -55,6 +70,7 @@ class GoalCreationViewModel : ViewModel() {
             GoalType.BodyComposition -> {
                 targetUnit = "lbs"
                 identityStatement = "I am someone who takes care of my body"
+                prefillCurrentWeight()
             }
             GoalType.Consistency -> {
                 targetUnit = "days"
@@ -73,6 +89,13 @@ class GoalCreationViewModel : ViewModel() {
                 identityStatement = ""
             }
         }
+    }
+
+    /** iOS `prefillCurrentWeight`: latest weigh-in converted to lbs; blank when none is logged. */
+    private fun prefillCurrentWeight() {
+        val latest = BodyTrackingStore.weightEntries().firstOrNull() ?: return
+        val lbs = latest.unit.convert(latest.weight, WeightUnit.LBS)
+        currentValue = if (lbs == Math.rint(lbs)) String.format(Locale.US, "%.0f", lbs) else String.format(Locale.US, "%.1f", lbs)
     }
 
     fun next() {
@@ -112,10 +135,11 @@ class GoalCreationViewModel : ViewModel() {
             )
             GoalType.BodyComposition -> listOf(
                 habit("Log your meals", HabitType.Nutrition, "After each meal", 3.0, "meals", 2),
-                habit("Walk 5,000 steps", HabitType.PassiveSensor, null, 5000.0, "steps", 0)
+                // iOS: `autoCompleteSource: "HealthKit_Steps"`; the Android source is Health Connect.
+                habit("Walk 5,000 steps", HabitType.PassiveSensor, null, 5000.0, "steps", 0, autoCompleteSource = PASSIVE_STEPS_SOURCE)
             )
             GoalType.Nutrition -> listOf(
-                habit("Eat a protein-rich breakfast", HabitType.Nutrition, "After I wake up", 30.0, "g protein", 1),
+                habit("Eat a protein-rich breakfast", HabitType.Nutrition, "After I wake up", 30.0, "grams protein", 1),
                 habit("Drink a glass of water", HabitType.ActionBased, "Before each meal", 3.0, "glasses", 1)
             )
             GoalType.Consistency -> listOf(
@@ -135,32 +159,31 @@ class GoalCreationViewModel : ViewModel() {
         selectedHabitIds.addAll(list.map { it.id })
     }
 
+    /** iOS `save`: write + queue locally, send without waiting, close the flow. */
     private fun submit() {
         if (isSubmitting) return
         val type = selectedGoalType ?: return
-        val target = targetValue.toDoubleOrNull()
+        val now = System.currentTimeMillis()
         val goal = Goal(
-            id = UUID.randomUUID().toString(),
+            id = UUID.randomUUID().toString().lowercase(Locale.US),
             goalType = type,
             title = title.trim(),
             description = description.trim(),
-            targetValue = target,
+            targetValue = targetValue.toDoubleOrNull(),
             targetUnit = targetUnit.takeIf { it.isNotBlank() },
+            // Optional — defaults to 0 when skipped; progress begins once a body weight is logged.
+            currentValue = currentValue.toDoubleOrNull() ?: 0.0,
+            startDate = now,
             targetDate = targetDate,
             identityStatement = identityStatement.takeIf { it.isNotBlank() }
         )
+        val toLink = suggestedHabits.filter { it.id in selectedHabitIds }
 
         isSubmitting = true
         submitError = null
         viewModelScope.launch {
             try {
-                val created = ApiClient.goalApi.create(goal)
-                val toLink = suggestedHabits.filter { it.id in selectedHabitIds }
-                toLink.forEach { habit ->
-                    runCatching {
-                        ApiClient.goalApi.createHabit(habit.copy(goalId = created.id))
-                    }
-                }
+                GoalStore.create(goal, toLink)
                 isComplete = true
             } catch (e: Exception) {
                 submitError = e.localizedMessage ?: "Could not create goal"
@@ -176,7 +199,8 @@ class GoalCreationViewModel : ViewModel() {
         anchor: String?,
         target: Double,
         unit: String,
-        minutes: Int
+        minutes: Int,
+        autoCompleteSource: String? = null
     ): Habit = Habit(
         id = UUID.randomUUID().toString(),
         title = title,
@@ -184,10 +208,14 @@ class GoalCreationViewModel : ViewModel() {
         anchorBehavior = anchor,
         targetValue = target,
         targetUnit = unit,
-        estimatedMinutes = minutes
+        estimatedMinutes = minutes,
+        autoCompleteSource = autoCompleteSource
     )
 
     companion object {
+        /** Android counterpart of iOS `"HealthKit_Steps"`. */
+        const val PASSIVE_STEPS_SOURCE = "HealthConnect_Steps"
+
         private fun defaultTargetDate(): Long {
             val cal = Calendar.getInstance()
             cal.add(Calendar.MONTH, 3)

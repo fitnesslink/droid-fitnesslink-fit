@@ -604,9 +604,15 @@ object AuthManager {
             runCatching { SyncManager.reset() }
         }
         NotificationBadge.clear()
-        // Entitlement / StoreKit-equivalent resets land here in Wave 4
-        // (EntitlementStore.reset(), BillingManager.reset()).
+        runCatching { com.fitnesslink.fit.billing.EntitlementStore.reset() }
+        runCatching { com.fitnesslink.fit.nutrition.NutritionGoalsStore.reset() }
+        runCatching { com.fitnesslink.fit.nutrition.DisplayedNutrientsStore.reset() }
+        runCatching { com.fitnesslink.fit.nutrition.NutritionSummaryStore.invalidateAll() }
+        runCatching { com.fitnesslink.fit.billing.PlayBillingManager.reset() }
     }
+
+    /** Re-reads `GET users/me` into [currentUser] (after Personal Info edits / photo upload). */
+    suspend fun refreshCurrentUser() { runCatching { fetchPlatformUser() } }
 
     // MARK: - Error mapping (iOS `mapFirebaseError`)
 

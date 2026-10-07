@@ -491,3 +491,86 @@ object MealPlanDay {
     /** Canonical `yyyy-MM-dd` for any accepted spelling. */
     fun normalize(raw: String): String = string(parse(raw))
 }
+
+// MARK: - Copy-week / apply-week collision rules (client-side replay)
+
+/**
+ * The occupied-slot semantics the server applies on `copy-week` and
+ * `apply-week`, replayed client-side for the offline fallback. Pure so the
+ * rules are unit-testable (iOS `MealPlanViewModel.copyPreviousWeekLocally`
+ * / `applyMealPlanIdeasLocally`).
+ */
+object MealPlanCopyRules {
+    /** `(weekday, mealType)` collision key — a slot's position inside its week. */
+    fun weekdayKey(slot: MealSlot): String = weekdayKey(slot.dateValue, slot.mealType)
+
+    fun weekdayKey(date: Date, mealType: MealType): String {
+        val weekday = MealPlanDay.calendar().apply { time = date }.get(Calendar.DAY_OF_WEEK)
+        return "$weekday-${mealType.wireValue}"
+    }
+
+    /** `(date, mealType)` collision key — absolute, for apply-week merge. */
+    fun dayKey(date: String, mealType: MealType): String = "${MealPlanDay.normalize(date)}-${mealType.wireValue}"
+
+    /** Outcome of a client-side copy-week replay. */
+    data class WeekCopyPlan(
+        /** Target-week slots that get removed first (overwrite mode only). */
+        val remove: List<MealSlot>,
+        /** New slots to create (fresh ids, shifted +7 days, foods carried along). */
+        val create: List<MealSlot>,
+        val skippedCount: Int
+    ) {
+        val copiedCount: Int get() = create.size
+        val overwrittenCount: Int get() = remove.size
+    }
+
+    /**
+     * Copy [source] (last week's slots) onto the week holding [target].
+     * `overwrite = true` replaces colliding `(weekday, meal)` targets and
+     * keeps the rest; `false` skips collisions and adds the rest. Mirrors
+     * the server's `copy-week` contract.
+     */
+    fun planWeekCopy(source: List<MealSlot>, target: List<MealSlot>, overwrite: Boolean): WeekCopyPlan {
+        if (source.isEmpty()) return WeekCopyPlan(emptyList(), emptyList(), 0)
+        val sourceKeys = source.map { weekdayKey(it) }.toSet()
+        val remove = if (overwrite) target.filter { weekdayKey(it) in sourceKeys } else emptyList()
+        val occupied = if (overwrite) emptySet() else target.map { weekdayKey(it) }.toSet()
+        val create = mutableListOf<MealSlot>()
+        var skipped = 0
+        for (slot in source) {
+            val targetDate = MealPlanDay.addDays(slot.dateValue, 7)
+            if (!overwrite && weekdayKey(targetDate, slot.mealType) in occupied) { skipped++; continue }
+            create += slot.copy(
+                id = UUID.randomUUID().toString().lowercase(Locale.US),
+                date = MealPlanDay.string(targetDate),
+                rowVersion = ""
+            )
+        }
+        return WeekCopyPlan(remove, create, skipped)
+    }
+
+    /** One approved AI idea destined for `(day, mealType)`. */
+    data class PlannedIdea(val day: String, val mealType: MealType?, val slot: MealSlot)
+
+    data class IdeasApplyPlan(val remove: List<MealSlot>, val create: List<MealSlot>, val skippedCount: Int)
+
+    /**
+     * Apply-week collision rules: `replace` clears the week first; `merge`
+     * skips any `(day, mealType)` that already holds a meal. Ideas whose
+     * day / meal type can't be resolved are skipped.
+     */
+    fun planIdeasApply(existing: List<MealSlot>, ideas: List<PlannedIdea>, replace: Boolean): IdeasApplyPlan {
+        val remove = if (replace) existing else emptyList()
+        val occupied = if (replace) mutableSetOf() else existing.map { dayKey(it.date, it.mealType) }.toMutableSet()
+        val create = mutableListOf<MealSlot>()
+        var skipped = 0
+        for (idea in ideas) {
+            val mealType = idea.mealType
+            if (mealType == null || MealPlanDay.date(idea.day) == null) { skipped++; continue }
+            val key = dayKey(idea.day, mealType)
+            if (!occupied.add(key)) { skipped++; continue }
+            create += idea.slot
+        }
+        return IdeasApplyPlan(remove, create, skipped)
+    }
+}

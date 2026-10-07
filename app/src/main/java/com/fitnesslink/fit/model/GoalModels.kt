@@ -77,6 +77,7 @@ enum class AchievementType(val title: String, val description: String) {
 
 // MARK: - Data classes
 
+@com.google.gson.annotations.JsonAdapter(Goal.WireAdapter::class)
 data class Goal(
     val id: String = UUID.randomUUID().toString(),
     val userId: String = "",
@@ -94,8 +95,24 @@ data class Goal(
     val trajectoryStatus: TrajectoryStatus = TrajectoryStatus.OnTrack,
     val createdAt: Long = System.currentTimeMillis(),
     val updatedAt: Long = System.currentTimeMillis()
-)
+) {
+    /** iOS `Goal.progressPercent`: 0 without a positive target, capped at 100. */
+    val progressPercent: Double
+        get() {
+            val target = targetValue ?: return 0.0
+            if (target <= 0) return 0.0
+            return minOf(currentValue / target * 100.0, 100.0)
+        }
 
+    /** Server `GoalDto`: ISO dates, `createdAtUtc` / `updatedAtUtc` (iOS `Goal.CodingKeys`). */
+    class WireAdapter : EpochWireAdapter<Goal>(
+        Goal::class.java,
+        dateKeys = setOf("startDate", "targetDate", "completedDate", "createdAt", "updatedAt"),
+        utcSuffixed = setOf("createdAt", "updatedAt")
+    )
+}
+
+@com.google.gson.annotations.JsonAdapter(Habit.WireAdapter::class)
 data class Habit(
     val id: String = UUID.randomUUID().toString(),
     val goalId: String? = null,
@@ -113,9 +130,38 @@ data class Habit(
     val isActive: Boolean = true,
     val sortOrder: Int = 0,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
-)
+    val updatedAt: Long = System.currentTimeMillis(),
+    /** iOS `Habit.autoCompleteSource` — e.g. "HealthConnect_Steps" for passive-sensor habits. */
+    val autoCompleteSource: String? = null
+) {
+    /**
+     * Server `HabitDto`: ISO dates with `Utc`-suffixed audit stamps, and
+     * `frequencyDays` as a JSON *string* — decode it to the local int list
+     * and re-encode on the way out so `POST /habits` model-binds.
+     */
+    class WireAdapter : EpochWireAdapter<Habit>(
+        Habit::class.java,
+        dateKeys = setOf("createdAt", "updatedAt"),
+        utcSuffixed = setOf("createdAt", "updatedAt")
+    ) {
+        override fun preprocess(raw: com.google.gson.JsonObject) {
+            super.preprocess(raw)
+            val days = raw.get("frequencyDays") ?: return
+            if (days.isJsonPrimitive && days.asJsonPrimitive.isString) {
+                val parsed = runCatching { com.google.gson.JsonParser.parseString(days.asString) }.getOrNull()
+                if (parsed != null && parsed.isJsonArray) raw.add("frequencyDays", parsed) else raw.remove("frequencyDays")
+            }
+        }
 
+        override fun postwrite(tree: com.google.gson.JsonObject) {
+            super.postwrite(tree)
+            val days = tree.get("frequencyDays") ?: return
+            if (days.isJsonArray) tree.addProperty("frequencyDays", days.toString())
+        }
+    }
+}
+
+@com.google.gson.annotations.JsonAdapter(HabitLog.WireAdapter::class)
 data class HabitLog(
     val id: String = UUID.randomUUID().toString(),
     val habitId: String = "",
@@ -123,9 +169,25 @@ data class HabitLog(
     val completedAt: Long = System.currentTimeMillis(),
     val completionType: CompletionType = CompletionType.Manual,
     val actualValue: Double? = null,
-    val notes: String? = null
-)
+    val notes: String? = null,
+    /** Server `LogHabitRequest.IdempotencyKey`; defaults to the log id on the wire. */
+    val idempotencyKey: String? = null,
+    val deviceSource: String? = null
+) {
+    class WireAdapter : EpochWireAdapter<HabitLog>(
+        HabitLog::class.java,
+        dateKeys = setOf("completedAt", "createdAt"),
+        utcSuffixed = setOf("createdAt")
+    ) {
+        override fun postwrite(tree: com.google.gson.JsonObject) {
+            super.postwrite(tree)
+            if (!tree.has("idempotencyKey")) tree.get("id")?.let { tree.add("idempotencyKey", it) }
+            if (!tree.has("deviceSource")) tree.addProperty("deviceSource", "Android")
+        }
+    }
+}
 
+@com.google.gson.annotations.JsonAdapter(Streak.WireAdapter::class)
 data class Streak(
     val id: String = UUID.randomUUID().toString(),
     val habitId: String = "",
@@ -133,16 +195,30 @@ data class Streak(
     val currentCount: Int = 0,
     val longestCount: Int = 0,
     val lastCompletedDate: Long? = null,
-    val streakStartDate: Long? = null
-)
+    val streakStartDate: Long? = null,
+    /** iOS `Streak.freezesAvailable` / `freezesUsed` (server `HabitStreakDto`). */
+    val freezesAvailable: Int = 0,
+    val freezesUsed: Int = 0
+) {
+    class WireAdapter : EpochWireAdapter<Streak>(
+        Streak::class.java,
+        dateKeys = setOf("lastCompletedDate", "lastFreezeDate", "streakStartDate", "createdAt", "updatedAt")
+    )
+}
 
+@com.google.gson.annotations.JsonAdapter(Milestone.WireAdapter::class)
 data class Milestone(
     val id: String = UUID.randomUUID().toString(),
     val goalId: String = "",
     val title: String = "",
     val targetValue: Double = 0.0,
     val achievedAt: Long? = null
-)
+) {
+    class WireAdapter : EpochWireAdapter<Milestone>(
+        Milestone::class.java,
+        dateKeys = setOf("achievedAt", "createdAt")
+    )
+}
 
 @com.google.gson.annotations.JsonAdapter(Achievement.Adapter::class)
 data class Achievement(
@@ -316,3 +392,46 @@ data class HabitStats(
     val currentStreak: Int = 0,
     val longestStreak: Int = 0
 )
+
+/**
+ * Wire ⇄ local shape for the goal-domain models, whose timestamps are epoch
+ * millis locally (`Long`) but ISO-8601 strings on the server, which also
+ * suffixes audit stamps as `createdAtUtc` / `updatedAtUtc` (iOS maps the same
+ * pair through `CodingKeys`). Reads accept ISO strings or numbers; writes
+ * emit ISO UTC so a queued payload decodes the same way a server row does.
+ */
+abstract class EpochWireAdapter<T : Any>(
+    target: Class<T>,
+    private val dateKeys: Set<String>,
+    private val utcSuffixed: Set<String> = emptySet()
+) : TolerantAdapterFactory<T>(target) {
+
+    override fun preprocess(raw: com.google.gson.JsonObject) {
+        for (local in utcSuffixed) {
+            val wire = local + "Utc"
+            if (!raw.has(wire)) continue
+            val value = raw.remove(wire)
+            if (!raw.has(local) && value != null && !value.isJsonNull) raw.add(local, value)
+        }
+        for (key in dateKeys) {
+            val element = raw.get(key) ?: continue
+            if (element.isJsonPrimitive && element.asJsonPrimitive.isString) {
+                val millis = ModelGson.LenientDateAdapter().parse(element.asString)?.time
+                if (millis == null) raw.remove(key) else raw.addProperty(key, millis)
+            }
+        }
+    }
+
+    override fun postwrite(tree: com.google.gson.JsonObject) {
+        for (key in dateKeys) {
+            val element = tree.get(key) ?: continue
+            if (element.isJsonPrimitive && element.asJsonPrimitive.isNumber) {
+                tree.addProperty(key, FitnessContent.formatIsoDate(element.asLong))
+            }
+        }
+        for (local in utcSuffixed) {
+            val element = tree.remove(local) ?: continue
+            tree.add(local + "Utc", element)
+        }
+    }
+}

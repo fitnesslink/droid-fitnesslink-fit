@@ -19,7 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import com.fitnesslink.fit.auth.AuthManager
 import com.fitnesslink.fit.push.PushNotificationManager
-import com.fitnesslink.fit.push.rememberPushPermissionRequester
+import com.fitnesslink.fit.ui.notifications.NotificationPrePromptHost
 import com.fitnesslink.fit.ui.auth.GetStartedScreen
 import com.fitnesslink.fit.ui.auth.SplashScreen
 import kotlinx.coroutines.delay
@@ -44,14 +44,9 @@ import com.fitnesslink.fit.ui.home.HomeScreen
 import com.fitnesslink.fit.ui.nutrition.BarcodeScannerScreen
 import com.fitnesslink.fit.ui.nutrition.CustomFoodFormScreen
 import com.fitnesslink.fit.ui.nutrition.FoodEntryDetailScreen
-import com.fitnesslink.fit.ui.nutrition.GroceryListScreen
-import com.fitnesslink.fit.ui.nutrition.LogWaterScreen
-import com.fitnesslink.fit.ui.nutrition.MealPlanScreen
-import com.fitnesslink.fit.ui.nutrition.MealSlotDetailScreen
 import com.fitnesslink.fit.ui.nutrition.NutritionGoalSettingsScreen
 import com.fitnesslink.fit.ui.nutrition.NutritionHomeScreen
 import com.fitnesslink.fit.ui.nutrition.NutritionScreen
-import com.fitnesslink.fit.ui.nutrition.NutritionSummaryScreen
 import com.fitnesslink.fit.ui.nutrition.QuickAddScreen
 import com.fitnesslink.fit.ui.nutrition.RecentFoodsScreen
 import com.fitnesslink.fit.ui.nutrition.WeeklyProgressScreen
@@ -239,17 +234,9 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
         onDispose { AppRouter.clearHandlers() }
     }
 
-    // Push permission (Android 13+). iOS asks contextually rather than at
-    // first launch; mirror the Home pre-prompt cadence loosely: once, a
-    // couple of seconds after the tabs appear, and never again after an
-    // answer (PushNotificationManager.shouldRequestPermission).
-    val requestPushPermission = rememberPushPermissionRequester()
-    LaunchedEffect(Unit) {
-        delay(2_000)
-        if (AppRouter.pendingRoute.value == null && PushNotificationManager.shouldRequestPermission(context)) {
-            requestPushPermission()
-        }
-    }
+    // Push permission (Android 13+): iOS-style in-app pre-prompt sheet
+    // (≤3 offers, ≥3 days apart, only while the OS permission is undetermined).
+    NotificationPrePromptHost()
 
     Scaffold(
         bottomBar = {
@@ -306,6 +293,7 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
             }
             composable(AppRouter.NUTRITION_TAB) {
                 NutritionHomeScreen(
+                    onNavigate = { navController.navigate(it) },
                     onNavigateToCalorieTracking = { navController.navigate("calorieTracking") },
                     onNavigateToMealPlan = { navController.navigate("mealPlan") },
                     onNavigateToNutritionSummary = { navController.navigate("nutritionSummary") },
@@ -456,53 +444,22 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                     onNavigateToFoodEntryDetail = { entryId -> navController.navigate("foodEntryDetail/$entryId") },
                     onNavigateToRecentFoods = { navController.navigate("recentFoods") },
                     onNavigateToWeeklyProgress = { navController.navigate("weeklyProgress") },
-                    onNavigateToBarcodeScanner = { mealType -> navController.navigate("barcodeScanner/$mealType") }
-                )
-            }
-            composable("mealPlan") {
-                MealPlanScreen(
-                    onBack = { navController.popBackStack() },
-                    onNavigateToMealSlotDetail = { day, mealType -> navController.navigate("mealSlotDetail/$day/$mealType") },
-                    onNavigateToNutritionSummary = { navController.navigate("nutritionSummary") },
-                    onNavigateToGroceryList = { navController.navigate("groceryList") }
-                )
-            }
-            composable(
-                "mealSlotDetail/{day}/{mealType}",
-                arguments = listOf(
-                    navArgument("day") { type = NavType.StringType },
-                    navArgument("mealType") { type = NavType.StringType }
-                )
-            ) { backStackEntry ->
-                MealSlotDetailScreen(
-                    dayName = backStackEntry.arguments?.getString("day") ?: "MONDAY",
-                    mealTypeName = backStackEntry.arguments?.getString("mealType") ?: "BREAKFAST",
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable("nutritionSummary") {
-                NutritionSummaryScreen(
-                    onBack = { navController.popBackStack() }
-                )
-            }
-            composable("groceryList") {
-                GroceryListScreen(
-                    onBack = { navController.popBackStack() }
+                    onNavigateToBarcodeScanner = { mealType -> navController.navigate("barcodeScanner/$mealType") },
+                    onNavigate = { navController.navigate(it) }
                 )
             }
             composable("nutritionGoalSettings") {
                 NutritionGoalSettingsScreen(
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onNavigate = { navController.navigate(it) }
                 )
-            }
-            composable("logWater") {
-                LogWaterScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 "quickAdd/{mealType}",
                 arguments = listOf(navArgument("mealType") { type = NavType.StringType })
             ) { backStackEntry ->
                 QuickAddScreen(
+                    onNavigate = { navController.navigate(it) },
                     mealTypeName = backStackEntry.arguments?.getString("mealType") ?: "BREAKFAST",
                     onBack = { navController.popBackStack() },
                     onNavigateToBarcodeScanner = { mealType -> navController.navigate("barcodeScanner/$mealType") },
@@ -520,6 +477,7 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
             }
             composable("recentFoods") {
                 RecentFoodsScreen(
+                    onNavigate = { navController.navigate(it) },
                     onBack = { navController.popBackStack() },
                     onNavigateToCustomFoodForm = { entryId -> navController.navigate("customFoodForm/$entryId") }
                 )
@@ -543,6 +501,7 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                 arguments = listOf(navArgument("mealType") { type = NavType.StringType })
             ) { backStackEntry ->
                 BarcodeScannerScreen(
+                    onNavigate = { navController.navigate(it) },
                     mealTypeName = backStackEntry.arguments?.getString("mealType") ?: "BREAKFAST",
                     onBack = { navController.popBackStack() }
                 )
@@ -579,13 +538,16 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                 )
             }
             composable("mealTypeDetail/{mealType}", arguments = listOf(navArgument("mealType") { type = NavType.StringType })) { backStackEntry ->
-                ProfileStubScreen(title = backStackEntry.arguments?.getString("mealType") ?: "Meal", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.profile.MealTypeDetailScreen(
+                    mealType = backStackEntry.arguments?.getString("mealType") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable("foodItemDetail/{foodName}", arguments = listOf(navArgument("foodName") { type = NavType.StringType })) { backStackEntry ->
-                ProfileStubScreen(title = backStackEntry.arguments?.getString("foodName") ?: "Food", onBack = { navController.popBackStack() })
-            }
-            composable("preferences") {
-                ProfileStubScreen(title = "Preferences", onBack = { navController.popBackStack() })
+                com.fitnesslink.fit.ui.profile.FoodItemDetailScreen(
+                    foodName = backStackEntry.arguments?.getString("foodName") ?: "",
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable("billing") {
                 com.fitnesslink.fit.ui.profile.BillingScreen(onBack = { navController.popBackStack() })
@@ -636,7 +598,8 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
             }
             composable("measurements") {
                 com.fitnesslink.fit.ui.progress.MeasurementsLogScreen(
-                    onBack = { navController.popBackStack() }
+                    onBack = { navController.popBackStack() },
+                    onOpenEntry = { navController.navigate("measurementEntryDetail/$it") }
                 )
             }
             composable("photos") {

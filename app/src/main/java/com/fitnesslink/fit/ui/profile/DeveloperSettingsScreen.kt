@@ -147,6 +147,18 @@ fun DeveloperSettingsScreen(onBack: () -> Unit) {
             Button(onClick = { scope.launch { SyncManager.performFullSync() } }) {
                 Text("Force Sync Now")
             }
+            // iOS "Reset Sync Cursor & Re-pull": forget the cursor so the next
+            // pass pulls every entity from scratch (local rows are kept).
+            OutlinedButton(onClick = {
+                scope.launch {
+                    SyncManager.reset()
+                    SyncManager.performFullSync()
+                }
+            }) {
+                Text("Reset Sync Cursor & Re-pull")
+            }
+            StatusRow("Notifications API", ApiConfiguration.baseUrl(ApiService.NOTIFICATION))
+            StatusRow("Billing API", ApiConfiguration.baseUrl(ApiService.BILLING))
             OutlinedButton(
                 onClick = { DatabaseManager.clearUserData() },
                 colors = ButtonDefaults.outlinedButtonColors(

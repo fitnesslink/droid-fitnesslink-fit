@@ -5,7 +5,12 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import com.fitnesslink.fit.auth.AuthManager
+import com.fitnesslink.fit.billing.EntitlementStore
+import com.fitnesslink.fit.billing.PlayBillingManager
+import com.fitnesslink.fit.settings.UserSettings
 import com.fitnesslink.fit.calendar.CalendarService
+import com.fitnesslink.fit.goals.GoalStore
+import com.fitnesslink.fit.progress.BodyTrackingStore
 import com.fitnesslink.fit.calendar.CalendarSyncService
 import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.contributors.ContributorStore
@@ -16,6 +21,9 @@ import com.fitnesslink.fit.network.ApiConfiguration
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.programs.ProgramEnrollmentService
+import com.fitnesslink.fit.nutrition.FoodLogStore
+import com.fitnesslink.fit.nutrition.GroceryStore
+import com.fitnesslink.fit.nutrition.MealPlanStore
 import com.fitnesslink.fit.push.NotificationBadge
 import com.fitnesslink.fit.session.ActiveWorkoutSession
 import com.fitnesslink.fit.session.SessionSettings
@@ -38,6 +46,8 @@ class FitnessLinkApp : Application() {
         FirebaseApp.initializeApp(this)
         DatabaseManager.initialize(this)
         ApiConfiguration.initialize(this)
+        // Units + appearance must be right from the first frame.
+        UserSettings.attach(this)
         NetworkMonitor.initialize(this)
         MediaCacheStore.initialize(this)
         MediaPrefetcher.initialize(this)
@@ -48,8 +58,16 @@ class FitnessLinkApp : Application() {
         CalendarSyncService.attach(this)
         CalendarService.ensureRegistered()
         ProgramEnrollmentService.ensureRegistered()
+        GoalStore.ensureRegistered()
+        BodyTrackingStore.ensureRegistered()
+        BodyTrackingStore.attach(this)
+        FoodLogStore.ensureRegistered()
+        MealPlanStore.ensureRegistered()
+        GroceryStore.ensureRegistered()
         SessionSettings.attach(this)
         ActiveWorkoutSession.ensureRegistered()
+        EntitlementStore.attach(this)
+        PlayBillingManager.attach(this)
         ContentLayoutPrefs.initialize(this)
         // Auth state listener must attach after the DB exists (it hydrates
         // the cached user) and before the first frame (splash gating).

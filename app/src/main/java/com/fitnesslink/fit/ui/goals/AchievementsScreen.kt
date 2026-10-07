@@ -38,6 +38,11 @@ import com.fitnesslink.fit.viewmodel.AchievementsViewModel
 import java.text.DateFormat
 import java.util.Date
 
+/**
+ * iOS `AchievementsView`: 3-column grid, Earned then Locked. Locked comes
+ * from the `GET /achievements` definitions the user hasn't earned (client
+ * enum fallback offline). Tapping a badge opens Android's detail dialog.
+ */
 @Composable
 fun AchievementsScreen(
     onBack: () -> Unit,
@@ -46,8 +51,9 @@ fun AchievementsScreen(
     LaunchedEffect(Unit) { viewModel.loadData() }
 
     var selected by remember { mutableStateOf<AchievementSelection?>(null) }
-    val earned = viewModel.earnedAchievements.filter { it.achievementType != null }
-    val locked = viewModel.lockedTypes
+    val earned = viewModel.earnedAchievements
+    val lockedDefinitions = viewModel.lockedDefinitions
+    val lockedTypes = if (viewModel.definitions.isEmpty()) viewModel.lockedTypes else emptyList()
 
     Column(
         modifier = Modifier
@@ -59,39 +65,30 @@ fun AchievementsScreen(
         LazyVerticalGrid(
             columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp
-            ),
+            contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 24.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Title
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Text(
-                    text = "Achievements",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = TextPrimaryColor
-                )
+                Text("Achievements", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
             }
 
-            if (earned.isEmpty() && locked.isEmpty()) {
+            if (earned.isEmpty() && lockedDefinitions.isEmpty() && lockedTypes.isEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) { EmptyState() }
             }
 
-            // Earned section header
             if (earned.isNotEmpty()) {
-                item(span = { GridItemSpan(maxLineSpan) }) {
-                    SectionHeader(text = "Earned", color = TextPrimaryColor)
-                }
+                item(span = { GridItemSpan(maxLineSpan) }) { SectionHeader("Earned", TextPrimaryColor) }
                 items(earned, key = { it.id }) { achievement ->
-                    val earnedType = achievement.achievementType ?: return@items
+                    val type = achievement.achievementType
                     AchievementBadge(
-                        type = earnedType,
+                        title = achievement.title.ifBlank { type?.title ?: "Achievement" },
+                        icon = achievementIcon(type, achievement.title),
                         isEarned = true,
                         onClick = {
                             selected = AchievementSelection(
-                                type = earnedType,
+                                title = achievement.title.ifBlank { type?.title ?: "Achievement" },
+                                description = achievement.description.ifBlank { type?.description ?: "" },
                                 isEarned = true,
                                 earnedAt = Date(achievement.earnedAt)
                             )
@@ -100,39 +97,43 @@ fun AchievementsScreen(
                 }
             }
 
-            // Locked section header
-            if (locked.isNotEmpty()) {
+            if (lockedDefinitions.isNotEmpty() || lockedTypes.isNotEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    SectionHeader(text = "Locked", color = TextSecondaryColor)
+                    SectionHeader("Locked", TextSecondaryColor)
                 }
-                items(locked, key = { it.name }) { type ->
+                items(lockedDefinitions, key = { "def-${it.id}" }) { def ->
+                    val type = AchievementType.fromWire(def.achievementType)
+                    AchievementBadge(
+                        title = def.name.ifBlank { type?.title ?: def.achievementType },
+                        icon = achievementIcon(type, def.name),
+                        isEarned = false,
+                        onClick = {
+                            selected = AchievementSelection(
+                                title = def.name.ifBlank { type?.title ?: def.achievementType },
+                                description = def.description ?: type?.description ?: "",
+                                isEarned = false
+                            )
+                        }
+                    )
+                }
+                items(lockedTypes, key = { "type-${it.name}" }) { type ->
                     AchievementBadge(
                         type = type,
                         isEarned = false,
-                        onClick = {
-                            selected = AchievementSelection(type = type, isEarned = false)
-                        }
+                        onClick = { selected = AchievementSelection(title = type.title, description = type.description, isEarned = false) }
                     )
                 }
             }
         }
     }
 
-    selected?.let { sel ->
-        AchievementDetailDialog(selection = sel, onDismiss = { selected = null })
-    }
+    selected?.let { sel -> AchievementDetailDialog(selection = sel, onDismiss = { selected = null }) }
 }
 
 @Composable
 private fun SectionHeader(text: String, color: androidx.compose.ui.graphics.Color) {
-    Text(
-        text = text,
-        fontSize = 18.sp,
-        fontWeight = FontWeight.SemiBold,
-        color = color,
-        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
-    )
+    Text(text, fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = color, modifier = Modifier.padding(top = 8.dp, bottom = 4.dp))
 }
 
 @Composable
@@ -144,55 +145,33 @@ private fun EmptyState() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(
-            text = "No achievements yet",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = TextPrimaryColor
-        )
-        Text(
-            text = "Complete habits and goals to earn badges.",
-            fontSize = 13.sp,
-            color = TextSecondaryColor
-        )
+        Text("No achievements yet", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text("Complete habits and goals to earn badges.", fontSize = 13.sp, color = TextSecondaryColor)
     }
 }
 
 @Composable
-private fun AchievementDetailDialog(
-    selection: AchievementSelection,
-    onDismiss: () -> Unit
-) {
+private fun AchievementDetailDialog(selection: AchievementSelection, onDismiss: () -> Unit) {
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(selection.type.title) },
+        title = { Text(selection.title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(selection.type.description, fontSize = 14.sp, color = TextSecondaryColor)
+                if (selection.description.isNotBlank()) Text(selection.description, fontSize = 14.sp, color = TextSecondaryColor)
                 if (selection.isEarned && selection.earnedAt != null) {
-                    Text(
-                        text = "Earned ${dateFormatter.format(selection.earnedAt)}",
-                        fontSize = 12.sp,
-                        color = FLPrimary,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Text("Earned ${dateFormatter.format(selection.earnedAt)}", fontSize = 12.sp, color = FLPrimary, fontWeight = FontWeight.SemiBold)
                 } else {
-                    Text(
-                        text = "Locked — keep going to earn this badge.",
-                        fontSize = 12.sp,
-                        color = TextSecondaryColor
-                    )
+                    Text("Locked — keep going to earn this badge.", fontSize = 12.sp, color = TextSecondaryColor)
                 }
             }
         },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
-        }
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Close") } }
     )
 }
 
 private data class AchievementSelection(
-    val type: AchievementType,
+    val title: String,
+    val description: String,
     val isEarned: Boolean,
     val earnedAt: Date? = null
 )

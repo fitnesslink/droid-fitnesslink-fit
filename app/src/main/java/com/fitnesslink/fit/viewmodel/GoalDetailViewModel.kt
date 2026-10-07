@@ -5,69 +5,81 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fitnesslink.fit.goals.GoalStore
 import com.fitnesslink.fit.model.Goal
 import com.fitnesslink.fit.model.Habit
 import com.fitnesslink.fit.model.Milestone
 import com.fitnesslink.fit.model.Streak
-import com.fitnesslink.fit.network.ApiClient
-import com.fitnesslink.fit.network.NetworkMonitor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
+/**
+ * iOS `GoalDetailViewModel` over the local cache: goal, linked habits with
+ * their streaks, milestones. Delete cascades through `GoalStore.delete`
+ * (habits, streaks, logs; offline-safe). Milestone create / achieve are the
+ * Android extras kept from the previous build.
+ */
 class GoalDetailViewModel : ViewModel() {
     var goal by mutableStateOf(Goal())
+        private set
     var habits by mutableStateOf<List<Habit>>(emptyList())
+        private set
     var milestones by mutableStateOf<List<Milestone>>(emptyList())
+        private set
     var streaks by mutableStateOf<Map<String, Streak>>(emptyMap())
+        private set
+    var isRefreshing by mutableStateOf(false)
+        private set
+    /** True once the goal row is gone locally (the screen should pop). */
+    var isDeleted by mutableStateOf(false)
+        private set
+
+    private var goalId: String = ""
+
+    init {
+        GoalStore.ensureRegistered()
+        viewModelScope.launch { GoalStore.changes.collect { if (goalId.isNotEmpty()) hydrateFromCache() } }
+    }
 
     fun loadData(goalId: String) {
-        viewModelScope.launch { refreshFromServer(goalId) }
+        this.goalId = goalId
+        hydrateFromCache()
+        viewModelScope.launch {
+            isRefreshing = true
+            try { withContext(Dispatchers.IO) { GoalStore.refreshGoalDetail(goalId) } } finally { isRefreshing = false }
+            hydrateFromCache()
+        }
     }
 
-    /** Optimistic milestone create — appends locally, posts to API. */
+    private fun hydrateFromCache() {
+        if (isDeleted) return
+        val cached = GoalStore.goal(goalId)
+        if (cached != null) goal = cached
+        habits = GoalStore.habits(goalId)
+        milestones = GoalStore.milestones(goalId)
+        streaks = habits.associate { it.id to (GoalStore.streak(it.id) ?: Streak(habitId = it.id)) }
+    }
+
+    val completedMilestones: List<Milestone> get() = milestones.filter { it.achievedAt != null }
+    val upcomingMilestones: List<Milestone> get() = milestones.filter { it.achievedAt == null }
+
+    /** iOS `deleteGoal`: local cascade + queued server deletes. */
+    fun deleteGoal(onDone: () -> Unit = {}) {
+        if (goalId.isEmpty()) return
+        viewModelScope.launch {
+            GoalStore.delete(goalId)
+            isDeleted = true
+            onDone()
+        }
+    }
+
     fun addMilestone(goalId: String, title: String, targetValue: Double) {
-        val draft = Milestone(
-            id = java.util.UUID.randomUUID().toString(),
-            goalId = goalId,
-            title = title.trim(),
-            targetValue = targetValue,
-            achievedAt = null
-        )
-        milestones = milestones + draft
-        viewModelScope.launch {
-            try { ApiClient.goalApi.createMilestone(draft) } catch (_: Exception) {}
-        }
+        if (title.isBlank()) return
+        viewModelScope.launch { GoalStore.addMilestone(goalId, title, targetValue) }
     }
 
-    /** Mark milestone reached locally and on the server. */
     fun achieveMilestone(milestoneId: String) {
-        val now = System.currentTimeMillis()
-        milestones = milestones.map {
-            if (it.id == milestoneId) it.copy(achievedAt = now) else it
-        }
-        viewModelScope.launch {
-            try { ApiClient.goalApi.achieveMilestone(milestoneId) } catch (_: Exception) {}
-        }
-    }
-
-    private suspend fun refreshFromServer(goalId: String) {
-        if (!NetworkMonitor.isConnected.value) return
-        try {
-            goal = ApiClient.goalApi.get(goalId)
-        } catch (_: Exception) { /* use cached */ }
-        try {
-            habits = ApiClient.goalApi.getHabitsForGoal(goalId)
-        } catch (_: Exception) {}
-        try {
-            milestones = ApiClient.goalApi.getMilestones(goalId)
-        } catch (_: Exception) {}
-        try {
-            val streakMap = mutableMapOf<String, Streak>()
-            for (habit in habits) {
-                try {
-                    streakMap[habit.id] = ApiClient.goalApi.getStreak(habit.id)
-                } catch (_: Exception) {}
-            }
-            streaks = streakMap
-        } catch (_: Exception) {}
+        viewModelScope.launch { GoalStore.achieveMilestone(goalId, milestoneId) }
     }
 }

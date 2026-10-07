@@ -44,10 +44,10 @@ import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.NotificationSettingsViewModel
 
 /**
- * FA-100 — per-category notification settings. Groups the existing
- * GoalNotificationPreference toggles into the four categories the
- * AC calls out: System / Goals / Content / Calendar. Coaching tone
- * lives at the top so the per-category toggles read consistently.
+ * Goal reminder settings (port of iOS `NotificationSettingsView`): coaching
+ * tone, the six reminder toggles and the daily cap. The per-category
+ * System / Goals / Content / Calendar switches live one level up in
+ * `NotificationPreferencesScreen` (route `notificationPreferences`).
  */
 @Composable
 fun NotificationSettingsScreen(onBack: () -> Unit) {
@@ -71,39 +71,25 @@ fun NotificationSettingsScreen(onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Notifications",
+                text = "Goal Reminders",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
                 color = TextPrimaryColor,
                 modifier = Modifier.padding(top = 8.dp)
             )
 
-            // System category — links to OS-level settings since the
-            // app-level master switch lives there, plus reengagement
-            // (mostly system-paced re-activation pushes).
-            Section(title = "System") {
-                ToggleRow(
-                    label = "Re-engagement nudges",
-                    sub = "Reminders if you've drifted off your routine.",
-                    checked = prefs.enableReengagement,
-                    onToggle = viewModel::toggleReengagement
-                )
-                Divider()
-                LinkRow(
-                    label = "Open Android settings",
-                    sub = "Block all FitnessLink notifications at the OS level.",
-                    onClick = {
-                        context.startActivity(
-                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
-                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                        )
-                    }
+            viewModel.saveErrorMessage?.let {
+                Text(it, fontSize = 12.sp, color = androidx.compose.ui.graphics.Color.Red)
+            }
+
+            Section(title = "Coaching style") {
+                CoachingToneRow(
+                    selected = prefs.coachingTone,
+                    onSelect = viewModel::updateCoachingTone
                 )
             }
 
-            // Goals — habit reminders, streaks, milestones, check-ins,
-            // plus AI coaching (also goal-driven).
-            Section(title = "Goals") {
+            Section(title = "Reminders") {
                 ToggleRow(
                     label = "Habit reminders",
                     sub = "Daily prompts for habits you're tracking.",
@@ -139,36 +125,31 @@ fun NotificationSettingsScreen(onBack: () -> Unit) {
                     onToggle = viewModel::toggleAiCoaching
                 )
                 Divider()
-                CoachingToneRow(
-                    selected = prefs.coachingTone,
-                    onSelect = viewModel::updateCoachingTone
+                ToggleRow(
+                    label = "Re-engagement nudges",
+                    sub = "Reminders if you've drifted off your routine.",
+                    checked = prefs.enableReengagement,
+                    onToggle = viewModel::toggleReengagement
                 )
             }
 
-            // Content — newly published programs / workouts / tips.
-            // No backend toggle today; surfaces as info card so the AC
-            // category isn't silently missing. Wires up cleanly when
-            // the backend adds an enableContent flag.
-            Section(title = "Content") {
-                InfoRow(
-                    label = "New programs &amp; tips",
-                    sub = "Coming soon — managed at the app level for now."
-                )
-            }
-
-            // Calendar — schedule reminders.
-            Section(title = "Calendar") {
-                InfoRow(
-                    label = "Workout reminders",
-                    sub = "Tied to scheduled workouts. Coming soon as a separate toggle."
-                )
-            }
-
-            // Daily cap.
             Section(title = "Daily cap") {
                 MaxDailyRow(
                     selected = prefs.maxDailyNotifications,
                     onSelect = viewModel::updateMaxDailyNotifications
+                )
+            }
+
+            Section(title = "System") {
+                LinkRow(
+                    label = "Open Android settings",
+                    sub = "Block all FitnessLink notifications at the OS level.",
+                    onClick = {
+                        context.startActivity(
+                            Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        )
+                    }
                 )
             }
 
@@ -242,21 +223,6 @@ private fun LinkRow(label: String, sub: String, onClick: () -> Unit) {
             Text(sub, fontSize = 11.sp, color = TextSecondaryColor)
         }
         Text(text = "›", fontSize = 18.sp, color = MediumGray)
-    }
-}
-
-@Composable
-private fun InfoRow(label: String, sub: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-            Text(sub, fontSize = 11.sp, color = TextSecondaryColor)
-        }
     }
 }
 

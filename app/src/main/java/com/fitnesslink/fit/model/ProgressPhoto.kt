@@ -21,6 +21,14 @@ enum class PhotoAngle(val displayName: String) {
             SIDE -> BACK
             BACK -> null
         }
+
+    companion object {
+        /** Wire value ("Front" | "Side" | "Back", any case); null for unknown / absent. */
+        fun fromWire(raw: String?): PhotoAngle? {
+            val value = raw?.trim() ?: return null
+            return entries.firstOrNull { it.displayName.equals(value, true) || it.name.equals(value, true) }
+        }
+    }
 }
 
 data class AnglePhoto(
