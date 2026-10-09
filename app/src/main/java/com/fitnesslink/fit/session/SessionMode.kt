@@ -9,7 +9,9 @@ import java.util.Locale
  */
 enum class SessionMode(val rawValue: String) {
     PLAYLIST("playlist"),
-    INTERACTIVE("interactive");
+    INTERACTIVE("interactive"),
+    /** The Quick Start live canvas (Quick Start PRD §38): built and logged as it happens, never run in a player. */
+    QUICK_START("quickStart");
 
     companion object {
         fun fromRaw(raw: String?): SessionMode? =
@@ -55,4 +57,12 @@ data class InProgressSessionEntry(
     /** "62% complete · 12m elapsed" (or just the elapsed part). */
     fun summaryText(nowMs: Long = System.currentTimeMillis()): String =
         listOfNotNull(progressText, elapsedText(nowMs)).joinToString(" · ")
+
+    /**
+     * Where Resume lands: a Quick Start session reopens its live canvas;
+     * every player session goes back through the playlist, which re-enters
+     * Interactive Mode on its own when that was the last mode (FTNSSLNK-404).
+     */
+    val resumeRoute: String
+        get() = if (lastMode == SessionMode.QUICK_START) "quickStartCanvas/$workoutId" else "playlistSession/$workoutId"
 }

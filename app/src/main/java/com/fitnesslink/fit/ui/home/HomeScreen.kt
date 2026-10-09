@@ -122,7 +122,7 @@ fun HomeScreen(
             HomeQuickActionsView(onNavigate = onNavigate, onSetGoal = { onNavigate("goalCreation") })
 
             // Session agent: "Continue Where You Left Off" (renders nothing without in-progress sessions).
-            ResumeSessionBanner(onResume = { entry -> onNavigate("playlistSession/${entry.workoutId}") })
+            ResumeSessionBanner(onResume = { entry -> onNavigate(entry.resumeRoute) })
 
             if (viewModel.goalSummaries.isNotEmpty()) {
                 LazyRow(

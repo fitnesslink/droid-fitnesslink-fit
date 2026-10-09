@@ -165,6 +165,8 @@ fun WorkoutDetailScreen(
     fun startSession(mode: SessionMode?) {
         when (mode) {
             SessionMode.INTERACTIVE -> onStartInteractive(workoutId)
+            // A Quick Start session resumes on its canvas, not a player.
+            SessionMode.QUICK_START -> AppRouter.push("quickStartCanvas/$workoutId")
             else -> onStartPlaylist(workoutId)
         }
     }

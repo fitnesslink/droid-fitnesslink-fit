@@ -49,7 +49,7 @@ Paths below are relative to:
 10. **Hydrate state on reinstall.** `GET /sessions/{id}/history` is fed to `SessionProgress.rebuilt` (`Services/Session/SessionHistorySync.swift:227`) when local state is empty. **MISSING.**
 11. **SyncManager drains.** `drainSessions` handles start/abandon/delete/complete in createdAt order. `drainSessionProgress` handles progress/history and skips entries whose start hasn't landed. Both run before `/sync/push`. **MISSING.** Android's `sync/SyncManager.kt` only does a generic push with `data=null`.
 12. **Calendar side effects.** `ensureCalendarEntryForToday` runs at start (local insert, `CalendarSyncService.mirror`, `CalendarService.create`). `markCalendarCompleted` runs at finish. **MISSING.**
-13. **Quick Start id adoption.** When the workout id is renamed via `.workoutServerCreateDidApply`, `adoptWorkoutId` follows it. **MISSING.**
+13. **Quick Start id adoption.** When the workout id is renamed via `.workoutServerCreateDidApply`, `adoptWorkoutId` follows it. **DONE** (QuickStartViewModel collects `WorkoutStore.events`).
 14. **Workout refresh at session start** (`Services/Session/SessionWorkoutRefresh.swift`). Fetch when the cache is shallow, or once per launch while the session is fresh. Re-apply only if the phase/task id structure changed, and never once progress exists. **MISSING** in sessions. Android's `WorkoutDetailViewModel` refreshes, but sessions read the cache only.
 15. **Workout-not-found guard.** `workoutNotFound` dismisses the session. **MISSING.** Android falls back to `Workout()`.
 16. **Resume surfaces.**
@@ -174,7 +174,7 @@ Paths below are relative to:
 64. **Edit actions.** Add after current / at end / to a phase; swap movement; edit sets & reps; remove; Create New Exercise from the picker. **MISSING** in sessions. Android has a workout editor but no session hooks.
 65. **Scope.** Permanent for the user's own workout (`contributorId` and `sharedByUserId` both nil), else session-only overrides (swaps / removed / setChanges / added). Overrides are persisted in `workout_sessions.sessionOverrides` JSON and applied on every load in both modes. **MISSING.**
 66. **Scope prompt and "Save as my workout".** "Just this session" / "This session + save my own version". `saveMyVersion` forks a copy with `preBuiltTemplateId`. **MISSING.**
-67. **Quick Start.** Pick one movement, mint a workout, push Interactive. At finish: name it and Keep in My Workouts, or delete. Currently feature-flagged off on iOS. **MISSING.**
+67. **Quick Start.** Superseded by the Quick Start PRD (focus → canvas → dynamic set logging → summary; `SessionMode.QUICK_START`, `quickStartCanvas/{id}` resume). **DONE** 2026-10-09.
 68. **Re-anchor after an edit** (`applyTaskList`): clamp the cursor, cancel the runner if the group changed. **MISSING.**
 
 **M. Playlist mode** (`Views/WorkoutSession/PlaylistView.swift`, `PlaylistWorkoutMovementView.swift`, `AdvancedPlaylistMovementsView.swift`, `PlaylistWorkoutTasksView.swift`)
@@ -204,7 +204,7 @@ Paths below are relative to:
     **MISSING.**
 79. **Wearable slot.** Apple Health active energy and max heart rate for the session window. **MISSING.** Health Connect would be the Android equivalent.
 80. **Share Results.** Email up to 10 recipients plus a note via `POST /sessions/{id}/share-results`; re-sends completion with RPE and %. "Skip sharing". **MISSING.** Android has a different, OS-level share (see section 2).
-81. **Quick Start keep/name** on the summary. **MISSING.**
+81. **Quick Start keep/name** on the summary. Dropped — the PRD names the workout up front and always keeps it in My Content. **N/A.**
 82. **Reopen the summary from history** (`WorkoutSummaryReopenView`, read-only plus the RPE edit). **MISSING.**
 83. **Session detail / report** (`Views/Profile/SessionDetailView.swift`, `ViewModels/WorkoutReportViewModel.swift`):
     - Delete Session: `SessionRecorder.delete`, which reverts the calendar entry, queues `DELETE /sessions/{id}`, and tries inline.

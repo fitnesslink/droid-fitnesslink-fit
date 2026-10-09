@@ -27,7 +27,7 @@ Path roots used below: iOS = `/Users/quincywilliams/Repos/FitnessLink/iOS-fitnes
 | Equipment and anatomy chip filters | **Missing** | iOS filters on the `equipmentIds` / `anatomyIds` the server returns from `/workouts/list-view`. |
 | Clear-filters button | **Missing** | |
 | Card/list layout toggle (`ContentLayoutToggle`, `WorkoutRowView`) | **Missing** | |
-| Quick Start ("Do → Build": `QuickStartCard`, `quickStartFlow`, `WorkoutEditorViewModel.quickStartWorkout`) | **Missing** | |
+| Quick Start (Quick Start PRD, 2026-10: `QuickStartViewModel`, `ui/quickstart/*`, `quickStart` + `quickStartCanvas/{id}` routes, `ExerciseBrowserSheet` multi-select + suggestions) | **Built** 2026-10-09 | Exercise RPE / Training Log / training focus are local-only (`session_exercise_notes`, V12) until the sessions API carries them. |
 | "+" to open a new editor | **Present** | |
 | Template-only visibility (`visibleTemplates`) | **Missing** | iOS hides user-authored workouts and those inside a contributor program (`partOfContributorProgram`). Android lists everything. |
 | `listView` query params (`contributorId` / `personalOnly` / `favoritesOnly` via `ContentFilterQuery`) | **Missing** | Android `WorkoutApi.listView()` takes no params. |

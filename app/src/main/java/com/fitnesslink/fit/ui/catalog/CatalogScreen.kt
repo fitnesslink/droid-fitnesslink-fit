@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.DirectionsRun
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -121,6 +122,7 @@ fun CatalogScreen(
                     onCreateWorkout = onNavigateToWorkoutEditor,
                     onCreateProgram = onNavigateToProgramEditor,
                     onCreateMovement = { onNavigate(MovementRoutes.MOVEMENT_EDITOR) },
+                    onQuickStart = { onNavigate("quickStart") },
                     onSeeAll = { onNavigate(CatalogRoutes.MY_CONTENT) }
                 )
                 if (viewModel.programs.isNotEmpty()) {
@@ -167,6 +169,7 @@ private fun MyContentRail(
     onCreateWorkout: () -> Unit,
     onCreateProgram: () -> Unit,
     onCreateMovement: () -> Unit,
+    onQuickStart: () -> Unit,
     onSeeAll: () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -182,7 +185,8 @@ private fun MyContentRail(
                 iconSize = 26.dp,
                 onCreateWorkout = onCreateWorkout,
                 onCreateProgram = onCreateProgram,
-                onCreateMovement = onCreateMovement
+                onCreateMovement = onCreateMovement,
+                onQuickStart = onQuickStart
             )
             if (items.isNotEmpty()) {
                 Spacer(modifier = Modifier.width(12.dp))
@@ -215,7 +219,9 @@ fun CreateContentMenu(
     iconSize: androidx.compose.ui.unit.Dp,
     onCreateWorkout: () -> Unit,
     onCreateProgram: () -> Unit,
-    onCreateMovement: () -> Unit
+    onCreateMovement: () -> Unit,
+    /** Quick Start PRD §5: the same flow as the Home Quick Tap. Null hides the item. */
+    onQuickStart: (() -> Unit)? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box {
@@ -228,6 +234,13 @@ fun CreateContentMenu(
                 .clickable { expanded = true }
         )
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            if (onQuickStart != null) {
+                DropdownMenuItem(
+                    text = { Text("Quick Start") },
+                    leadingIcon = { Icon(Icons.Filled.Bolt, contentDescription = null) },
+                    onClick = { expanded = false; onQuickStart() }
+                )
+            }
             DropdownMenuItem(
                 text = { Text("Workout") },
                 leadingIcon = { Icon(Icons.Filled.FitnessCenter, contentDescription = null) },

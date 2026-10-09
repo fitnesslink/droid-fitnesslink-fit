@@ -56,7 +56,7 @@ object DatabaseManager {
 
     // MARK: - Schema
 
-    private const val DB_VERSION = 11
+    private const val DB_VERSION = 12
 
     private class DatabaseHelper(context: Context) :
         SQLiteOpenHelper(context, "fitnesslink.db", null, DB_VERSION) {
@@ -75,6 +75,7 @@ object DatabaseManager {
             if (old < 9) migrateToV9(db)
             if (old < 10) migrateToV10(db)
             if (old < 11) migrateToV11(db)
+            if (old < 12) migrateToV12(db)
         }
     }
 
@@ -89,6 +90,7 @@ object DatabaseManager {
         migrateToV9(db)
         migrateToV10(db)
         migrateToV11(db)
+        migrateToV12(db)
     }
 
     private fun createAllTables(db: SQLiteDatabase) {
@@ -340,6 +342,21 @@ object DatabaseManager {
      * session / history columns, programs + calendar columns, `user_programs`,
      * movement tag joins, favorites + sort order, notification-pref fields.
      */
+    /**
+     * Quick Start (PRD §45, iOS V47): the training focus the session was
+     * started with and a flag so Resume reopens the live canvas instead of
+     * a player; plus the per-exercise RPE / Training Log table (local-only
+     * until the sessions API carries them).
+     */
+    private fun migrateToV12(db: SQLiteDatabase) {
+        addColumn(db, "workout_sessions", "trainingFocus TEXT")
+        addColumn(db, "workout_sessions", "isQuickStart INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("""CREATE TABLE IF NOT EXISTS session_exercise_notes (
+            sessionId TEXT NOT NULL, taskId TEXT NOT NULL, movementId TEXT,
+            taskName TEXT NOT NULL DEFAULT '', rpe INTEGER, trainingLog TEXT,
+            updatedAt INTEGER NOT NULL, PRIMARY KEY (sessionId, taskId))""")
+    }
+
     private fun migrateToV11(db: SQLiteDatabase) {
         // workouts
         listOf(
@@ -855,12 +872,14 @@ object DatabaseManager {
     /** Remove an in-progress session and its live history rows. */
     fun discardInProgressSession(id: String) = transaction {
         db().delete("workout_session_history", "LOWER(workoutSessionId)=?", arrayOf(lc(id)))
+        db().delete("session_exercise_notes", "sessionId=?", arrayOf(lc(id)))
         db().delete("workout_sessions", "LOWER(id)=? AND isCompleted=0", arrayOf(lc(id)))
     }
 
     /** Soft-delete counterpart of `DELETE /sessions/{id}`: drops the session and its history locally. */
     fun deleteSession(id: String) = transaction {
         db().delete("workout_session_history", "LOWER(workoutSessionId)=?", arrayOf(lc(id)))
+        db().delete("session_exercise_notes", "sessionId=?", arrayOf(lc(id)))
         db().delete("workout_sessions", "LOWER(id)=?", arrayOf(lc(id)))
     }
 

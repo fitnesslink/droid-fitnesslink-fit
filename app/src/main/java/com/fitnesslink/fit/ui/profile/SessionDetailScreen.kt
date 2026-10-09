@@ -18,6 +18,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
@@ -54,6 +56,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -67,6 +70,9 @@ import com.fitnesslink.fit.model.WeightUnit
 import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.persistence.fullSessionRow
+import com.fitnesslink.fit.persistence.sessionExerciseNotes
+import com.fitnesslink.fit.persistence.sessionQuickStartMeta
+import com.fitnesslink.fit.session.SessionExerciseNote
 import com.fitnesslink.fit.persistence.sessionSetDistances
 import com.fitnesslink.fit.persistence.sessionSetDurations
 import com.fitnesslink.fit.persistence.sessionSetKey
@@ -108,6 +114,9 @@ fun SessionDetailScreen(
     var showRpeEditor by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
+    // Quick Start PRD §42: the training focus the session was started with, and the per-exercise RPE / Training Log keyed by exercise name.
+    var trainingFocus by remember { mutableStateOf<String?>(null) }
+    var notesByTaskName by remember { mutableStateOf<Map<String, SessionExerciseNote>>(emptyMap()) }
     val scope = rememberCoroutineScope()
 
     fun reload() {
@@ -115,6 +124,8 @@ fun SessionDetailScreen(
         exercises = DatabaseManager.sessionExercises(sessionId)
         setDurations = DatabaseManager.sessionSetDurations(sessionId)
         setDistances = DatabaseManager.sessionSetDistances(sessionId)
+        trainingFocus = DatabaseManager.sessionQuickStartMeta(sessionId)?.trainingFocus
+        notesByTaskName = DatabaseManager.sessionExerciseNotes(sessionId).associateBy { it.taskName }
     }
 
     LaunchedEffect(sessionId) { reload() }
@@ -168,6 +179,15 @@ fun SessionDetailScreen(
                         Text("Incomplete", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = OrangeTheme)
                     }
                 }
+                trainingFocus?.let { focus ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(PurpleTheme.copy(alpha = 0.12f)).padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Icon(Icons.Default.Bolt, contentDescription = null, tint = PurpleTheme, modifier = Modifier.size(12.dp))
+                        Text("Quick Start · $focus", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = PurpleTheme)
+                    }
+                }
             }
 
             StatsGrid(
@@ -176,7 +196,7 @@ fun SessionDetailScreen(
                 onEditRpe = { showRpeEditor = true }
             )
 
-            ExerciseBreakdown(exercises, setDurations, setDistances)
+            ExerciseBreakdown(exercises, setDurations, setDistances, notesByTaskName)
         }
     }
 
@@ -284,7 +304,8 @@ private data class GroupedExercise(val name: String, val sets: List<SessionExerc
 private fun ExerciseBreakdown(
     exercises: List<SessionExerciseRow>,
     setDurations: Map<String, Int>,
-    setDistances: Map<String, DistanceValue>
+    setDistances: Map<String, DistanceValue>,
+    notesByTaskName: Map<String, SessionExerciseNote> = emptyMap()
 ) {
     val grouped = exercises.groupBy { it.taskName }
         .map { (name, sets) -> GroupedExercise(name, sets.sortedBy { it.setNumber }) }
@@ -295,7 +316,7 @@ private fun ExerciseBreakdown(
         if (grouped.isEmpty()) {
             Text("No exercise data recorded", fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.padding(top = 8.dp))
         } else {
-            grouped.forEach { exercise -> ExerciseCard(exercise, setDurations, setDistances) }
+            grouped.forEach { exercise -> ExerciseCard(exercise, setDurations, setDistances, notesByTaskName[exercise.name]) }
         }
     }
 }
@@ -304,7 +325,8 @@ private fun ExerciseBreakdown(
 private fun ExerciseCard(
     exercise: GroupedExercise,
     setDurations: Map<String, Int>,
-    setDistances: Map<String, DistanceValue>
+    setDistances: Map<String, DistanceValue>,
+    note: SessionExerciseNote? = null
 ) {
     val unit = WeightUnit.current.label
     Column(
@@ -328,6 +350,14 @@ private fun ExerciseCard(
             ReportMiniStat("Sets", "${exercise.sets.size}")
             if (exercise.maxWeight > 0) ReportMiniStat("Max Weight", WeightUnit.displayString(exercise.maxWeight))
             ReportMiniStat("Total Reps", "${exercise.totalReps}")
+            note?.rpe?.let { ReportMiniStat("RPE", "$it") }
+        }
+        // Training Log (Quick Start PRD §34): the user's own words.
+        note?.trainingLog?.takeIf { it.isNotBlank() }?.let { log ->
+            Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Icon(Icons.Default.Description, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(12.dp).padding(top = 1.dp))
+                Text(log, fontSize = 13.sp, fontStyle = FontStyle.Italic, color = TextSecondaryColor)
+            }
         }
         HorizontalDivider(color = MediumGray.copy(alpha = 0.3f))
         exercise.sets.forEach { set ->

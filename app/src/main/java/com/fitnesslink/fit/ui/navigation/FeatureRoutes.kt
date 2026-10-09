@@ -25,4 +25,5 @@ fun NavGraphBuilder.featureRoutes(navController: NavHostController) {
     nutritionCoreRoutes(navController)
     mealPlanRoutes(navController)
     foodLoggingRoutes(navController)
+    quickStartRoutes(navController)
 }

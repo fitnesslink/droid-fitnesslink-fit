@@ -10,6 +10,7 @@ import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.network.dto.UpdateCalendarEntryRequest
 import com.fitnesslink.fit.network.dto.toCreateRequest
 import com.fitnesslink.fit.persistence.DatabaseManager
+import com.fitnesslink.fit.persistence.deleteSessionExerciseNotes
 import com.fitnesslink.fit.persistence.openProgramEntry
 import com.fitnesslink.fit.persistence.sessionDetailRow
 import kotlinx.coroutines.CoroutineScope
@@ -123,6 +124,7 @@ object SessionRecorder {
         withContext(Dispatchers.Main.immediate) {
             val row = DatabaseManager.sessionDetailRow(sessionId)
             DatabaseManager.deleteSession(sessionId)
+            DatabaseManager.deleteSessionExerciseNotes(sessionId)
             if (row != null) revertCalendarCompletion(row)
             ActiveWorkoutSession.commitDelete(sessionId)
         }

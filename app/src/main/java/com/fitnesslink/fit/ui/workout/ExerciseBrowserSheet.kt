@@ -26,6 +26,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
@@ -64,6 +66,8 @@ import com.fitnesslink.fit.model.BrowserTab
 import com.fitnesslink.fit.model.ExerciseGroupType
 import com.fitnesslink.fit.model.MovementLibraryItem
 import com.fitnesslink.fit.movements.MovementStore
+import com.fitnesslink.fit.session.QuickStartSuggestions
+import com.fitnesslink.fit.workouts.WorkoutRowOps
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.movements.MoreFiltersSelection
@@ -115,11 +119,24 @@ fun ExerciseBrowserSheet(
     pendingCount: Int,
     mode: BrowserMode = BrowserMode.Multi,
     onDone: (() -> Unit)? = null,
-    allowCreateNew: Boolean = mode is BrowserMode.Multi
+    allowCreateNew: Boolean = mode is BrowserMode.Multi,
+    /**
+     * Quick Start PRD §18–19: rows toggle a selection (○ → ✓) instead of
+     * adding at once; a bottom "Add N Exercises" button hands the picks
+     * back in pick order. Favoriting or opening info never selects.
+     */
+    multiSelect: Boolean = false,
+    onAddSelected: ((List<MovementLibraryItem>) -> Unit)? = null,
+    /** Caps the selection (a superset takes exactly two). */
+    maxSelection: Int? = null,
+    /** PRD §17: "Suggested for <phase>" listed above the library, each row directly selectable. */
+    suggestionPhaseName: String? = null
 ) {
     val viewModel: ExerciseBrowserViewModel = viewModel()
     val scope = rememberCoroutineScope()
     var addedIds by remember { mutableStateOf(emptySet<String>()) }
+    var selected by remember { mutableStateOf<List<MovementLibraryItem>>(emptyList()) }
+    var suggestions by remember { mutableStateOf<List<MovementLibraryItem>>(emptyList()) }
     var previewMovement by remember { mutableStateOf<MovementLibraryItem?>(null) }
     var lastAddedName by remember { mutableStateOf("") }
     var showAddedToast by remember { mutableStateOf(false) }
@@ -131,9 +148,27 @@ fun ExerciseBrowserSheet(
     val primaryAnatomy = remember(anatomy) { ClassificationStore.primaryAnatomy }
     val primaryEquipment = remember(equipment) { ClassificationStore.primaryEquipment }
 
-    LaunchedEffect(Unit) { viewModel.loadData() }
+    LaunchedEffect(Unit) {
+        viewModel.loadData()
+        suggestionPhaseName?.let { suggestions = runCatching { QuickStartSuggestions.suggest(it) }.getOrDefault(emptyList()) }
+    }
+
+    /** Picks so far in group-building mode: the owner's running count, or this sheet's own selection. */
+    val effectivePendingCount = if (multiSelect) selected.size else pendingCount
+    /** Suggestions show on the unfiltered All tab only — a search or a filter means the user is looking for something specific. */
+    val showsSuggestions = suggestionPhaseName != null && suggestions.isNotEmpty() && viewModel.searchText.isEmpty() &&
+        viewModel.selectedTab == BrowserTab.All && viewModel.selectedAnatomyIds.isEmpty() && viewModel.selectedEquipmentIds.isEmpty() && viewModel.nonPrimaryFilterCount == 0
+
+    /** ○ → ✓ / ✓ → ○ (PRD §18). At the cap, a new pick replaces the oldest. */
+    fun toggleSelection(movement: MovementLibraryItem) {
+        if (selected.any { it.id == movement.id }) { selected = selected.filter { it.id != movement.id }; return }
+        var next = selected
+        if (maxSelection != null && maxSelection > 0 && next.size >= maxSelection) next = next.drop(next.size - maxSelection + 1)
+        selected = next + movement
+    }
 
     fun addMovement(movement: MovementLibraryItem) {
+        if (multiSelect) { toggleSelection(movement); return }
         onSelect(movement)
         viewModel.recordRecent(movement.id)
         addedIds = addedIds + movement.id
@@ -189,7 +224,7 @@ fun ExerciseBrowserSheet(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                    if (pendingGroupType != null && onDone != null) {
+                    if (pendingGroupType != null && onDone != null && !multiSelect) {
                         TextButton(onClick = onDone, enabled = pendingCount >= minimumGroupCount) {
                             Text("Done", fontWeight = FontWeight.SemiBold, color = if (pendingCount >= minimumGroupCount) FLPrimary else MediumGray)
                         }
@@ -209,11 +244,13 @@ fun ExerciseBrowserSheet(
 
                 // Group-building banner
                 pendingGroupType?.let { groupType ->
+                    val pendingCount = effectivePendingCount
+                    val done = if (multiSelect) "Add" else "Done"
                     val remaining = if (groupType == ExerciseGroupType.Superset) maxOf(0, 2 - pendingCount) else 0
                     val message = when (groupType) {
-                        ExerciseGroupType.Superset -> if (remaining > 0) "Pick $remaining more exercise for superset" else "Superset ready — tap Done"
-                        ExerciseGroupType.Circuit -> if (pendingCount < 2) "Pick at least ${2 - pendingCount} more exercises" else "$pendingCount exercises selected — tap Done or keep adding"
-                        ExerciseGroupType.Interval -> if (pendingCount < 1) "Pick one or more exercises" else "$pendingCount selected — tap Done"
+                        ExerciseGroupType.Superset -> if (remaining > 0) "Pick $remaining more ${if (remaining == 1) "exercise" else "exercises"} for superset" else "Superset ready — tap $done"
+                        ExerciseGroupType.Circuit -> if (pendingCount < 2) "Pick at least ${2 - pendingCount} more exercises" else "$pendingCount exercises selected — tap $done or keep adding"
+                        ExerciseGroupType.Interval -> if (pendingCount < 1) "Pick one or more exercises" else "$pendingCount selected — tap $done"
                     }
                     val bannerColor = when (groupType) {
                         ExerciseGroupType.Superset -> PurpleTheme
@@ -296,7 +333,7 @@ fun ExerciseBrowserSheet(
 
                 HorizontalDivider()
 
-                if (viewModel.movements.isEmpty()) {
+                if (viewModel.movements.isEmpty() && !showsSuggestions) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Icon(Icons.Default.Search, contentDescription = null, tint = MediumGray, modifier = Modifier.size(32.dp))
@@ -309,12 +346,31 @@ fun ExerciseBrowserSheet(
                     }
                 } else {
                     LazyColumn(modifier = Modifier.weight(1f), contentPadding = PaddingValues(bottom = 72.dp)) {
+                        if (showsSuggestions) {
+                            item(key = "suggested-header") {
+                                Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(14.dp))
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text("Suggested for $suggestionPhaseName", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FLPrimary, modifier = Modifier.weight(1f))
+                                    Text("From your workouts", fontSize = 11.sp, color = FLPrimary)
+                                }
+                            }
+                            items(suggestions, key = { "s:${it.id}" }) { movement ->
+                                BrowserRow(movement, if (multiSelect) selected.any { it.id == movement.id } else addedIds.contains(movement.id), rowSubtitle(movement), multiSelect,
+                                    onTap = { addMovement(movement) }, onPreview = { previewMovement = movement }, onToggleFavorite = { viewModel.toggleFavorite(movement.id) })
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BackgroundColor)
+                            }
+                            item(key = "library-header") {
+                                Text("Exercise Library", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                            }
+                        }
                         items(viewModel.movements, key = { it.id }) { movement ->
-                            val isAdded = addedIds.contains(movement.id)
+                            val isAdded = if (multiSelect) selected.any { it.id == movement.id } else addedIds.contains(movement.id)
                             BrowserRow(
                                 movement = movement,
                                 isAdded = isAdded,
                                 subtitle = rowSubtitle(movement),
+                                selectable = multiSelect,
                                 onTap = { addMovement(movement) },
                                 onPreview = { previewMovement = movement },
                                 onToggleFavorite = { viewModel.toggleFavorite(movement.id) }
@@ -325,8 +381,27 @@ fun ExerciseBrowserSheet(
                 }
             }
 
+            // "Add N Exercises" (PRD §19) — the count follows the selection.
+            if (multiSelect) {
+                val n = selected.size
+                val minimum = pendingGroupType?.let { WorkoutRowOps.minimumGroupCount(it) } ?: 1
+                val label = when {
+                    n == 0 -> "Select exercises"
+                    n < minimum -> "Pick ${minimum - n} more"
+                    else -> "Add $n ${if (n == 1) "Exercise" else "Exercises"}"
+                }
+                Box(
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(White).padding(horizontal = 16.dp, vertical = 12.dp)
+                ) {
+                    Text(
+                        label, color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(if (n >= minimum) FLPrimary else MediumGray.copy(alpha = 0.5f))
+                            .clickable(enabled = n >= minimum) { onAddSelected?.invoke(selected) }.padding(vertical = 15.dp)
+                    )
+                }
+            }
             // Added-count badge (multi mode only)
-            if (mode is BrowserMode.Multi && addedIds.isNotEmpty()) {
+            if (!multiSelect && mode is BrowserMode.Multi && addedIds.isNotEmpty()) {
                 val n = addedIds.size
                 val noun = if (n == 1) "exercise" else "exercises"
                 Row(
@@ -384,6 +459,7 @@ private fun BrowserRow(
     movement: MovementLibraryItem,
     isAdded: Boolean,
     subtitle: String,
+    selectable: Boolean = false,
     onTap: () -> Unit,
     onPreview: () -> Unit,
     onToggleFavorite: () -> Unit
@@ -392,7 +468,13 @@ private fun BrowserRow(
         modifier = Modifier.fillMaxWidth().clickable(onClick = onTap).padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        if (isAdded) {
+        if (selectable) {
+            Icon(
+                if (isAdded) Icons.Default.CheckCircle else Icons.Outlined.Circle, contentDescription = if (isAdded) "Selected" else "Not selected",
+                tint = if (isAdded) FLPrimary else MediumGray, modifier = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+        } else if (isAdded) {
             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
         }

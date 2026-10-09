@@ -112,7 +112,8 @@ fun MyContentScreen(
                     iconSize = 22.dp,
                     onCreateWorkout = { onNavigate("workoutEditor") },
                     onCreateProgram = { onNavigate("programEditor") },
-                    onCreateMovement = { onNavigate(MovementRoutes.MOVEMENT_EDITOR) }
+                    onCreateMovement = { onNavigate(MovementRoutes.MOVEMENT_EDITOR) },
+                    onQuickStart = { onNavigate("quickStart") }
                 )
             }
         }
