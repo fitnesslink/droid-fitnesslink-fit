@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircleOutline
+import androidx.compose.material.icons.filled.PhotoCamera
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Replay
 import androidx.compose.material3.CircularProgressIndicator
@@ -37,6 +38,7 @@ import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
+import com.fitnesslink.fit.nutrition.NutritionFeatureFlags
 import com.fitnesslink.fit.ui.theme.PurpleTheme
 import com.fitnesslink.fit.ui.theme.TextPrimaryColor
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
@@ -59,6 +61,8 @@ fun MealSectionView(
     onScan: () -> Unit,
     onEntryTap: (FoodEntry) -> Unit,
     modifier: Modifier = Modifier,
+    /** Snap a Meal shortcut: photo → foods → macros for this meal. Null hides the icon. */
+    onSnap: (() -> Unit)? = null,
     quickLogSource: QuickLogMealSource? = null,
     quickLogLabel: String = "",
     isQuickLogging: Boolean = false,
@@ -76,6 +80,12 @@ fun MealSectionView(
             Spacer(modifier = Modifier.weight(1f))
             Text("$totalCalories cal", fontSize = 14.sp, color = TextSecondaryColor)
             if (allowsLogging) {
+                if (onSnap != null && NutritionFeatureFlags.snapMealEnabled) {
+                    Icon(
+                        Icons.Default.PhotoCamera, contentDescription = "Snap a photo of your ${mealType.displayName.lowercase(Locale.US)}", tint = FLPrimary,
+                        modifier = Modifier.size(20.dp).clickable(onClick = onSnap)
+                    )
+                }
                 Icon(
                     Icons.Default.QrCodeScanner, contentDescription = "Scan barcode", tint = FLPrimary,
                     modifier = Modifier.size(20.dp).clickable(onClick = onScan)

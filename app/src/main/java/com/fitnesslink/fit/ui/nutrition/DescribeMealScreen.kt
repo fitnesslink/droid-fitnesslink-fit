@@ -20,6 +20,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.Cancel
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -199,14 +200,40 @@ fun DescribeMealScreen(
             Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(if (fromPhoto) "Snap a Meal" else "Describe a Meal", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
                 Text(
-                    if (fromPhoto) "Estimating from what you confirmed. You can still tweak the text and try again."
+                    if (fromPhoto) "Macros for the foods you confirmed. Edit any number before logging."
                     else "Say what you ate in one line — AI splits it into items you can edit before logging.",
                     fontSize = 13.sp, color = TextSecondaryColor
                 )
             }
 
-            // Input card
-            FoodLogCard {
+            // From a photo the description is built from the confirmed lines and sent
+            // behind the scenes — no text box to review. Before results: progress while
+            // estimating, or the error with a retry (fixing the list happens back on the
+            // confirm screen).
+            if (fromPhoto) {
+                if (rows.isEmpty()) {
+                    FoodLogCard {
+                        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            val error = parseError
+                            if (error != null) {
+                                FoodLogErrorText(error, modifier = Modifier.fillMaxWidth(), centered = true)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().background(if (canParse) FLPrimary else DisabledButton, RoundedCornerShape(10.dp))
+                                        .then(if (canParse) Modifier.clickable { parse() } else Modifier).padding(vertical = 12.dp),
+                                    horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(Icons.Default.Refresh, null, tint = White, modifier = Modifier.size(16.dp))
+                                    Spacer(Modifier.width(8.dp))
+                                    Text("Try again", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = White)
+                                }
+                            } else {
+                                CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                                Text("Estimating macros…", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                            }
+                        }
+                    }
+                }
+            } else FoodLogCard {
                 Box(modifier = Modifier.fillMaxWidth().background(BackgroundColor, RoundedCornerShape(10.dp)).padding(12.dp)) {
                     BasicTextField(
                         value = description, onValueChange = { description = it }, minLines = 2, maxLines = 4,

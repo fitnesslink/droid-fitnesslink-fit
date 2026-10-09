@@ -260,6 +260,7 @@ fun NutritionScreen(
                         allowsLogging = viewModel.canLogToSelectedDay,
                         onAdd = { onNavigate(FoodLoggingRoutes.foodSearch(meal, dayKey)) },
                         onScan = { onNavigateToBarcodeScanner(meal.name) },
+                        onSnap = { onNavigate(FoodLoggingRoutes.snapMeal(meal, dayKey)) },
                         onEntryTap = { entry ->
                             onNavigate(FoodLoggingRoutes.foodDetail(entry.foodId ?: entry.id, meal, dayKey, mode = "edit:${entry.id}"))
                         },
