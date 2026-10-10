@@ -45,9 +45,13 @@ object ApiConfiguration {
     var isDebugBuild: Boolean = false
         private set
 
-    /** PRODUCTION for release builds, LOCAL for debug builds. */
+    /**
+     * PRODUCTION for every build, matching iOS. A local API (`10.0.2.2`) is only
+     * reachable when one is running on the host Mac, so it is opt-in from
+     * Developer Settings rather than the debug default.
+     */
     val defaultEnvironment: ApiEnvironment
-        get() = if (isDebugBuild) ApiEnvironment.LOCAL else ApiEnvironment.PRODUCTION
+        get() = ApiEnvironment.PRODUCTION
 
     var environment: ApiEnvironment = ApiEnvironment.PRODUCTION
         private set
