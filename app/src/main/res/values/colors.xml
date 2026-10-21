@@ -17,6 +17,8 @@
     <color name="fl_image_placeholder">#FFE5E7EB</color>
     <color name="fl_menu_color">#FFF9FAFB</color>
     <color name="fl_info_color">#FF6B7280</color>
+    <!-- FTNSSLNK-540: window background (LightFLColors.background); night value in values-night. -->
+    <color name="fl_window_background">#FFF0F4F5</color>
     <color name="white">#FFFFFFFF</color>
     <color name="black">#FF000000</color>
 </resources>

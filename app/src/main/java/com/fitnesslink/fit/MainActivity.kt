@@ -5,12 +5,16 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.fitnesslink.fit.push.PushNotificationManager
 import com.fitnesslink.fit.ui.navigation.AppNavigation
 import com.fitnesslink.fit.ui.theme.FitnessLinkTheme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        // System splash (Theme.FitnessLink.Starting) hands off to the Compose
+        // SplashScreen, which stays up while the session restores.
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         // FTNSSLNK-261: cold-start notification tap. The route is parked on

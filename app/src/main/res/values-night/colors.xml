@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- FTNSSLNK-540: DarkFLColors.background (iOS BackgroundColor dark). -->
+    <color name="fl_window_background">#FF1C1C1E</color>
+</resources>

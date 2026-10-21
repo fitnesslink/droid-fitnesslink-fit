@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- FTNSSLNK-540: night half of Theme.FitnessLink (iOS BackgroundColor dark). -->
+    <style name="Theme.FitnessLink" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/fl_window_background</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+    </style>
+</resources>

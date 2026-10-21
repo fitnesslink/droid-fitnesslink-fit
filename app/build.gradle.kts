@@ -49,6 +49,7 @@ android {
 
 dependencies {
     implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.process)
@@ -99,3 +100,53 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     testImplementation(libs.junit)
 }
+
+// FTNSSLNK-540: block new light-only colours in UI code. Files under ui/ (except
+// ui/theme) may not use the deprecated Color.kt neutrals, Color.White/Black or raw
+// Color(0x…) literals unless listed in config/hardcoded-colors-allowlist.txt. The
+// allowlist only shrinks: each dark-mode migration story removes its files.
+// Regenerate after a migration with: ./gradlew checkHardcodedColors -PupdateColorAllowlist
+val hardcodedColorPattern = Regex(
+    """(?<![\w.])(BackgroundColor|TextPrimaryColor|TextSecondaryColor|MediumGray|BlendGray|ProgressBG|DisabledButton|CalendarLine|ImagePlaceholder|MenuColor|InfoColor|HighlightState|White|Black)\b|Color\.(White|Black)\b|Color\(0x"""
+)
+val uiSourceDir = file("src/main/java/com/fitnesslink/fit/ui")
+val colorAllowlistFile = rootProject.file("config/hardcoded-colors-allowlist.txt")
+val updateColorAllowlist = project.hasProperty("updateColorAllowlist")
+
+tasks.register("checkHardcodedColors") {
+    group = "verification"
+    description = "Fails on light-only colours in UI files that are not on the allowlist."
+    doLast {
+        val root = uiSourceDir.parentFile.parentFile.parentFile.parentFile // .../java
+        val offenders = uiSourceDir.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" && !it.path.contains("/ui/theme/") }
+            .filter { f -> f.readLines().any { line -> !line.trimStart().startsWith("import ") && hardcodedColorPattern.containsMatchIn(line) } }
+            .map { it.relativeTo(root).invariantSeparatorsPath }
+            .sorted()
+            .toList()
+        if (updateColorAllowlist) {
+            colorAllowlistFile.parentFile.mkdirs()
+            colorAllowlistFile.writeText(
+                "# FTNSSLNK-540: UI files still using light-only colours. Only remove lines.\n" +
+                    offenders.joinToString("\n", postfix = "\n")
+            )
+            println("Wrote ${offenders.size} files to ${colorAllowlistFile.name}")
+            return@doLast
+        }
+        val allowed = if (colorAllowlistFile.exists())
+            colorAllowlistFile.readLines().map { it.trim() }.filter { it.isNotEmpty() && !it.startsWith("#") }.toSet()
+        else emptySet()
+        val violations = offenders.filterNot { it in allowed }
+        if (violations.isNotEmpty()) {
+            throw GradleException(
+                "Light-only colours found in ${violations.size} file(s) not on the allowlist. " +
+                    "Use FLTheme.colors (see ui/theme/README.md):\n" + violations.joinToString("\n") { "  $it" }
+            )
+        }
+        val cleaned = allowed - offenders.toSet()
+        if (cleaned.isNotEmpty()) {
+            println("These allowlisted files are now clean; remove them from ${colorAllowlistFile.name}:\n" + cleaned.joinToString("\n") { "  $it" })
+        }
+    }
+}
+tasks.named("check") { dependsOn("checkHardcodedColors") }
