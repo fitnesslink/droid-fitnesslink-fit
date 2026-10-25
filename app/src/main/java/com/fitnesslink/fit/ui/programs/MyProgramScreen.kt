@@ -46,6 +46,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -615,6 +616,7 @@ private fun StructureRow(label: String, value: String) {
 @Composable
 private fun Coach(program: Program) {
     val contributor = program.contributor
+    val isConnected by NetworkMonitor.isConnected.collectAsState()
     Box(modifier = Modifier.padding(horizontal = 20.dp)) {
         if (contributor != null && !ContributorStore.isHouse(program.contributorId?.toString())) {
             ProgramContributorCard(contributor)
@@ -622,7 +624,7 @@ private fun Coach(program: Program) {
             Text(
                 text = when {
                     contributor != null -> "This program is coached by the FitnessLink team."
-                    NetworkMonitor.isConnected.value -> "This program doesn't have a coach profile yet."
+                    isConnected ->"This program doesn't have a coach profile yet."
                     else -> "Your coach's profile will appear when you're back online."
                 },
                 fontSize = 14.sp,

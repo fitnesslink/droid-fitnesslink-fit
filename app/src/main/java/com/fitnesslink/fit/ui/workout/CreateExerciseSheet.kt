@@ -410,10 +410,14 @@ class FormVideoUploadModel {
     }
 
     private suspend fun validateDuration(context: Context, uri: Uri): String? = withContext(Dispatchers.IO) {
+        // Not `use {}`: MediaMetadataRetriever is only AutoCloseable from API 29 (minSdk is 26).
         val ms = runCatching {
-            MediaMetadataRetriever().use { r ->
+            val r = MediaMetadataRetriever()
+            try {
                 r.setDataSource(context, uri)
                 r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull()
+            } finally {
+                r.release()
             }
         }.getOrNull() ?: return@withContext null
         if (ms <= 0 || ms <= MAX_DURATION_SECONDS * 1000L) null

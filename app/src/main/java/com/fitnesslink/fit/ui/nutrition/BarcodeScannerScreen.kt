@@ -8,6 +8,7 @@ import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.CameraSelector
+import androidx.camera.core.ExperimentalGetImage
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -205,6 +206,8 @@ fun BarcodeScannerScreen(
 
 // MARK: - Real Camera Scanner with ML Kit
 
+// imageProxy.image (for ML Kit's InputImage.fromMediaImage) is ExperimentalGetImage.
+@androidx.annotation.OptIn(ExperimentalGetImage::class)
 @Composable
 private fun CameraScannerView(onBarcodeScanned: (String) -> Unit, onCameraUnavailable: () -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
