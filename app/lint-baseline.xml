@@ -13,17 +13,6 @@
     </issue>
 
     <issue
-        id="NewApi"
-        message="Implicit cast from `MediaMetadataRetriever` to `AutoCloseable` requires API level 29 (current min is 26)"
-        errorLine1="            MediaMetadataRetriever().use { r ->"
-        errorLine2="                                     ~~~">
-        <location
-            file="src/main/java/com/fitnesslink/fit/ui/workout/CreateExerciseSheet.kt"
-            line="414"
-            column="38"/>
-    </issue>
-
-    <issue
         id="OldTargetApi"
         message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
         errorLine1="        targetSdk = 35"
@@ -409,17 +398,6 @@
     </issue>
 
     <issue
-        id="UnsafeOptInUsageError"
-        message="This declaration is opt-in and its usage should be marked with `@androidx.camera.core.ExperimentalGetImage` or `@OptIn(markerClass = androidx.camera.core.ExperimentalGetImage.class)`"
-        errorLine1="                                val mediaImage = imageProxy.image"
-        errorLine2="                                                            ~~~~~">
-        <location
-            file="src/main/java/com/fitnesslink/fit/ui/nutrition/BarcodeScannerScreen.kt"
-            line="236"
-            column="61"/>
-    </issue>
-
-    <issue
         id="ModifierParameter"
         message="Modifier parameter should be the first optional parameter"
         errorLine1="    modifier: Modifier = Modifier"
@@ -560,17 +538,6 @@
             file="src/main/java/com/fitnesslink/fit/ui/workout/WorkoutRowView.kt"
             line="40"
             column="78"/>
-    </issue>
-
-    <issue
-        id="StateFlowValueCalledInComposition"
-        message="StateFlow.value should not be called within composition"
-        errorLine1="                    NetworkMonitor.isConnected.value -> &quot;This program doesn&apos;t have a coach profile yet.&quot;"
-        errorLine2="                                               ~~~~~">
-        <location
-            file="src/main/java/com/fitnesslink/fit/ui/programs/MyProgramScreen.kt"
-            line="625"
-            column="48"/>
     </issue>
 
     <issue
@@ -719,7 +686,7 @@
         errorLine2="                                                 ~~~~~~~~~~~~~~">
         <location
             file="src/main/java/com/fitnesslink/fit/ui/programs/MyProgramScreen.kt"
-            line="383"
+            line="384"
             column="50"/>
     </issue>
 
