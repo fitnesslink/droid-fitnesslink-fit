@@ -13,16 +13,32 @@ android {
         applicationId = "com.fitnesslink.fit"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        // CI passes -PversionCode / -PversionName (see .github/workflows/android-release.yml);
+        // local builds keep 1 / "1.0".
+        versionCode = (findProperty("versionCode") as String?)?.toInt() ?: 1
+        versionName = (findProperty("versionName") as String?) ?: "1.0"
 
         vectorDrawables {
             useSupportLibrary = true
         }
     }
 
+    // Play App Signing upload key. Google holds the app signing key; this one only
+    // authenticates uploads. Without ANDROID_KEYSTORE_PATH, release builds are unsigned.
+    signingConfigs {
+        System.getenv("ANDROID_KEYSTORE_PATH")?.let { keystorePath ->
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -39,6 +55,11 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    lint {
+        // Existing issues as of CI setup; CI fails only on new ones. Fix and shrink with
+        // ./gradlew updateLintBaseline
+        baseline = file("lint-baseline.xml")
     }
     packaging {
         resources {
