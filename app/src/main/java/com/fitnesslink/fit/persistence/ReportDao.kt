@@ -102,12 +102,16 @@ fun DatabaseManager.sessionSetDistances(sessionId: String): Map<String, Distance
 fun DatabaseManager.movementAggregateDetail(userId: String, since: Long, exerciseName: String): MovementAggregate? {
     data class Raw(
         val taskName: String, val reps: Int, val setNumber: Int, val weight: Double, val date: Date,
-        val workoutName: String, val sessionId: String, val duration: Int?, val distance: DistanceValue?
+        val workoutName: String, val sessionId: String, val duration: Int?, val distance: DistanceValue?,
+        /** False for warm-up sets / Warm-Up & Cool Down phase tasks (FTNSSLNK-497) — listed, but add no volume. */
+        val isWorkingSet: Boolean
     )
+    val exclusions = VolumeExclusionCache.forDatabase(this)
     val raw = rawDatabase().rawQuery(
         """
         SELECT h.taskName, COALESCE(h.reps,0), COALESCE(h.setNumber,1), COALESCE(h.weightLifted,0),
-               h.logDate, s.workoutName, h.workoutSessionId, h.intervalSeconds, h.distance, h.distanceUnit
+               h.logDate, s.workoutName, h.workoutSessionId, h.intervalSeconds, h.distance, h.distanceUnit,
+               COALESCE(h.workoutTaskId,''), COALESCE(h.workoutId,'')
         FROM workout_session_history h JOIN workout_sessions s ON s.id=h.workoutSessionId
         WHERE h.userId=? AND h.logDate>=? AND LOWER(TRIM(h.taskName))=?
         ORDER BY h.logDate DESC, h.setNumber
@@ -119,7 +123,8 @@ fun DatabaseManager.movementAggregateDetail(userId: String, since: Long, exercis
                 val duration = c.intOrNullAt(7)?.takeIf { it > 0 }
                 val distance = c.doubleOrNullAt(8)?.takeIf { it > 0 }
                     ?.let { v -> DistanceUnit.fromWire(c.textOrNull(9))?.let { DistanceValue(v, it) } }
-                add(Raw(c.text(0), c.getInt(1), c.getInt(2), c.getDouble(3), Date(c.getLong(4)), c.text(5), c.text(6), duration, distance))
+                val working = !exclusions.excludes(c.text(11), c.text(10), c.getInt(2))
+                add(Raw(c.text(0), c.getInt(1), c.getInt(2), c.getDouble(3), Date(c.getLong(4)), c.text(5), c.text(6), duration, distance, working))
             }
         }
     }
@@ -149,7 +154,7 @@ fun DatabaseManager.movementAggregateDetail(userId: String, since: Long, exercis
         totalSets = raw.size,
         totalReps = raw.sumOf { it.reps },
         maxWeight = maxWeight,
-        totalVolume = raw.sumOf { it.reps.toDouble() * it.weight },
+        totalVolume = raw.sumOf { if (it.isWorkingSet) com.fitnesslink.fit.session.WorkingSetVolume.setVolume(it.weight, it.reps) else 0.0 },
         prWeight = maxWeight,
         prReps = pr.reps,
         prDate = pr.date,

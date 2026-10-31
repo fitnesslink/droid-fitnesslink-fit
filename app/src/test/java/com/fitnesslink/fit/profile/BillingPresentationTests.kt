@@ -61,7 +61,7 @@ class BillingPresentationTests {
     fun `renewal line reads renews, ends, or ended`() {
         val text: (Date) -> String = { "D" }
         assertEquals("Renews D", BillingPresentation.renewalLine(entitlement("active"), subscription(false), text))
-        assertEquals("Access ends D", BillingPresentation.renewalLine(entitlement("active"), subscription(true), text))
+        assertEquals("Cancels on D", BillingPresentation.renewalLine(entitlement("active"), subscription(true), text))
         assertEquals("Ended D", BillingPresentation.renewalLine(entitlement("expired", entitled = false), null, text))
         assertEquals("Doesn't expire", BillingPresentation.renewalLine(entitlement("active", source = "Comped"), null, text))
         assertNull(BillingPresentation.renewalLine(entitlement("active", end = null), null, text))
@@ -89,13 +89,20 @@ class BillingPresentationTests {
 
     @Test
     fun `trial copy comes from the offer period`() {
-        assertEquals("Start 1 Week Free Trial", BillingPresentation.trialButtonText("P1W"))
-        assertEquals("Start 1 Month Free Trial", BillingPresentation.trialButtonText("P1M"))
-        assertEquals("Start Free Trial", BillingPresentation.trialButtonText(null))
+        assertEquals("Start 7-day free trial", BillingPresentation.ctaText("P7D"))
+        assertEquals("Start 7-day free trial", BillingPresentation.ctaText("P1W"))
+        assertEquals("Start 1-month free trial", BillingPresentation.ctaText("P1M"))
+        assertEquals("Start free trial", BillingPresentation.ctaText("bogus"))
+        assertEquals("Subscribe", BillingPresentation.ctaText(null))
         assertEquals("$9.99 / month", BillingPresentation.priceLine("$9.99", "P1M"))
         assertEquals(
-            "1 week free, then $9.99 / month. Renews automatically until cancelled. Cancel anytime in Google Play.",
+            "7-day free trial, then $9.99 / month. Renews automatically until cancelled. " +
+                "Cancel anytime in Google Play — cancel before the trial ends and you won't be charged.",
             BillingPresentation.disclosure("$9.99", "P1M", "P1W")
+        )
+        assertEquals(
+            "$79.99 / year. Renews automatically until cancelled. Cancel anytime in Google Play.",
+            BillingPresentation.disclosure("$79.99", "P1Y", null)
         )
     }
 

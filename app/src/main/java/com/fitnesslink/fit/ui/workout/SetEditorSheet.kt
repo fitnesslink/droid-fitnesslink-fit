@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
@@ -261,7 +262,7 @@ private fun ModePill(label: String, active: Boolean, modifier: Modifier, onClick
 
 /** Coaching cue field shared by the set editor and the interval sheet. */
 @Composable
-fun InstructionsField(value: String, onValueChange: (String) -> Unit, label: String = "Instructions", placeholder: String = "Movement cues") {
+fun InstructionsField(value: String, onValueChange: (String) -> Unit, label: String = "Notes", placeholder: String = "Movement cues") {
     var text by remember(value) { mutableStateOf(value) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label, fontSize = 11.sp, color = TextSecondaryColor)
@@ -329,7 +330,7 @@ private fun PerSetRows(task: WorkoutTask, viewModel: WorkoutEditorViewModel, per
 @Composable
 private fun PerSetRow(task: WorkoutTask, config: TaskSetConfig, viewModel: WorkoutEditorViewModel, perRowLabel: String) {
     var reps by remember(config.id) { mutableStateOf(if (config.reps > 0) "${config.reps}" else "") }
-    var duration by remember(config.id) { mutableStateOf(WorkoutRowOps.formatDuration(config.durationSeconds ?: 0)) }
+    var duration by remember(config.id) { mutableStateOf((config.durationSeconds ?: 0).let { if (it > 0) WorkoutRowOps.formatDuration(it) else "" }) }
     var weight by remember(config.id) { mutableStateOf(config.weightKg?.takeIf { it > 0 }?.let { WeightUnit.displayNumber(fromLbs = it) } ?: "") }
     LaunchedEffect(config.reps) { if ((reps.toIntOrNull() ?: 0) != config.reps) reps = if (config.reps > 0) "${config.reps}" else "" }
 
@@ -338,30 +339,43 @@ private fun PerSetRow(task: WorkoutTask, config: TaskSetConfig, viewModel: Worko
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("$perRowLabel ${config.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.width(64.dp))
         if (task.usesDuration) {
+            // FTNSSLNK-511: timed sets are Time + Weight only (plank 0:30 /
+            // 0:45 / 1:00) — no per-set rep target. The draft text commits
+            // whenever it parses ("45" → 0:45, "1:30") and snaps back to m:ss
+            // when focus leaves, so a partial entry isn't clobbered mid-typing.
             OutlinedTextField(
                 value = duration,
                 onValueChange = { raw ->
                     duration = raw
-                    val parts = raw.split(":")
-                    val m = parts.getOrNull(0)?.toIntOrNull() ?: 0
-                    val s = parts.getOrNull(1)?.toIntOrNull()?.coerceIn(0, 59) ?: 0
-                    viewModel.updateSetConfigDuration(task.id, config.setNumber, maxOf(0, m * 60 + s), config.weightKg)
+                    val total = WorkoutRowOps.parseSetDuration(raw)
+                    if (total != null && total > 0 && total != (config.durationSeconds ?: 0)) {
+                        viewModel.updateSetConfigDuration(task.id, config.setNumber, total, config.weightKg)
+                    }
                 },
                 placeholder = { Text("0:30") }, singleLine = true,
-                textStyle = TextStyle(fontSize = 14.sp, textAlign = TextAlign.Center), modifier = Modifier.width(70.dp)
+                textStyle = TextStyle(fontSize = 14.sp, textAlign = TextAlign.Center),
+                // Ascii, not Number: "m:ss" needs the colon.
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+                modifier = Modifier.width(70.dp).onFocusChanged { state ->
+                    if (!state.isFocused) {
+                        val secs = config.durationSeconds ?: 0
+                        duration = if (secs > 0) WorkoutRowOps.formatDuration(secs) else ""
+                    }
+                }
             )
+        } else {
+            OutlinedTextField(
+                value = reps,
+                onValueChange = { raw ->
+                    reps = raw.filter(Char::isDigit)
+                    viewModel.updateSetConfig(task.id, config.setNumber, reps.toIntOrNull() ?: 0, config.weightKg, config.isDropSet)
+                },
+                placeholder = { Text("Reps") }, singleLine = true,
+                textStyle = TextStyle(fontSize = 14.sp, textAlign = TextAlign.Center),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.width(60.dp)
+            )
+            Text("reps", fontSize = 11.sp, color = TextSecondaryColor)
         }
-        OutlinedTextField(
-            value = reps,
-            onValueChange = { raw ->
-                reps = raw.filter(Char::isDigit)
-                viewModel.updateSetConfig(task.id, config.setNumber, reps.toIntOrNull() ?: 0, config.weightKg, config.isDropSet)
-            },
-            placeholder = { Text("Reps") }, singleLine = true,
-            textStyle = TextStyle(fontSize = 14.sp, textAlign = TextAlign.Center),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.width(60.dp)
-        )
-        Text("reps", fontSize = 11.sp, color = TextSecondaryColor)
         OutlinedTextField(
             value = weight,
             onValueChange = { raw ->

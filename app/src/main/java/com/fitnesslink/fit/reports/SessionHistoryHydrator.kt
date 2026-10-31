@@ -16,6 +16,8 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
+import com.fitnesslink.fit.session.WorkingSetVolume
+import com.fitnesslink.fit.model.WorkoutTask
 import java.util.Locale
 
 /**
@@ -93,7 +95,8 @@ object SessionHistoryHydrator {
         var inserted = 0
         for (session in newSessions) {
             val history = (historyBySession[session.id] ?: emptyList()).filter(::isPerformedSet)
-            val stats = deriveStats(session, history)
+            val cachedTasks = session.workoutId.takeIf { it.isNotEmpty() }?.let { wid -> runCatching { DatabaseManager.workout(wid)?.allTasks }.getOrNull() }.orEmpty()
+            val stats = deriveStats(session, history, cachedTasks)
             val nameByTask = session.workoutTasks.associate { it.id.lowercase(Locale.US) to it.name }
             val movementByTask = session.workoutTasks
                 .filter { it.movementId != null }
@@ -188,10 +191,20 @@ object SessionHistoryHydrator {
     )
 
     /** The aggregate columns the report reads, mirroring the session engine's writer. */
-    fun deriveStats(session: WorkoutSession, performedHistory: List<SessionHistoryEntry>): DerivedStats {
+    fun deriveStats(
+        session: WorkoutSession,
+        performedHistory: List<SessionHistoryEntry>,
+        cachedWorkoutTasks: List<WorkoutTask> = emptyList()
+    ): DerivedStats {
         val distinctTasks = performedHistory.map { it.workoutTaskId.lowercase(Locale.US) }.toSet()
         val totalReps = performedHistory.sumOf { it.reps ?: 0 }
-        val totalWeight = performedHistory.sumOf { (it.weightLifted ?: 0.0) * (it.reps ?: 0) }
+        // FTNSSLNK-497: working sets only. The server tasks carry no phase name, so prefer the cached
+        // workout's (phase-stamped) tasks and union in the payload's own for warm-up set flags.
+        val exclusions = WorkingSetVolume.Exclusions(cachedWorkoutTasks + session.workoutTasks)
+        val totalWeight = performedHistory.sumOf { entry ->
+            if (exclusions.excludes(entry.workoutTaskId, entry.set ?: 1)) 0.0
+            else WorkingSetVolume.setVolume(entry.weightLifted ?: 0.0, entry.reps ?: 0)
+        }
         val start = session.startDate
         val end = session.completionDate
         val duration = if (start != null && end != null) ((end.time - start.time) / 1000L).toInt().coerceAtLeast(0) else 0

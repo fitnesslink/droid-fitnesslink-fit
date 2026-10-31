@@ -2236,7 +2236,7 @@ object DatabaseManager {
             "movement_anatomy", "movement_equipment", "anatomy", "equipment",
             "user_preferences", "user_personalizations", "program_schedules",
             "recent_movements", "notifications",
-            "goals", "habits", "habit_logs", "streaks", "milestones",
+            "goals", "goal_definitions", "goal_entries", "habits", "habit_logs", "streaks", "milestones",
             "achievements", "weight_entries", "measurement_entries",
             "progress_photo_entries", "notification_preferences", "sync_queue",
             "water_entries", "hydration_goals", "user_programs", "workout_phases")

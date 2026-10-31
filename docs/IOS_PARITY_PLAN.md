@@ -104,10 +104,14 @@ are grouped by the files they touch so they can be built in parallel.
 
 ## Status log
 
+- 2026-10-31 — **Caught up with iOS through 2026-10-29, uncommitted.** Ported: Progress tab + avatar Profile menu sheet + metric registry/`ProgressMetricsEngine` (FTNSSLNK-553, iOS 5d9b5de); Oct 10 sprint batch FTNSSLNK-497..517 (iOS 23ef55d: working-set volume, TTS ducking, pause reset, Interactive edit menu, timed-set editing, owner movement edit/delete, duration filter, classification picker); delete account (`DELETE users/me`); Google sign-in creates accounts; paywall close/copy; Snap Meal quick tile. Progress pulls `/sessions/me` once per process (iOS only hydrates from the Workout report). Phones-only `<compatible-screens>` in the manifest. 543 JVM tests green. Smoke-tested on the `Pixel_8_API_35` emulator against prod (Home, Progress, profile menu, goal setup steps 1–2, Catalog, workout detail, Calendar, Nutrition); nothing was saved and no session was run. Open: Health Connect (steps/sleep/HR/HRV/body fat and the matching goals show "not connected"), profile-menu items push onto the current tab instead of inside the sheet, Quick Stats reorder uses arrows, old `DatabaseManager.volumeEntries`/`movementAggregates` and `HomeViewModel.goalSummaries`/`GoalProgressCard.kt` are dead code.
+
+- 2026-10-31 — **Goals PRD port (iOS f64f488), uncommitted.** Typed setup flow for all 6 categories (`ui/goals/GoalCreationScreen.kt` + `viewmodel/GoalSetupViewModel.kt`), typed detail (`TypedGoalDetailScreen.kt`, legacy detail kept for pre-PRD goals), pure `goals/GoalProgressEngine.kt`, goal entries + `goal_definitions` side table (GoalsDao `ensureGoalsSchema`), `SyncDomain.GOAL_ENTRIES` drained from the GOALS drain, WorkManager goal reminders, Home "My Goals" pinned card, `goals/{id}` deep link. GOAL_ENTRIES is in `SyncManager.drainOrder` after GOALS and both goal tables are in the logout wipe; still to do: fold the side tables into the versioned migration. Health Connect-backed goals (sleep import, RHR/HRV, steps) report "not supported yet".
+
 - 2026-10-06 — **All waves (0–4) built and committed on local main.** Module compiles; 423 JVM unit tests green; debug APK assembles. Not yet verified on a device/emulator (none on this machine).
 
 ### Open follow-ups after the port
-- **Backend (launch-blocking for Android billing):** no `POST billing/subscriptions/google/verify`, and `restore` rejects `source: "Google"` (400). Play purchases cannot be verified, so the client does not acknowledge them and Google auto-refunds after 3 days. Needs a Google verify command + Play RTDN webhook mapper; `obfuscatedAccountId` carries the FitnessLink user id.
+- **Android billing (FTNSSLNK-524, client side built 2026-10-30, uncommitted):** client codes against the final contract — `subscriptions/google/verify` (403 sandbox / 409 linked / 422 invalid / 503 retry, `pending` status), `restore {source: Google}`, checkout-context `trialEligible` + `googleObfuscatedAccountId`. Server acknowledges; client is the fallback acknowledger. Pending purchases drain on app start + every foreground. Not device-verified (no Play image / license tester).
 - **Backend:** `CreateGoalRequest` lacks `CurrentValue` (client works around with a follow-up progress PUT); `GET /progress-photos/me` omits per-row `notes`; no habit-log delete endpoint; rowVersion required on first delete of offline-created meal slots / grocery items.
 - **Schema:** fold the guarded side tables/columns created lazily by the Dao files into the versioned migration (`nutrition_cache`, `meal_slot_foods`, `movement_detail_cache`, `movement_pending_creates`, `habits.autoCompleteSource`, `streaks.freezes*`).
 - **Cleanup:** two parallel `ShareableContentKind` enums (`model.api` vs `network.dto`); duplicate `NutritionTargets`/`NutritionProfile` data classes in `model/api` vs `network/dto`; `MealMacroSummary` defined twice in `ui/nutrition`; `Plan*` vs `AI*` chip duplicates; dead `DatabaseManager.dashboards()/catalog*()`, `MockDataProvider` leftovers, `DatabaseSeeder` profile_menus seed, unused `HorizontalCalendar`.
@@ -133,7 +137,7 @@ Nutrition: see `docs/IOS_PARITY_PLAN.md` Wave 3; 40+ routes (`/profile/*`, `/sum
 `/preferences/displayed-nutrients`, `/food-entries/me/foods`, `/food-entries/batch`).
 
 Billing (new service): `plans`, `entitlement/me`, `customers/me/checkout-context`, `subscriptions/me`,
-`subscriptions/google/verify` (**does not exist on the backend yet** — `RestorePurchaseRequest` already accepts a Google `purchaseToken`; a Google verify command + Play webhook mapper is a backend task for Wave 4.5), `subscriptions/restore`.
+`subscriptions/google/verify` (FTNSSLNK-524), `subscriptions/restore`.
 
 ## Appendix B — Android-only behaviour worth keeping
 

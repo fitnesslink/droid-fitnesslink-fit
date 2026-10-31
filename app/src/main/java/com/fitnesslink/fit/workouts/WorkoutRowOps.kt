@@ -232,12 +232,51 @@ object WorkoutRowOps {
         val same = !task.sameAcrossSets
         return if (same) {
             val first = task.setConfigs.firstOrNull()
-            task.copy(sameAcrossSets = true, setConfigs = task.setConfigs.map {
+            val collapsed = task.copy(sameAcrossSets = true, setConfigs = task.setConfigs.map {
                 it.copy(reps = first?.reps ?: task.reps, weightKg = first?.weightKg, isDropSet = false)
             })
+            if (!task.usesDuration) return collapsed
+            // FTNSSLNK-511: timed sets collapse to set 1's window too, and the
+            // task-level duration (what ships in uniform mode) follows it so
+            // the summary matches the rows.
+            val window = first?.durationSeconds?.takeIf { it > 0 } ?: task.durationSeconds ?: 60
+            collapsed.copy(
+                durationSeconds = window,
+                setConfigs = collapsed.setConfigs.map { it.copy(durationSeconds = window, reps = 0) },
+                metric = formatMetric(true, maxOf(task.sets, 1), task.reps, window, task.weightKg?.toDouble())
+            )
         } else {
-            seedConfigs(task.copy(sameAcrossSets = false), maxOf(task.sets, 1))
+            val seeded = seedConfigs(task.copy(sameAcrossSets = false), maxOf(task.sets, 1))
+            if (!task.usesDuration) return seeded
+            // FTNSSLNK-511: a timed task's per-set row always has a window to
+            // edit (configs from the server / rep mode without one start at
+            // the task-level duration) and no rep target.
+            seeded.copy(setConfigs = seeded.setConfigs.map {
+                it.copy(
+                    durationSeconds = it.durationSeconds?.takeIf { d -> d > 0 } ?: task.durationSeconds ?: 60,
+                    reps = 0
+                )
+            })
         }
+    }
+
+    /**
+     * Per-set time input parser (FTNSSLNK-511): "m:ss" ("1:30") or a bare
+     * seconds count ("45" → 45, "90" → 90). Null when unparseable / empty.
+     */
+    fun parseSetDuration(raw: String): Int? {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return null
+        if (trimmed.contains(":")) {
+            val parts = trimmed.split(":")
+            if (parts.size != 2) return null
+            val m = (parts[0].ifEmpty { "0" }).toIntOrNull() ?: return null
+            val s = (parts[1].ifEmpty { "0" }).toIntOrNull() ?: return null
+            if (m < 0 || s !in 0..59) return null
+            return m * 60 + s
+        }
+        val s = trimmed.toIntOrNull() ?: return null
+        return if (s >= 0) s else null
     }
 
     /** Per-round loads for a grouped member — one `setConfigs` row per round. */

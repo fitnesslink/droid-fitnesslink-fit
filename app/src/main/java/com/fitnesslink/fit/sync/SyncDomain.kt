@@ -40,6 +40,13 @@ enum class SyncDomain(val wireName: String, val isPullDomain: Boolean = true) {
 
     // Queue-only (drained, never pulled) — see class doc.
     WORKOUT_PHASES("workout-phases", isPullDomain = false),
+    /**
+     * Goals PRD check-ins (iOS `SyncDomain.goalEntries`), drained against
+     * `POST /goals/{id}/entries` / `DELETE /goals/entries/{id}`. Not in
+     * `SyncManager.drainOrder` yet — `GoalStore`'s GOALS drain runs it right
+     * after goals so the parent goal exists server-side. Never pulled.
+     */
+    GOAL_ENTRIES("goal-entries", isPullDomain = false),
     PROGRAM_ENROLLMENTS("programEnrollment", isPullDomain = false);
 
     /**

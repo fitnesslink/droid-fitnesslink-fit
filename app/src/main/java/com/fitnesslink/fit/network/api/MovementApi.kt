@@ -7,6 +7,7 @@ import com.fitnesslink.fit.network.dto.MovementAnatomyRole
 import com.fitnesslink.fit.network.dto.MovementFavoriteDto
 import com.fitnesslink.fit.network.dto.PagedResponse
 import com.fitnesslink.fit.network.dto.RecentMovementDto
+import com.fitnesslink.fit.network.dto.UpdateMovementRequest
 import retrofit2.http.*
 
 /** Mirrors iOS `MovementService`. */
@@ -43,9 +44,15 @@ interface MovementApi {
     @POST("movements")
     suspend fun create(@Body request: CreateMovementRequest): String
 
+    /**
+     * Partial update (null = unchanged). The server answers 204 No Content, so
+     * nothing is decoded (decoding a `Movement` from the empty 204 used to
+     * throw after a successful save). Owner only — 403 otherwise.
+     */
     @PUT("movements/{id}")
-    suspend fun update(@Path("id") id: String, @Body movement: Movement): Movement
+    suspend fun update(@Path("id") id: String, @Body request: UpdateMovementRequest)
 
+    /** Soft delete, owner only (403 otherwise). */
     @DELETE("movements/{id}")
     suspend fun delete(@Path("id") id: String)
 

@@ -593,6 +593,25 @@ object AuthManager {
     suspend fun logoutSuspending() {
         // Best-effort push unregister first (bounded to ~3 s internally).
         PushNotificationManager.unregisterForLogout()
+        clearLocalSession()
+    }
+
+    /**
+     * Deletes the signed-in account server-side (`DELETE /users/me` — soft
+     * delete + PII scrub + Firebase user removal), then tears the local session
+     * down exactly like logout. Throws before touching local state if the
+     * server call fails, so the user can retry. Port of iOS
+     * `AuthManager.deleteAccount`.
+     */
+    suspend fun deleteAccount() {
+        // Same ordering as logout: the device-token DELETE needs a live bearer
+        // token, and the server deletes the Firebase user as part of the call.
+        PushNotificationManager.unregisterForLogout()
+        ApiClient.userApi.deleteMe()
+        clearLocalSession()
+    }
+
+    private suspend fun clearLocalSession() {
         runCatching { auth.signOut() }
         _firebaseUser.value = null
         _currentUser.value = null

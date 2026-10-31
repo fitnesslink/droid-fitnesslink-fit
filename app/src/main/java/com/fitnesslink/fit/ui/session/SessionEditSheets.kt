@@ -11,11 +11,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
@@ -28,7 +29,9 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,11 +46,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.media.MediaRef
+import com.fitnesslink.fit.model.WeightUnit
 import com.fitnesslink.fit.model.WorkoutTask
+import com.fitnesslink.fit.workouts.WorkoutRowOps
 import com.fitnesslink.fit.model.api.Movement
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.session.MovementPerformanceLines
@@ -58,37 +64,37 @@ import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.TextPrimaryColor
 import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
-import com.fitnesslink.fit.viewmodel.PhaseOption
 import com.fitnesslink.fit.viewmodel.SessionEditAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Ellipsis menu in the session info strip (Do → Build). Items adapt to the current task. */
+/**
+ * Ellipsis menu in the session info strip (Interactive Mode only — the playlist rows have their own
+ * menu). Items adapt to the current task: swap / sets / remove for a movement, "Save as my workout"
+ * only when the workout isn't the user's own. Interactive Mode no longer offers the "Build"
+ * insertions (add after / at end / to phase — FTNSSLNK-505); Playlist Mode keeps them. Callers hide
+ * the menu entirely when it would open empty (FTNSSLNK-515, `InteractiveSessionViewModel.hasEditMenuItems`).
+ */
 @Composable
 fun SessionEditMenu(
-    phaseOptions: List<PhaseOption>,
     isMovement: Boolean,
     canSwap: Boolean,
     canEditSets: Boolean,
+    editSetsTitle: String,
     canRemove: Boolean,
     isWorkoutEditable: Boolean,
     hasSessionOnlyEdits: Boolean,
     onAction: (SessionEditAction) -> Unit
 ) {
     var open by remember { mutableStateOf(false) }
-    var phaseMenu by remember { mutableStateOf(false) }
     Box {
         Icon(Icons.Filled.MoreVert, contentDescription = "Edit workout", tint = White.copy(alpha = 0.9f), modifier = Modifier.size(32.dp).clickable { open = true }.padding(6.dp))
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            Text("BUILD", color = TextSecondaryColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-            DropdownMenuItem(text = { Text("Add exercise after this") }, leadingIcon = { Icon(Icons.Filled.Add, null) }, onClick = { open = false; onAction(SessionEditAction.AddAfterCurrent) })
-            DropdownMenuItem(text = { Text("Add exercise at the end") }, leadingIcon = { Icon(Icons.Filled.AddCircle, null) }, onClick = { open = false; onAction(SessionEditAction.AddAtEnd) })
-            if (phaseOptions.size > 1) DropdownMenuItem(text = { Text("Add exercise to phase…") }, onClick = { open = false; phaseMenu = true })
             if (isMovement) {
                 Text("THIS EXERCISE", color = TextSecondaryColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
-                if (canSwap) DropdownMenuItem(text = { Text("Swap movement") }, leadingIcon = { Icon(Icons.Filled.SwapHoriz, null) }, onClick = { open = false; onAction(SessionEditAction.Swap) })
-                if (canEditSets) DropdownMenuItem(text = { Text("Edit sets & reps") }, leadingIcon = { Icon(Icons.Filled.Tune, null) }, onClick = { open = false; onAction(SessionEditAction.EditSets) })
-                if (canRemove) DropdownMenuItem(text = { Text("Remove exercise", color = Color(0xFFE53935)) }, leadingIcon = { Icon(Icons.Filled.Delete, null, tint = Color(0xFFE53935)) }, onClick = { open = false; onAction(SessionEditAction.Remove) })
+                if (canSwap) DropdownMenuItem(text = { Text("Swap Exercise") }, leadingIcon = { Icon(Icons.Filled.SwapHoriz, null) }, onClick = { open = false; onAction(SessionEditAction.Swap) })
+                if (canEditSets) DropdownMenuItem(text = { Text(editSetsTitle) }, leadingIcon = { Icon(Icons.Filled.Tune, null) }, onClick = { open = false; onAction(SessionEditAction.EditSets) })
+                if (canRemove) DropdownMenuItem(text = { Text("Remove Exercise", color = Color(0xFFE53935)) }, leadingIcon = { Icon(Icons.Filled.Delete, null, tint = Color(0xFFE53935)) }, onClick = { open = false; onAction(SessionEditAction.Remove) })
             }
             if (!isWorkoutEditable) {
                 DropdownMenuItem(text = { Text("Save as my workout") }, leadingIcon = { Icon(Icons.Filled.Save, null) }, onClick = { open = false; onAction(SessionEditAction.SaveMyVersion) })
@@ -96,8 +102,95 @@ fun SessionEditMenu(
                     color = TextSecondaryColor, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
             }
         }
-        DropdownMenu(expanded = phaseMenu, onDismissRequest = { phaseMenu = false }) {
-            phaseOptions.forEach { phase -> DropdownMenuItem(text = { Text(phase.name) }, onClick = { phaseMenu = false; onAction(SessionEditAction.AddToPhase(phase.id)) }) }
+    }
+}
+
+/**
+ * The sets editor for [task]: sets × reps for rep-based work, sets × time for timed work
+ * (FTNSSLNK-512). Shared by Playlist and Interactive so both modes edit the same way.
+ */
+@Composable
+fun SessionSetsEditorSheet(
+    task: WorkoutTask,
+    onSaveReps: (sets: Int, reps: Int) -> Unit,
+    onSaveDuration: (sets: Int, durationSeconds: Int, weightLbs: Int?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    if (task.usesDuration) {
+        SessionDurationSetsSheet(
+            sets = maxOf(task.sets, 1),
+            durationSeconds = maxOf(task.durationSeconds ?: 60, 5),
+            weightLbs = task.weightKg?.takeIf { it > 0 },
+            exerciseName = task.name,
+            onSave = onSaveDuration,
+            onDismiss = onDismiss
+        )
+    } else {
+        SessionSetsSheet(maxOf(task.sets, 1), task.reps, task.name, onSave = onSaveReps, onDismiss = onDismiss)
+    }
+}
+
+/**
+ * Sets × duration for a time-based exercise (FTNSSLNK-512): number of sets, seconds per set (the
+ * same for every set), and the load when the exercise carries one. No reps field. The new duration
+ * drives the Interactive set timer; sets already logged stay logged.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SessionDurationSetsSheet(
+    sets: Int,
+    durationSeconds: Int,
+    weightLbs: Int?,
+    exerciseName: String,
+    onSave: (sets: Int, durationSeconds: Int, weightLbs: Int?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var s by remember { mutableIntStateOf(maxOf(1, sets)) }
+    var seconds by remember { mutableIntStateOf(durationSeconds.coerceIn(5, 3600)) }
+    var weightText by remember { mutableStateOf(weightLbs?.let { WeightUnit.displayNumber(it.toDouble()) } ?: "") }
+    // 5 s steps under two minutes, 15 s above — fine control for short holds without a hundred taps.
+    fun step(up: Boolean): Int = if (up) (if (seconds < 120) 5 else 15) else (if (seconds <= 120) 5 else 15)
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = White) {
+        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text("Sets & Time", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+            Text(exerciseName, color = TextSecondaryColor, fontSize = 14.sp)
+            Stepper("Sets", s, 1, 20) { s = it }
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Text("Time per set: ${WorkoutRowOps.formatDuration(seconds)}", fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                Icon(Icons.Filled.RemoveCircle, contentDescription = "Less time", tint = if (seconds > 5) FLPrimary else TextSecondaryColor,
+                    modifier = Modifier.size(32.dp).clickable(enabled = seconds > 5) { seconds = maxOf(5, seconds - step(up = false)) })
+                Spacer(Modifier.size(12.dp))
+                Icon(Icons.Filled.AddCircle, contentDescription = "More time", tint = if (seconds < 3600) FLPrimary else TextSecondaryColor,
+                    modifier = Modifier.size(32.dp).clickable(enabled = seconds < 3600) { seconds = minOf(3600, seconds + step(up = true)) })
+            }
+            if (weightLbs != null) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Text("Weight", fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
+                    OutlinedTextField(
+                        value = weightText,
+                        onValueChange = { weightText = it },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.End),
+                        modifier = Modifier.width(100.dp)
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    Text(WeightUnit.current.label, color = TextSecondaryColor, fontSize = 14.sp)
+                }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Cancel", color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.weight(1f).clickable { onDismiss() }.padding(vertical = 12.dp))
+                Text("Save", color = White, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(FLPrimary).clickable {
+                        // Null leaves the load alone (no weight row); 0 clears it.
+                        val saved = weightLbs?.let {
+                            val display = weightText.replace(',', '.').toDoubleOrNull() ?: 0.0
+                            Math.round(WeightUnit.storageLbs(maxOf(display, 0.0))).toInt()
+                        }
+                        onSave(s, seconds, saved); onDismiss()
+                    }.padding(vertical = 12.dp))
+            }
+            Spacer(Modifier.height(16.dp))
         }
     }
 }

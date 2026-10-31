@@ -105,6 +105,36 @@ fun CreateExerciseSheet(
 }
 
 /**
+ * Owner edit sheet for a user-created movement (iOS `MovementEditSheet`,
+ * FTNSSLNK-501): the shared form in edit mode — prefilled, Save instead of
+ * Create, PUT on save.
+ */
+@Composable
+fun MovementEditSheet(
+    movement: com.fitnesslink.fit.model.api.Movement,
+    onUpdated: (com.fitnesslink.fit.model.api.Movement) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 40.dp)
+                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .background(BackgroundColor)
+        ) {
+            MovementCreateForm(
+                title = "Edit Movement",
+                onCancel = onDismiss,
+                onCreated = {},
+                editing = movement,
+                onUpdated = { onUpdated(it); onDismiss() }
+            )
+        }
+    }
+}
+
+/**
  * The shared create-movement form (iOS `MovementCreateForm`): name,
  * description, still image (uploaded at Create time → `imageId` =
  * `thumbnailId`), multi-select anatomy + equipment from the server taxonomy,
@@ -116,15 +146,21 @@ fun MovementCreateForm(
     title: String,
     onCancel: () -> Unit,
     onCreated: (MovementLibraryItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Edit mode (FTNSSLNK-501): the owner's movement to prefill from and PUT back. Null = create. */
+    editing: com.fitnesslink.fit.model.api.Movement? = null,
+    onUpdated: (com.fitnesslink.fit.model.api.Movement) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val isEditing = editing != null
+    /** The movement's current still image (edit mode), shown until a replacement is picked. */
+    val existingImageId = (editing?.thumbnailId ?: editing?.imageId)?.toString()
 
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var selectedAnatomyIds by remember { mutableStateOf<Set<String>>(emptySet()) }
-    var selectedEquipmentIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var name by remember { mutableStateOf(editing?.name ?: "") }
+    var description by remember { mutableStateOf(editing?.description ?: "") }
+    var selectedAnatomyIds by remember { mutableStateOf(editing?.anatomyIds?.map { it.toString() }?.toSet() ?: emptySet()) }
+    var selectedEquipmentIds by remember { mutableStateOf(editing?.equipmentIds?.map { it.toString() }?.toSet() ?: emptySet()) }
     var isSaving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf<String?>(null) }
     var picker by remember { mutableStateOf<FormPicker?>(null) }
@@ -177,6 +213,54 @@ fun MovementCreateForm(
         }
     }
 
+    /**
+     * PUT the owner's edits. Fields the form doesn't show (summary, status,
+     * videos) ride along unchanged from the fetched movement. A newly picked
+     * image uploads first; a new form video is stitched on by the attachment
+     * coordinator once Mux reports Ready. Errors keep the form open.
+     */
+    fun save() {
+        val base = editing ?: return
+        if (name.isBlank() || isSaving) return
+        isSaving = true
+        saveError = null
+        scope.launch {
+            try {
+                var updated = base
+                thumbUri?.let { uri ->
+                    thumbError = null
+                    try {
+                        val imageId = java.util.UUID.fromString(MovementStore.uploadStillImage(context, uri))
+                        updated = updated.copy(imageId = imageId, thumbnailId = imageId)
+                    } catch (e: Exception) {
+                        thumbError = "Couldn't upload the image — try again, or remove it to keep the current one."
+                        return@launch
+                    }
+                }
+                updated = updated.copy(
+                    name = name.trim(),
+                    description = description.ifEmpty { null },
+                    anatomyIds = selectedAnatomyIds.mapNotNull { runCatching { java.util.UUID.fromString(it) }.getOrNull() },
+                    equipmentIds = selectedEquipmentIds.mapNotNull { runCatching { java.util.UUID.fromString(it) }.getOrNull() }
+                )
+                try {
+                    MovementStore.update(updated)
+                } catch (e: Exception) {
+                    saveError = MovementStore.userMessage(e, "edit")
+                    return@launch
+                }
+                formVideo.uploadId?.let { uploadId ->
+                    runCatching {
+                        com.fitnesslink.fit.media.MovementVideoAttachmentCoordinator.attach(updated.id.toString().lowercase(Locale.US), uploadId)
+                    }
+                }
+                onUpdated(updated)
+            } finally {
+                isSaving = false
+            }
+        }
+    }
+
     when (picker) {
         FormPicker.ANATOMY -> {
             ClassificationPickerView(
@@ -213,11 +297,11 @@ fun MovementCreateForm(
                 title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
                 modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-            TextButton(onClick = { create() }, enabled = name.isNotBlank() && !isSaving) {
+            TextButton(onClick = { if (isEditing) save() else create() }, enabled = name.isNotBlank() && !isSaving) {
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = FLPrimary)
                 } else {
-                    Text("Create", fontWeight = FontWeight.SemiBold, color = if (name.isNotBlank()) FLPrimary else MediumGray)
+                    Text(if (isEditing) "Save" else "Create", fontWeight = FontWeight.SemiBold, color = if (name.isNotBlank()) FLPrimary else MediumGray)
                 }
             }
         }
@@ -259,6 +343,19 @@ fun MovementCreateForm(
                     TextButton(onClick = { thumbUri = null; thumbError = null }) {
                         Text("Remove Image", fontSize = 13.sp, color = Color.Red)
                     }
+                } else if (existingImageId != null) {
+                    // Edit mode: the movement's current image, tap to swap.
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(10.dp))
+                            .clickable { thumbPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+                    ) {
+                        com.fitnesslink.fit.ui.components.FLImageView(ref = MediaRef.MovementThumbnail(existingImageId), modifier = Modifier.fillMaxSize())
+                        Icon(
+                            Icons.Default.Edit, contentDescription = "Change image", tint = White,
+                            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(22.dp)
+                        )
+                    }
+                    Text("Tap the image to replace it.", fontSize = 12.sp, color = TextSecondaryColor)
                 } else {
                     Row(
                         modifier = Modifier
@@ -288,6 +385,12 @@ fun MovementCreateForm(
 
             FormSectionHeader("Form Video")
             FormCard { FormVideoSlot(model = formVideo) }
+            if (isEditing && (editing?.videoId != null || editing?.phoneVideoId != null)) {
+                Text(
+                    "This movement already has a form video. Add a new one to replace it.",
+                    fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 20.dp)
+                )
+            }
 
             saveError?.let { Text(it, fontSize = 12.sp, color = Color.Red, modifier = Modifier.padding(horizontal = 20.dp)) }
         }

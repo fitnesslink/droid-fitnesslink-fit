@@ -78,6 +78,8 @@ import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
+import com.fitnesslink.fit.ui.theme.TextPrimaryColor
+import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.ui.theme.White
 import java.util.Locale
 
@@ -278,7 +280,10 @@ fun WorkoutControlTopView(task: WorkoutTask, currentRound: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
         if (task.isSuperset || task.isCircuit) {
             val stored = task.advancedMovement.trim()
-            Badge(if (stored.isNotEmpty()) stored.uppercase(Locale.US) else if (task.isSuperset) "SUPERSET" else "CIRCUIT", if (task.isSuperset) PurpleTheme else OrangeTheme)
+            // One line, never wrapped by character (FTNSSLNK-507): the structure badge
+            // ellipsizes before the ROUND badge gives up any width.
+            Badge(if (stored.isNotEmpty()) stored.uppercase(Locale.US) else if (task.isSuperset) "SUPERSET" else "CIRCUIT", if (task.isSuperset) PurpleTheme else OrangeTheme,
+                modifier = Modifier.weight(1f, fill = false))
             Badge("ROUND $currentRound OF ${maxOf(task.rounds ?: task.totalRounds, 1)}", White.copy(alpha = 0.18f))
         } else if (task.isInterval) {
             Badge(task.intervalMode?.let { "INTERVAL · ${it.displayName.uppercase(Locale.US)}" } ?: "INTERVAL", BlueTheme)
@@ -287,10 +292,11 @@ fun WorkoutControlTopView(task: WorkoutTask, currentRound: Int) {
 }
 
 @Composable
-fun Badge(text: String, color: Color, textColor: Color = White) {
+fun Badge(text: String, color: Color, textColor: Color = White, modifier: Modifier = Modifier) {
     Text(
         text, color = textColor, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-        modifier = Modifier.clip(RoundedCornerShape(5.dp)).background(color).padding(horizontal = 10.dp, vertical = 5.dp)
+        maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
+        modifier = modifier.clip(RoundedCornerShape(5.dp)).background(color).padding(horizontal = 10.dp, vertical = 5.dp)
     )
 }
 
@@ -303,19 +309,24 @@ fun SessionStructureTag(text: String, fill: Color?) {
         modifier = styled.padding(horizontal = 14.dp, vertical = 6.dp))
 }
 
-/** Coach note, boxed. Renders nothing for a blank cue. */
+/**
+ * Coach note, boxed. Renders nothing for a blank cue. `NOTES` everywhere (FTNSSLNK-506/508 — one
+ * term for movement guidance). [onLight] is the Playlist row variant (FTNSSLNK-499): dark copy on a
+ * faint brand tint instead of white on black.
+ */
 @Composable
-fun SessionNoteCard(text: String?, label: String = "NOTE", maxLines: Int = 3, isBordered: Boolean = true, modifier: Modifier = Modifier) {
+fun SessionNoteCard(text: String?, label: String = "NOTES", maxLines: Int = 3, isBordered: Boolean = true, onLight: Boolean = false, modifier: Modifier = Modifier) {
     val trimmed = text?.trim() ?: return
     if (trimmed.isEmpty()) return
     val shape = RoundedCornerShape(12.dp)
-    val boxed = if (isBordered) modifier.clip(shape).background(Color.Black.copy(alpha = 0.45f)).border(1.dp, FLPrimary.copy(alpha = 0.45f), shape).padding(horizontal = 12.dp, vertical = 10.dp) else modifier
+    val fill = if (onLight) FLPrimary.copy(alpha = 0.08f) else Color.Black.copy(alpha = 0.45f)
+    val boxed = if (isBordered) modifier.clip(shape).background(fill).border(1.dp, FLPrimary.copy(alpha = 0.45f), shape).padding(horizontal = 12.dp, vertical = 10.dp) else modifier
     Row(modifier = boxed, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(Icons.Filled.Description, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
-        Box(Modifier.width(1.dp).height(28.dp).background(White.copy(alpha = 0.25f)))
+        Box(Modifier.width(1.dp).height(28.dp).background(if (onLight) TextSecondaryColor.copy(alpha = 0.3f) else White.copy(alpha = 0.25f)))
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(label, color = FLPrimary, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
-            Text(trimmed, color = White, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
+            Text(trimmed, color = if (onLight) TextPrimaryColor else White, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
         }
     }
 }

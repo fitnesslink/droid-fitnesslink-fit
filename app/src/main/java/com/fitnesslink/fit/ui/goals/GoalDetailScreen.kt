@@ -74,8 +74,40 @@ import java.util.Locale
  * add-milestone form and tap-to-achieve), Current vs Target card, Target
  * Date row, and a trash button with confirmation that cascades the delete.
  */
+/**
+ * `goalDetail/{goalId}` route (iOS `GoalDetailRouteView`): typed goals get
+ * the Goals PRD detail screen; goals made before the typed flow keep the
+ * legacy habits/milestones screen. A deep-linked goal that isn't cached yet
+ * triggers one refresh before deciding.
+ */
 @Composable
 fun GoalDetailScreen(
+    goalId: String,
+    onBack: () -> Unit,
+    onOpenHabit: (String) -> Unit = {}
+) {
+    var cached by remember(goalId) { mutableStateOf(com.fitnesslink.fit.goals.GoalStore.goal(goalId)) }
+    var resolved by remember(goalId) { mutableStateOf(cached != null) }
+    LaunchedEffect(goalId) {
+        if (cached == null) {
+            com.fitnesslink.fit.goals.GoalStore.ensureRegistered()
+            runCatching { kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { com.fitnesslink.fit.goals.GoalStore.refresh() } }
+            cached = com.fitnesslink.fit.goals.GoalStore.goal(goalId)
+            resolved = true
+        }
+    }
+    when {
+        !resolved -> Box(Modifier.fillMaxSize().background(BackgroundColor), contentAlignment = Alignment.Center) {
+            androidx.compose.material3.CircularProgressIndicator(color = FLPrimary)
+        }
+        cached?.subtype != null -> TypedGoalDetailScreen(goalId = goalId, onBack = onBack)
+        else -> LegacyGoalDetailScreen(goalId = goalId, onBack = onBack, onOpenHabit = onOpenHabit)
+    }
+}
+
+/** Pre-PRD goal detail: progress ring, identity statement, linked habits, milestones. */
+@Composable
+fun LegacyGoalDetailScreen(
     goalId: String,
     onBack: () -> Unit,
     onOpenHabit: (String) -> Unit = {}

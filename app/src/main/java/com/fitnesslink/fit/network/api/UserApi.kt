@@ -30,6 +30,14 @@ interface UserApi {
     @PUT("users/{id}")
     suspend fun update(@Path("id") id: String, @Body user: FLUser)
 
+    /**
+     * Self-service account deletion (iOS `UserService.deleteAccount`). Soft-deletes
+     * the server user, scrubs its PII and removes the Firebase auth account, so the
+     * bearer token stops working right after this. Answers 204.
+     */
+    @DELETE("users/me")
+    suspend fun deleteMe()
+
     @PUT("users/{id}/preferences")
     suspend fun updatePreferences(@Path("id") id: String, @Body prefs: UserPreference)
 

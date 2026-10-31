@@ -483,8 +483,47 @@ class WorkoutEditorViewModel : ViewModel() {
 
     // MARK: - Exercises
 
-    fun addExercise(movement: MovementLibraryItem, phaseIndex: Int) {
-        val phase = workout.phases.getOrNull(phaseIndex) ?: return
+    // MARK: - Exercise browser add / undo (FTNSSLNK-513)
+
+    /** What one immediate-add from the browser inserted, so a re-tap can take it back out. */
+    data class BrowserAdd(val taskId: String, val restTaskId: String?)
+
+    /** Keyed by lowercased movement id. Cleared when the browser closes. */
+    private val browserAdds = mutableMapOf<String, BrowserAdd>()
+    private var lastAutoInsertedRestId: String? = null
+
+    /** Browser entry point: [addExercise], remembering what was inserted for [undoBrowserAdd]. */
+    fun addExerciseFromBrowser(movement: MovementLibraryItem, phaseIndex: Int) {
+        lastAutoInsertedRestId = null
+        val taskId = addExercise(movement, phaseIndex) ?: return
+        browserAdds[movement.id.lowercase(Locale.US)] = BrowserAdd(taskId, lastAutoInsertedRestId)
+        lastAutoInsertedRestId = null
+    }
+
+    /**
+     * Undo a browser add (tap on an already-added row). Removes the task (and
+     * the rest auto-inserted with it) from whichever phase holds it, and drops
+     * it from a still-pending group's picks.
+     */
+    fun undoBrowserAdd(movementId: String) {
+        val add = browserAdds.remove(movementId.lowercase(Locale.US)) ?: return
+        pendingGroupTaskIds = pendingGroupTaskIds.filter { it != add.taskId }
+        selectedTaskIds = selectedTaskIds - add.taskId
+        val ids = setOfNotNull(add.taskId, add.restTaskId)
+        workout = workout.copy(phases = workout.phases.map { phase ->
+            phase.copy(taskRows = phase.taskRows.filterNot { row ->
+                val id = row.task?.id
+                id != null && ids.contains(id) && row.advancedTasks.isEmpty()
+            })
+        })
+        isDirty = true
+    }
+
+    fun clearBrowserAdds() { browserAdds.clear() }
+
+    /** Returns the inserted task id (null when the phase doesn't exist). */
+    fun addExercise(movement: MovementLibraryItem, phaseIndex: Int): String? {
+        val phase = workout.phases.getOrNull(phaseIndex) ?: return null
         val fresh = DatabaseManager.movement(movement.id) ?: movement
         val task = WorkoutRowOps.makeMovementTask(fresh).copy(order = phase.taskRows.size, phaseId = phase.id, phaseName = phase.name, workoutPhaseId = phase.id)
 
@@ -498,19 +537,22 @@ class WorkoutEditorViewModel : ViewModel() {
                 finalizePendingGroup()
                 showExerciseBrowser = false
             }
-            return
+            return task.id
         }
 
         val rows = phase.taskRows.toMutableList()
         val phaseName = phase.name.lowercase(Locale.US)
         val existingMovements = rows.mapNotNull { it.task }.filter { it.isMovement }
         if (existingMovements.isNotEmpty() && (phaseName.contains("main") || phaseName.contains("exercis"))) {
-            rows.add(TaskRow(task = WorkoutRowOps.makeRestTask(60, ClassificationStore.workoutTaskTypeId("Rest"))))
+            val rest = WorkoutRowOps.makeRestTask(60, ClassificationStore.workoutTaskTypeId("Rest"))
+            rows.add(TaskRow(task = rest))
+            lastAutoInsertedRestId = rest.id
         }
         rows.add(TaskRow(task = task))
         updatePhase(phaseIndex) { it.copy(taskRows = rows) }
         DatabaseManager.logRecentMovement(fresh.id)
         isDirty = true
+        return task.id
     }
 
     fun finalizePendingGroup() {

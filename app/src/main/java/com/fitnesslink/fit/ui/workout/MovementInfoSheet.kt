@@ -175,7 +175,7 @@ fun MovementInfoSheet(task: WorkoutTask, onDismiss: () -> Unit) {
             val cue = task.instructions
             if (!cue.isNullOrEmpty()) {
                 HorizontalDivider()
-                Text("Instructions", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                Text("Notes", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 Text(cue, fontSize = 15.sp, color = TextPrimaryColor)
             }
 

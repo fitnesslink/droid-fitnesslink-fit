@@ -4,10 +4,76 @@ import java.util.Date
 
 // MARK: - Time Range
 
-enum class ReportTimeRange(val label: String, val days: Int?) {
-    SEVEN_DAYS("7 Days", 7),
-    THIRTY_DAYS("30 Days", 30),
-    ALL_TIME("All Time", null);
+/**
+ * One set of period definitions for the Progress landing page, Quick Stats,
+ * All Stats and every report (iOS `ReportTimeRange`, Progress PRD §3.3 / §10.2).
+ */
+enum class ReportTimeRange(val label: String, val shortLabel: String) {
+    SEVEN_DAYS("7 Days", "7D"),
+    THIRTY_DAYS("30 Days", "30D"),
+    THREE_MONTHS("3 Months", "3M"),
+    SIX_MONTHS("6 Months", "6M"),
+    ONE_YEAR("1 Year", "1Y"),
+    ALL_TIME("All Time", "All");
+
+    /** Lowercased phrase for comparison captions ("vs. previous 30 days"). */
+    val previousPeriodPhrase: String
+        get() = when (this) {
+            SEVEN_DAYS -> "previous 7 days"
+            THIRTY_DAYS -> "previous 30 days"
+            THREE_MONTHS -> "previous 3 months"
+            SIX_MONTHS -> "previous 6 months"
+            ONE_YEAR -> "previous year"
+            ALL_TIME -> ""
+        }
+
+    /** Daily buckets for short periods, weekly beyond a month. */
+    val groupsByWeek: Boolean get() = this != SEVEN_DAYS && this != THIRTY_DAYS
+
+    /** Day spacing between chart x-axis labels. */
+    val axisStrideDays: Int
+        get() = when (this) {
+            SEVEN_DAYS -> 1
+            THIRTY_DAYS -> 7
+            THREE_MONTHS -> 14
+            SIX_MONTHS -> 30
+            ONE_YEAR -> 60
+            ALL_TIME -> 90
+        }
+
+    /** Start of the period ending [nowMs] in the local calendar (epoch ms); null for All Time. */
+    fun startMillis(nowMs: Long = System.currentTimeMillis()): Long? {
+        val (field, amount) = when (this) {
+            SEVEN_DAYS -> java.util.Calendar.DAY_OF_YEAR to -7
+            THIRTY_DAYS -> java.util.Calendar.DAY_OF_YEAR to -30
+            THREE_MONTHS -> java.util.Calendar.MONTH to -3
+            SIX_MONTHS -> java.util.Calendar.MONTH to -6
+            ONE_YEAR -> java.util.Calendar.YEAR to -1
+            ALL_TIME -> return null
+        }
+        return java.util.Calendar.getInstance().apply { timeInMillis = nowMs; add(field, amount) }.timeInMillis
+    }
+
+    /** `startMillis` or 0 (All Time) — the `since` argument the SQLite readers take. */
+    fun sinceMillis(nowMs: Long = System.currentTimeMillis()): Long = startMillis(nowMs) ?: 0L
+
+    /**
+     * The equivalent window immediately before this one, as `[start, end)`
+     * epoch ms (PRD §10.2); null for All Time.
+     */
+    fun previousInterval(nowMs: Long = System.currentTimeMillis()): LongRange? {
+        val start = startMillis(nowMs) ?: return null
+        val length = nowMs - start
+        return (start - length) until start
+    }
+
+    companion object {
+        /**
+         * The period last picked on Progress or a report. Reports open on it
+         * so the landing page's filter carries into the report (PRD §8.4).
+         */
+        @Volatile var current: ReportTimeRange = THIRTY_DAYS
+    }
 }
 
 // MARK: - Report Tab

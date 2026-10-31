@@ -13,6 +13,7 @@ import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.network.dto.ShareableContentKind
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.persistence.toListRow
+import com.fitnesslink.fit.ui.components.TagOption
 import com.fitnesslink.fit.workouts.WorkoutStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -48,9 +49,30 @@ class WorkoutsViewModel : ViewModel() {
     var anatomyByWorkoutId by mutableStateOf<Map<String, Set<String>>>(emptyMap())
         private set
 
+    /**
+     * FTNSSLNK-503: duration filter from the More Filters drawer. Matched
+     * client-side against `estimatedTime` (SECONDS) from the same list-view
+     * response — not persisted, so empty until the first online refresh (the
+     * drawer hides the section until then).
+     */
+    var selectedDurationIds by mutableStateOf<Set<String>>(emptySet())
+    var estimatedSecondsByWorkoutId by mutableStateOf<Map<String, Int>>(emptyMap())
+        private set
+
+    val durationOptions: List<TagOption>
+        get() = if (estimatedSecondsByWorkoutId.isEmpty()) emptyList() else WorkoutDurationBuckets.all.map { it.option }
+
+    /** Count on the More Filters button: everything the drawer edits (anatomy + equipment, shared with the chips, plus duration). */
+    val moreFiltersCount: Int
+        get() = selectedEquipmentIds.size + selectedAnatomyIds.size + selectedDurationIds.size
+
+    fun matchesDuration(workout: WorkoutList): Boolean =
+        WorkoutDurationBuckets.matches(selectedDurationIds, estimatedSecondsByWorkoutId[workout.id.lowercase(Locale.US)])
+
     val hasActiveFilters: Boolean
         get() = showFavoritesOnly || selectedContributorId != null || mineSelected ||
-            selectedEquipmentIds.isNotEmpty() || selectedAnatomyIds.isNotEmpty() || levelFilter != null
+            selectedEquipmentIds.isNotEmpty() || selectedAnatomyIds.isNotEmpty() || levelFilter != null ||
+            selectedDurationIds.isNotEmpty()
 
     fun clearFilters() {
         showFavoritesOnly = false
@@ -58,6 +80,7 @@ class WorkoutsViewModel : ViewModel() {
         mineSelected = false
         selectedEquipmentIds = emptySet()
         selectedAnatomyIds = emptySet()
+        selectedDurationIds = emptySet()
         levelFilter = null
     }
 
@@ -86,6 +109,7 @@ class WorkoutsViewModel : ViewModel() {
             if (selectedAnatomyIds.isNotEmpty()) {
                 items = items.filter { w -> (anatomyByWorkoutId[w.id.lowercase(Locale.US)] ?: emptySet()).any { selectedAnatomyIds.contains(it) } }
             }
+            if (selectedDurationIds.isNotEmpty()) items = items.filter { matchesDuration(it) }
             levelFilter?.let { level -> items = items.filter { it.trainingLevel.equals(level, ignoreCase = true) } }
             val q = searchText.trim().lowercase(Locale.US)
             if (q.isNotEmpty()) items = items.filter { it.name.lowercase(Locale.US).contains(q) }
@@ -121,6 +145,11 @@ class WorkoutsViewModel : ViewModel() {
                 anatomyByWorkoutId = remote.associate { w ->
                     w.id.lowercase(Locale.US) to w.anatomyIds.map { it.toString().lowercase(Locale.US) }.toSet()
                 }.filterValues { it.isNotEmpty() }
+                // FTNSSLNK-503: estimated time (seconds) for the duration filter.
+                estimatedSecondsByWorkoutId = remote
+                    .mapNotNull { w -> w.estimatedTime?.takeIf { it > 0 }?.let { w.id.lowercase(Locale.US) to it } }
+                    .distinctBy { it.first }
+                    .toMap()
             }
             hydrateFavorites()
             workouts = visibleTemplates()
@@ -175,5 +204,28 @@ class WorkoutsViewModel : ViewModel() {
         mineSelected = !mineSelected
         if (mineSelected) selectedContributorId = null
         workouts = visibleTemplates()
+    }
+}
+
+/**
+ * Duration buckets offered in the Workouts More Filters drawer (iOS
+ * `WorkoutsViewModel.durationBuckets`). Ids are stable keys; names are labels.
+ * Ranges are in SECONDS, upper bound exclusive.
+ */
+object WorkoutDurationBuckets {
+    data class Bucket(val option: TagOption, val range: IntRange)
+
+    val all: List<Bucket> = listOf(
+        Bucket(TagOption("lt20", "Under 20 min"), 0 until 20 * 60),
+        Bucket(TagOption("20to40", "20–40 min"), 20 * 60 until 40 * 60),
+        Bucket(TagOption("40to60", "40–60 min"), 40 * 60 until 60 * 60),
+        Bucket(TagOption("60plus", "60+ min"), 60 * 60 until Int.MAX_VALUE)
+    )
+
+    /** OR across the selected buckets. No (or zero) estimated time never matches an active filter. */
+    fun matches(selectedIds: Set<String>, estimatedSeconds: Int?): Boolean {
+        if (selectedIds.isEmpty()) return true
+        val seconds = estimatedSeconds?.takeIf { it > 0 } ?: return false
+        return all.any { selectedIds.contains(it.option.id) && seconds in it.range }
     }
 }

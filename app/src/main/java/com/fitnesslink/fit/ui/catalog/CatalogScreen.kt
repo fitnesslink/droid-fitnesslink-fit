@@ -242,17 +242,17 @@ fun CreateContentMenu(
                 )
             }
             DropdownMenuItem(
-                text = { Text("Workout") },
+                text = { Text("Create Workout") },
                 leadingIcon = { Icon(Icons.Filled.FitnessCenter, contentDescription = null) },
                 onClick = { expanded = false; onCreateWorkout() }
             )
             DropdownMenuItem(
-                text = { Text("Program") },
+                text = { Text("Create Program") },
                 leadingIcon = { Icon(Icons.Filled.DateRange, contentDescription = null) },
                 onClick = { expanded = false; onCreateProgram() }
             )
             DropdownMenuItem(
-                text = { Text("Movement") },
+                text = { Text("Create Movement") },
                 leadingIcon = { Icon(Icons.Filled.DirectionsRun, contentDescription = null) },
                 onClick = { expanded = false; onCreateMovement() }
             )

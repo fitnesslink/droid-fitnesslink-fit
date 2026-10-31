@@ -4,15 +4,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
@@ -124,16 +121,8 @@ fun HomeScreen(
             // Session agent: "Continue Where You Left Off" (renders nothing without in-progress sessions).
             ResumeSessionBanner(onResume = { entry -> onNavigate(entry.resumeRoute) })
 
-            if (viewModel.goalSummaries.isNotEmpty()) {
-                LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(viewModel.goalSummaries, key = { it.id }) { goal ->
-                        GoalProgressCard(goal = goal, onClick = { onNavigate("goalDetail/${goal.id}") })
-                    }
-                }
-            }
+            // My Goals (Goals PRD §8): one pinned goal — replaces the goal-card rail, as on iOS.
+            MyGoalsSection(onCreate = { onNavigate("goalCreation") }, onNavigate = onNavigate)
 
             if (viewModel.todayHabits.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(horizontal = 20.dp)) {

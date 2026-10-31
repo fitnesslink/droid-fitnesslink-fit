@@ -2,6 +2,8 @@ package com.fitnesslink.fit.network.api
 
 import com.fitnesslink.fit.model.*
 import com.fitnesslink.fit.network.dto.AchievementDefinition
+import com.fitnesslink.fit.network.dto.CreateGoalEntryRequest
+import com.fitnesslink.fit.network.dto.GoalPinRequest
 import com.fitnesslink.fit.network.dto.GoalProgressRequest
 import com.fitnesslink.fit.network.dto.UnlockAchievementRequest
 import retrofit2.http.*
@@ -34,6 +36,24 @@ interface GoalApi {
     /** 204. */
     @PUT("goals/{id}/progress")
     suspend fun updateProgress(@Path("id") id: String, @Body request: GoalProgressRequest)
+
+    /** 204. Pinning unpins every other goal server-side (Goals PRD 8.3). */
+    @PUT("goals/{id}/pin")
+    suspend fun setPinned(@Path("id") id: String, @Body request: GoalPinRequest)
+
+    // Goal entries (Goals PRD manual check-ins / logged amounts)
+
+    /** Every entry the user has, across goals (server `GoalEntryDto`). */
+    @GET("goals/entries")
+    suspend fun entries(): List<GoalEntry>
+
+    /** 201 with the entry id (200 with the same id when a replay re-sends a client-minted id). */
+    @POST("goals/{goalId}/entries")
+    suspend fun createEntry(@Path("goalId") goalId: String, @Body request: CreateGoalEntryRequest): String
+
+    /** 204; soft delete, so a repeat answers 404. */
+    @DELETE("goals/entries/{id}")
+    suspend fun deleteEntry(@Path("id") id: String)
 
     // Habits
     @GET("habits/goal/{goalId}")

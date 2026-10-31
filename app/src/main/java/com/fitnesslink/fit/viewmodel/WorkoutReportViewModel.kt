@@ -8,6 +8,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.fitnesslink.fit.model.*
 import com.fitnesslink.fit.persistence.DatabaseManager
+import com.fitnesslink.fit.persistence.workingMovementAggregates
+import com.fitnesslink.fit.persistence.workingVolumeEntries
 import com.fitnesslink.fit.persistence.fullSessionRows
 import com.fitnesslink.fit.reports.SessionHistoryHydrator
 import com.fitnesslink.fit.session.SessionRecorder
@@ -24,7 +26,14 @@ import java.util.Locale
  */
 class WorkoutReportViewModel : ViewModel() {
     var reportData by mutableStateOf(WorkoutReportData())
-    var selectedTimeRange by mutableStateOf(ReportTimeRange.THIRTY_DAYS)
+    // Opens on the period picked on Progress / the last report (PRD §8.4).
+    private var selectedRangeState by mutableStateOf(ReportTimeRange.current)
+    var selectedTimeRange: ReportTimeRange
+        get() = selectedRangeState
+        set(value) {
+            selectedRangeState = value
+            ReportTimeRange.current = value
+        }
     var selectedTab by mutableStateOf(ReportTab.OVERVIEW)
     var sessions by mutableStateOf<List<SessionRow>>(emptyList())
     var volumeEntries by mutableStateOf<List<VolumeEntry>>(emptyList())
@@ -134,10 +143,11 @@ class WorkoutReportViewModel : ViewModel() {
 
         reportData = DatabaseManager.workoutReportData(userId, since)
         sessions = DatabaseManager.fullSessionRows(userId, since)
-        volumeEntries = DatabaseManager.volumeEntries(userId, since)
+        // FTNSSLNK-497: working sets only (warm-up sets, Warm-Up / Cool Down tasks excluded).
+        volumeEntries = DatabaseManager.workingVolumeEntries(userId, since)
         personalRecords = DatabaseManager.personalRecords(userId, since)
         workoutAggregates = WorkoutAggregate.build(sessions)
-        movementAggregates = DatabaseManager.movementAggregates(userId, since)
+        movementAggregates = DatabaseManager.workingMovementAggregates(userId, since)
 
         val dates = DatabaseManager.workoutDates(userId, since)
         streak = computeStreak(dates)
@@ -180,10 +190,7 @@ class WorkoutReportViewModel : ViewModel() {
     // MARK: - Private
 
     private fun sinceDate(range: ReportTimeRange): Long {
-        val days = range.days ?: return 0L
-        val cal = Calendar.getInstance()
-        cal.add(Calendar.DAY_OF_YEAR, -days)
-        return cal.timeInMillis
+        return range.sinceMillis()
     }
 
     private fun computeStreak(dates: List<Date>): WorkoutStreak {
@@ -250,7 +257,7 @@ class WorkoutReportViewModel : ViewModel() {
     }
 
     private fun computeChartPoints() {
-        val useWeekly = selectedTimeRange != ReportTimeRange.SEVEN_DAYS
+        val useWeekly = selectedTimeRange.groupsByWeek
         val completed = sessions.filter { it.isCompleted }
 
         completedChartPoints = groupChart(completed, useWeekly) { it.size.toDouble() }

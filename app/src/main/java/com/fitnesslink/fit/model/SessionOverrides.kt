@@ -58,9 +58,15 @@ data class SessionMovementOverride(
 
 data class SessionSetOverride(
     val sets: Int = 1,
-    val reps: Int = 0
+    val reps: Int = 0,
+    /** Time-based work (FTNSSLNK-512): seconds per set. Null = a rep edit (older persisted overrides omit it). */
+    val durationSeconds: Int? = null,
+    /** Load (stored lbs, like `WorkoutTask.weightKg`) set alongside a duration edit; null keeps the task's own. */
+    val weightLbs: Int? = null
 ) {
-    fun apply(task: WorkoutTask): WorkoutTask = SessionOverrides.applySets(task, sets, reps)
+    fun apply(task: WorkoutTask): WorkoutTask =
+        if (durationSeconds != null) SessionOverrides.applyDuration(task, sets, durationSeconds, weightLbs)
+        else SessionOverrides.applySets(task, sets, reps)
 }
 
 data class SessionAddedTask(
@@ -164,6 +170,29 @@ data class SessionOverrides(
                 list
             }
             return task.copy(sets = s, reps = r, metric = "$s x $r", setConfigs = configs)
+        }
+
+        /**
+         * Mirrors the editor's `updateTaskDuration` for timed work (FTNSSLNK-512):
+         * sets × seconds, no reps. One time for every set (the sheet edits a
+         * single value); per-set loads are kept when sets vary.
+         */
+        fun applyDuration(task: WorkoutTask, sets: Int, durationSeconds: Int, weightLbs: Int?): WorkoutTask {
+            val s = maxOf(sets, 1)
+            val seconds = maxOf(durationSeconds, 1)
+            val weightKg = if (weightLbs != null) weightLbs.takeIf { it > 0 } else task.weightKg
+            val weight = weightKg?.toDouble()
+            val core = "$s x ${com.fitnesslink.fit.workouts.WorkoutRowOps.formatDuration(seconds)}"
+            val metric = if ((weight ?: 0.0) > 0) "$core @ ${weight!!.toInt()} lbs" else core
+            val configs: List<TaskSetConfig> = if (task.sameAcrossSets || task.setConfigs.isEmpty()) {
+                (1..s).map { TaskSetConfig(setNumber = it, reps = 0, weightKg = weight, durationSeconds = seconds) }
+            } else {
+                val list = task.setConfigs.toMutableList()
+                while (list.size < s) list.add(TaskSetConfig(setNumber = list.size + 1, reps = 0, weightKg = weight, durationSeconds = seconds))
+                while (list.size > s) list.removeAt(list.size - 1)
+                list.map { it.copy(durationSeconds = seconds) }
+            }
+            return task.copy(sets = s, durationSeconds = seconds, weightKg = weightKg, metric = metric, setConfigs = configs)
         }
 
         /**

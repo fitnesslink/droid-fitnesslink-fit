@@ -15,19 +15,80 @@ object BillingPresentation {
 
     data class StatusPill(val label: String, val tone: PillTone)
 
-    /** iOS `BillingView.statusLabel` + `statusColor`. */
-    fun statusPill(entitlement: Entitlement, subscription: SubscriptionDto?): StatusPill {
+    /** iOS `BillingView.statusLabel` + `statusColor`, plus Play's pending payment and account hold. */
+    fun statusPill(entitlement: Entitlement, subscription: SubscriptionDto?, nowMs: Long = System.currentTimeMillis()): StatusPill {
         if (entitlement.isComped) return StatusPill("COMPLIMENTARY", PillTone.BRAND)
+        if (isAccountHold(entitlement, subscription, nowMs)) return StatusPill("ON HOLD", PillTone.WARNING)
+        if (isGrace(entitlement, subscription, nowMs)) return StatusPill("PAYMENT ISSUE", PillTone.WARNING)
         return when (entitlement.status.lowercase(Locale.US)) {
-            "trial" -> StatusPill("FREE TRIAL", PillTone.BRAND)
+            "trial" -> StatusPill(
+                if (subscription?.cancelAtPeriodEnd == true) "TRIAL · CANCELS" else "FREE TRIAL",
+                PillTone.BRAND
+            )
             "active" -> StatusPill(
                 if (subscription?.cancelAtPeriodEnd == true) "CANCELS SOON" else "ACTIVE",
                 PillTone.BRAND
             )
-            "grace" -> StatusPill("PAYMENT ISSUE", PillTone.WARNING)
+            "pending" -> StatusPill("PAYMENT PENDING", PillTone.WARNING)
             "expired" -> StatusPill("EXPIRED", PillTone.NEUTRAL)
             else -> StatusPill("NONE", PillTone.NEUTRAL)
         }
+    }
+
+    // MARK: - Grace / account hold (534)
+
+    /** Payment failing, access kept: server `grace`, or `PastDue` with a future `gracePeriodEndsAt`. */
+    fun isGrace(entitlement: Entitlement, subscription: SubscriptionDto?, nowMs: Long): Boolean {
+        if (entitlement.isGrace) return true
+        if (!subscription.isPastDue()) return false
+        val graceEnd = subscription?.gracePeriodEndsAt ?: return false
+        return graceEnd.time > nowMs
+    }
+
+    /** Payment failing, access suspended: `PastDue` with no (or a past) grace period, and not entitled. */
+    fun isAccountHold(entitlement: Entitlement, subscription: SubscriptionDto?, nowMs: Long): Boolean {
+        if (entitlement.isEntitled || !subscription.isPastDue()) return false
+        val graceEnd = subscription?.gracePeriodEndsAt
+        return graceEnd == null || graceEnd.time <= nowMs
+    }
+
+    private fun SubscriptionDto?.isPastDue(): Boolean = this?.status.equals("PastDue", ignoreCase = true)
+
+    enum class BannerKind { GRACE, HOLD }
+
+    data class PaymentBanner(val kind: BannerKind, val text: String, val opensPlay: Boolean)
+
+    /** Grace / account-hold banner, with "where to fix it" copy for the billing source. */
+    fun paymentBanner(
+        entitlement: Entitlement,
+        subscription: SubscriptionDto?,
+        nowMs: Long,
+        dateText: (java.util.Date) -> String
+    ): PaymentBanner? {
+        val source = actions(entitlement, subscription)
+        val where = when (source) {
+            Actions.PLAY -> "in Google Play"
+            Actions.APPLE -> "on your iPhone (Settings → Apple ID → Payment & Shipping)"
+            Actions.WEB -> "on the web"
+            Actions.COMPED -> return null
+        }
+        val opensPlay = source == Actions.PLAY
+        if (isAccountHold(entitlement, subscription, nowMs)) {
+            return PaymentBanner(
+                BannerKind.HOLD,
+                "Your subscription is on hold because of a payment problem. Update your payment method $where to get your access back.",
+                opensPlay
+            )
+        }
+        if (isGrace(entitlement, subscription, nowMs)) {
+            val by = subscription?.gracePeriodEndsAt?.let { " by ${dateText(it)}" }.orEmpty()
+            return PaymentBanner(
+                BannerKind.GRACE,
+                "There's a problem with your payment. Update your payment method $where$by to keep your access.",
+                opensPlay
+            )
+        }
+        return null
     }
 
     /** iOS `BillingView.planName`. */
@@ -47,7 +108,7 @@ object BillingPresentation {
     fun renewalLine(entitlement: Entitlement, subscription: SubscriptionDto?, dateText: (java.util.Date) -> String): String? {
         if (entitlement.isComped) return "Doesn't expire"
         val end = entitlement.currentPeriodEnd ?: return null
-        if (subscription?.cancelAtPeriodEnd == true) return "Access ends ${dateText(end)}"
+        if (subscription?.cancelAtPeriodEnd == true) return "Cancels on ${dateText(end)}"
         return if (entitlement.isEntitled) "Renews ${dateText(end)}" else "Ended ${dateText(end)}"
     }
 
@@ -62,12 +123,42 @@ object BillingPresentation {
     /** Which action block the Subscription screen renders (iOS `BillingView.actions`). */
     enum class Actions { COMPED, WEB, APPLE, PLAY }
 
-    fun actions(entitlement: Entitlement): Actions = when {
-        entitlement.isComped -> Actions.COMPED
-        entitlement.isStripe -> Actions.WEB
-        entitlement.isApple -> Actions.APPLE
-        else -> Actions.PLAY
+    /**
+     * The billing source drives the manage controls. The entitlement's source
+     * wins; a lapsed / on-hold user (no entitlement source) falls back to the
+     * subscription row's; nothing at all means a would-be Play subscriber.
+     */
+    fun actions(entitlement: Entitlement, subscription: SubscriptionDto? = null): Actions {
+        val source = entitlement.source?.takeIf { it.isNotBlank() } ?: subscription?.source?.takeIf { it.isNotBlank() }
+        return when (source?.lowercase(Locale.US)) {
+            "comped" -> Actions.COMPED
+            "stripe" -> Actions.WEB
+            "apple" -> Actions.APPLE
+            else -> Actions.PLAY
+        }
     }
+
+    /** What "Manage subscription" does for each source (534). */
+    sealed class ManageAction {
+        /** Open Play's subscription centre ([AppLinks.playSubscriptions]). */
+        data object OpenPlay : ManageAction()
+        /** No link — Play can't manage an App Store subscription. */
+        data class Instructions(val text: String) : ManageAction()
+        data class OpenUrl(val label: String, val url: String) : ManageAction()
+        data class Info(val text: String) : ManageAction()
+    }
+
+    const val APPLE_MANAGE_TEXT =
+        "Billed through the App Store — manage it on your iPhone (Settings → Apple ID → Subscriptions)."
+    const val COMPED_TEXT = "Your access is on us — there's nothing to manage or pay."
+
+    fun manageAction(entitlement: Entitlement, subscription: SubscriptionDto? = null): ManageAction =
+        when (actions(entitlement, subscription)) {
+            Actions.PLAY -> ManageAction.OpenPlay
+            Actions.APPLE -> ManageAction.Instructions(APPLE_MANAGE_TEXT)
+            Actions.WEB -> ManageAction.OpenUrl("Manage on the web", AppLinks.WEB_BILLING_PORTAL)
+            Actions.COMPED -> ManageAction.Info(COMPED_TEXT)
+        }
 
     // MARK: - Play offer copy
 
@@ -97,9 +188,28 @@ object BillingPresentation {
         return if (name.first().isDigit()) name else "1 $name"
     }
 
-    fun trialButtonText(trialIsoPeriod: String?): String {
-        val period = trialPeriodText(trialIsoPeriod) ?: return "Start Free Trial"
-        return "Start ${period.split(' ').joinToString(" ") { w -> w.replaceFirstChar { it.titlecase(Locale.US) } }} Free Trial"
+    /**
+     * 533 CTA: "Start 7-day free trial" when the selected offer is the trial
+     * offer, else "Subscribe". Weeks read as days ("P1W" → "7-day") the way
+     * trial lengths are usually advertised.
+     */
+    fun ctaText(trialIsoPeriod: String?): String {
+        if (trialIsoPeriod == null) return "Subscribe"
+        val length = trialLengthAdjective(trialIsoPeriod) ?: return "Start free trial"
+        return "Start $length free trial"
+    }
+
+    /** "P7D" / "P1W" → "7-day", "P1M" → "1-month"; null when unparseable. */
+    fun trialLengthAdjective(isoPeriod: String): String? {
+        val match = PERIOD.matchEntire(isoPeriod.trim()) ?: return null
+        val value = match.groupValues[1].toIntOrNull() ?: return null
+        return when (match.groupValues[2]) {
+            "D" -> "$value-day"
+            "W" -> "${value * 7}-day"
+            "M" -> "$value-month"
+            "Y" -> "$value-year"
+            else -> null
+        }
     }
 
     /** "$9.99 / month". */
@@ -110,8 +220,9 @@ object BillingPresentation {
     fun disclosure(formattedPrice: String, isoPeriod: String?, trialIsoPeriod: String?): String {
         val price = priceLine(formattedPrice, isoPeriod)
         if (trialIsoPeriod != null) {
-            val trial = trialPeriodText(trialIsoPeriod)?.let { "$it free" } ?: "Free trial"
-            return "$trial, then $price. Renews automatically until cancelled. Cancel anytime in Google Play."
+            val trial = trialLengthAdjective(trialIsoPeriod)?.let { "$it free trial" } ?: "Free trial"
+            return "$trial, then $price. Renews automatically until cancelled. " +
+                "Cancel anytime in Google Play — cancel before the trial ends and you won't be charged."
         }
         return "$price. Renews automatically until cancelled. Cancel anytime in Google Play."
     }

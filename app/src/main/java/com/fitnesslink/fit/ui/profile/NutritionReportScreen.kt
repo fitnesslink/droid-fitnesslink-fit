@@ -55,7 +55,7 @@ private fun TimeRangePicker(selected: ReportTimeRange, onSelect: (ReportTimeRang
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clip(RoundedCornerShape(8.dp)).background(White)) {
         ReportTimeRange.entries.forEach { range ->
             Box(modifier = Modifier.weight(1f).clickable { onSelect(range) }.background(if (selected == range) FLPrimary else White).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                Text(range.label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected == range) White else TextSecondaryColor)
+                Text(range.shortLabel, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected == range) White else TextSecondaryColor)
             }
         }
     }

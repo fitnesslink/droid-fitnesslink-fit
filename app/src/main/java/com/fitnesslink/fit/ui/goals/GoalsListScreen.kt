@@ -1,41 +1,41 @@
 package com.fitnesslink.fit.ui.goals
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Archive
+import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Unarchive
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.PushPin
+import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,29 +43,36 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import com.fitnesslink.fit.goals.GoalAction
+import com.fitnesslink.fit.goals.GoalPhase
+import com.fitnesslink.fit.goals.GoalProgress
+import com.fitnesslink.fit.goals.GoalProgressEngine
+import com.fitnesslink.fit.goals.GoalReminderScheduler
+import com.fitnesslink.fit.goals.GoalStore
+import com.fitnesslink.fit.goals.LocalGoalDataSource
+import com.fitnesslink.fit.goals.deadlineText
+import com.fitnesslink.fit.goals.phase
 import com.fitnesslink.fit.model.Goal
 import com.fitnesslink.fit.model.GoalStatus
-import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
-import com.fitnesslink.fit.viewmodel.GoalListViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
- * iOS `GoalListView`: active goals as `GoalDetailCard`s (progress ring + %,
- * trajectory and type badges), a collapsible Archived section at 60 %
- * opacity, an empty state with a call to action, and a + button. Long-press
- * a card for Pause / Resume / Archive (the ViewModel actions neither
- * platform exposed before).
+ * Goals landing screen (iOS `GoalListView`, PRD 1.3): active goals with live
+ * progress, or the empty state; paused and finished goals below. "Set Your
+ * First Goal" / "+" open the category selection.
  */
 @Composable
 fun GoalsListScreen(
@@ -73,200 +80,131 @@ fun GoalsListScreen(
     onCreateGoal: () -> Unit,
     onOpenGoal: (String) -> Unit
 ) {
-    val viewModel: GoalListViewModel = viewModel()
-    LaunchedEffect(Unit) { viewModel.loadData() }
+    val context = LocalContext.current
+    var goals by remember { mutableStateOf<List<Goal>>(emptyList()) }
+    var progress by remember { mutableStateOf<Map<String, GoalProgress>>(emptyMap()) }
+    var loaded by remember { mutableStateOf(false) }
+    var showInactive by remember { mutableStateOf(false) }
+    var tick by remember { mutableIntStateOf(0) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BackgroundColor)
-    ) {
-        HeaderBackView(onBack = onBack)
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 30.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 20.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("Goals", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(CircleShape)
-                            .background(FLPrimary)
-                            .clickable(onClick = onCreateGoal),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = "Create goal", tint = White, modifier = Modifier.size(20.dp))
-                    }
+    LaunchedEffect(Unit) {
+        GoalReminderScheduler.attach(context)
+        GoalStore.ensureRegistered()
+        withContext(Dispatchers.IO) { runCatching { GoalStore.refresh() } }
+        tick++
+    }
+    LaunchedEffect(Unit) { GoalStore.changes.collect { tick++ } }
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, e -> if (e == Lifecycle.Event.ON_RESUME) tick++ }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+    LaunchedEffect(tick) {
+        val (all, computed) = withContext(Dispatchers.IO) {
+            val list = GoalStore.goals().sortedWith(compareByDescending<Goal> { it.isPinned }.thenByDescending { it.createdAt })
+            val data = LocalGoalDataSource()
+            list to list.associate { it.id to GoalProgressEngine.progress(it, data) }
+        }
+        goals = all
+        progress = computed
+        loaded = true
+    }
+
+    val active = goals.filter { it.status == GoalStatus.Active }
+    val paused = goals.filter { it.status == GoalStatus.Paused }
+    val finished = goals.filter { it.status == GoalStatus.Completed || it.status == GoalStatus.Archived }
+
+    Column(Modifier.fillMaxSize().background(BackgroundColor)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.clickable(onClick = onBack).padding(6.dp))
+            Text("Goals", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+            Icon(Icons.Filled.AddCircle, contentDescription = "Add goal", tint = FLPrimary,
+                modifier = Modifier.size(36.dp).clickable(onClick = onCreateGoal).padding(4.dp))
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 12.dp)) {
+            if (!loaded) {
+                Box(Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = FLPrimary) }
+            } else if (goals.isEmpty()) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 80.dp)) {
+                    Icon(Icons.Filled.TrackChanges, contentDescription = null, tint = MediumGray, modifier = Modifier.size(48.dp))
+                    Text("No active goals", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Set a goal to start tracking your progress.", fontSize = 14.sp, color = goalSecondaryText(), textAlign = TextAlign.Center)
+                    GoalPrimaryButton("Set Your First Goal", modifier = Modifier.widthIn(max = 260.dp), onClick = onCreateGoal)
                 }
-            }
-
-            if (viewModel.activeGoals.isEmpty()) {
-                item { EmptyGoalsState(onCreateGoal = onCreateGoal) }
             } else {
-                items(viewModel.activeGoals, key = { it.id }) { goal ->
-                    GoalDetailCard(
-                        goal = goal,
-                        onClick = { onOpenGoal(goal.id) },
-                        onPause = { viewModel.pauseGoal(goal.id) },
-                        onResume = { viewModel.resumeGoal(goal.id) },
-                        onArchive = { viewModel.archiveGoal(goal.id) },
-                        modifier = Modifier.padding(horizontal = 20.dp)
-                    )
+                if (active.isEmpty()) Text("No active goals", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = goalSecondaryText())
+                active.forEach { GoalSummaryCard(it, progress[it.id], onClick = { onOpenGoal(it.id) }) }
+                Row(horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().clip(CircleShape).border(1.5.dp, FLPrimary, CircleShape)
+                        .clickable(onClick = onCreateGoal).padding(vertical = 12.dp)) {
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text("Add Another Goal", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
                 }
-            }
-
-            if (viewModel.archivedGoals.isNotEmpty()) {
-                item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { viewModel.showArchived = !viewModel.showArchived }
-                            .padding(horizontal = 20.dp, vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Text("Archived", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-                        Icon(
-                            if (viewModel.showArchived) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp)
-                        )
-                        Text("${viewModel.archivedGoals.size}", fontSize = 12.sp, color = TextSecondaryColor)
-                    }
+                if (paused.isNotEmpty()) {
+                    SectionTitle("Paused")
+                    paused.forEach { GoalSummaryCard(it, progress[it.id], Modifier.alpha(0.75f), onClick = { onOpenGoal(it.id) }) }
                 }
-                if (viewModel.showArchived) {
-                    items(viewModel.archivedGoals, key = { "archived-${it.id}" }) { goal ->
-                        GoalDetailCard(
-                            goal = goal,
-                            onClick = { onOpenGoal(goal.id) },
-                            onResume = { viewModel.resumeGoal(goal.id) },
-                            modifier = Modifier
-                                .padding(horizontal = 20.dp)
-                                .alpha(0.6f)
-                        )
+                if (finished.isNotEmpty()) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable { showInactive = !showInactive }) {
+                        SectionTitle("Completed & archived")
+                        Icon(if (showInactive) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown, contentDescription = null,
+                            tint = goalSecondaryText(), modifier = Modifier.padding(top = 8.dp))
                     }
+                    if (showInactive) finished.forEach { GoalSummaryCard(it, progress[it.id], Modifier.alpha(0.6f), onClick = { onOpenGoal(it.id) }) }
                 }
             }
         }
     }
+}
+
+@Composable
+private fun SectionTitle(text: String) {
+    Text(text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = goalSecondaryText(), modifier = Modifier.padding(top = 8.dp))
 }
 
 /**
- * iOS `GoalDetailCard`: 56 dp progress ring with the % inside, title,
- * one-line description, trajectory + goal-type badges, chevron. Long-press
- * opens the status menu.
+ * Compact goal card shared by the Goals list and Home's My Goals (iOS
+ * `GoalSummaryCard`, PRD 8.2). When there's no data for the period it shows
+ * the logging action rather than a zero.
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun GoalDetailCard(
-    goal: Goal,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    onPause: (() -> Unit)? = null,
-    onResume: (() -> Unit)? = null,
-    onArchive: (() -> Unit)? = null
-) {
-    var menuOpen by remember { mutableStateOf(false) }
-    val percent = goal.progressPercent
-    val color = trajectoryColor(goal.trajectoryStatus)
-
-    Box(modifier = modifier) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
-                .background(White)
-                .combinedClickable(onClick = onClick, onLongClick = { menuOpen = true })
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            GoalProgressRing(percent = percent, color = color, size = 56.dp, strokeWidth = 6.dp) {
-                Text("${percent.toInt()}%", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(
-                        goal.title.ifBlank { goal.goalType.displayName },
-                        fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false)
-                    )
-                    if (goal.status == GoalStatus.Paused) {
-                        Text("Paused", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor,
-                            modifier = Modifier.background(MediumGray.copy(alpha = 0.18f), RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 2.dp))
-                    }
-                }
-                if (goal.description.isNotBlank()) {
-                    Text(goal.description, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    TrajectoryBadge(goal.trajectoryStatus)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(goalTypeIcon(goal.goalType), contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(11.dp))
-                        Text(goal.goalType.displayName, fontSize = 11.sp, color = TextSecondaryColor)
-                    }
-                }
-            }
-            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
-        }
-
-        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-            if (goal.status == GoalStatus.Active && onPause != null) {
-                DropdownMenuItem(
-                    text = { Text("Pause goal") },
-                    leadingIcon = { Icon(Icons.Default.Pause, contentDescription = null) },
-                    onClick = { menuOpen = false; onPause() }
-                )
-            }
-            if (goal.status != GoalStatus.Active && onResume != null) {
-                DropdownMenuItem(
-                    text = { Text(if (goal.status == GoalStatus.Archived) "Restore goal" else "Resume goal") },
-                    leadingIcon = { Icon(if (goal.status == GoalStatus.Archived) Icons.Default.Unarchive else Icons.Default.PlayArrow, contentDescription = null) },
-                    onClick = { menuOpen = false; onResume() }
-                )
-            }
-            if (goal.status != GoalStatus.Archived && onArchive != null) {
-                DropdownMenuItem(
-                    text = { Text("Archive goal") },
-                    leadingIcon = { Icon(Icons.Default.Archive, contentDescription = null) },
-                    onClick = { menuOpen = false; onArchive() }
-                )
-            }
-        }
-    }
-}
-
-/** iOS empty state: target glyph, "No active goals", helper copy, "Set Your First Goal" pill. */
-@Composable
-private fun EmptyGoalsState(onCreateGoal: () -> Unit) {
+fun GoalSummaryCard(goal: Goal, progress: GoalProgress?, modifier: Modifier = Modifier, showsAction: Boolean = false, onClick: () -> Unit) {
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 20.dp, vertical = 60.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(goalSurface()).clickable(onClick = onClick).padding(14.dp)
     ) {
-        Icon(Icons.Default.Flag, contentDescription = null, tint = MediumGray, modifier = Modifier.size(48.dp))
-        Text("No active goals", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-        Text(
-            "Set a goal to get started with personalized habits",
-            fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center
-        )
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(25.dp))
-                .background(FLPrimary)
-                .clickable(onClick = onCreateGoal)
-                .padding(horizontal = 32.dp, vertical = 12.dp)
-        ) {
-            Text("Set Your First Goal", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(contentAlignment = Alignment.Center, modifier = Modifier.size(34.dp).clip(RoundedCornerShape(9.dp)).background(FLPrimary.copy(alpha = 0.12f))) {
+                Icon(goal.subtype?.let { goalSubtypeIcon(it) } ?: goalTypeIcon(goal.goalType), contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))
+            }
+            Column(Modifier.weight(1f)) {
+                Text(goal.title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                val phase = goal.phase(progress)
+                val text = if (phase == GoalPhase.IN_PROGRESS) goal.deadlineText() ?: phase.label else phase.label
+                Text(text, fontSize = 12.sp, color = phaseColor(phase))
+            }
+            if (goal.isPinned) Icon(Icons.Filled.PushPin, contentDescription = "Pinned", tint = FLPrimary, modifier = Modifier.size(14.dp))
+            Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = goalSecondaryText(), modifier = Modifier.size(16.dp))
+        }
+        if (progress != null) {
+            Text(progress.summary, fontSize = 15.sp, fontWeight = FontWeight.Medium)
+            progress.fraction?.let { GoalProgressBar(it) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                progress.detail?.let { Text(it, fontSize = 13.sp, color = goalSecondaryText(), modifier = Modifier.weight(1f)) } ?: Spacer(Modifier.weight(1f))
+                val action = progress.action
+                if (showsAction && !progress.hasData && action != null && goal.status == GoalStatus.Active) {
+                    Icon(goalActionIcon(action), contentDescription = null, tint = FLPrimary, modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(if (action is GoalAction.LogAmount) "Log Activity" else action.title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
+                }
+            }
+        } else {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(20.dp)) }
         }
     }
 }

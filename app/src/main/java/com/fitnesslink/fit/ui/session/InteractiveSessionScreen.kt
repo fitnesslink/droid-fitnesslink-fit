@@ -114,9 +114,6 @@ fun InteractiveSessionScreen(
 
     fun applyEdit(action: SessionEditAction, movement: MovementLibraryItem?, scope: SessionWorkoutEditor.Scope) {
         when (action) {
-            SessionEditAction.AddAfterCurrent -> movement?.let { viewModel.addExercise(it, InteractiveSessionViewModel.AddPlacement.AfterCurrent, scope) }
-            SessionEditAction.AddAtEnd -> movement?.let { viewModel.addExercise(it, InteractiveSessionViewModel.AddPlacement.End, scope) }
-            is SessionEditAction.AddToPhase -> movement?.let { viewModel.addExercise(it, InteractiveSessionViewModel.AddPlacement.Phase(action.phaseId), scope) }
             SessionEditAction.Swap -> movement?.let { viewModel.swapCurrentMovement(it, scope) }
             SessionEditAction.Remove -> viewModel.removeCurrentExercise(scope)
             SessionEditAction.EditSets, SessionEditAction.SaveMyVersion -> Unit
@@ -180,16 +177,22 @@ fun InteractiveSessionScreen(
             onSelect = { movement -> editAction = null; movementPicked(movement, action) },
             onCreateNew = { editAction = null; createAction = action },
             onDismiss = { editAction = null },
-            pendingGroupType = null, pendingCount = 0
+            pendingGroupType = null, pendingCount = 0,
+            swapMode = action == SessionEditAction.Swap
         )
     }
     createAction?.let { action ->
         CreateExerciseSheet(onCreated = { movement -> createAction = null; movementPicked(movement, action) }, onDismiss = { createAction = null })
     }
     if (showSetsSheet) {
-        SessionSetsSheet(maxOf(viewModel.workoutTask.sets, 1), viewModel.workoutTask.reps, viewModel.workoutTask.name,
-            onSave = { s, r -> viewModel.updateCurrentSets(s, r, if (viewModel.isWorkoutEditable) SessionWorkoutEditor.Scope.PERMANENT else SessionWorkoutEditor.Scope.SESSION_ONLY) },
-            onDismiss = { showSetsSheet = false })
+        // Sets × reps, or sets × time for a timed exercise (FTNSSLNK-512) — the new duration drives the set timer.
+        val scope = if (viewModel.isWorkoutEditable) SessionWorkoutEditor.Scope.PERMANENT else SessionWorkoutEditor.Scope.SESSION_ONLY
+        SessionSetsEditorSheet(
+            task = viewModel.workoutTask,
+            onSaveReps = { s, r -> viewModel.updateCurrentSets(s, r, scope) },
+            onSaveDuration = { s, seconds, weight -> viewModel.updateCurrentDuration(s, seconds, weight, scope) },
+            onDismiss = { showSetsSheet = false }
+        )
     }
     val scopeAction = pendingScopeAction
     if (scopeAction != null) {
@@ -348,8 +351,11 @@ private fun SessionInfoStrip(viewModel: InteractiveSessionViewModel, onInfo: () 
             else viewModel.setHeadlineText?.let { Text(it, color = White, fontSize = 22.sp, fontWeight = FontWeight.Black, maxLines = 1) }
             Spacer(Modifier.weight(1f))
             if (task.isMovement) SetTimerLabel(viewModel.setTimerText, viewModel.setTimerCountsDown)
-            SessionEditMenu(viewModel.phaseOptions, task.isMovement, viewModel.canSwapCurrentMovement, viewModel.canEditCurrentSets, viewModel.canRemoveCurrentExercise,
-                viewModel.isWorkoutEditable, viewModel.hasSessionOnlyEdits, onEdit)
+            // Hidden when the menu would open empty (FTNSSLNK-515).
+            if (viewModel.hasEditMenuItems) {
+                SessionEditMenu(task.isMovement, viewModel.canSwapCurrentMovement, viewModel.canEditCurrentSets, viewModel.editCurrentSetsTitle,
+                    viewModel.canRemoveCurrentExercise, viewModel.isWorkoutEditable, viewModel.hasSessionOnlyEdits, onEdit)
+            }
         }
         if (task.isMovement) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {

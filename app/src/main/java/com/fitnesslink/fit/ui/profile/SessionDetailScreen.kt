@@ -71,6 +71,7 @@ import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.persistence.fullSessionRow
 import com.fitnesslink.fit.persistence.sessionExerciseNotes
+import com.fitnesslink.fit.persistence.sessionWorkingVolume
 import com.fitnesslink.fit.persistence.sessionQuickStartMeta
 import com.fitnesslink.fit.session.SessionExerciseNote
 import com.fitnesslink.fit.persistence.sessionSetDistances
@@ -109,6 +110,8 @@ fun SessionDetailScreen(
 ) {
     var session by remember { mutableStateOf<SessionRow?>(null) }
     var exercises by remember { mutableStateOf<List<SessionExerciseRow>>(emptyList()) }
+    // Working-set volume (FTNSSLNK-497): warm-up sets and Warm-Up / Cool Down tasks excluded.
+    var workingVolume by remember { mutableStateOf(0.0) }
     var setDurations by remember { mutableStateOf<Map<String, Int>>(emptyMap()) }
     var setDistances by remember { mutableStateOf<Map<String, DistanceValue>>(emptyMap()) }
     var showRpeEditor by remember { mutableStateOf(false) }
@@ -122,6 +125,7 @@ fun SessionDetailScreen(
     fun reload() {
         session = DatabaseManager.fullSessionRow(sessionId)
         exercises = DatabaseManager.sessionExercises(sessionId)
+        workingVolume = DatabaseManager.sessionWorkingVolume(sessionId)
         setDurations = DatabaseManager.sessionSetDurations(sessionId)
         setDistances = DatabaseManager.sessionSetDistances(sessionId)
         trainingFocus = DatabaseManager.sessionQuickStartMeta(sessionId)?.trainingFocus
@@ -193,6 +197,7 @@ fun SessionDetailScreen(
             StatsGrid(
                 session = s,
                 exercises = exercises,
+                totalVolume = workingVolume,
                 onEditRpe = { showRpeEditor = true }
             )
 
@@ -256,8 +261,7 @@ fun SessionDetailScreen(
 // MARK: - Stats grid
 
 @Composable
-private fun StatsGrid(session: SessionRow, exercises: List<SessionExerciseRow>, onEditRpe: () -> Unit) {
-    val totalVolume = exercises.sumOf { it.reps.toDouble() * it.weightLifted }
+private fun StatsGrid(session: SessionRow, exercises: List<SessionExerciseRow>, totalVolume: Double, onEditRpe: () -> Unit) {
     // FTNSSLNK-319 — rows written before the totals writer hold 0s; derive from the sets.
     val totalSets = if (session.totalSets > 0) session.totalSets else exercises.size
     val totalReps = if (session.totalReps > 0) session.totalReps else exercises.sumOf { it.reps }

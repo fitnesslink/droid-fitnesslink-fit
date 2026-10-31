@@ -115,7 +115,6 @@ com/fitnesslink/fit/ui/profile/NutritionMetricDetailScreen.kt
 com/fitnesslink/fit/ui/profile/NutritionReportScreen.kt
 com/fitnesslink/fit/ui/profile/PersonalInfoScreen.kt
 com/fitnesslink/fit/ui/profile/PreferencesScreen.kt
-com/fitnesslink/fit/ui/profile/ProfileScreen.kt
 com/fitnesslink/fit/ui/profile/ProfileStubScreen.kt
 com/fitnesslink/fit/ui/profile/ReportDetailScreen.kt
 com/fitnesslink/fit/ui/profile/SessionDetailScreen.kt

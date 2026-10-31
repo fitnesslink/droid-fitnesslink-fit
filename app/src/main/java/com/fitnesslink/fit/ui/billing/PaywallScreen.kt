@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -26,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Restaurant
@@ -61,6 +63,8 @@ import com.fitnesslink.fit.billing.BillingPresentation
 import com.fitnesslink.fit.billing.EntitlementState
 import com.fitnesslink.fit.billing.EntitlementStore
 import com.fitnesslink.fit.billing.PlayBillingManager
+import com.fitnesslink.fit.billing.PlayBillingRules
+import com.fitnesslink.fit.billing.RestoreResult
 import com.fitnesslink.fit.network.dto.BillingTerm
 import com.fitnesslink.fit.ui.components.ActionButtonView
 import com.fitnesslink.fit.ui.theme.FLPrimary
@@ -69,8 +73,8 @@ import kotlinx.coroutines.launch
 
 /**
  * FTNSSLNK-283 port of iOS `PaywallView`. The gate: nothing in FitnessLink
- * is free, so this is not dismissible — the only ways past are a completed
- * purchase, a successful restore, or signing out.
+ * is free, so the only ways past are a completed purchase or a successful
+ * restore. The close button and Sign Out both log out back to Welcome.
  *
  * Play's subscription policy requires everything shown here: price and
  * duration, the trial terms when one is offered, a Restore control, and
@@ -89,11 +93,14 @@ fun PaywallScreen(
     val purchaseInFlight by PlayBillingManager.purchaseInFlight.collectAsState()
     val purchaseStalled by PlayBillingManager.purchaseStalled.collectAsState()
     val collided by PlayBillingManager.collidedPurchaseTokens.collectAsState()
-    val verificationPending by PlayBillingManager.verificationPendingTokens.collectAsState()
+    val pendingPayments by PlayBillingManager.pendingPaymentTokens.collectAsState()
+    val unconfirmed by PlayBillingManager.unconfirmedPurchaseTokens.collectAsState()
     val entitlementState by EntitlementStore.state.collectAsState()
 
     var selectedTerm by remember { mutableStateOf(BillingTerm.MONTHLY) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    /** Non-error outcomes (restore results, "already Premium") — shown in a calmer colour. */
+    var infoMessage by remember { mutableStateOf<String?>(null) }
     var isRestoring by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -145,6 +152,14 @@ fun PaywallScreen(
                 color = White.copy(alpha = 0.75f),
                 textAlign = TextAlign.Center
             )
+            // iOS 21ce001 (App Review 5.6): the requirement must be stated, not implied.
+            Text(
+                "A subscription is required to use FitnessLink.",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = White,
+                textAlign = TextAlign.Center
+            )
 
             Spacer(modifier = Modifier.height(28.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
@@ -186,6 +201,9 @@ fun PaywallScreen(
                         PlanCard(
                             title = offer.title,
                             priceLine = BillingPresentation.priceLine(offer.formattedPrice, offer.billingPeriod),
+                            trialLine = offer.trialPeriod?.let { p ->
+                                BillingPresentation.trialLengthAdjective(p)?.let { "$it free trial, then" } ?: "Free trial, then"
+                            },
                             isSelected = selected?.term == offer.term,
                             savingsBadge = savings,
                             onClick = { selectedTerm = offer.term }
@@ -213,8 +231,11 @@ fun PaywallScreen(
             if (collided.isNotEmpty() && errorMessage == null) {
                 Notice(BillingException.AlreadyLinkedToAnotherAccount.message ?: "", Color(0xFFFFB74D))
             }
-            if (verificationPending.isNotEmpty() && errorMessage == null) {
-                Notice(BillingException.VerificationUnavailable.message ?: "", Color(0xFFFFB74D))
+            if (pendingPayments.isNotEmpty() && errorMessage == null) {
+                Notice(BillingException.PaymentPending.message ?: "", White.copy(alpha = 0.85f))
+            }
+            if (unconfirmed.isNotEmpty() && errorMessage == null) {
+                Notice(BillingException.VerificationDelayed(duringRestore = false).message ?: "", Color(0xFFFFB74D))
             }
             if (purchaseStalled && errorMessage == null) {
                 Notice(
@@ -223,9 +244,10 @@ fun PaywallScreen(
                 )
             }
             errorMessage?.let { Notice(it, Color(0xFFEF5350)) }
+            infoMessage?.let { if (errorMessage == null) Notice(it, White.copy(alpha = 0.85f)) }
 
             ActionButtonView(
-                text = if (selected?.hasTrial == true) BillingPresentation.trialButtonText(selected.trialPeriod) else "Subscribe",
+                text = BillingPresentation.ctaText(selected?.trialPeriod),
                 isEnabled = selected != null,
                 isLoading = purchaseInFlight,
                 onClick = {
@@ -235,16 +257,21 @@ fun PaywallScreen(
                         return@ActionButtonView
                     }
                     errorMessage = null
+                    infoMessage = null
                     PlayBillingManager.clearPurchaseStalled()
                     scope.launch {
                         try {
                             val entitlement = PlayBillingManager.purchase(activity, offer)
                             if (entitlement?.isEntitled == true) onEntitled()
-                            // null = cancelled / pending / stalled — stay put, say nothing.
-                        } catch (e: BillingException.VerificationUnavailable) {
-                            // Shown by the verificationPending notice.
+                            // null = cancelled (silent) / pending / stalled — the notices above cover the last two.
+                        } catch (e: BillingException.VerificationDelayed) {
+                            // Shown by the unconfirmed-purchase notice; the drain keeps retrying.
+                        } catch (e: BillingException.AlreadyLinkedToAnotherAccount) {
+                            // Shown by the collision notice.
+                        } catch (e: BillingException) {
+                            errorMessage = e.message
                         } catch (e: Exception) {
-                            errorMessage = e.message ?: "Something went wrong. Please try again."
+                            errorMessage = PlayBillingRules.GENERIC_STORE_MESSAGE
                         }
                     }
                 }
@@ -271,14 +298,26 @@ fun PaywallScreen(
                     color = White,
                     modifier = Modifier.clickable {
                         errorMessage = null
+                        infoMessage = null
                         isRestoring = true
                         scope.launch {
                             try {
-                                val entitlement = PlayBillingManager.restorePurchases()
-                                if (entitlement.isEntitled) onEntitled()
-                                else errorMessage = BillingException.NoActiveSubscription.message
+                                val result = PlayBillingManager.restorePurchases()
+                                val entitled = when (result) {
+                                    is RestoreResult.Restored -> result.entitlement.isEntitled
+                                    is RestoreResult.AlreadyPremium -> true
+                                    else -> false
+                                }
+                                infoMessage = if (result is RestoreResult.Restored && !entitled) {
+                                    BillingException.NoActiveSubscription.message
+                                } else {
+                                    PlayBillingRules.restoreMessage(result)
+                                }
+                                if (entitled) onEntitled()
+                            } catch (e: BillingException) {
+                                errorMessage = e.message
                             } catch (e: Exception) {
-                                errorMessage = e.message ?: "Restore failed. Please try again."
+                                errorMessage = "Restore failed. Please try again."
                             } finally {
                                 isRestoring = false
                             }
@@ -301,6 +340,27 @@ fun PaywallScreen(
                 modifier = Modifier.clickable(onClick = onLogout).padding(8.dp)
             )
         }
+
+        // iOS 21ce001 (App Review 5.6): a visible way off the purchase page.
+        // Closing signs out back to Welcome, since nothing past here is free.
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(top = 12.dp, end = 16.dp)
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(White.copy(alpha = 0.18f))
+                .clickable(onClick = onLogout),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = "Close",
+                tint = White,
+                modifier = Modifier.size(18.dp)
+            )
+        }
     }
 }
 
@@ -313,7 +373,7 @@ private fun BenefitRow(icon: androidx.compose.ui.graphics.vector.ImageVector, te
 }
 
 @Composable
-private fun PlanCard(title: String, priceLine: String, isSelected: Boolean, savingsBadge: String?, onClick: () -> Unit) {
+private fun PlanCard(title: String, priceLine: String, trialLine: String?, isSelected: Boolean, savingsBadge: String?, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -334,6 +394,7 @@ private fun PlanCard(title: String, priceLine: String, isSelected: Boolean, savi
         Column(modifier = Modifier.weight(1f)) {
             Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
             // Price and duration straight from Play — backend display prices are reporting-only.
+            if (trialLine != null) Text(trialLine, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
             Text(priceLine, fontSize = 13.sp, color = White.copy(alpha = 0.7f))
         }
         if (savingsBadge != null) {

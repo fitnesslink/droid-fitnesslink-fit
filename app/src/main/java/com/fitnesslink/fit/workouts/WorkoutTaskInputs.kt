@@ -131,7 +131,9 @@ object WorkoutTaskInputs {
         setConfigs = if (task.sameAcrossSets) null else task.setConfigs.map {
             WorkoutTaskSetConfigInput(
                 setNumber = it.setNumber,
-                reps = it.reps,
+                // FTNSSLNK-511: time-based sets carry Time + Weight only — no
+                // rep target goes on the wire (mirrors the task-level `reps`).
+                reps = if (task.usesDuration) null else it.reps,
                 weightKg = it.weightKg?.toInt(),
                 durationSeconds = it.durationSeconds,
                 isDropSet = it.isDropSet,

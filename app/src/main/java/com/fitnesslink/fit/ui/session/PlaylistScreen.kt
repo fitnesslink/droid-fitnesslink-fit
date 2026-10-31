@@ -37,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -123,6 +124,9 @@ fun PlaylistScreen(
             highlightInteractive = false
         }
     }
+    // Cut the first-session tip if the user leaves mid-sentence (iOS 23ef55d onDisappear).
+    val hintPlaying by rememberUpdatedState(highlightInteractive)
+    DisposableEffect(Unit) { onDispose { if (hintPlaying) AudioCueService.silenceVoice() } }
     // Coming back from Interactive: re-read the cache (edits made there) and record the playlist mode.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -186,12 +190,18 @@ fun PlaylistScreen(
         ExerciseBrowserSheet(
             onSelect = { movement -> pickerRequest = null; movementPicked(movement, request) },
             onCreateNew = { pickerRequest = null; createRequest = request },
-            onDismiss = { pickerRequest = null }, pendingGroupType = null, pendingCount = 0
+            onDismiss = { pickerRequest = null }, pendingGroupType = null, pendingCount = 0,
+            swapMode = request is PlaylistEditRequest.Swap
         )
     }
     createRequest?.let { request -> CreateExerciseSheet(onCreated = { movement -> createRequest = null; movementPicked(movement, request) }, onDismiss = { createRequest = null }) }
     setsTarget?.let { task ->
-        SessionSetsSheet(maxOf(task.sets, 1), task.reps, task.name, onSave = { s, r -> viewModel.updateSets(task.id, s, r) }, onDismiss = { setsTarget = null })
+        SessionSetsEditorSheet(
+            task = task,
+            onSaveReps = { s, r -> viewModel.updateSets(task.id, s, r) },
+            onSaveDuration = { s, seconds, weight -> viewModel.updateDuration(task.id, s, seconds, weight) },
+            onDismiss = { setsTarget = null }
+        )
     }
     removeTarget?.let { task ->
         ConfirmDialog("Remove this exercise?", if (viewModel.isWorkoutEditable) "${task.name} will be removed from this workout." else "${task.name} will be skipped for this session.", "Remove", destructive = true,

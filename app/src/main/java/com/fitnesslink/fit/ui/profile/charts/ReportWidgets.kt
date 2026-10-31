@@ -112,7 +112,7 @@ fun <T> ReportSegmentedPicker(
 
 @Composable
 fun ReportTimeRangePicker(selected: ReportTimeRange, onSelect: (ReportTimeRange) -> Unit, modifier: Modifier = Modifier) {
-    ReportSegmentedPicker(ReportTimeRange.entries, selected, { it.label }, onSelect, modifier)
+    ReportSegmentedPicker(ReportTimeRange.entries, selected, { it.shortLabel }, onSelect, modifier)
 }
 
 /** Icon + value + label tile (iOS `statCard`). */

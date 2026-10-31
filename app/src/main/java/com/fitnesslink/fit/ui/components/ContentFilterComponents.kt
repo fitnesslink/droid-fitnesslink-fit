@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -274,6 +275,34 @@ private fun MenuEntry(label: String, checked: Boolean, onClick: () -> Unit) {
         },
         onClick = onClick
     )
+}
+
+/**
+ * "More filters" pill that opens `MoreFiltersSheet` (iOS `MoreFiltersButton`,
+ * FTNSSLNK-503). Count badge + tinted fill while any drawer filter is active.
+ * Shared by the Movements / Workouts lists and the exercise browser.
+ */
+@Composable
+fun MoreFiltersButton(activeCount: Int, onClick: () -> Unit) {
+    val active = activeCount > 0
+    Row(
+        modifier = Modifier
+            .clip(RoundedCornerShape(14.dp))
+            .background(if (active) FLPrimary.copy(alpha = 0.15f) else BackgroundColor)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 10.dp, vertical = 6.dp)
+            .semantics { contentDescription = if (active) "More filters, $activeCount active" else "More filters" },
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        Icon(Icons.Default.Tune, contentDescription = null, tint = if (active) FLPrimary else TextPrimaryColor, modifier = Modifier.size(12.dp))
+        Text("More filters", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (active) FLPrimary else TextPrimaryColor)
+        if (active) {
+            Box(modifier = Modifier.clip(androidx.compose.foundation.shape.CircleShape).background(FLPrimary).padding(horizontal = 6.dp, vertical = 1.dp)) {
+                Text("$activeCount", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = White)
+            }
+        }
+    }
 }
 
 /** Small "Clear filters" affordance (iOS `ClearFiltersButton`); renders nothing unless [visible]. */

@@ -97,7 +97,18 @@ fun WelcomeScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // iOS 21ce001: say up front that the app needs a subscription.
+            Text(
+                text = "A FitnessLink subscription is required to use the app. New members can start with a free trial.",
+                fontSize = 12.sp,
+                color = White.copy(alpha = 0.7f),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
 
             Row(
                 modifier = Modifier.align(Alignment.CenterHorizontally)

@@ -6,7 +6,7 @@ package com.fitnesslink.fit.ui.navigation
  *
  * Server deep links are BARE route strings (no scheme):
  *   Calendar producer: "workoutDetail/{id}" or "calendar" (→ Calendar tab)
- *   Goals producer:    "goals"
+ *   Goals producer:    "goals" or "goals/{id}" (goal detail)
  *   Content producer:  "programDetail/{id}", "movementDetail/{id}", "workoutDetail/{id}"
  *   System broadcasts: deepLink is null (tapping just marks the row read).
  * Legacy user-to-user share rows still exist in prod with a scheme:
@@ -47,7 +47,10 @@ object DeepLinkResolver {
             "personalInfo" -> AppRoute.PersonalInfo.route
             "workoutReport" -> AppRoute.WorkoutReport.route
             "nutritionReport" -> AppRoute.NutritionReport.route
-            "goals" -> AppRoute.Goals.route
+            // Goals PRD: "goals/{id}" (reminders, goal pushes) opens the goal.
+            "goals" ->
+                if (parts.size > 1 && parts[1].isNotEmpty()) AppRoute.GoalDetail.createRoute(parts[1])
+                else AppRoute.Goals.route
             "programs" -> AppRoute.Programs.route
             "workouts" -> AppRoute.Workouts.route
             // Calendar is a tab, not a pushable screen: MainTabNavigation

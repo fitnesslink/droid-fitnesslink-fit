@@ -221,9 +221,43 @@ class InteractiveSessionViewModel : ViewModel() {
     val currentSetState: SetState get() = session.setState(workoutTask.id, currentIteration)
     val currentSetIsLogged: Boolean get() = actualSetLogs[workoutTask.id]?.get(currentIteration) != null
     val hasSessionOnlyEdits: Boolean get() = !session.overrides.isEmpty
-    val canSwapCurrentMovement: Boolean get() = SessionWorkoutEditor.canSwap(workoutTask) && intervalRunner == null
+    /**
+     * Swap is offered for interval movements too (FTNSSLNK-515): only the movement fields change,
+     * so the block's work / rest / rounds structure is kept, and a live runner is rebuilt in place.
+     */
+    val canSwapCurrentMovement: Boolean get() = SessionWorkoutEditor.canSwap(swapTargetTask)
     val canRemoveCurrentExercise: Boolean get() = SessionWorkoutEditor.canRemove(workoutTask)
+    /** Rep- and time-based loose movements alike (FTNSSLNK-512); [currentUsesDuration] picks the sheet. */
     val canEditCurrentSets: Boolean get() = SessionWorkoutEditor.canEditSets(workoutTask)
+    /** True when the current exercise is time-based — the menu opens the duration editor. */
+    val currentUsesDuration: Boolean get() = workoutTask.usesDuration
+    /** "Edit Sets & Time" / "Edit Sets & Reps" for the current exercise. */
+    val editCurrentSetsTitle: String get() = SessionWorkoutEditor.editSetsTitle(workoutTask)
+
+    /**
+     * The movement a swap replaces: inside a live interval block, the member on screen (the runner
+     * rotates through the group while the cursor stays on the lead); otherwise the current task.
+     */
+    val swapTargetTask: WorkoutTask
+        get() {
+            val runner = intervalRunner
+            if (runner != null && runner.phase != IntervalPhase.DONE) {
+                val member = runner.currentExercise
+                if (member != null) workoutTasks.firstOrNull { it.id == member.id }?.let { return it }
+            }
+            return workoutTask
+        }
+
+    /**
+     * Whether the info strip's ⋯ menu has anything to show — it is hidden otherwise, so it never
+     * opens empty (FTNSSLNK-515).
+     */
+    val hasEditMenuItems: Boolean
+        get() {
+            if (!isWorkoutEditable) return true
+            if (!workoutTask.isMovement) return false
+            return canSwapCurrentMovement || canEditCurrentSets || canRemoveCurrentExercise
+        }
 
     val summaryStats: WorkoutSummaryStats
         get() = WorkoutSummaryStats.build(
@@ -487,14 +521,31 @@ class InteractiveSessionViewModel : ViewModel() {
             return
         }
         val runner = intervalRunner
-        if (runner != null && runner.phase != IntervalPhase.DONE) { runner.skip(); bump(); return }
+        if (runner != null && runner.phase != IntervalPhase.DONE) { clearPauseForAdvance(); runner.skip(); bump(); return }
         apply(engine.next(cursor), completing = true)
+    }
+
+    /**
+     * FTNSSLNK-500: a pause taken on the preparation / rest screen must not carry into what comes
+     * next. Start Now, NEXT and a skipped rest are the user moving on — drop the paused state so the
+     * exercise clocks and the demo video run. The timers that matter re-arm on their own
+     * (`syncSetTimer` / `startRestCountdown` / `makeRunner` all honour [isVideoPaused]); a live
+     * interval runner resumes here. Play/Pause itself ([toggleVideoState]) still resumes only the
+     * currently active timer.
+     */
+    private fun clearPauseForAdvance() {
+        if (!isVideoPaused) return
+        isVideoPaused = false
+        // A paused rest kept its remainder for a resume that will never come — the rest is being left.
+        restPausedRemainingMs = null
+        intervalRunner?.resume()
     }
 
     fun startWork() {
         if (!isPreparing) return
         cancelPrepCueGate()
         removeRestTimer()
+        clearPauseForAdvance()
         isPreparing = false
         pendingPhaseChange = null
         isRest = workoutTask.isRest
@@ -510,6 +561,8 @@ class InteractiveSessionViewModel : ViewModel() {
     }
 
     private fun apply(transition: Transition, completing: Boolean) {
+        // Every engine advance (NEXT, a skipped rest, Skip) leaves the paused prep / rest behind (FTNSSLNK-500).
+        clearPauseForAdvance()
         if (completing) markCurrentSetCompleted()
         when (transition) {
             is Transition.NextSet -> {
@@ -890,9 +943,19 @@ class InteractiveSessionViewModel : ViewModel() {
 
     fun swapCurrentMovement(movement: MovementLibraryItem, scope: SessionWorkoutEditor.Scope) {
         if (!canSwapCurrentMovement) return
-        val id = workoutTask.id
-        SessionWorkoutEditor.swap(id, movement, workoutId, scope)
-        reloadFromCache(id)
+        val anchorId = workoutTask.id
+        val targetId = swapTargetTask.id
+        // A live interval block keeps its place: capture it before the reload, then rebuild the
+        // runner on the swapped row (the reload keeps the old runner, which holds the old movement).
+        val liveBlock = intervalRunner?.takeIf { it.phase != IntervalPhase.DONE }?.snapshot()
+        SessionWorkoutEditor.swap(targetId, movement, workoutId, scope)
+        reloadFromCache(anchorId)
+        val row = currentIntervalTaskRow()
+        if (liveBlock != null && intervalRunner != null && row != null && row.task?.groupId == liveBlock.groupId) {
+            session.intervalSnapshot = liveBlock
+            makeRunner(row)
+            bump()
+        }
     }
 
     fun removeCurrentExercise(scope: SessionWorkoutEditor.Scope) {
@@ -906,6 +969,17 @@ class InteractiveSessionViewModel : ViewModel() {
         if (!canEditCurrentSets) return
         val id = workoutTask.id
         SessionWorkoutEditor.updateSets(id, sets, reps, workoutTask.weightKg, workoutId, scope)
+        reloadFromCache(id)
+    }
+
+    /**
+     * Sets × time for a timed exercise (FTNSSLNK-512). The set timer's target is derived from the
+     * task, so the reload re-targets the running set; logged sets stay logged.
+     */
+    fun updateCurrentDuration(sets: Int, durationSeconds: Int, weightLbs: Int?, scope: SessionWorkoutEditor.Scope) {
+        if (!canEditCurrentSets) return
+        val id = workoutTask.id
+        SessionWorkoutEditor.updateDuration(id, sets, durationSeconds, weightLbs, workoutId, scope)
         reloadFromCache(id)
     }
 

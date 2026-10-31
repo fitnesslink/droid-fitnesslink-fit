@@ -64,6 +64,80 @@ object SummaryRPE {
     }
 }
 
+// MARK: - Working-set volume (FTNSSLNK-497)
+
+/**
+ * The single definition of Total Volume used by the Workout Summary, the stored session totals,
+ * Session Detail and the Reports tab: Σ(weight × reps) over completed **working** sets. A set is not a
+ * working set when its planned config is flagged `isWarmup`, or when its task sits in the Warm-Up or
+ * Cool Down phase (prod phase names "Warmup" / "Cool Down", normalised by
+ * `SessionTransitionEngine.phaseDisplayName`). Port of iOS `WorkingSetVolume`.
+ */
+object WorkingSetVolume {
+    /** True for the Warm-Up / Cool Down phases, whatever the spelling. */
+    fun isExcludedPhase(phaseName: String): Boolean =
+        when (SessionTransitionEngine.phaseDisplayName(phaseName)) {
+            "Warm-Up", "Cool Down" -> true
+            else -> false
+        }
+
+    /** Whether [setNumber] of [task] counts toward volume. Expects the task's `phaseName` stamped. */
+    fun isWorkingSet(task: WorkoutTask, setNumber: Int): Boolean {
+        if (isExcludedPhase(task.phaseName)) return false
+        if (task.setConfigs.firstOrNull { it.setNumber == setNumber }?.isWarmup == true) return false
+        return true
+    }
+
+    /** One set's contribution: weight × reps when both are positive. */
+    fun setVolume(weightLbs: Double, reps: Int): Double = if (weightLbs > 0 && reps > 0) weightLbs * reps else 0.0
+
+    /**
+     * Lookup for persisted history rows, which carry only a task id / name and set number (no phase
+     * column): built from the cached workout's tasks.
+     */
+    class Exclusions(tasks: List<WorkoutTask>) {
+        private val excludedTasks = mutableSetOf<String>()
+        private val warmupSets = mutableSetOf<String>()
+        /** name → (excluded phase for every task of that name, warm-up set numbers shared by every task of that name). */
+        private val byName = mutableMapOf<String, Pair<Boolean, Set<Int>>>()
+
+        init {
+            for (task in tasks) {
+                if (!task.isMovement) continue
+                val id = task.id.lowercase(Locale.US)
+                val excludedPhase = isExcludedPhase(task.phaseName)
+                if (excludedPhase) excludedTasks.add(id)
+                val warmups = task.setConfigs.filter { it.isWarmup }.map { it.setNumber }.toSet()
+                for (n in warmups) warmupSets.add("$id|$n")
+                val key = task.name.lowercase(Locale.US)
+                val prior = byName[key]
+                byName[key] = if (prior != null) (prior.first && excludedPhase) to (prior.second intersect warmups)
+                    else excludedPhase to warmups
+            }
+        }
+
+        val isEmpty: Boolean get() = excludedTasks.isEmpty() && warmupSets.isEmpty()
+
+        fun excludes(taskId: String, setNumber: Int): Boolean {
+            val id = taskId.lowercase(Locale.US)
+            return excludedTasks.contains(id) || warmupSets.contains("$id|$setNumber")
+        }
+
+        /**
+         * Name-based fallback for rows that carry no task id. When the same movement appears in several
+         * phases it is excluded only if every occurrence would be.
+         */
+        fun excludesByName(taskName: String, setNumber: Int): Boolean {
+            val entry = byName[taskName.lowercase(Locale.US)] ?: return false
+            return entry.first || entry.second.contains(setNumber)
+        }
+
+        companion object {
+            val none = Exclusions(emptyList())
+        }
+    }
+}
+
 // MARK: - Actual stats (FTNSSLNK-412)
 
 /** An exercise the user did not fully complete — skipped outright or stopped short of its required sets. */
@@ -199,8 +273,11 @@ data class WorkoutSummaryStats(
                 else missed.add(MissedExercise(task.id, task.name, done, required))
             }
 
-            val weighted = performed.filter { it.weightLbs > 0 && it.reps > 0 }
-            val volume: Double? = if (weighted.isEmpty()) null else weighted.sumOf { it.weightLbs * it.reps }
+            // FTNSSLNK-497: working sets only — warm-up sets and the Warm-Up / Cool Down phases never count.
+            val weighted = performed.filter {
+                it.weightLbs > 0 && it.reps > 0 && WorkingSetVolume.isWorkingSet(it.task, it.setNumber)
+            }
+            val volume: Double? = if (weighted.isEmpty()) null else weighted.sumOf { WorkingSetVolume.setVolume(it.weightLbs, it.reps) }
 
             return WorkoutSummaryStats(
                 durationSeconds = maxOf(0, durationSeconds),
@@ -230,8 +307,13 @@ data class WorkoutSummaryStats(
             if (tasks != null && progress != null && tasks.isNotEmpty()) {
                 return build(tasks, logs, progress, SessionProgress.requiredIterations(tasks), row.durationSeconds, distance)
             }
-            val weighted = exercises.filter { it.weightLifted > 0 && it.reps > 0 }
-            val volume: Double? = if (weighted.isEmpty()) null else weighted.sumOf { it.weightLifted * it.reps }
+            // FTNSSLNK-497: history rows carry no phase, so match them to the cached workout's tasks
+            // (when still cached) by name.
+            val exclusions = WorkingSetVolume.Exclusions(tasks ?: emptyList())
+            val weighted = exercises.filter {
+                it.weightLifted > 0 && it.reps > 0 && !exclusions.excludesByName(it.taskName, it.setNumber)
+            }
+            val volume: Double? = if (weighted.isEmpty()) null else weighted.sumOf { WorkingSetVolume.setVolume(it.weightLifted, it.reps) }
             return WorkoutSummaryStats(
                 durationSeconds = row.durationSeconds,
                 exercisesCompleted = row.exerciseCount,

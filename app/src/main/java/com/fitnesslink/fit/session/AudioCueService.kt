@@ -1,6 +1,8 @@
 package com.fitnesslink.fit.session
 
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.media.ToneGenerator
 import android.os.Build
@@ -42,6 +44,19 @@ object AudioCueService {
     private var currentPhrase: VoicePhrase? = null
     private var speaking = false
 
+    /**
+     * FTNSSLNK-498: the user's music is ducked only for the length of each spoken announcement —
+     * a transient may-duck focus request taken when speech starts and abandoned the moment the
+     * queue drains (or is cut). Never held for a whole session, and the workout videos never request
+     * focus (`handleAudioFocus = false`), so music keeps its level between cues.
+     */
+    private var audioManager: AudioManager? = null
+    private var duckRequest: AudioFocusRequest? = null
+    private val speechAttributes: AudioAttributes = AudioAttributes.Builder()
+        .setUsage(AudioAttributes.USAGE_ASSISTANCE_NAVIGATION_GUIDANCE)
+        .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+        .build()
+
     /** Session-scoped master mute (top-bar speaker). Reset by the session VM when the session ends. */
     @Volatile var isMasterMuted = false
 
@@ -51,9 +66,11 @@ object AudioCueService {
         val app = context.applicationContext
         appContext = app
         SessionSettings.attach(app)
+        audioManager = app.getSystemService(Context.AUDIO_SERVICE) as? AudioManager
         tts = TextToSpeech(app) { status ->
             ttsReady = status == TextToSpeech.SUCCESS
             if (ttsReady) {
+                tts?.setAudioAttributes(speechAttributes)
                 tts?.language = Locale.getDefault()
                 CoachVoicePrefs.invalidate()
                 applyVoice()
@@ -72,8 +89,36 @@ object AudioCueService {
     private fun fire(utteranceId: String?) {
         if (utteranceId == null) return
         val handler = completions.remove(utteranceId)
-        if (completions.isEmpty()) { speaking = false; currentPhrase = null }
+        if (completions.isEmpty()) { speaking = false; currentPhrase = null; releaseDuck() }
         handler?.invoke()
+    }
+
+    /**
+     * Start ducking other audio for the announcement about to be spoken ("Duck Music" on). Called
+     * only when nothing is being spoken, so the focus state never flips mid-phrase.
+     */
+    private fun beginDuck() {
+        if (!SessionSettings.intervalDuckMusicEnabled || duckRequest != null) return
+        val am = audioManager ?: return
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        val request = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK)
+            .setAudioAttributes(speechAttributes)
+            .setOnAudioFocusChangeListener { }
+            .build()
+        try {
+            if (am.requestAudioFocus(request) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED) duckRequest = request
+        } catch (e: Exception) {
+            Log.w(TAG, "duck focus request failed: ${e.message}")
+        }
+    }
+
+    /** Give the focus back so the user's music returns to full level right after the phrase. */
+    private fun releaseDuck() {
+        val request = duckRequest ?: return
+        duckRequest = null
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try { audioManager?.abandonAudioFocusRequest(request) } catch (_: Exception) {}
+        }
     }
 
     val policy: SessionCuePolicy get() = SessionSettings.policy(isMasterMuted)
@@ -173,6 +218,7 @@ object AudioCueService {
             }
         }
         applyVoice()
+        if (!speaking) beginDuck()
         speaking = true
         for ((index, phrase) in phrases.withIndex()) {
             currentPhrase = phrase
@@ -192,6 +238,7 @@ object AudioCueService {
         speaking = false
         currentPhrase = null
         try { tts?.stop() } catch (_: Exception) {}
+        releaseDuck()
         pending.forEach { it() }
     }
 
@@ -204,8 +251,13 @@ object AudioCueService {
         if (!ttsReady) return
         stopSpeaking()
         applyVoice()
+        // Ducks like a real cue; the completion entry releases the focus when the sample ends.
+        beginDuck()
+        speaking = true
+        val id = UUID.randomUUID().toString()
+        completions[id] = {}
         engine.setSpeechRate(0.94f)
-        engine.speak("Up next, Barbell Squat, 3 sets of 10 reps. Get ready.", TextToSpeech.QUEUE_FLUSH, null, UUID.randomUUID().toString())
+        engine.speak("Up next, Barbell Squat, 3 sets of 10 reps. Get ready.", TextToSpeech.QUEUE_FLUSH, null, id)
     }
 
     private fun applyVoice() {

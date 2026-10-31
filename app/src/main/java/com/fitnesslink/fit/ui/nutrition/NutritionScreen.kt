@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.EventNote
@@ -56,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.R
+import com.fitnesslink.fit.nutrition.NutritionFeatureFlags
 import com.fitnesslink.fit.model.MealType
 import com.fitnesslink.fit.model.NutritionDayTitle
 import com.fitnesslink.fit.model.api.Micronutrient
@@ -226,7 +228,13 @@ fun NutritionScreen(
                 val meal = NutritionViewModel.inferredMealType()
                 Row(modifier = Modifier.padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     QuickAction(Icons.Default.Search, "Log Food", Modifier.weight(1f)) { onNavigate(FoodLoggingRoutes.foodSearch(meal, dayKey)) }
-                    QuickAction(Icons.Default.QrCodeScanner, "Scan", Modifier.weight(1f)) { onNavigateToBarcodeScanner(meal.name) }
+                    // iOS 0037f7c: Snap a Meal is the most-used logging path, so it
+                    // takes the middle tile; barcode stays reachable via Quick Add.
+                    if (NutritionFeatureFlags.snapMealEnabled) {
+                        QuickAction(Icons.Default.CameraAlt, "Snap Meal", Modifier.weight(1f)) { onNavigate(FoodLoggingRoutes.snapMeal(meal, dayKey)) }
+                    } else {
+                        QuickAction(Icons.Default.QrCodeScanner, "Scan", Modifier.weight(1f)) { onNavigateToBarcodeScanner(meal.name) }
+                    }
                     QuickAction(Icons.Default.WaterDrop, "Add Water", Modifier.weight(1f)) { onNavigate("logWater") }
                 }
             }

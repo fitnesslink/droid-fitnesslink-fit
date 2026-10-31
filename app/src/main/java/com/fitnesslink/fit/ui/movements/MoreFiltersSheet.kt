@@ -45,10 +45,12 @@ data class MoreFiltersSelection(
     val difficultyIds: Set<String> = emptySet(),
     val goalIds: Set<String> = emptySet(),
     val movementPatternIds: Set<String> = emptySet(),
-    val locationIds: Set<String> = emptySet()
+    val locationIds: Set<String> = emptySet(),
+    /** FTNSSLNK-503: Workouts-list duration buckets (client-side). */
+    val durationIds: Set<String> = emptySet()
 ) {
     val totalCount: Int
-        get() = anatomyIds.size + equipmentIds.size + difficultyIds.size + goalIds.size + movementPatternIds.size + locationIds.size
+        get() = anatomyIds.size + equipmentIds.size + difficultyIds.size + goalIds.size + movementPatternIds.size + locationIds.size + durationIds.size
 }
 
 /**
@@ -63,7 +65,12 @@ fun MoreFiltersSheet(
     initial: MoreFiltersSelection,
     tagOptions: TagFilterOptions = TagFilterOptions(),
     onApply: (MoreFiltersSelection) -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    /**
+     * FTNSSLNK-503: duration buckets for the Workouts list. Empty → no
+     * section, so the movement call sites are unaffected.
+     */
+    durationOptions: List<TagOption> = emptyList()
 ) {
     var draft by remember { mutableStateOf(initial) }
     var drillIn by remember { mutableStateOf<DrillIn?>(null) }
@@ -120,6 +127,9 @@ fun MoreFiltersSheet(
                         }
                         TagSection("Location", tagOptions.location, draft.locationIds) {
                             draft = draft.copy(locationIds = draft.locationIds.toggled(it))
+                        }
+                        TagSection("Duration", durationOptions, draft.durationIds) {
+                            draft = draft.copy(durationIds = draft.durationIds.toggled(it))
                         }
                         androidx.compose.foundation.layout.Spacer(modifier = Modifier.size(32.dp))
                     }

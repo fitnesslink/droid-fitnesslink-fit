@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -264,7 +265,7 @@ private fun FeatureCard(
             )
         }
         Icon(
-            painter = painterResource(R.drawable.back),
+            imageVector = Icons.Default.ChevronRight,
             contentDescription = "Go",
             tint = MediumGray,
             modifier = Modifier.size(16.dp)
@@ -304,7 +305,7 @@ private fun FeatureCard(
             Text(text = subtitle, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 2)
         }
         Icon(
-            painter = painterResource(R.drawable.back),
+            imageVector = Icons.Default.ChevronRight,
             contentDescription = "Go",
             tint = MediumGray,
             modifier = Modifier.size(16.dp)

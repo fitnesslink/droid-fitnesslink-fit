@@ -203,7 +203,7 @@ private fun GroupMemberRow(
                 Icon(Icons.Filled.MoreHoriz, contentDescription = "Member actions", tint = MediumGray, modifier = Modifier.size(24.dp).clickable { showMenu = true })
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(text = { Text("Edit exercise") }, onClick = { showMenu = false; viewModel.expandedTaskId = task.id })
-                    DropdownMenuItem(text = { Text("Replace exercise") }, onClick = { showMenu = false; viewModel.replaceExerciseTaskId = task.id })
+                    DropdownMenuItem(text = { Text("Swap Exercise") }, onClick = { showMenu = false; viewModel.replaceExerciseTaskId = task.id })
                     if (memberIdx > 0) DropdownMenuItem(text = { Text("Move up") }, onClick = { showMenu = false; viewModel.moveGroupMember(task.id, true, phaseIndex) })
                     if (memberIdx < memberCount - 1) DropdownMenuItem(text = { Text("Move down") }, onClick = { showMenu = false; viewModel.moveGroupMember(task.id, false, phaseIndex) })
                     DropdownMenuItem(text = { Text("Delete exercise", color = Color.Red) }, onClick = { showMenu = false; onDelete() })

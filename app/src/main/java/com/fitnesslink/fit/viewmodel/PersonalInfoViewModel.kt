@@ -37,6 +37,8 @@ class PersonalInfoViewModel : ViewModel() {
     var isActive by mutableStateOf(true)
     var memberSince by mutableStateOf<Date?>(null)
     var showDeleteConfirmation by mutableStateOf(false)
+    var isDeletingAccount by mutableStateOf(false)
+    var deleteAccountError by mutableStateOf<String?>(null)
     var isSaving by mutableStateOf(false)
     var saveError by mutableStateOf<String?>(null)
     var isUploadingPhoto by mutableStateOf(false)
@@ -135,6 +137,27 @@ class PersonalInfoViewModel : ViewModel() {
                 saveError = "Couldn't save your changes. Check your connection and try again."
             } finally {
                 isSaving = false
+            }
+        }
+    }
+
+    /**
+     * Delete Account confirmed. On success AuthManager clears the session and
+     * the root gate falls back to login; on failure the account is untouched
+     * and the error is surfaced so the user can retry. iOS `deleteAccount()`.
+     */
+    fun deleteAccount() {
+        if (isDeletingAccount) return
+        isDeletingAccount = true
+        deleteAccountError = null
+        viewModelScope.launch {
+            try {
+                AuthManager.deleteAccount()
+            } catch (_: Exception) {
+                // Retrofit's HttpException message ("HTTP 500") isn't user copy.
+                deleteAccountError = "We couldn't delete your account. Check your connection and try again."
+            } finally {
+                isDeletingAccount = false
             }
         }
     }

@@ -89,7 +89,7 @@ import kotlinx.coroutines.launch
 /**
  * How the browser hands picks back (CONTRACTS.md, Movements block).
  * [Multi] is the editor's "Add Exercise" flow — the sheet stays open and
- * stacks an "N added" badge. [Single] is a chained picker ("Replace Exercise",
+ * stacks an "N added" badge. [Single] is a chained picker ("Swap Exercise",
  * "Recovery Exercise"): the title is overridden, Create New is hidden, and the
  * first pick is final (the presenter dismisses from `onSelect`).
  */
@@ -130,7 +130,21 @@ fun ExerciseBrowserSheet(
     /** Caps the selection (a superset takes exactly two). */
     maxSelection: Int? = null,
     /** PRD §17: "Suggested for <phase>" listed above the library, each row directly selectable. */
-    suggestionPhaseName: String? = null
+    suggestionPhaseName: String? = null,
+    /**
+     * FTNSSLNK-513: immediate-add mode only. Tapping a row that's already been
+     * added (green check) calls this to take that add back out, so selection
+     * toggles instead of stacking duplicates. When null, a re-tap on an added
+     * row is ignored (no duplicate add).
+     */
+    onDeselect: ((MovementLibraryItem) -> Unit)? = null,
+    /**
+     * FTNSSLNK-516: swap mode. The tapped replacement gets the green check and
+     * an "Exercise swapped." toast, then [onSelect] fires after a short beat
+     * (the presenter swaps + closes). Null infers it from the title, so every
+     * "Swap Exercise" picker opts in without passing the flag.
+     */
+    swapMode: Boolean? = null
 ) {
     val viewModel: ExerciseBrowserViewModel = viewModel()
     val scope = rememberCoroutineScope()
@@ -138,9 +152,13 @@ fun ExerciseBrowserSheet(
     var selected by remember { mutableStateOf<List<MovementLibraryItem>>(emptyList()) }
     var suggestions by remember { mutableStateOf<List<MovementLibraryItem>>(emptyList()) }
     var previewMovement by remember { mutableStateOf<MovementLibraryItem?>(null) }
-    var lastAddedName by remember { mutableStateOf("") }
     var showAddedToast by remember { mutableStateOf(false) }
     var showMoreFilters by remember { mutableStateOf(false) }
+    /** Toast copy: "<name> added" / "<name> removed" / "Exercise swapped." */
+    var toastText by remember { mutableStateOf("") }
+    /** Swap mode: the replacement tapped while the confirmation beat runs (locks further taps). */
+    var swappingMovementId by remember { mutableStateOf<String?>(null) }
+    val isSwapMode = swapMode ?: ((mode as? BrowserMode.Single)?.title == "Swap Exercise")
 
     // Collecting keeps the chip strip reactive to the taxonomy landing.
     val anatomy by ClassificationStore.anatomy.collectAsState()
@@ -167,20 +185,62 @@ fun ExerciseBrowserSheet(
         selected = next + movement
     }
 
+    fun showToast(text: String) {
+        toastText = text
+        showAddedToast = true
+        scope.launch {
+            delay(2000)
+            // Unless a newer toast replaced it.
+            if (toastText == text) showAddedToast = false
+        }
+    }
+
     fun addMovement(movement: MovementLibraryItem) {
         if (multiSelect) { toggleSelection(movement); return }
+        if (isSwapMode) {
+            // FTNSSLNK-516: confirm the pick in place (green check + toast),
+            // hold a beat, then hand it to the presenter, which swaps and
+            // closes the browser. Further taps are ignored meanwhile.
+            if (swappingMovementId != null) return
+            swappingMovementId = movement.id
+            showToast("Exercise swapped.")
+            viewModel.recordRecent(movement.id)
+            scope.launch { delay(800); onSelect(movement) }
+            return
+        }
+        if (addedIds.contains(movement.id)) {
+            // FTNSSLNK-513: tapping a green-checked row unselects it — the
+            // presenter undoes the immediate add. Without an undo hook we just
+            // refuse the duplicate.
+            val undo = onDeselect ?: return
+            undo(movement)
+            addedIds = addedIds - movement.id
+            showToast("${movement.name} removed")
+            return
+        }
         onSelect(movement)
         viewModel.recordRecent(movement.id)
         addedIds = addedIds + movement.id
-        lastAddedName = movement.name
-        showAddedToast = true
-        scope.launch { delay(2000); showAddedToast = false }
+        showToast("${movement.name} added")
+    }
+
+    /** Green check state for a row. */
+    fun isRowAdded(movement: MovementLibraryItem): Boolean = when {
+        multiSelect -> selected.any { it.id == movement.id }
+        isSwapMode -> swappingMovementId == movement.id
+        else -> addedIds.contains(movement.id)
     }
 
     previewMovement?.let { mv ->
         MovementPreviewSheet(
             movement = mv,
-            onAdd = { previewMovement = null; addMovement(mv) },
+            onAdd = {
+                previewMovement = null
+                // The preview's action only ever adds / selects — it must not
+                // act as the row's unselect toggle (FTNSSLNK-513).
+                val alreadyPicked = if (multiSelect) selected.any { it.id == mv.id } else addedIds.contains(mv.id)
+                if (isSwapMode || !alreadyPicked) addMovement(mv)
+            },
             onDismiss = { previewMovement = null },
             addLabel = if (mode is BrowserMode.Single) "Select" else "Add to Workout"
         )
@@ -356,7 +416,7 @@ fun ExerciseBrowserSheet(
                                 }
                             }
                             items(suggestions, key = { "s:${it.id}" }) { movement ->
-                                BrowserRow(movement, if (multiSelect) selected.any { it.id == movement.id } else addedIds.contains(movement.id), rowSubtitle(movement), multiSelect,
+                                BrowserRow(movement, isRowAdded(movement), rowSubtitle(movement), multiSelect,
                                     onTap = { addMovement(movement) }, onPreview = { previewMovement = movement }, onToggleFavorite = { viewModel.toggleFavorite(movement.id) })
                                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BackgroundColor)
                             }
@@ -365,7 +425,7 @@ fun ExerciseBrowserSheet(
                             }
                         }
                         items(viewModel.movements, key = { it.id }) { movement ->
-                            val isAdded = if (multiSelect) selected.any { it.id == movement.id } else addedIds.contains(movement.id)
+                            val isAdded = isRowAdded(movement)
                             BrowserRow(
                                 movement = movement,
                                 isAdded = isAdded,
@@ -438,7 +498,7 @@ fun ExerciseBrowserSheet(
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
                     Icon(Icons.Default.Check, contentDescription = null, tint = White, modifier = Modifier.size(12.dp))
-                    Text("$lastAddedName added", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = White)
+                    Text(toastText, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = White)
                 }
             }
         }
@@ -514,25 +574,7 @@ private fun TaxonomyChip(label: String, isSelected: Boolean, onClick: () -> Unit
     }
 }
 
-/** The "More filters" chip with its drawer-only count badge (shared by browser + catalog). */
+/** The "More filters" chip — now the shared [com.fitnesslink.fit.ui.components.MoreFiltersButton]. */
 @Composable
-internal fun MoreFiltersChip(count: Int, onClick: () -> Unit) {
-    val active = count > 0
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (active) FLPrimary.copy(alpha = 0.15f) else BackgroundColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Icon(Icons.Default.Tune, contentDescription = null, tint = if (active) FLPrimary else TextPrimaryColor, modifier = Modifier.size(12.dp))
-        Text("More filters", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (active) FLPrimary else TextPrimaryColor)
-        if (active) {
-            Box(modifier = Modifier.clip(CircleShape).background(FLPrimary).padding(horizontal = 6.dp, vertical = 1.dp)) {
-                Text("$count", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = White)
-            }
-        }
-    }
-}
+internal fun MoreFiltersChip(count: Int, onClick: () -> Unit) =
+    com.fitnesslink.fit.ui.components.MoreFiltersButton(activeCount = count, onClick = onClick)

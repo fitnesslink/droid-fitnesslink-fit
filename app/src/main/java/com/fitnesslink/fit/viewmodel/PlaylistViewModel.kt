@@ -173,6 +173,13 @@ class PlaylistViewModel : ViewModel() {
         reload(id)
     }
 
+    /** Sets × duration for a time-based exercise (FTNSSLNK-512). */
+    fun updateDuration(taskId: String, sets: Int, durationSeconds: Int, weightLbs: Int?, scope: SessionWorkoutEditor.Scope? = null) {
+        val id = targetWorkoutId.ifEmpty { return }
+        SessionWorkoutEditor.updateDuration(taskId, sets, durationSeconds, weightLbs, id, scope ?: editScope)
+        reload(id)
+    }
+
     fun updateSets(taskId: String, sets: Int, reps: Int, scope: SessionWorkoutEditor.Scope? = null) {
         val id = targetWorkoutId.ifEmpty { return }
         val weight = workout.allTasks.firstOrNull { it.id == taskId }?.weightKg

@@ -151,10 +151,7 @@ internal fun dailyCaloriePoints(entries: List<FoodEntry>): List<ChartPoint> {
     }.map { (day, rows) -> ChartPoint(java.util.Date(day), rows.sumOf { it.calories }.toDouble()) }.sortedBy { it.date }
 }
 
-internal fun sinceMillis(range: ReportTimeRange): Long {
-    val days = range.days ?: return 0L
-    return Calendar.getInstance().apply { add(Calendar.DAY_OF_YEAR, -days) }.timeInMillis
-}
+internal fun sinceMillis(range: ReportTimeRange): Long = range.sinceMillis()
 
 private fun mealIcon(type: MealType?) = when (type) {
     MealType.BREAKFAST -> Icons.Default.WbSunny

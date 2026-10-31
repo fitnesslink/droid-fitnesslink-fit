@@ -48,11 +48,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fitnesslink.fit.billing.AppLinks
 import com.fitnesslink.fit.billing.BillingException
 import com.fitnesslink.fit.billing.BillingPresentation
 import com.fitnesslink.fit.billing.EntitlementStore
 import com.fitnesslink.fit.billing.PlayBillingManager
+import com.fitnesslink.fit.billing.PlayBillingRules
+import com.fitnesslink.fit.billing.RestoreResult
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.ApiError
 import com.fitnesslink.fit.network.dto.SubscriptionDto
@@ -85,6 +86,8 @@ fun BillingScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val entitlementState by EntitlementStore.state.collectAsState()
     val entitlement = entitlementState.entitlement
+    val collided by PlayBillingManager.collidedPurchaseTokens.collectAsState()
+    val pendingPayments by PlayBillingManager.pendingPaymentTokens.collectAsState()
     var subscription by remember { mutableStateOf<SubscriptionDto?>(null) }
     var isLoading by remember { mutableStateOf(true) }
     var isRestoring by remember { mutableStateOf(false) }
@@ -119,7 +122,17 @@ fun BillingScreen(onBack: () -> Unit) {
                     CircularProgressIndicator(color = FLPrimary)
                 }
             } else {
-                val pill = BillingPresentation.statusPill(entitlement, subscription)
+                val nowMs = System.currentTimeMillis()
+                val pill = BillingPresentation.statusPill(entitlement, subscription, nowMs)
+                fun openPlayManage() {
+                    PlayBillingManager.attach(context)
+                    scope.launch {
+                        // The deep link wants the Play product id; the generic page is the fallback.
+                        val productId = PlayBillingManager.ownedProductId()
+                            ?: subscription?.externalSubscriptionId?.takeIf { it.isNotBlank() }?.let { PlayBillingManager.offer(it)?.productId }
+                        PlayBillingManager.openManageSubscriptions(context, productId)
+                    }
+                }
                 Column(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
@@ -140,67 +153,52 @@ fun BillingScreen(onBack: () -> Unit) {
                             InfoLine(Icons.Default.Schedule, "Your free trial ends ${dateText(it)} — you'll be charged then unless you cancel.")
                         }
                     }
-                    entitlement.source?.let {
+                    (entitlement.source ?: subscription?.source?.takeIf { it.isNotBlank() })?.let {
                         InfoLine(Icons.Default.CreditCard, "Billed through ${BillingPresentation.billingSourceName(it)}")
                     }
                 }
 
-                if (entitlement.isGrace) {
+                BillingPresentation.paymentBanner(entitlement, subscription, nowMs, dateText)?.let { banner ->
                     Row(
                         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
-                            .background(OrangeTheme.copy(alpha = 0.12f)).padding(14.dp),
+                            .background(OrangeTheme.copy(alpha = 0.12f))
+                            .clickable(enabled = banner.opensPlay) { openPlayManage() }
+                            .padding(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = OrangeTheme)
-                        Text("There's a problem with your payment method. Update it to keep your access.", fontSize = 13.sp, color = TextPrimaryColor)
+                        Text(banner.text, fontSize = 13.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                        if (banner.opensPlay) Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
                     }
                 }
 
                 Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White)) {
-                    when (BillingPresentation.actions(entitlement)) {
-                        BillingPresentation.Actions.COMPED -> Row(
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(10.dp)
-                        ) {
-                            Icon(Icons.Default.CardGiftcard, contentDescription = null, tint = FLPrimary)
-                            Text("Your access is on us — there's nothing to manage or pay.", fontSize = 13.sp, color = TextSecondaryColor)
+                    when (val manage = BillingPresentation.manageAction(entitlement, subscription)) {
+                        BillingPresentation.ManageAction.OpenPlay -> ActionRow("Manage subscription", Icons.Default.Settings) {
+                            message = null
+                            openPlayManage()
                         }
-                        BillingPresentation.Actions.WEB -> ActionRow("Manage on the web", Icons.Default.Language) {
-                            context.openUrl(AppLinks.WEB_BILLING_PORTAL)
+                        is BillingPresentation.ManageAction.Instructions -> InfoRow(Icons.Default.PhoneIphone, manage.text)
+                        is BillingPresentation.ManageAction.OpenUrl -> ActionRow(manage.label, Icons.Default.Language) {
+                            context.openUrl(manage.url)
                         }
-                        BillingPresentation.Actions.APPLE -> {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Icon(Icons.Default.PhoneIphone, contentDescription = null, tint = FLPrimary)
-                                Text("This subscription is billed through the App Store. Manage it from your iPhone or iPad.", fontSize = 13.sp, color = TextSecondaryColor)
-                            }
-                            SeparatorView(modifier = Modifier.padding(horizontal = 20.dp))
-                            RestoreRow(isRestoring) {
-                                restore(scope, onStart = { isRestoring = true; message = null }, onDone = { m -> isRestoring = false; message = m }) {
-                                    subscription = try { ApiClient.billingApi.getMySubscription() } catch (_: Exception) { subscription }
-                                }
-                            }
-                        }
-                        BillingPresentation.Actions.PLAY -> {
-                            ActionRow("Manage subscription", Icons.Default.Settings) {
-                                message = null
-                                PlayBillingManager.attach(context)
-                                PlayBillingManager.openManageSubscriptions(context, subscription?.externalSubscriptionId?.takeIf { it.isNotBlank() }?.let { PlayBillingManager.offer(it)?.productId })
-                            }
-                            SeparatorView(modifier = Modifier.padding(horizontal = 20.dp))
-                            RestoreRow(isRestoring) {
-                                PlayBillingManager.attach(context)
-                                restore(scope, onStart = { isRestoring = true; message = null }, onDone = { m -> isRestoring = false; message = m }) {
-                                    subscription = try { ApiClient.billingApi.getMySubscription() } catch (_: Exception) { subscription }
-                                }
-                            }
+                        is BillingPresentation.ManageAction.Info -> InfoRow(Icons.Default.CardGiftcard, manage.text)
+                    }
+                    SeparatorView(modifier = Modifier.padding(horizontal = 20.dp))
+                    RestoreRow(isRestoring) {
+                        PlayBillingManager.attach(context)
+                        restore(scope, onStart = { isRestoring = true; message = null }, onDone = { m -> isRestoring = false; message = m }) {
+                            subscription = try { ApiClient.billingApi.getMySubscription() } catch (_: Exception) { subscription }
                         }
                     }
+                }
+
+                if (collided.isNotEmpty()) {
+                    Text(BillingException.AlreadyLinkedToAnotherAccount.message ?: "", fontSize = 13.sp, color = OrangeTheme, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                }
+                if (pendingPayments.isNotEmpty()) {
+                    Text(BillingException.PaymentPending.message ?: "", fontSize = 13.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
 
                 message?.let {
@@ -222,10 +220,12 @@ private fun restore(
     scope.launch {
         val result = try {
             val restored = PlayBillingManager.restorePurchases()
-            reloadSubscription()
-            if (restored.isEntitled) "Your subscription has been restored." else BillingException.NoActiveSubscription.message
-        } catch (e: Exception) {
+            if (restored is RestoreResult.Restored) reloadSubscription()
+            PlayBillingRules.restoreMessage(restored)
+        } catch (e: BillingException) {
             e.message
+        } catch (e: Exception) {
+            "Restore failed. Please try again."
         }
         onDone(result)
     }
@@ -248,6 +248,18 @@ private fun InfoLine(icon: ImageVector, text: String) {
     Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Icon(icon, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
         Text(text, fontSize = 14.sp, color = TextSecondaryColor)
+    }
+}
+
+@Composable
+private fun InfoRow(icon: ImageVector, text: String) {
+    Row(
+        modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Icon(icon, contentDescription = null, tint = FLPrimary)
+        Text(text, fontSize = 13.sp, color = TextSecondaryColor)
     }
 }
 

@@ -19,6 +19,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.MoreHoriz
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.Group
@@ -26,6 +29,8 @@ import androidx.compose.material.icons.filled.PersonRemove
 import androidx.compose.material.icons.filled.SportsGymnastics
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -104,6 +109,12 @@ fun MovementDetailScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var pendingShare by remember(movementId) { mutableStateOf<SharedContentDto?>(null) }
     var isRespondingToShare by remember { mutableStateOf(false) }
+    // FTNSSLNK-501: owner edit / delete.
+    var showEditSheet by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showOwnerMenu by remember { mutableStateOf(false) }
+    var isDeleting by remember { mutableStateOf(false) }
+    var ownerActionError by remember { mutableStateOf<String?>(null) }
 
     val anatomy by ClassificationStore.anatomy.collectAsState()
     val equipment by ClassificationStore.equipment.collectAsState()
@@ -123,6 +134,17 @@ fun MovementDetailScreen(
     val heroHeight = if (isPortraitVideo) 440.dp else 250.dp
 
     val isOwn = movement?.let { it.contributorId == null && it.sharedByUserId == null } ?: false
+    /**
+     * Owner = a user-authored movement (no contributor) not shared *to* this
+     * user (iOS `isOwnedByCurrentUser`). When the audit names a creator it must
+     * be the signed-in user. The server enforces the same rule (403).
+     */
+    val isOwnedByCurrentUser = movement?.let { m ->
+        if (pendingShare != null || m.contributorId != null || m.sharedByUserId != null || m.isSharedWithMe == true) return@let false
+        val createdBy = m.audit?.createdBy
+        val me = com.fitnesslink.fit.auth.AuthManager.currentUser.value?.id
+        if (createdBy != null && createdBy != UUID(0L, 0L) && me != null) createdBy == me else true
+    } ?: false
     val isSharedIn = movement?.let { it.contributorId == null && it.sharedByUserId != null } ?: (fallback?.isSharedWithMe == true)
 
     suspend fun load() {
@@ -153,6 +175,52 @@ fun MovementDetailScreen(
 
     if (showShareSheet) {
         ShareSheet(contentId = movementId, kind = ModelShareKind.MOVEMENT, onDismiss = { showShareSheet = false })
+    }
+
+    if (showEditSheet) {
+        movement?.let { m ->
+            com.fitnesslink.fit.ui.workout.MovementEditSheet(
+                movement = m,
+                onUpdated = { updated ->
+                    movement = updated
+                    // Re-read server truth (video attach, derived fields).
+                    scope.launch { load() }
+                },
+                onDismiss = { showEditSheet = false }
+            )
+        }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete \u201C$displayName\u201D?") },
+            text = { Text("This removes the movement from your library. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteConfirm = false
+                    isDeleting = true
+                    scope.launch {
+                        try {
+                            MovementStore.deleteOwned(movementId)
+                            onBack()
+                        } catch (e: Exception) {
+                            ownerActionError = MovementStore.userMessage(e, "delete")
+                        } finally { isDeleting = false }
+                    }
+                }) { Text("Delete Movement", color = Color.Red) }
+            },
+            dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") } }
+        )
+    }
+
+    ownerActionError?.let { msg ->
+        AlertDialog(
+            onDismissRequest = { ownerActionError = null },
+            title = { Text("Couldn't complete that") },
+            text = { Text(msg) },
+            confirmButton = { TextButton(onClick = { ownerActionError = null }) { Text("OK") } }
+        )
     }
 
     if (showRemoveAlert) {
@@ -242,11 +310,31 @@ fun MovementDetailScreen(
                 BackCircleButton(onClick = onBack)
                 Spacer(modifier = Modifier.weight(1f))
                 when {
-                    isOwn -> HeroIconButton(Icons.Default.Group, "Share") { showShareSheet = true }
+                    isOwn -> Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        HeroIconButton(Icons.Default.Group, "Share") { showShareSheet = true }
+                        // FTNSSLNK-501: owner-only Edit / Delete.
+                        if (isOwnedByCurrentUser) {
+                            Box {
+                                HeroIconButton(Icons.Default.MoreHoriz, "Movement options") { if (!isDeleting) showOwnerMenu = true }
+                                DropdownMenu(expanded = showOwnerMenu, onDismissRequest = { showOwnerMenu = false }) {
+                                    DropdownMenuItem(
+                                        text = { Text("Edit Movement") },
+                                        leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                        onClick = { showOwnerMenu = false; showEditSheet = true }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text("Delete Movement", color = Color.Red) },
+                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) },
+                                        onClick = { showOwnerMenu = false; showDeleteConfirm = true }
+                                    )
+                                }
+                            }
+                        }
+                    }
                     isSharedIn && pendingShare == null -> HeroIconButton(Icons.Default.PersonRemove, "Remove from library") { showRemoveAlert = true }
                 }
             }
-            if (isLoading && movement == null && fallback == null) {
+            if (isDeleting || (isLoading && movement == null && fallback == null)) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = White)
             }
         }

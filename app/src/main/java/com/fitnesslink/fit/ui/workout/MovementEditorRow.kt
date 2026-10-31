@@ -108,7 +108,7 @@ fun MovementEditorRow(task: WorkoutTask, phaseIndex: Int, isSelected: Boolean, v
                 Icon(Icons.Filled.MoreHoriz, contentDescription = "Row actions", tint = MediumGray,
                     modifier = Modifier.size(22.dp).clickable { showMenu = true })
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
-                    DropdownMenuItem(text = { Text("Replace exercise") }, onClick = { showMenu = false; viewModel.replaceExerciseTaskId = taskId })
+                    DropdownMenuItem(text = { Text("Swap Exercise") }, onClick = { showMenu = false; viewModel.replaceExerciseTaskId = taskId })
                     if (otherPhases.isNotEmpty()) {
                         DropdownMenuItem(text = { Text("Move to phase…") }, onClick = { showMenu = false; showMoveMenu = true })
                     }

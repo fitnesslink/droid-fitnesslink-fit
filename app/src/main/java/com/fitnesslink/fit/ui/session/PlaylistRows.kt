@@ -106,7 +106,11 @@ fun PlaylistMovementRow(
     var menu by remember { mutableStateOf(false) }
     val hasVideo = task.effectiveMovementVideoId != null
 
-    Row(Modifier.fillMaxWidth().padding(vertical = 8.dp, horizontal = 4.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    // Light card per exercise (FTNSSLNK-499): white on the grey page, with a hairline that keeps
+    // it crisp on a superset / circuit / interval block's accent wash.
+    val cardShape = RoundedCornerShape(12.dp)
+    Row(Modifier.fillMaxWidth().clip(cardShape).background(White).border(1.dp, TextPrimaryColor.copy(alpha = 0.06f), cardShape)
+        .padding(vertical = 10.dp, horizontal = 10.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(
             if (isCompleted) Icons.Filled.CheckBox else Icons.Filled.CheckBoxOutlineBlank, contentDescription = if (isCompleted) "Completed" else "Mark completed",
             tint = if (isCompleted) FLPrimary else MediumGray, modifier = Modifier.size(24.dp).clickable { viewModel.toggleCompleted(task.id) }
@@ -132,15 +136,19 @@ fun PlaylistMovementRow(
             }
             SetBreakdown(task)
             previous?.let { Text(it.previousLine, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLPrimary) }
-            task.instructions?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 2, overflow = TextOverflow.Ellipsis) }
+            // Coaching cue in the same boxed note the Interactive screens use (FTNSSLNK-499); hidden when blank.
+            SessionNoteCard(task.instructions, onLight = true, modifier = Modifier.padding(top = 6.dp))
         }
-        if (viewModel.onEditRequest != null && task.isMovement) {
+        // Never render a ⋯ with nothing behind it (FTNSSLNK-515): grouped members only offer Swap,
+        // a loose movement always has "Add exercise after".
+        val hasEditActions = SessionWorkoutEditor.canSwap(task) || !isGrouped
+        if (viewModel.onEditRequest != null && task.isMovement && hasEditActions) {
             Box {
                 Icon(Icons.Filled.MoreVert, contentDescription = "Edit ${task.name}", tint = MediumGray, modifier = Modifier.size(28.dp).clickable { menu = true })
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    if (SessionWorkoutEditor.canSwap(task)) DropdownMenuItem(text = { Text("Swap movement") }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.Swap(task.id)) })
+                    if (SessionWorkoutEditor.canSwap(task)) DropdownMenuItem(text = { Text("Swap Exercise") }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.Swap(task.id)) })
                     if (!isGrouped) {
-                        if (SessionWorkoutEditor.canEditSets(task)) DropdownMenuItem(text = { Text("Edit sets & reps") }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.EditSets(task.id)) })
+                        if (SessionWorkoutEditor.canEditSets(task)) DropdownMenuItem(text = { Text(SessionWorkoutEditor.editSetsTitle(task)) }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.EditSets(task.id)) })
                         DropdownMenuItem(text = { Text("Add exercise after") }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.Add(task.id)) })
                         if (SessionWorkoutEditor.canRemove(task)) DropdownMenuItem(text = { Text("Remove exercise", color = Color(0xFFE53935)) }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.Remove(task.id)) })
                     }

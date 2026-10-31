@@ -86,9 +86,8 @@ private fun PreparationBody(
         upNext?.let { Text(it.name, color = White, fontSize = 26.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp)) }
         structureLabel?.let { SessionStructureTag(it, null) }
         if (!prescription.isNullOrEmpty()) Text(prescription, color = White, fontSize = 20.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp))
-        coachingCue?.trim()?.takeIf { it.isNotEmpty() }?.let {
-            Text(it, color = White.copy(alpha = 0.85f), fontSize = 14.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, maxLines = 3, modifier = Modifier.padding(horizontal = 32.dp))
-        }
+        // Same boxed NOTES card as the rest screen and the block form (FTNSSLNK-506); hidden for a blank cue.
+        SessionNoteCard(coachingCue, maxLines = 2, modifier = Modifier.padding(horizontal = 28.dp))
     }
     Spacer(Modifier.size(6.dp))
     SessionCountdownRing(secondsRemaining, totalSeconds, caption = if (block == null) "SECONDS TO START" else "STARTS IN", tint = if (block == null) FLPrimary else tint)

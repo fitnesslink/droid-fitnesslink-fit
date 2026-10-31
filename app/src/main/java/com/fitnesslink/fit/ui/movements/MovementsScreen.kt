@@ -46,6 +46,7 @@ import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.contributors.ContributorStore
 import com.fitnesslink.fit.model.MovementLibraryItem
 import com.fitnesslink.fit.movements.MovementStore
+import com.fitnesslink.fit.ui.components.AnatomyChipStrip
 import com.fitnesslink.fit.ui.components.ClearFiltersButton
 import com.fitnesslink.fit.ui.components.ContentLayout
 import com.fitnesslink.fit.ui.components.ContentLayoutPrefs
@@ -84,6 +85,8 @@ fun MovementsScreen(
 
     val equipment by ClassificationStore.equipment.collectAsState()
     val primaryEquipment = remember(equipment) { ClassificationStore.primaryEquipment }
+    val anatomy by ClassificationStore.anatomy.collectAsState()
+    val primaryAnatomy = remember(anatomy) { ClassificationStore.primaryAnatomy }
     val contributors by ContributorStore.contributors.collectAsState()
     val availableContributors = remember(contributors, viewModel.movements) {
         ContributorStore.present(viewModel.presentContributorIds)
@@ -157,6 +160,14 @@ fun MovementsScreen(
             }
             if (primaryEquipment.isNotEmpty()) item { VerticalDivider(modifier = Modifier.height(20.dp)) }
             item { MoreFiltersChip(count = viewModel.moreFiltersCount, onClick = { showMoreFilters = true }) }
+        }
+
+        // FTNSSLNK-502: anatomy quick filters alongside equipment. Both strips
+        // write the same id sets the More Filters drawer edits; the two
+        // dimensions AND together (OR within each) in `filtered`.
+        if (primaryAnatomy.isNotEmpty()) {
+            AnatomyChipStrip(options = primaryAnatomy, selected = viewModel.selectedAnatomyIds, onToggle = viewModel::toggleAnatomy)
+            Spacer(modifier = Modifier.height(8.dp))
         }
 
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.End) {

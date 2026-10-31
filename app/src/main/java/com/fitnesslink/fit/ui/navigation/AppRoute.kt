@@ -8,6 +8,8 @@ sealed class AppRoute(val route: String) {
     data object Catalog : AppRoute("catalog")
     data object Calendar : AppRoute("calendar")
     data object Nutrition : AppRoute("nutrition")
+    data object Progress : AppRoute("progress")
+    /** Profile menu as a pushed screen (the header avatar shows it as a sheet). */
     data object Profile : AppRoute("profile")
 
     data object Login : AppRoute("login")
@@ -62,6 +64,21 @@ sealed class AppRoute(val route: String) {
     data object Photos : AppRoute("photos")
     data object Weight : AppRoute("weight")
     data object WorkoutReport : AppRoute("workoutReport")
+    /** Progress PRD §8: a registry-driven report; `report` is a `ProgressReport.rawValue`. */
+    data class ProgressReportRoute(val report: String) : AppRoute("progressReport/{report}") {
+        companion object {
+            const val ROUTE = "progressReport/{report}"
+            fun createRoute(report: String) = "progressReport/$report"
+        }
+    }
+    /** Progress PRD §8.5: every report in one list. */
+    data object AllReports : AppRoute("allReports")
+    /** Progress PRD §6.1: the full statistics catalog. */
+    data object AllStats : AppRoute("allStats")
+    /** Progress PRD §6.3: pick and order the six Quick Stats. */
+    data object CustomizeQuickStats : AppRoute("customizeQuickStats")
+    /** Navigation PRD §6.3: health platform and wearable connections. */
+    data object ConnectedApps : AppRoute("connectedApps")
     data class ReportDetail(val metric: String) : AppRoute("reportDetail/{metric}") {
         companion object {
             const val ROUTE = "reportDetail/{metric}"

@@ -167,12 +167,15 @@ fun WorkoutEditorScreen(
 
     if (viewModel.showExerciseBrowser) {
         ExerciseBrowserSheet(
-            onSelect = { viewModel.addExercise(it, viewModel.activePhaseIndex) },
-            onCreateNew = { viewModel.showExerciseBrowser = false; viewModel.showCreateExercise = true },
-            onDismiss = { viewModel.showExerciseBrowser = false; viewModel.finalizePendingGroup() },
+            onSelect = { viewModel.addExerciseFromBrowser(it, viewModel.activePhaseIndex) },
+            onCreateNew = { viewModel.showExerciseBrowser = false; viewModel.clearBrowserAdds(); viewModel.showCreateExercise = true },
+            onDismiss = { viewModel.showExerciseBrowser = false; viewModel.finalizePendingGroup(); viewModel.clearBrowserAdds() },
             pendingGroupType = viewModel.pendingGroupType,
             pendingCount = viewModel.pendingGroupTaskIds.size,
-            onDone = { viewModel.showExerciseBrowser = false; viewModel.finalizePendingGroup() }
+            onDone = { viewModel.showExerciseBrowser = false; viewModel.finalizePendingGroup(); viewModel.clearBrowserAdds() },
+            // FTNSSLNK-513: re-tapping a green-checked row takes the immediate
+            // add back out (and out of a pending group).
+            onDeselect = { viewModel.undoBrowserAdd(it.id) }
         )
     }
     if (viewModel.showCreateExercise) {
@@ -187,7 +190,8 @@ fun WorkoutEditorScreen(
             onCreateNew = {},
             onDismiss = { viewModel.replaceExerciseTaskId = null },
             pendingGroupType = null, pendingCount = 0,
-            mode = BrowserMode.Single("Replace Exercise")
+            mode = BrowserMode.Single("Swap Exercise"),
+            swapMode = true
         )
     }
     // Recovery picker for loose rest rows (interval leads present it from inside IntervalEditSheet).

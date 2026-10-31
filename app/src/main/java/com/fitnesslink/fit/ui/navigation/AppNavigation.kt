@@ -51,7 +51,10 @@ import com.fitnesslink.fit.ui.nutrition.QuickAddScreen
 import com.fitnesslink.fit.ui.nutrition.RecentFoodsScreen
 import com.fitnesslink.fit.ui.nutrition.WeeklyProgressScreen
 import com.fitnesslink.fit.ui.personalization.PersonalizationScreen
+import com.fitnesslink.fit.ui.profile.LocalLogoutAction
 import com.fitnesslink.fit.ui.profile.ProfileScreen
+import com.fitnesslink.fit.ui.progress.ProgressHomeScreen
+import androidx.compose.runtime.CompositionLocalProvider
 import com.fitnesslink.fit.ui.profile.ProfileStubScreen
 import com.fitnesslink.fit.ui.session.InteractiveSessionScreen
 import com.fitnesslink.fit.ui.session.PlaylistScreen
@@ -178,13 +181,15 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
     var selectedTab by rememberSaveable { mutableStateOf(0) }
     val context = LocalContext.current
 
-    // Tab order matches iOS: Home, Catalog, Calendar, Nutrition, Profile.
+    // Tab order matches iOS: Home, Catalog, Calendar, Nutrition, Progress.
+    // Navigation PRD §4.1: Progress replaced Profile; Profile moved behind
+    // the header avatar (HeaderView → Profile menu sheet).
     val bottomNavItems = listOf(
         BottomNavItem(AppRouter.HOME_TAB, "Home", R.drawable.homeselected, R.drawable.homeicon),
         BottomNavItem(AppRouter.CATALOG_TAB, "Catalog", R.drawable.runningselected, R.drawable.runningicon),
         BottomNavItem(AppRouter.CALENDAR_TAB, "Calendar", R.drawable.calendarselected, R.drawable.calendaricon),
         BottomNavItem(AppRouter.NUTRITION_TAB, "Nutrition", R.drawable.nutrition, R.drawable.nutrition),
-        BottomNavItem(AppRouter.PROFILE_TAB, "Profile", R.drawable.profileselected, R.drawable.profileicon)
+        BottomNavItem(AppRouter.PROGRESS_TAB, "Progress", R.drawable.progressselected, R.drawable.progressicon)
     )
 
     fun selectTab(route: String) {
@@ -238,6 +243,9 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
     // (≤3 offers, ≥3 days apart, only while the OS permission is undetermined).
     NotificationPrePromptHost()
 
+    // The Profile menu is a sheet off every tab's header; it signs out
+    // through the same callback the old Profile tab used (iOS `\.logout`).
+    CompositionLocalProvider(LocalLogoutAction provides onLogout) {
     Scaffold(
         bottomBar = {
             NavigationBar(containerColor = White) {
@@ -310,10 +318,17 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                     onNavigate = { navController.navigate(it) }
                 )
             }
+            composable(AppRouter.PROGRESS_TAB) {
+                ProgressHomeScreen(
+                    onNavigate = { route -> navController.navigate(route) },
+                    onNavigateToNotifications = { navController.navigate("notifications") }
+                )
+            }
             composable(AppRouter.PROFILE_TAB) {
                 ProfileScreen(
                     onNavigate = { route -> navController.navigate(route) },
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    onClose = { navController.popBackStack() }
                 )
             }
 
@@ -654,6 +669,9 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
             }
             // Feature modules register their own routes here (ui/navigation/*Routes.kt).
             featureRoutes(navController)
+            // Progress tab sub-screens + Connected Apps (FTNSSLNK-553).
+            progressTabRoutes(navController)
         }
+    }
     }
 }

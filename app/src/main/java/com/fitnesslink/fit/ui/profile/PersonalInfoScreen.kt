@@ -235,13 +235,20 @@ fun PersonalInfoScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { viewModel.showDeleteConfirmation = true }
+                        .clickable(enabled = !viewModel.isDeletingAccount) { viewModel.showDeleteConfirmation = true }
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(Icons.Default.Delete, contentDescription = null, tint = androidx.compose.ui.graphics.Color.Red, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text("Delete Account", fontSize = 15.sp, color = androidx.compose.ui.graphics.Color.Red)
+                    Text("Delete Account", fontSize = 15.sp, color = androidx.compose.ui.graphics.Color.Red, modifier = Modifier.weight(1f))
+                    if (viewModel.isDeletingAccount) {
+                        CircularProgressIndicator(
+                            color = androidx.compose.ui.graphics.Color.Red,
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                    }
                 }
             }
         }
@@ -253,7 +260,10 @@ fun PersonalInfoScreen(
             title = { Text("Delete Account") },
             text = { Text("Are you sure you want to delete your account? This action cannot be undone.") },
             confirmButton = {
-                TextButton(onClick = { viewModel.showDeleteConfirmation = false }) {
+                TextButton(onClick = {
+                    viewModel.showDeleteConfirmation = false
+                    viewModel.deleteAccount()
+                }) {
                     Text("Delete", color = androidx.compose.ui.graphics.Color.Red)
                 }
             },
@@ -261,6 +271,16 @@ fun PersonalInfoScreen(
                 TextButton(onClick = { viewModel.showDeleteConfirmation = false }) {
                     Text("Cancel")
                 }
+            }
+        )
+    }
+    viewModel.deleteAccountError?.let { message ->
+        AlertDialog(
+            onDismissRequest = { viewModel.deleteAccountError = null },
+            title = { Text("Couldn't Delete Account") },
+            text = { Text(message) },
+            confirmButton = {
+                TextButton(onClick = { viewModel.deleteAccountError = null }) { Text("OK") }
             }
         )
     }

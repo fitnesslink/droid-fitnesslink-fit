@@ -52,6 +52,9 @@ import com.fitnesslink.fit.ui.components.EquipmentChipStrip
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.FavoritesFilterControl
 import com.fitnesslink.fit.ui.components.HeaderBackView
+import com.fitnesslink.fit.ui.components.MoreFiltersButton
+import com.fitnesslink.fit.ui.movements.MoreFiltersSelection
+import com.fitnesslink.fit.ui.movements.MoreFiltersSheet
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.components.SharedBadge
 import com.fitnesslink.fit.ui.theme.BackgroundColor
@@ -76,6 +79,7 @@ fun WorkoutsScreen(
     onNavigateToWorkoutEditor: () -> Unit = {}
 ) {
     val viewModel: WorkoutsViewModel = viewModel()
+    var showMoreFilters by remember { mutableStateOf(false) }
     var layout by remember { mutableStateOf(runCatching { ContentLayoutPrefs.get() }.getOrDefault(ContentLayout.CARD)) }
     val contributors by ContributorStore.contributors.collectAsState()
     val anatomy by ClassificationStore.anatomy.collectAsState()
@@ -158,6 +162,11 @@ fun WorkoutsScreen(
                     onToggleMine = { viewModel.toggleMine() }
                 )
             }
+            // FTNSSLNK-503: More Filters beside the quick filters. The drawer
+            // edits the same equipment / anatomy sets as the chip strips below,
+            // plus a duration bucket — all applied client-side.
+            Spacer(modifier = Modifier.weight(1f))
+            MoreFiltersButton(activeCount = viewModel.moreFiltersCount, onClick = { showMoreFilters = true })
         }
 
         if (equipmentOptions.isNotEmpty()) {
@@ -167,6 +176,24 @@ fun WorkoutsScreen(
         if (anatomyOptions.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             AnatomyChipStrip(options = anatomyOptions, selected = viewModel.selectedAnatomyIds, onToggle = viewModel::toggleAnatomy)
+        }
+
+        if (showMoreFilters) {
+            MoreFiltersSheet(
+                initial = MoreFiltersSelection(
+                    anatomyIds = viewModel.selectedAnatomyIds,
+                    equipmentIds = viewModel.selectedEquipmentIds,
+                    durationIds = viewModel.selectedDurationIds
+                ),
+                onApply = { sel ->
+                    // Chip strips compare lowercased ids.
+                    viewModel.selectedAnatomyIds = sel.anatomyIds.map { it.lowercase() }.toSet()
+                    viewModel.selectedEquipmentIds = sel.equipmentIds.map { it.lowercase() }.toSet()
+                    viewModel.selectedDurationIds = sel.durationIds
+                },
+                onDismiss = { showMoreFilters = false },
+                durationOptions = viewModel.durationOptions
+            )
         }
 
         LevelFilterRow(selected = viewModel.levelFilter, onSelect = { viewModel.levelFilter = it })

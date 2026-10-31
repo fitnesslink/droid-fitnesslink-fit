@@ -7,7 +7,8 @@ plugins {
 
 android {
     namespace = "com.fitnesslink.fit"
-    compileSdk = 35
+    // 36 because connect-client 1.1.0 requires it; targetSdk (runtime behaviour) stays 35.
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.fitnesslink.fit"
@@ -91,6 +92,9 @@ dependencies {
 
     // Billing
     implementation(libs.billing.ktx)
+
+    // Health Connect (read-only; iOS Apple Health counterpart)
+    implementation(libs.health.connect)
 
     // Firebase
     implementation(platform(libs.firebase.bom))
