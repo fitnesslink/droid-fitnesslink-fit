@@ -52,10 +52,17 @@ object HealthConnectService {
     private const val TAG = "HealthConnect"
     private const val PREFS = "health_connect"
     private const val KEY_ENABLED = "enabled"
+    private const val KEY_FIRST_GRANT = "first_grant_ms"
     const val PROVIDER_PACKAGE = "com.google.android.apps.healthdata"
 
-    /** How far back an All Time read goes. Health Connect itself only serves 30 days before the first grant. */
+    /** How far back an All Time read goes, at most. */
     private const val MAX_HISTORY_DAYS = 400L
+    /**
+     * Without READ_HEALTH_DATA_HISTORY, Health Connect serves data from 30
+     * days before the first grant onward — and an aggregate whose range
+     * starts any earlier comes back empty for *every* bucket (seen on API 35).
+     */
+    private const val GRANT_HISTORY_DAYS = 30L
     private const val READ_TIMEOUT_MS = 15_000L
 
     enum class Availability { AVAILABLE, NEEDS_INSTALL_OR_UPDATE, UNAVAILABLE }
@@ -112,6 +119,9 @@ object HealthConnectService {
         else runCatching { client.permissionController.getGrantedPermissions() intersect readPermissions }
             .onFailure { Log.w(TAG, "getGrantedPermissions failed", it) }
             .getOrDefault(granted)
+        // First time we see a grant ≈ when it happened; a later read can't reach further back than 30 days before it.
+        if (granted.isEmpty()) prefs?.edit()?.remove(KEY_FIRST_GRANT)?.apply()
+        else if (prefs?.contains(KEY_FIRST_GRANT) == false) prefs?.edit()?.putLong(KEY_FIRST_GRANT, System.currentTimeMillis())?.apply()
         _connected.value = isConnected
         return isConnected
     }
@@ -131,7 +141,9 @@ object HealthConnectService {
 
     /**
      * Stops reading and revokes every Health Connect permission FitnessLink
-     * holds (iOS can only forget the choice; Android can revoke).
+     * holds (iOS can only forget the choice; Android can revoke). Android
+     * applies the revocation when the process ends (verified on API 35), so
+     * clearing the opt-in is what disconnects immediately.
      */
     suspend fun disconnect() {
         userEnabled = false
@@ -156,6 +168,13 @@ object HealthConnectService {
     fun clampStart(from: Instant, now: Instant = Instant.now()): Instant =
         maxOf(from, now.minusSeconds(MAX_HISTORY_DAYS * 86_400))
 
+    /** Start of the first whole local day Health Connect will serve (see [GRANT_HISTORY_DAYS]); null = unknown. */
+    private fun readableSince(zone: ZoneId): Instant? {
+        val firstGrant = prefs?.takeIf { it.contains(KEY_FIRST_GRANT) }?.getLong(KEY_FIRST_GRANT, 0L) ?: return null
+        return Instant.ofEpochMilli(firstGrant).minusSeconds(GRANT_HISTORY_DAYS * 86_400)
+            .atZone(zone).toLocalDate().plusDays(1).atStartOfDay(zone).toInstant()
+    }
+
     /**
      * Per-day values in [from, to) keyed by local date — sums for steps,
      * active kcal and exercise minutes; means for resting HR and HRV (ms);
@@ -163,22 +182,23 @@ object HealthConnectService {
      * Empty when not connected, not permitted or on error.
      */
     suspend fun daily(kind: Daily, from: Instant, to: Instant, zone: ZoneId = ZoneId.systemDefault()): Map<LocalDate, Double> {
-        if (!isConnected || !to.isAfter(from)) return emptyMap()
+        val start = readableSince(zone)?.let { maxOf(from, it) } ?: from
+        if (!isConnected || !to.isAfter(start)) return emptyMap()
         val client = client() ?: return emptyMap()
         return withTimeoutOrNull(READ_TIMEOUT_MS) {
             runCatching {
                 when (kind) {
-                    Daily.STEPS -> aggregateDaily(client, StepsRecord.COUNT_TOTAL, from, to, zone) { it.toDouble() }
-                    Daily.ACTIVE_CALORIES -> aggregateDaily(client, ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL, from, to, zone) { it.inKilocalories }
-                    Daily.ACTIVE_MINUTES -> aggregateDaily(client, ExerciseSessionRecord.EXERCISE_DURATION_TOTAL, from, to, zone) { it.seconds / 60.0 }
-                    Daily.RESTING_HEART_RATE -> aggregateDaily(client, RestingHeartRateRecord.BPM_AVG, from, to, zone) { it.toDouble() }
+                    Daily.STEPS -> aggregateDaily(client, StepsRecord.COUNT_TOTAL, start, to, zone) { it.toDouble() }
+                    Daily.ACTIVE_CALORIES -> aggregateDaily(client, ActiveCaloriesBurnedRecord.ACTIVE_CALORIES_TOTAL, start, to, zone) { it.inKilocalories }
+                    Daily.ACTIVE_MINUTES -> aggregateDaily(client, ExerciseSessionRecord.EXERCISE_DURATION_TOTAL, start, to, zone) { it.seconds / 60.0 }
+                    Daily.RESTING_HEART_RATE -> aggregateDaily(client, RestingHeartRateRecord.BPM_AVG, start, to, zone) { it.toDouble() }
                     // HRV has no aggregate metric. Health Connect stores RMSSD (iOS reads SDNN): both in ms, not interchangeable.
                     Daily.HRV -> HealthConnectMath.dailyAverages(
-                        readAll(client, HeartRateVariabilityRmssdRecord::class, TimeRangeFilter.between(from, to))
+                        readAll(client, HeartRateVariabilityRmssdRecord::class, TimeRangeFilter.between(start, to))
                             .map { it.time to it.heartRateVariabilityMillis },
                         zone
                     )
-                    Daily.SLEEP_SECONDS -> sleepByNight(client, from, to, zone)
+                    Daily.SLEEP_SECONDS -> sleepByNight(client, start, to, zone)
                 }
             }.onFailure { Log.w(TAG, "daily $kind read failed", it) }.getOrDefault(emptyMap())
         } ?: emptyMap<LocalDate, Double>().also { Log.w(TAG, "daily $kind read timed out") }
@@ -211,7 +231,6 @@ object HealthConnectService {
         val groups = client.aggregateGroupByPeriod(
             AggregateGroupByPeriodRequest(setOf(metric), TimeRangeFilter.between(start, end), Period.ofDays(1))
         )
-        Log.d(TAG, "DEBUG aggregate ${metric} $start..$end groups=${groups.size} nonNull=${groups.count { it.result[metric] != null }}")
         return groups.mapNotNull { group -> group.result[metric]?.let { group.startTime.toLocalDate() to value(it) } }.toMap()
     }
 
