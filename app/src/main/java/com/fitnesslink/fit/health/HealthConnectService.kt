@@ -181,7 +181,7 @@ object HealthConnectService {
                     Daily.SLEEP_SECONDS -> sleepByNight(client, from, to, zone)
                 }
             }.onFailure { Log.w(TAG, "daily $kind read failed", it) }.getOrDefault(emptyMap())
-        } ?: emptyMap()
+        } ?: emptyMap<LocalDate, Double>().also { Log.w(TAG, "daily $kind read timed out") }
     }
 
     /** Most recent body-fat reading (percent, 0–100) at or before [before]. */
@@ -211,6 +211,7 @@ object HealthConnectService {
         val groups = client.aggregateGroupByPeriod(
             AggregateGroupByPeriodRequest(setOf(metric), TimeRangeFilter.between(start, end), Period.ofDays(1))
         )
+        Log.d(TAG, "DEBUG aggregate ${metric} $start..$end groups=${groups.size} nonNull=${groups.count { it.result[metric] != null }}")
         return groups.mapNotNull { group -> group.result[metric]?.let { group.startTime.toLocalDate() to value(it) } }.toMap()
     }
 
