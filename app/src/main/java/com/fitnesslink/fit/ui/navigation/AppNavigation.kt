@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,6 +31,7 @@ import com.fitnesslink.fit.R
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fitnesslink.fit.ui.auth.LoginScreen
@@ -179,6 +181,9 @@ fun AuthNavigation(onLogin: (Boolean) -> Unit) {
 fun MainTabNavigation(onLogout: () -> Unit = {}) {
     val navController = rememberNavController()
     var selectedTab by rememberSaveable { mutableStateOf(0) }
+    // Workout sessions run full screen, as on iOS (`.toolbar(.hidden, for: .tabBar)`).
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val hideTabBar = currentRoute in fullScreenRoutes
     val context = LocalContext.current
 
     // Tab order matches iOS: Home, Catalog, Calendar, Nutrition, Progress.
@@ -191,6 +196,13 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
         BottomNavItem(AppRouter.NUTRITION_TAB, "Nutrition", R.drawable.nutrition, R.drawable.nutrition),
         BottomNavItem(AppRouter.PROGRESS_TAB, "Progress", R.drawable.progressselected, R.drawable.progressicon)
     )
+
+    // Keep the highlight in step when code (not a tab tap) lands on a tab
+    // root, e.g. discarding a session returns to Home.
+    LaunchedEffect(currentRoute) {
+        val index = bottomNavItems.indexOfFirst { it.route == currentRoute }
+        if (index >= 0) selectedTab = index
+    }
 
     fun selectTab(route: String) {
         val index = bottomNavItems.indexOfFirst { it.route == route }
@@ -248,7 +260,7 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
     CompositionLocalProvider(LocalLogoutAction provides onLogout) {
     Scaffold(
         bottomBar = {
-            NavigationBar(containerColor = White) {
+            if (!hideTabBar) NavigationBar(containerColor = White) {
                 bottomNavItems.forEachIndexed { index, item ->
                     NavigationBarItem(
                         icon = {
@@ -278,7 +290,9 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
         NavHost(
             navController = navController,
             startDestination = AppRouter.HOME_TAB,
-            modifier = Modifier.padding(innerPadding)
+            // Consume what the Scaffold already padded, so a screen's own
+            // statusBarsPadding() doesn't add the status bar a second time.
+            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
         ) {
             composable(AppRouter.HOME_TAB) {
                 HomeScreen(
@@ -675,3 +689,11 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
     }
     }
 }
+
+/** Routes that hide the tab bar: the Playlist and Interactive players and Quick Start. */
+private val fullScreenRoutes = setOf(
+    "playlistSession/{workoutId}",
+    "interactiveSession/{workoutId}",
+    QuickStartRoutes.QUICK_START,
+    QuickStartRoutes.CANVAS
+)

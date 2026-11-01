@@ -298,9 +298,9 @@ fun WorkoutDetailScreen(
                         .height(100.dp)
                         .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.5f), Color.Transparent)))
                 )
-                BackCircleButton(onClick = onBack, modifier = Modifier.padding(top = 60.dp, start = 20.dp))
+                BackCircleButton(onClick = onBack, modifier = Modifier.padding(top = 12.dp, start = 20.dp))
                 Row(
-                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 60.dp, end = 20.dp),
+                    modifier = Modifier.align(Alignment.TopEnd).padding(top = 12.dp, end = 20.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
