@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -106,12 +107,19 @@ fun PlaylistScreen(
     var videoTask by remember { mutableStateOf<WorkoutTask?>(null) }
     var infoTask by remember { mutableStateOf<WorkoutTask?>(null) }
     var highlightInteractive by remember { mutableStateOf(false) }
+    // iOS `didAutoOpen`: resuming into Interactive happens only on the first
+    // open. Saveable because this screen is rebuilt whenever Interactive's
+    // "Playlist" button pops back here; by then the session's last mode is
+    // Interactive, and re-running the auto-open would bounce straight back.
+    var didAutoOpen by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(workoutId) {
         AudioCueService.attach(context)
         SessionSettings.attach(context)
         viewModel.loadData(workoutId, programId)
-        if (viewModel.shouldReopenInteractive) {
+        val firstOpen = !didAutoOpen
+        didAutoOpen = true
+        if (viewModel.shouldReopenInteractive && firstOpen) {
             viewModel.shouldReopenInteractive = false
             delay(50)
             onNavigateToInteractive(workoutId)
