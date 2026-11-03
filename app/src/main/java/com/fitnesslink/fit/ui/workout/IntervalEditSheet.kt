@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -42,13 +43,8 @@ import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.RestType
 import com.fitnesslink.fit.model.TaskRow
 import com.fitnesslink.fit.model.WorkoutTask
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutEditorViewModel
 import java.util.Locale
 
@@ -78,7 +74,7 @@ fun IntervalEditSheet(row: TaskRow, viewModel: WorkoutEditorViewModel, onDismiss
             onDismissRequest = { showModeChangeConfirm = false },
             title = { Text("Change interval style?") },
             text = { Text("Switching styles will reset Work, Rest, Rounds, and Window to the new style's defaults.") },
-            confirmButton = { TextButton(onClick = { showModeChangeConfirm = false; showModePicker = true }) { Text("Continue", color = Color.Red) } },
+            confirmButton = { TextButton(onClick = { showModeChangeConfirm = false; showModePicker = true }) { Text("Continue", color = FLTheme.colors.danger) } },
             dismissButton = { TextButton(onClick = { showModeChangeConfirm = false }) { Text("Cancel") } }
         )
     }
@@ -102,7 +98,7 @@ fun IntervalEditSheet(row: TaskRow, viewModel: WorkoutEditorViewModel, onDismiss
         )
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.background, contentColor = FLTheme.colors.textPrimary) {
         Column(
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -117,9 +113,9 @@ fun IntervalEditSheet(row: TaskRow, viewModel: WorkoutEditorViewModel, onDismiss
                 if (metrics != null) {
                     Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(metrics.totalText, fontSize = 34.sp, fontWeight = FontWeight.Bold)
-                        Text("Total Time", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor, modifier = Modifier.padding(bottom = 6.dp))
+                        Text("Total Time", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(bottom = 6.dp))
                     }
-                    metrics.summaryLines.dropLast(1).forEach { Text(it, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor) }
+                    metrics.summaryLines.dropLast(1).forEach { Text(it, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary) }
                 }
             }
 
@@ -129,16 +125,16 @@ fun IntervalEditSheet(row: TaskRow, viewModel: WorkoutEditorViewModel, onDismiss
                         LabeledStepper("Work", plan.workSeconds, 5, 300, 5, "s") { viewModel.updateIntervalWork(taskId, it) }
                         LabeledStepper("Rest", plan.restSeconds, 0, 300, 5, "s") { viewModel.updateIntervalRest(taskId, it) }
                         LabeledStepper("Rounds per Set", plan.roundsPerSet, 1, 30, 1, "") { viewModel.updateGroupRounds(taskId, it) }
-                        Text("Per set: ${IntervalMath.formatTime(IntervalMath.setSeconds(plan))}", fontSize = 11.sp, color = TextSecondaryColor)
+                        Text("Per set: ${IntervalMath.formatTime(IntervalMath.setSeconds(plan))}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     }
                     IntervalMode.EMOM -> {
                         LabeledStepper("Minutes", maxOf(1, windowSeconds / 60), 1, 30, 1, " min") { viewModel.updateIntervalWindow(taskId, it * 60) }
                         LabeledStepper("Work / min", minOf(plan.workSeconds, 55), 5, 55, 5, "s") { viewModel.updateIntervalWork(taskId, it) }
-                        Text("Rest: ${60 - minOf(plan.workSeconds, 55)}s implicit · Per set: ${IntervalMath.formatTime(IntervalMath.setSeconds(plan))}", fontSize = 11.sp, color = TextSecondaryColor)
+                        Text("Rest: ${60 - minOf(plan.workSeconds, 55)}s implicit · Per set: ${IntervalMath.formatTime(IntervalMath.setSeconds(plan))}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     }
                     IntervalMode.AMRAP -> {
                         LabeledStepper("Window", maxOf(1, windowSeconds / 60), 1, 30, 1, " min") { viewModel.updateIntervalWindow(taskId, it * 60) }
-                        Text("As many rounds as possible in ${IntervalMath.formatTime(windowSeconds)}. Tap +1 mid-workout.", fontSize = 11.sp, color = TextSecondaryColor)
+                        Text("As many rounds as possible in ${IntervalMath.formatTime(windowSeconds)}. Tap +1 mid-workout.", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }
@@ -155,7 +151,7 @@ fun IntervalEditSheet(row: TaskRow, viewModel: WorkoutEditorViewModel, onDismiss
                                     IntervalMath.formatTime(lead.effectiveIntervalSetRestSeconds ?: IntervalMath.defaultSetRestSeconds),
                                     fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary
                                 )
-                                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
+                                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
@@ -169,12 +165,12 @@ fun IntervalEditSheet(row: TaskRow, viewModel: WorkoutEditorViewModel, onDismiss
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).clickable { showModeChangeConfirm = true }.padding(14.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).clickable { showModeChangeConfirm = true }.padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(Icons.Filled.Sync, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
                 Text("Change interval style…", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary, modifier = Modifier.weight(1f))
-                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
+                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
             }
         }
     }
@@ -183,10 +179,10 @@ fun IntervalEditSheet(row: TaskRow, viewModel: WorkoutEditorViewModel, onDismiss
 @Composable
 private fun SectionCard(title: String, content: @Composable () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(title.uppercase(Locale.US), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondaryColor)
+        Text(title.uppercase(Locale.US), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textSecondary)
         content()
     }
 }
@@ -208,50 +204,50 @@ private fun ActiveRecoverySection(row: TaskRow, viewModel: WorkoutEditorViewMode
     val inGroup = (listOf(lead) + row.advancedTasks).filter { !it.movementId.isNullOrEmpty() }
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(BackgroundColor)) {
+        Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.background)) {
             SegmentPill("Passive", restType == RestType.PASSIVE, Modifier.weight(1f)) { viewModel.updateRestType(taskId, RestType.PASSIVE) }
             SegmentPill("Active", restType == RestType.ACTIVE_RECOVERY, Modifier.weight(1f)) { viewModel.updateRestType(taskId, RestType.ACTIVE_RECOVERY) }
         }
         Text(
             if (restType == RestType.PASSIVE) "Stop and recover between rounds." else "Keep moving lightly between rounds — walk, jog, or mobility work.",
-            fontSize = 11.sp, color = TextSecondaryColor
+            fontSize = 11.sp, color = FLTheme.colors.textSecondary
         )
         if (restType == RestType.ACTIVE_RECOVERY) {
             if (lead.restMovementId != null) {
                 Row(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(BackgroundColor).padding(horizontal = 12.dp, vertical = 8.dp),
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.background).padding(horizontal = 12.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     RecoveryThumbnail(lead.restMovementThumbnailId, 40)
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Recovery Exercise", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-                        Text(lead.restMovementName ?: "Recovery", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 1)
+                        Text("Recovery Exercise", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
+                        Text(lead.restMovementName ?: "Recovery", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 1)
                     }
                     Text("Edit", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary, modifier = Modifier.clickable { viewModel.restMovementPickerTaskId = taskId })
-                    Text("Remove", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = Color.Red, modifier = Modifier.clickable { viewModel.clearRestMovement(taskId) })
+                    Text("Remove", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.danger, modifier = Modifier.clickable { viewModel.clearRestMovement(taskId) })
                 }
             } else {
                 Row(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(BackgroundColor)
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.background)
                         .clickable { viewModel.restMovementPickerTaskId = taskId }.padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Recovery Exercise", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+                    Text("Recovery Exercise", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
                     Text("+ Add Exercise", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
                 }
             }
             if (inGroup.isNotEmpty()) {
-                Text("Or use one of these", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                Text("Or use one of these", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                 Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     inGroup.forEach { mvt ->
                         val selected = lead.restMovementId == mvt.movementId
                         Row(
-                            modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (selected) FLPrimary else BackgroundColor)
+                            modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(if (selected) FLPrimary else FLTheme.colors.background)
                                 .clickable { viewModel.updateRestMovementFromInGroupTask(taskId, mvt) }.padding(horizontal = 10.dp, vertical = 6.dp),
                             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            if (selected) Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = White, modifier = Modifier.size(12.dp))
-                            Text(mvt.name, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (selected) White else TextPrimaryColor, maxLines = 1)
+                            if (selected) Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(12.dp))
+                            Text(mvt.name, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary, maxLines = 1)
                         }
                     }
                 }

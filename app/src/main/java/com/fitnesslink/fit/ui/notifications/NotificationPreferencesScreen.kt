@@ -40,12 +40,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.NotificationType
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.NotificationPreferencesViewModel
 
 /**
@@ -57,7 +53,7 @@ fun NotificationPreferencesScreen(onBack: () -> Unit, onNavigate: (String) -> Un
     val viewModel: NotificationPreferencesViewModel = viewModel()
     LaunchedEffect(Unit) { viewModel.loadData() }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier
@@ -66,11 +62,11 @@ fun NotificationPreferencesScreen(onBack: () -> Unit, onNavigate: (String) -> Un
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Notification Preferences", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(top = 8.dp))
+            Text("Notification Preferences", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(top = 8.dp))
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Categories", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-                Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White)) {
+                Text("Categories", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
+                Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface)) {
                     NotificationType.entries.forEachIndexed { index, type ->
                         CategoryRow(
                             type = type,
@@ -78,26 +74,26 @@ fun NotificationPreferencesScreen(onBack: () -> Unit, onNavigate: (String) -> Un
                             onChange = { viewModel.setEnabled(type, it) }
                         )
                         if (index != NotificationType.entries.lastIndex) {
-                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(1.dp).background(TextSecondaryColor.copy(alpha = 0.1f)))
+                            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(1.dp).background(FLTheme.colors.textSecondary.copy(alpha = 0.1f)))
                         }
                     }
                 }
                 viewModel.saveErrorMessage?.let {
-                    Text(it, fontSize = 12.sp, color = Color.Red, modifier = Modifier.padding(horizontal = 4.dp))
+                    Text(it, fontSize = 12.sp, color = FLTheme.colors.danger, modifier = Modifier.padding(horizontal = 4.dp))
                 }
                 Text(
                     "Turning a category off stops those notifications entirely — in the inbox and as push alerts.",
-                    fontSize = 11.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 4.dp)
+                    fontSize = 11.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 4.dp)
                 )
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Goal Reminders", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                Text("Goal Reminders", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(12.dp))
-                        .background(White)
+                        .background(FLTheme.colors.surface)
                         .clickable { onNavigate("notificationSettings") }
                         .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -105,10 +101,10 @@ fun NotificationPreferencesScreen(onBack: () -> Unit, onNavigate: (String) -> Un
                     Icon(Icons.Default.Tune, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Reminder Settings", fontSize = 15.sp, color = TextPrimaryColor)
-                        Text("Coaching tone, habit reminders, and daily limits", fontSize = 11.sp, color = TextSecondaryColor)
+                        Text("Reminder Settings", fontSize = 15.sp, color = FLTheme.colors.textPrimary)
+                        Text("Coaching tone, habit reminders, and daily limits", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     }
-                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
                 }
             }
             Spacer(modifier = Modifier.height(16.dp))
@@ -133,13 +129,13 @@ private fun CategoryRow(type: NotificationType, checked: Boolean, onChange: (Boo
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(type.label, fontSize = 15.sp, color = TextPrimaryColor)
-            Text(categoryDescription(type), fontSize = 11.sp, color = TextSecondaryColor)
+            Text(type.label, fontSize = 15.sp, color = FLTheme.colors.textPrimary)
+            Text(categoryDescription(type), fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
         Switch(
             checked = checked,
             onCheckedChange = onChange,
-            colors = SwitchDefaults.colors(checkedTrackColor = FLPrimary, checkedThumbColor = White)
+            colors = SwitchDefaults.colors(checkedTrackColor = FLPrimary, checkedThumbColor = FLTheme.colors.onBrand)
         )
     }
 }

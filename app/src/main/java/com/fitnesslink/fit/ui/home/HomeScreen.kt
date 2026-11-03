@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +36,6 @@ import com.fitnesslink.fit.ui.components.HeaderView
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.programs.MyProgramHomeCard
 import com.fitnesslink.fit.ui.session.ResumeSessionBanner
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.viewmodel.HomeViewModel
 import com.fitnesslink.fit.viewmodel.WeeklyWorkoutGoalPrefs
@@ -83,7 +83,7 @@ fun HomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderView(onNotificationsTap = onNavigateToNotifications)
 

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.quickstart
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -65,15 +66,9 @@ import com.fitnesslink.fit.session.MovementHistoryStore
 import com.fitnesslink.fit.session.QuickStartPlan
 import com.fitnesslink.fit.session.SessionExerciseNote
 import com.fitnesslink.fit.ui.components.FLImageView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.DisabledButton
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * The universal Exercise Logging Page (Quick Start PRD §27–36): one
@@ -175,21 +170,21 @@ fun ExerciseLogSheet(
         if (editingSetNumber == set.setNumber) beginNewSet()
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.background, contentColor = FLTheme.colors.textPrimary) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("Log $unit", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+            Text("Log $unit", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
 
             // Header (PRD §28)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
                 val thumb = (task.movementThumbnailId ?: task.movementImageId)?.let { MediaRef.MovementThumbnail(it) }
-                Box(Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)).background(ImagePlaceholder)) { if (thumb != null) FLImageView(ref = thumb, modifier = Modifier.size(64.dp)) }
+                Box(Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.imagePlaceholder)) { if (thumb != null) FLImageView(ref = thumb, modifier = Modifier.size(64.dp)) }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(task.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, maxLines = 2)
+                    Text(task.name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, maxLines = 2)
                     programmed?.let { Text(it, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = PurpleTheme) }
                     if (anatomyNames.isNotEmpty()) {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             anatomyNames.take(3).forEach { name ->
-                                Text(name, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor, modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(White).padding(horizontal = 8.dp, vertical = 3.dp))
+                                Text(name, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary, modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.surface).padding(horizontal = 8.dp, vertical = 3.dp))
                             }
                         }
                     }
@@ -204,10 +199,10 @@ fun ExerciseLogSheet(
             }
 
             // Log New Set (PRD §22, §30–31)
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(editingSetNumber?.let { "Edit $unit $it" } ?: "Log New $unit", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                    if (editingSetNumber != null) Text("Cancel edit", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.clickable { beginNewSet() })
+                    Text(editingSetNumber?.let { "Edit $unit $it" } ?: "Log New $unit", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                    if (editingSetNumber != null) Text("Cancel edit", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary, modifier = Modifier.clickable { beginNewSet() })
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     LogField("Weight (${WeightUnit.current.label})", weightText, { weightText = it }, KeyboardType.Decimal, Modifier.weight(1f))
@@ -220,79 +215,79 @@ fun ExerciseLogSheet(
                     if (!showDistance) MetricToggle("Add distance", Icons.Filled.Route) { showDistance = true }
                     if (showDistance) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         DistanceUnit.entries.forEach { u ->
-                            Text(u.label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (distanceUnit == u) White else TextPrimaryColor,
-                                modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(if (distanceUnit == u) FLPrimary else BackgroundColor).clickable { distanceUnit = u }.padding(horizontal = 10.dp, vertical = 6.dp))
+                            Text(u.label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (distanceUnit == u) FLTheme.colors.onBrand else FLTheme.colors.textPrimary,
+                                modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(if (distanceUnit == u) FLPrimary else FLTheme.colors.background).clickable { distanceUnit = u }.padding(horizontal = 10.dp, vertical = 6.dp))
                         }
                     }
                 }
                 Text(
-                    editingSetNumber?.let { "Update $unit $it" } ?: "Save $unit", color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (canSave) PurpleTheme else DisabledButton).clickable(enabled = canSave) { saveSet() }.padding(vertical = 14.dp)
+                    editingSetNumber?.let { "Update $unit $it" } ?: "Save $unit", color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (canSave) PurpleTheme else FLTheme.colors.disabled).clickable(enabled = canSave) { saveSet() }.padding(vertical = 14.dp)
                 )
             }
 
             // Logged sets (PRD §32–33)
             if (sets.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Logged ${unit}s", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White)) {
+                    Text("Logged ${unit}s", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface)) {
                         sets.forEachIndexed { index, set ->
                             var menu by remember(set.setNumber) { mutableStateOf(false) }
                             val editing = editingSetNumber == set.setNumber
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth().clickable { beginEditing(set) }.padding(horizontal = 12.dp, vertical = 10.dp)) {
-                                Box(Modifier.size(28.dp).clip(CircleShape).background(if (editing) PurpleTheme else BackgroundColor), contentAlignment = Alignment.Center) {
-                                    Text("${set.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (editing) White else TextPrimaryColor)
+                                Box(Modifier.size(28.dp).clip(CircleShape).background(if (editing) PurpleTheme else FLTheme.colors.background), contentAlignment = Alignment.Center) {
+                                    Text("${set.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = if (editing) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
                                 }
-                                Text(QuickStartPlan.setLine(set), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                                Text(QuickStartPlan.setLine(set), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                                 Box {
-                                    Icon(Icons.Filled.MoreHoriz, contentDescription = "$unit ${set.setNumber} options", tint = TextSecondaryColor, modifier = Modifier.size(24.dp).clickable { menu = true })
+                                    Icon(Icons.Filled.MoreHoriz, contentDescription = "$unit ${set.setNumber} options", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(24.dp).clickable { menu = true })
                                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                                         DropdownMenuItem(text = { Text("Edit") }, onClick = { menu = false; beginEditing(set) })
-                                        DropdownMenuItem(text = { Text("Delete", color = Color(0xFFE53935)) }, onClick = { menu = false; delete(set) })
+                                        DropdownMenuItem(text = { Text("Delete", color = FLTheme.colors.danger) }, onClick = { menu = false; delete(set) })
                                     }
                                 }
                             }
-                            if (index < sets.size - 1) HorizontalDivider(Modifier.padding(start = 52.dp), color = BackgroundColor)
+                            if (index < sets.size - 1) HorizontalDivider(Modifier.padding(start = 52.dp), color = FLTheme.colors.background)
                         }
                     }
                 }
             }
 
             // Training Log (PRD §34)
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(Icons.Filled.Description, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
-                    Text("Training Log", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                    Text("(optional)", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text("Training Log", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                    Text("(optional)", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
                 OutlinedTextField(value = trainingLog, onValueChange = { trainingLog = it }, minLines = 2, maxLines = 5,
                     placeholder = { Text("How did this exercise feel? What did you notice?") }, modifier = Modifier.fillMaxWidth())
             }
 
             // Exercise RPE (PRD §36)
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(14.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(Icons.Filled.BarChart, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
-                    Text("Exercise RPE", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                    Text("(Rate of Perceived Exertion)", fontSize = 11.sp, color = TextSecondaryColor, maxLines = 1)
+                    Text("Exercise RPE", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                    Text("(Rate of Perceived Exertion)", fontSize = 11.sp, color = FLTheme.colors.textSecondary, maxLines = 1)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     ExerciseRPE.range.forEach { value ->
                         val on = rpe == value
-                        Box(Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(8.dp)).background(if (on) PurpleTheme else BackgroundColor).clickable { rpe = if (on) null else value }, contentAlignment = Alignment.Center) {
-                            Text("$value", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (on) White else TextPrimaryColor)
+                        Box(Modifier.weight(1f).height(36.dp).clip(RoundedCornerShape(8.dp)).background(if (on) PurpleTheme else FLTheme.colors.background).clickable { rpe = if (on) null else value }, contentAlignment = Alignment.Center) {
+                            Text("$value", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (on) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
                         }
                     }
                 }
                 Row(Modifier.fillMaxWidth()) {
-                    Text("• ${ExerciseRPE.LOW_LABEL}", fontSize = 11.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
-                    Text("${ExerciseRPE.HIGH_LABEL} •", fontSize = 11.sp, color = TextSecondaryColor)
+                    Text("• ${ExerciseRPE.LOW_LABEL}", fontSize = 11.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
+                    Text("${ExerciseRPE.HIGH_LABEL} •", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                 }
             }
 
-            Text("Done", color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+            Text("Done", color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLPrimary).clickable { onSaveNote(rpe, trainingLog); onDismiss() }.padding(vertical = 15.dp))
-            Text("Cancel", color = TextSecondaryColor, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().clickable { onDismiss() }.padding(vertical = 8.dp))
+            Text("Cancel", color = FLTheme.colors.textSecondary, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().clickable { onDismiss() }.padding(vertical = 8.dp))
             Spacer(Modifier.height(8.dp))
         }
     }
@@ -300,12 +295,12 @@ fun ExerciseLogSheet(
 
 @Composable
 private fun HistoryTile(title: String, icon: ImageVector, color: Color, value: String, caption: String?, modifier: Modifier) {
-    Column(modifier.clip(RoundedCornerShape(10.dp)).background(White).padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+    Column(modifier.clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.surface).padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(12.dp))
-            Text(title, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, maxLines = 1)
+            Text(title, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary, maxLines = 1)
         }
-        Text(value, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, maxLines = 1)
+        Text(value, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, maxLines = 1)
         caption?.let { Text(it, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = PurpleTheme, modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(PurpleTheme.copy(alpha = 0.12f)).padding(horizontal = 6.dp, vertical = 2.dp)) }
     }
 }
@@ -313,7 +308,7 @@ private fun HistoryTile(title: String, icon: ImageVector, color: Color, value: S
 @Composable
 private fun LogField(label: String, value: String, onChange: (String) -> Unit, keyboard: KeyboardType, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, maxLines = 1)
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary, maxLines = 1)
         OutlinedTextField(value = value, onValueChange = onChange, singleLine = true, placeholder = { Text("0", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
             keyboardOptions = KeyboardOptions(keyboardType = keyboard), modifier = Modifier.fillMaxWidth())
     }

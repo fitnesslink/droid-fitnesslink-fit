@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,10 +34,6 @@ import com.fitnesslink.fit.model.ProgramSnapshot
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ProgressBG
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 // Port of iOS `ProgramProgressView.swift`'s shared pieces: the segmented /
 // continuous progress track, the labelled progress row and the hero image,
@@ -53,12 +50,12 @@ fun ProgramProgressBar(filled: Int, total: Int, modifier: Modifier = Modifier, t
                         .weight(1f)
                         .fillMaxHeight()
                         .clip(CircleShape)
-                        .background(if (index < filled) tint else ProgressBG)
+                        .background(if (index < filled) tint else FLTheme.colors.progressTrack)
                 )
             }
         }
     } else {
-        BoxWithConstraints(modifier = modifier.fillMaxWidth().height(height).clip(CircleShape).background(ProgressBG)) {
+        BoxWithConstraints(modifier = modifier.fillMaxWidth().height(height).clip(CircleShape).background(FLTheme.colors.progressTrack)) {
             val fraction = if (total > 0) (filled.toFloat() / total).coerceIn(0f, 1f) else 0f
             Box(modifier = Modifier.width(maxWidth * fraction).fillMaxHeight().clip(CircleShape).background(tint))
         }
@@ -78,9 +75,9 @@ fun ProgramProgressRow(
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
-            Text(caption, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(caption, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             ProgramProgressBar(filled = filled, total = total, tint = tint, modifier = Modifier.weight(1f))
@@ -88,7 +85,7 @@ fun ProgramProgressRow(
                 "$percent%",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimaryColor,
+                color = FLTheme.colors.textPrimary,
                 textAlign = TextAlign.End,
                 modifier = Modifier.widthIn(min = 38.dp)
             )
@@ -110,12 +107,12 @@ fun ProgramHeroView(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f))))
+                .background(Brush.verticalGradient(colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)))) // theme-exempt: over media
         )
         Column(modifier = Modifier.align(Alignment.BottomStart).padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = White, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(name, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 2, overflow = TextOverflow.Ellipsis) // theme-exempt: over media
             if (!subtitle.isNullOrEmpty()) {
-                Text(subtitle, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = White.copy(alpha = 0.9f))
+                Text(subtitle, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = Color.White.copy(alpha = 0.9f)) // theme-exempt: over media
             }
         }
     }

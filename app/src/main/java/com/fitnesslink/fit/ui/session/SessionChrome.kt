@@ -78,14 +78,17 @@ import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import java.util.Locale
 
 // Shared chrome for the interactive session (ports of SessionTopBar / SessionTransportBar /
 // SessionDockView / SessionInfoStrip pieces / WorkoutControlTopView / SessionCountdownRing /
 // SessionNoteCard / SessionStructureTag / UpNextLabel).
+//
+// theme-exempt: always-dark player. Everything here draws on the Interactive video / rest image,
+// which is dark in both modes (as on iOS), so its fixed white-on-black palette is intentional.
+// The themed exceptions are the Material menus (they follow the app theme), Badge's default
+// text colour (onBrand) and SessionNoteCard's `onLight` variant used by Playlist rows.
 
 /** One audio channel exposed in the top bar's long-press menu. */
 data class SessionAudioChannel(val id: String, val title: String, val isOn: Boolean, val toggle: () -> Unit)
@@ -111,8 +114,8 @@ fun SessionTopBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(5.dp)
             ) {
-                Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, tint = White, modifier = Modifier.size(14.dp))
-                Text("Playlist", color = White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.AutoMirrored.Filled.List, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                Text("Playlist", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
         }
         Spacer(Modifier.weight(1f))
@@ -120,8 +123,8 @@ fun SessionTopBar(
             modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(Color.Black.copy(alpha = 0.35f)).padding(horizontal = 14.dp, vertical = 5.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("WORKOUT", color = White.copy(alpha = 0.7f), fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
-            Text(timerText, color = White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, fontFamily = FontFamily.Monospace)
+            Text("WORKOUT", color = Color.White.copy(alpha = 0.7f), fontSize = 9.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
+            Text(timerText, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.SemiBold, fontFamily = FontFamily.Monospace)
         }
         Spacer(Modifier.weight(1f))
         Box {
@@ -130,7 +133,7 @@ fun SessionTopBar(
                     .combinedClickable(onClick = onToggleMute, onLongClick = { channelMenu = true }),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(if (isMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp, contentDescription = if (isMuted) "Unmute all audio" else "Mute all audio", tint = White, modifier = Modifier.size(18.dp))
+                Icon(if (isMuted) Icons.Filled.VolumeOff else Icons.Filled.VolumeUp, contentDescription = if (isMuted) "Unmute all audio" else "Mute all audio", tint = Color.White, modifier = Modifier.size(18.dp))
             }
             DropdownMenu(expanded = channelMenu, onDismissRequest = { channelMenu = false }) {
                 audioChannels.forEach { channel ->
@@ -147,11 +150,11 @@ fun SessionTopBar(
             Box(
                 modifier = Modifier.size(36.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.35f)).clickable { moreMenu = true },
                 contentAlignment = Alignment.Center
-            ) { Icon(Icons.Filled.MoreVert, contentDescription = "Session options", tint = White, modifier = Modifier.size(18.dp)) }
+            ) { Icon(Icons.Filled.MoreVert, contentDescription = "Session options", tint = Color.White, modifier = Modifier.size(18.dp)) }
             DropdownMenu(expanded = moreMenu, onDismissRequest = { moreMenu = false }) {
                 DropdownMenuItem(
-                    text = { Text("Discard Session", color = Color(0xFFE53935)) },
-                    leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = Color(0xFFE53935)) },
+                    text = { Text("Discard Session", color = sessionDestructive) },
+                    leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = sessionDestructive) },
                     onClick = { moreMenu = false; onDiscard() }
                 )
             }
@@ -166,8 +169,8 @@ fun PausedBadge(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(Icons.Filled.Pause, contentDescription = null, tint = White, modifier = Modifier.size(12.dp))
-        Text("PAUSED", color = White, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+        Icon(Icons.Filled.Pause, contentDescription = null, tint = Color.White, modifier = Modifier.size(12.dp))
+        Text("PAUSED", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
     }
 }
 
@@ -202,11 +205,11 @@ fun SessionTransportBar(
         }
         if (showSkipBlock) {
             Row(
-                modifier = Modifier.height(32.dp).clip(CircleShape).background(White.copy(alpha = 0.12f)).clickable { onSkipBlock() }.padding(horizontal = 14.dp),
+                modifier = Modifier.height(32.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.12f)).clickable { onSkipBlock() }.padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(Icons.Filled.SkipNext, contentDescription = null, tint = White.copy(alpha = 0.85f), modifier = Modifier.size(12.dp))
-                Text("Skip Block", color = White.copy(alpha = 0.85f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Filled.SkipNext, contentDescription = null, tint = Color.White.copy(alpha = 0.85f), modifier = Modifier.size(12.dp))
+                Text("Skip Block", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -220,8 +223,8 @@ private fun TransportButton(title: String, icon: ImageVector, modifier: Modifier
             .clickable(enabled = enabled) { onClick() },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center
     ) {
-        Icon(icon, contentDescription = title, tint = White.copy(alpha = if (enabled) 1f else 0.45f), modifier = Modifier.size(if (emphasis) 22.dp else 18.dp))
-        Text(title, color = White.copy(alpha = if (enabled) 1f else 0.45f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        Icon(icon, contentDescription = title, tint = Color.White.copy(alpha = if (enabled) 1f else 0.45f), modifier = Modifier.size(if (emphasis) 22.dp else 18.dp))
+        Text(title, color = Color.White.copy(alpha = if (enabled) 1f else 0.45f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
     }
 }
 
@@ -252,11 +255,11 @@ fun SessionDockView(
         }
         if (!hasUpNext) {
             Row(
-                modifier = Modifier.height(40.dp).clip(CircleShape).background(White.copy(alpha = 0.15f)).clickable { onFinish() }.padding(horizontal = 14.dp),
+                modifier = Modifier.height(40.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.15f)).clickable { onFinish() }.padding(horizontal = 14.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                Icon(Icons.Filled.Flag, contentDescription = null, tint = White, modifier = Modifier.size(14.dp))
-                Text("Finish", color = White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Filled.Flag, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
+                Text("Finish", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -265,12 +268,12 @@ fun SessionDockView(
 @Composable
 private fun DockCta(label: String, icon: ImageVector, modifier: Modifier, muted: Boolean = false, onClick: () -> Unit) {
     Row(
-        modifier = modifier.height(44.dp).clip(CircleShape).background(if (muted) White.copy(alpha = 0.15f) else FLPrimary).clickable { onClick() },
+        modifier = modifier.height(44.dp).clip(CircleShape).background(if (muted) Color.White.copy(alpha = 0.15f) else FLPrimary).clickable { onClick() },
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
     ) {
-        Icon(icon, contentDescription = null, tint = White, modifier = Modifier.size(14.dp))
+        Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp))
         Spacer(Modifier.width(8.dp))
-        Text(label, color = White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -284,7 +287,7 @@ fun WorkoutControlTopView(task: WorkoutTask, currentRound: Int) {
             // ellipsizes before the ROUND badge gives up any width.
             Badge(if (stored.isNotEmpty()) stored.uppercase(Locale.US) else if (task.isSuperset) "SUPERSET" else "CIRCUIT", if (task.isSuperset) PurpleTheme else OrangeTheme,
                 modifier = Modifier.weight(1f, fill = false))
-            Badge("ROUND $currentRound OF ${maxOf(task.rounds ?: task.totalRounds, 1)}", White.copy(alpha = 0.18f))
+            Badge("ROUND $currentRound OF ${maxOf(task.rounds ?: task.totalRounds, 1)}", Color.White.copy(alpha = 0.18f))
         } else if (task.isInterval) {
             Badge(task.intervalMode?.let { "INTERVAL · ${it.displayName.uppercase(Locale.US)}" } ?: "INTERVAL", BlueTheme)
         }
@@ -292,7 +295,7 @@ fun WorkoutControlTopView(task: WorkoutTask, currentRound: Int) {
 }
 
 @Composable
-fun Badge(text: String, color: Color, textColor: Color = White, modifier: Modifier = Modifier) {
+fun Badge(text: String, color: Color, textColor: Color = FLTheme.colors.onBrand, modifier: Modifier = Modifier) {
     Text(
         text, color = textColor, fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
         maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis,
@@ -304,8 +307,8 @@ fun Badge(text: String, color: Color, textColor: Color = White, modifier: Modifi
 @Composable
 fun SessionStructureTag(text: String, fill: Color?) {
     val base = Modifier.clip(CircleShape)
-    val styled = if (fill != null) base.background(fill) else base.border(1.dp, White.copy(alpha = 0.6f), CircleShape)
-    Text(text, color = White, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
+    val styled = if (fill != null) base.background(fill) else base.border(1.dp, Color.White.copy(alpha = 0.6f), CircleShape)
+    Text(text, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
         modifier = styled.padding(horizontal = 14.dp, vertical = 6.dp))
 }
 
@@ -323,10 +326,10 @@ fun SessionNoteCard(text: String?, label: String = "NOTES", maxLines: Int = 3, i
     val boxed = if (isBordered) modifier.clip(shape).background(fill).border(1.dp, FLPrimary.copy(alpha = 0.45f), shape).padding(horizontal = 12.dp, vertical = 10.dp) else modifier
     Row(modifier = boxed, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(Icons.Filled.Description, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
-        Box(Modifier.width(1.dp).height(28.dp).background(if (onLight) TextSecondaryColor.copy(alpha = 0.3f) else White.copy(alpha = 0.25f)))
+        Box(Modifier.width(1.dp).height(28.dp).background(if (onLight) FLTheme.colors.textSecondary.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.25f)))
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(label, color = FLPrimary, fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
-            Text(trimmed, color = if (onLight) TextPrimaryColor else White, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
+            Text(trimmed, color = if (onLight) FLTheme.colors.textPrimary else Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = maxLines, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -341,7 +344,7 @@ fun SessionCountdownRing(secondsRemaining: Int, totalSeconds: Int, caption: Stri
         Canvas(modifier = Modifier.size(diameter)) {
             drawCircle(Color.Black.copy(alpha = 0.35f))
             val stroke = 5.dp.toPx()
-            drawCircle(White.copy(alpha = 0.18f), radius = size.minDimension / 2 - stroke / 2, style = Stroke(stroke))
+            drawCircle(Color.White.copy(alpha = 0.18f), radius = size.minDimension / 2 - stroke / 2, style = Stroke(stroke))
             val inset = stroke / 2 + 2.5.dp.toPx()
             drawArc(
                 tint, startAngle = -90f, sweepAngle = 360f * fraction, useCenter = false,
@@ -350,8 +353,8 @@ fun SessionCountdownRing(secondsRemaining: Int, totalSeconds: Int, caption: Stri
             )
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.padding(horizontal = 18.dp)) {
-            Text(display, color = White, fontSize = 56.sp, fontWeight = FontWeight.Black, maxLines = 1)
-            Text(caption, color = White.copy(alpha = 0.75f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, textAlign = TextAlign.Center, maxLines = 2)
+            Text(display, color = Color.White, fontSize = 56.sp, fontWeight = FontWeight.Black, maxLines = 1)
+            Text(caption, color = Color.White.copy(alpha = 0.75f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, textAlign = TextAlign.Center, maxLines = 2)
         }
     }
 }
@@ -369,11 +372,11 @@ fun UpNextCard(descriptor: UpNextDescriptor, onTap: () -> Unit) {
             FLImageView(ref = descriptor.mediaId?.let { MediaRef.MovementThumbnail(it) }, modifier = Modifier.size(72.dp).scale(scale))
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text("UP NEXT", color = White.copy(alpha = 0.65f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
-            Text(descriptor.title, color = White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2)
-            descriptor.detail?.let { Text(it, color = White.copy(alpha = 0.85f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
+            Text("UP NEXT", color = Color.White.copy(alpha = 0.65f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
+            Text(descriptor.title, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2)
+            descriptor.detail?.let { Text(it, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
         }
-        Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
+        Icon(Icons.Filled.ArrowForward, contentDescription = null, tint = Color.White.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
     }
 }
 
@@ -382,8 +385,8 @@ fun UpNextCard(descriptor: UpNextDescriptor, onTap: () -> Unit) {
 @Suppress("UNUSED_PARAMETER")
 fun SetTimerLabel(text: String, countsDown: Boolean) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-        Icon(Icons.Filled.Timer, contentDescription = null, tint = White, modifier = Modifier.size(15.dp))
-        Text(text, color = White, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
+        Icon(Icons.Filled.Timer, contentDescription = null, tint = Color.White, modifier = Modifier.size(15.dp))
+        Text(text, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace)
     }
 }
 

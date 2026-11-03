@@ -69,18 +69,15 @@ import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
 import com.fitnesslink.fit.ui.navigation.NutritionCoreRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.NutritionViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
+import com.fitnesslink.fit.ui.theme.NutritionOverColor
 
 /**
  * The nutrition dashboard (iOS `NutritionDashboardView`, FTNSSLNK-193;
@@ -128,7 +125,7 @@ fun NutritionScreen(
     val dayKey = viewModel.selectedDayKey
     val dim = if (viewModel.isViewingFutureDay) 0.55f else 1f
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderView()
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 10.dp, bottom = 24.dp),
@@ -139,10 +136,10 @@ fun NutritionScreen(
                 CircleIconButton(Icons.Default.ChevronLeft, "Previous day") { viewModel.goToPreviousDay() }
                 Column(modifier = Modifier.clickable { showDatePicker = true }, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(NutritionDayTitle.title(viewModel.selectedDate) { weekdayFormat.format(it) }, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                        Text(NutritionDayTitle.title(viewModel.selectedDate) { weekdayFormat.format(it) }, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                         Icon(Icons.Default.CalendarMonth, contentDescription = "Pick a day", tint = FLPrimary, modifier = Modifier.size(16.dp))
                     }
-                    Text(dateFormat.format(viewModel.selectedDate), fontSize = 14.sp, color = TextSecondaryColor)
+                    Text(dateFormat.format(viewModel.selectedDate), fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 }
                 CircleIconButton(Icons.Default.ChevronRight, "Next day") { viewModel.goToNextDay() }
                 Spacer(modifier = Modifier.weight(1f))
@@ -176,7 +173,7 @@ fun NutritionScreen(
 
             // 5. Calorie ring
             Column(
-                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().alpha(dim).background(White, RoundedCornerShape(12.dp)).padding(20.dp),
+                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().alpha(dim).background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 CalorieRingView(
@@ -192,17 +189,17 @@ fun NutritionScreen(
                             "${if (over) -viewModel.remainingCalories else viewModel.remainingCalories}",
                             fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (over) NutritionOverColor else FLPrimary
                         )
-                        Text(if (over) "Over" else "Remaining", fontSize = 11.sp, color = TextSecondaryColor)
+                        Text(if (over) "Over" else "Remaining", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }
 
             // 6. Macro bars
             Column(
-                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().alpha(dim).background(White, RoundedCornerShape(12.dp)).padding(16.dp),
+                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().alpha(dim).background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Macros", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Macros", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 MacroBarView("Protein", viewModel.proteinLine, BlueTheme)
                 MacroBarView("Fat", viewModel.fatLine, OrangeTheme)
                 MacroBarView("Carbs", viewModel.carbsLine, PurpleTheme)
@@ -242,17 +239,17 @@ fun NutritionScreen(
             // Day-one nudge
             if (viewModel.isViewingToday && viewModel.entries.isEmpty() && viewModel.waterTotalDisplay == 0.0) {
                 Row(
-                    modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(14.dp),
+                    modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Icon(Icons.Default.Restaurant, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))
-                    Text("Nothing logged yet — add your first food or water and your day fills in here.", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text("Nothing logged yet — add your first food or water and your day fills in here.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
             }
 
             // 10. Logged meals
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text("Meals", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+                Text("Meals", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp))
                 viewModel.quickLogError?.let { error ->
                     Row(modifier = Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = OrangeTheme, modifier = Modifier.size(14.dp))
@@ -284,7 +281,7 @@ fun NutritionScreen(
             // 11. Planned meals
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Planned Meals", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                    Text("Planned Meals", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     Spacer(modifier = Modifier.weight(1f))
                     Row(modifier = Modifier.clickable { onNavigate("mealPlan") }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text("Planner", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
@@ -298,19 +295,19 @@ fun NutritionScreen(
                         modifier = Modifier.padding(horizontal = 20.dp)
                     ) { onNavigate("mealPlan") }
                 } else {
-                    Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+                    Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                         viewModel.plannedSlots.forEachIndexed { index, slot ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().clickable { onNavigate("mealSlotDetail/${slot.id}") }.padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                    Text(slot.recipeName.ifEmpty { slot.mealType.displayName }, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                                    Text(slot.mealType.displayName, fontSize = 12.sp, color = TextSecondaryColor)
+                                    Text(slot.recipeName.ifEmpty { slot.mealType.displayName }, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                                    Text(slot.mealType.displayName, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                                 }
-                                Text("${slot.calories} cal", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                                Text("${slot.calories} cal", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                                 Spacer(modifier = Modifier.width(6.dp))
-                                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(14.dp))
+                                Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp))
                             }
                             if (index < viewModel.plannedSlots.size - 1) SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
                         }
@@ -348,7 +345,7 @@ fun NutritionScreen(
 
 @Composable
 private fun CircleIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
-    Box(modifier = Modifier.size(32.dp).background(White, CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(modifier = Modifier.size(32.dp).background(FLTheme.colors.surface, CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
         Icon(icon, contentDescription = description, tint = FLPrimary, modifier = Modifier.size(20.dp))
     }
 }
@@ -368,36 +365,36 @@ private fun ContextBanner(icon: ImageVector, text: String, onToday: () -> Unit) 
 @Composable
 private fun RingStat(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-        Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+        Text(label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
 @Composable
 private fun QuickAction(icon: ImageVector, title: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Column(
-        modifier = modifier.background(White, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 14.dp),
+        modifier = modifier.background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Icon(icon, contentDescription = title, tint = FLPrimary, modifier = Modifier.size(22.dp))
-        Text(title, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+        Text(title, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
     }
 }
 
 @Composable
 private fun TileRow(icon: ImageVector, iconColor: Color, title: String, subtitle: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Row(
-        modifier = modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(14.dp),
+        modifier = modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(modifier = Modifier.size(40.dp).background(iconColor.copy(alpha = 0.12f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = null, tint = iconColor, modifier = Modifier.size(22.dp))
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text(subtitle, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text(subtitle, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
     }
 }
 
@@ -405,7 +402,7 @@ private fun TileRow(icon: ImageVector, iconColor: Color, title: String, subtitle
 @Composable
 private fun GoalsTile(targets: NutritionTargets, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Row(
-        modifier = modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(14.dp),
+        modifier = modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(modifier = Modifier.size(40.dp).background(OrangeTheme.copy(alpha = 0.12f), RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
@@ -413,27 +410,27 @@ private fun GoalsTile(targets: NutritionTargets, modifier: Modifier = Modifier, 
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Goals", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Goals", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 ProvenanceBadge(isManual = targets.isManualOverride, fontSize = 10)
             }
             Text(
                 "${Math.round(targets.dailyCalorieTarget)} cal · P ${Math.round(targets.proteinGrams)}g · C ${Math.round(targets.carbGrams)}g · F ${Math.round(targets.fatGrams)}g",
-                fontSize = 12.sp, color = TextSecondaryColor
+                fontSize = 12.sp, color = FLTheme.colors.textSecondary
             )
         }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
     }
 }
 
 @Composable
 private fun Shortcut(title: String, modifier: Modifier = Modifier, icon: ImageVector? = null, painterRes: Int? = null, onClick: () -> Unit) {
     Row(
-        modifier = modifier.background(White, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp),
+        modifier = modifier.background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
     ) {
         if (icon != null) Icon(icon, contentDescription = title, tint = FLPrimary, modifier = Modifier.size(16.dp))
         else if (painterRes != null) Image(painter = painterResource(painterRes), contentDescription = title, modifier = Modifier.size(16.dp))
         Spacer(modifier = Modifier.width(6.dp))
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
     }
 }

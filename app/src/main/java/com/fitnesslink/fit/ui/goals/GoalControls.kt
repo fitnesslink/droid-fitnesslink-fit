@@ -1,5 +1,7 @@
 package com.fitnesslink.fit.ui.goals
 
+import com.fitnesslink.fit.ui.theme.FLTheme
+import com.fitnesslink.fit.ui.theme.OrangeTheme
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -85,7 +87,6 @@ import com.fitnesslink.fit.goals.GoalAction
 import com.fitnesslink.fit.model.GoalSubtype
 import com.fitnesslink.fit.model.GoalType
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.viewmodel.GoalSetupViewModel
 import java.time.Instant
 import java.time.LocalDate
@@ -93,13 +94,14 @@ import java.time.LocalTime
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import com.fitnesslink.fit.ui.theme.WarningAmber
 
 // Shared controls for the Goals PRD screens (iOS `GoalPrimaryButton`,
 // `GoalOptionCard`, `GoalCard`, `GoalNumberField`, `GoalNote`,
 // `WeekdayPicker` in GoalSetupFlowView.swift) plus Android stand-ins for
 // SwiftUI's segmented Picker, Stepper, Toggle and DatePicker rows.
 
-val GoalWarning = Color(0xFFF59E0B)
+val GoalWarning = WarningAmber
 
 @Composable
 fun goalSurface(): Color = MaterialTheme.colorScheme.surface
@@ -155,10 +157,10 @@ fun GoalPrimaryButton(title: String, enabled: Boolean = true, icon: ImageVector?
             .padding(vertical = 15.dp)
     ) {
         if (icon != null) {
-            Icon(icon, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
+            Icon(icon, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
         }
-        Text(title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+        Text(title, color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -223,7 +225,7 @@ fun GoalOptionCard(
         Icon(
             if (isSelected) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
             contentDescription = null,
-            tint = if (isSelected) FLPrimary else MediumGray,
+            tint = if (isSelected) FLPrimary else FLTheme.colors.textTertiary,
             modifier = Modifier.size(20.dp)
         )
     }
@@ -257,7 +259,7 @@ fun GoalNumberField(label: String, text: String, onChange: (String) -> Unit, uni
             textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End),
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent, unfocusedContainerColor = Color.Transparent,
-                focusedIndicatorColor = FLPrimary, unfocusedIndicatorColor = MediumGray.copy(alpha = 0.4f)
+                focusedIndicatorColor = FLPrimary, unfocusedIndicatorColor = FLTheme.colors.textTertiary.copy(alpha = 0.4f)
             ),
             modifier = Modifier.widthIn(max = 130.dp).semantics { contentDescription = label }
         )
@@ -336,7 +338,7 @@ private fun StepperButton(icon: ImageVector, description: String, enabled: Boole
             .background(Color.Gray.copy(alpha = 0.15f))
             .clickable(enabled = enabled, onClick = onClick)
             .semantics { contentDescription = description }
-    ) { Icon(icon, contentDescription = null, tint = if (enabled) MaterialTheme.colorScheme.onSurface else MediumGray, modifier = Modifier.size(18.dp)) }
+    ) { Icon(icon, contentDescription = null, tint = if (enabled) MaterialTheme.colorScheme.onSurface else FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp)) }
 }
 
 @Composable
@@ -347,7 +349,7 @@ fun GoalToggle(label: String, checked: Boolean, onChange: (Boolean) -> Unit, sub
             if (subtitle != null) Text(subtitle, fontSize = 12.sp, color = goalSecondaryText())
         }
         Switch(checked = checked, onCheckedChange = onChange,
-            colors = SwitchDefaults.colors(checkedTrackColor = FLPrimary, checkedThumbColor = Color.White))
+            colors = SwitchDefaults.colors(checkedTrackColor = FLPrimary, checkedThumbColor = FLTheme.colors.onBrand))
     }
 }
 
@@ -369,7 +371,7 @@ fun WeekdayPicker(selection: List<Int>, onToggle: (Int) -> Unit) {
                     .semantics { contentDescription = name; selected = on }
             ) {
                 Text(name.take(1), fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
-                    color = if (on) Color.White else MaterialTheme.colorScheme.onSurface)
+                    color = if (on) FLTheme.colors.onBrand else MaterialTheme.colorScheme.onSurface)
             }
         }
     }
@@ -388,7 +390,7 @@ fun GoalChip(label: String, selected: Boolean = false, modifier: Modifier = Modi
             .semantics { this.selected = selected }
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface)
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (selected) FLTheme.colors.onBrand else MaterialTheme.colorScheme.onSurface)
     }
 }
 

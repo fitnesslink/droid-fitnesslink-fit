@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.movements
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,9 +38,6 @@ import com.fitnesslink.fit.model.api.MovementStep
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * Renders a movement's plain-text summary plus its typed, ordered sections
@@ -55,7 +53,7 @@ fun MovementContentView(
     if (summary.isNullOrBlank() && sections.isEmpty()) return
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (!summary.isNullOrBlank()) {
-            Text(summary, fontSize = 15.sp, color = TextPrimaryColor)
+            Text(summary, fontSize = 15.sp, color = FLTheme.colors.textPrimary)
         }
         sections.sortedBy { it.ordinal }.forEach { section ->
             MovementSectionCard(section)
@@ -81,7 +79,7 @@ private fun MovementSectionCard(section: MovementSection) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(16.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -95,7 +93,7 @@ private fun MovementSectionCard(section: MovementSection) {
             ) {
                 Icon(style.icon, contentDescription = null, tint = style.tint, modifier = Modifier.size(14.dp))
             }
-            Text(section.type, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text(section.type, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
         }
         when (section.type.lowercase()) {
             "breathe" -> BreatheSectionBody(steps, section.note, style.tint)
@@ -121,9 +119,9 @@ private fun NumberedStepsBody(steps: List<MovementStep>, note: String?, tint: Co
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     if (!step.label.isNullOrEmpty()) {
-                        Text(step.label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                        Text(step.label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                     }
-                    Text(step.text, fontSize = 14.sp, color = TextPrimaryColor)
+                    Text(step.text, fontSize = 14.sp, color = FLTheme.colors.textPrimary)
                 }
             }
         }
@@ -153,7 +151,7 @@ private fun BreatheSectionBody(steps: List<MovementStep>, note: String?, tint: C
                             Text(step.label.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = tint)
                         }
                     }
-                    Text(step.text, fontSize = 13.sp, color = TextPrimaryColor)
+                    Text(step.text, fontSize = 13.sp, color = FLTheme.colors.textPrimary)
                 }
             }
         }
@@ -167,7 +165,7 @@ private fun TipsSectionBody(steps: List<MovementStep>, tint: Color) {
         steps.forEach { step ->
             Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Default.CheckCircle, contentDescription = null, tint = tint, modifier = Modifier.size(16.dp))
-                Text(step.text, fontSize = 14.sp, color = TextPrimaryColor)
+                Text(step.text, fontSize = 14.sp, color = FLTheme.colors.textPrimary)
             }
         }
     }
@@ -185,7 +183,7 @@ private fun SectionNote(text: String, tint: Color) {
     ) {
         Icon(Icons.Default.Info, contentDescription = null, tint = tint, modifier = Modifier.size(14.dp))
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text, fontSize = 13.sp, color = TextSecondaryColor)
+        Text(text, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }
 

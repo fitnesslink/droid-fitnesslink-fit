@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -89,12 +90,7 @@ import com.fitnesslink.fit.ui.components.TimeInfoView
 import com.fitnesslink.fit.ui.components.TrainingLevelInfoView
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.navigation.ProgramRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.ContentTagChip
 import com.fitnesslink.fit.ui.workout.ContentTagKind
 import com.fitnesslink.fit.ui.workout.ContentTagNames
@@ -221,7 +217,7 @@ fun MyProgramScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         // Top bar
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
@@ -229,12 +225,12 @@ fun MyProgramScreen(
         ) {
             BackCircleButton(onClick = onBack)
             Spacer(modifier = Modifier.weight(1f))
-            Text("My Program", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("My Program", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
             if (snapshot != null) {
                 Box {
                     IconButton(onClick = { showMenu = true }, modifier = Modifier.size(36.dp)) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Program options", tint = TextPrimaryColor)
+                        Icon(Icons.Default.MoreVert, contentDescription = "Program options", tint = FLTheme.colors.textPrimary)
                     }
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                         DropdownMenuItem(
@@ -279,8 +275,8 @@ fun MyProgramScreen(
                 program.trainingLevels.filter { it.isNotEmpty() }.forEach { TrainingLevelInfoView(level = it) }
                 if (program.time.isNotEmpty()) TimeInfoView(time = program.time)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(Icons.Default.DateRange, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
-                    Text("${current.totalWeeks} Week${if (current.totalWeeks == 1) "" else "s"}", fontSize = 13.sp, color = TextSecondaryColor)
+                    Icon(Icons.Default.DateRange, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(14.dp))
+                    Text("${current.totalWeeks} Week${if (current.totalWeeks == 1) "" else "s"}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
                 if (program.location.isNotEmpty()) LocationInfoView(location = program.location)
             }
@@ -293,12 +289,12 @@ fun MyProgramScreen(
                         modifier = Modifier
                             .weight(1f)
                             .clip(CircleShape)
-                            .background(if (selected) FLPrimary else White)
+                            .background(if (selected) FLPrimary else FLTheme.colors.surface)
                             .clickable { tab = item }
                             .padding(vertical = 9.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(item.label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (selected) White else TextPrimaryColor)
+                        Text(item.label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
                     }
                 }
             }
@@ -360,7 +356,7 @@ private fun WeekBody(
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(snapshot.weekLine(week.weekNumber), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                Text(snapshot.weekLine(week.weekNumber), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                 Row(
                     modifier = Modifier.clickable(onClick = onViewProgress).padding(vertical = 8.dp, horizontal = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -422,7 +418,7 @@ private fun WeekSelector(snapshot: ProgramSnapshot, selectedWeek: Int, onSelectW
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(White),
+            .background(FLTheme.colors.surface),
         contentPadding = PaddingValues(horizontal = 12.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -438,15 +434,15 @@ private fun WeekSelector(snapshot: ProgramSnapshot, selectedWeek: Int, onSelectW
             ) {
                 Box(contentAlignment = Alignment.TopEnd) {
                     Box(
-                        modifier = Modifier.size(38.dp).clip(CircleShape).background(if (isSelected) FLPrimary else BackgroundColor),
+                        modifier = Modifier.size(38.dp).clip(CircleShape).background(if (isSelected) FLPrimary else FLTheme.colors.background),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("${week.weekNumber}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = if (isSelected) White else TextPrimaryColor)
+                        Text("${week.weekNumber}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
                     }
                     if (week.isComplete) {
                         Icon(
                             Icons.Default.CheckCircle, contentDescription = "Complete", tint = FLPrimary,
-                            modifier = Modifier.offset(x = 3.dp, y = (-3).dp).size(14.dp).background(White, CircleShape)
+                            modifier = Modifier.offset(x = 3.dp, y = (-3).dp).size(14.dp).background(FLTheme.colors.surface, CircleShape)
                         )
                     }
                 }
@@ -454,7 +450,7 @@ private fun WeekSelector(snapshot: ProgramSnapshot, selectedWeek: Int, onSelectW
                     week.phase ?: "Week",
                     fontSize = 11.sp,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (isSelected) FLPrimary else TextSecondaryColor,
+                    color = if (isSelected) FLPrimary else FLTheme.colors.textSecondary,
                     maxLines = 1
                 )
             }
@@ -467,8 +463,8 @@ private fun DateColumn(date: Long) {
     val weekday = remember(date) { SimpleDateFormat("EEE", Locale.getDefault()).format(Date(date)).uppercase(Locale.getDefault()) }
     val day = remember(date) { SimpleDateFormat("d", Locale.getDefault()).format(Date(date)) }
     Column(modifier = Modifier.width(38.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(weekday, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
-        Text(day, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+        Text(weekday, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
+        Text(day, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
     }
 }
 
@@ -476,7 +472,7 @@ private fun DateColumn(date: Long) {
 private fun WorkoutRow(entry: FitnessContent, date: Long, info: ProgramWorkoutMeta?, onOpen: () -> Unit, onMove: () -> Unit) {
     var showMenu by remember { mutableStateOf(false) }
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(10.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -490,7 +486,7 @@ private fun WorkoutRow(entry: FitnessContent, date: Long, info: ProgramWorkoutMe
             Icon(
                 if (entry.isCompleted) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
                 contentDescription = if (entry.isCompleted) "Completed" else "Not completed",
-                tint = if (entry.isCompleted) FLPrimary else MediumGray,
+                tint = if (entry.isCompleted) FLPrimary else FLTheme.colors.textTertiary,
                 modifier = Modifier.size(20.dp)
             )
             FLImageView(
@@ -498,17 +494,17 @@ private fun WorkoutRow(entry: FitnessContent, date: Long, info: ProgramWorkoutMe
                 modifier = Modifier.width(64.dp).height(56.dp).clip(RoundedCornerShape(8.dp))
             )
             Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(entry.title.ifEmpty { "Workout" }, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 2)
-                info?.summary?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 1) }
-                info?.focus?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor) }
+                Text(entry.title.ifEmpty { "Workout" }, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 2)
+                info?.summary?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1) }
+                info?.focus?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.textSecondary) }
             }
         }
         if (entry.isCompleted) {
-            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(18.dp))
+            Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
         } else {
             Box {
                 IconButton(onClick = { showMenu = true }, modifier = Modifier.size(32.dp)) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Options for ${entry.title}", tint = TextSecondaryColor)
+                    Icon(Icons.Default.MoreVert, contentDescription = "Options for ${entry.title}", tint = FLTheme.colors.textSecondary)
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(
@@ -525,15 +521,15 @@ private fun WorkoutRow(entry: FitnessContent, date: Long, info: ProgramWorkoutMe
 @Composable
 private fun RestRow(day: ProgramDayPlan) {
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White.copy(alpha = 0.6f)).padding(10.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface.copy(alpha = 0.6f)).padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         DateColumn(day.date)
-        Icon(Icons.Default.Hotel, contentDescription = null, tint = MediumGray, modifier = Modifier.size(20.dp))
+        Icon(Icons.Default.Hotel, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(20.dp))
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Rest Day", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text("Recovery and light movement.", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("Rest Day", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text("Recovery and light movement.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -545,15 +541,15 @@ private fun CompletionCard(snapshot: ProgramSnapshot, onViewResults: () -> Unit,
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Program Complete", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+        Text("Program Complete", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
         Text(
             "${snapshot.weeksCompleted} of ${snapshot.totalWeeks} weeks completed\n${snapshot.completedWorkouts} of ${snapshot.totalWorkouts} workouts completed",
-            fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center
+            fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center
         )
         Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(100.dp)).clickable(onClick = onViewResults)) { PrimaryButtonView(text = "View Results") }
         Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(100.dp)).clickable(onClick = onBrowse)) { SecondaryButtonView(text = "Start Another Program") }
@@ -568,7 +564,7 @@ private fun Overview(snapshot: ProgramSnapshot, program: Program) {
     val perWeek = (snapshot.totalWorkouts.toDouble() / maxOf(snapshot.totalWeeks, 1)).roundToInt()
     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         if (program.description.isNotEmpty()) {
-            OverviewSection("Program Overview") { Text(program.description, fontSize = 14.sp, color = TextSecondaryColor) }
+            OverviewSection("Program Overview") { Text(program.description, fontSize = 14.sp, color = FLTheme.colors.textSecondary) }
         }
         if (program.whoIsFor.isNotEmpty() || program.bestFor.isNotEmpty()) {
             OverviewSection("Who This Program Is For") { ProgramAudienceView(whoIsFor = program.whoIsFor, bestFor = program.bestFor) }
@@ -596,17 +592,17 @@ private fun Overview(snapshot: ProgramSnapshot, program: Program) {
 @Composable
 private fun OverviewSection(title: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-        Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(16.dp)) { content() }
+        Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+        Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(16.dp)) { content() }
     }
 }
 
 @Composable
 private fun StructureRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 14.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.weight(1f))
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, textAlign = TextAlign.End)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.End)
     }
 }
 
@@ -626,8 +622,8 @@ private fun Coach(program: Program) {
                     else -> "Your coach's profile will appear when you're back online."
                 },
                 fontSize = 14.sp,
-                color = TextSecondaryColor,
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(16.dp)
+                color = FLTheme.colors.textSecondary,
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(16.dp)
             )
         }
     }
@@ -642,13 +638,13 @@ private fun EmptyState(onBrowse: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(Icons.Default.FitnessCenter, contentDescription = null, tint = MediumGray, modifier = Modifier.size(44.dp))
+        Icon(Icons.Default.FitnessCenter, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(44.dp))
         Spacer(modifier = Modifier.height(14.dp))
-        Text("No program in progress", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text("No program in progress", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
         Spacer(modifier = Modifier.height(8.dp))
         Text(
             "Start a program and it will live here — your weeks, workouts and progress in one place.",
-            fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center
+            fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(14.dp))
         Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(100.dp)).clickable(onClick = onBrowse)) { PrimaryButtonView(text = "Browse Programs") }

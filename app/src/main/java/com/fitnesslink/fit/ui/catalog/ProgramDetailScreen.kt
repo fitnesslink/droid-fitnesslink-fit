@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.catalog
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -73,11 +74,7 @@ import com.fitnesslink.fit.ui.programs.ProgramContributorCard
 import com.fitnesslink.fit.ui.programs.ProgramScheduleSection
 import com.fitnesslink.fit.ui.programs.SneakPeekReel
 import com.fitnesslink.fit.ui.programs.SneakPeekStrip
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.ContentTagChipRow
 import com.fitnesslink.fit.ui.workout.ContentTagKind
 import com.fitnesslink.fit.viewmodel.MovementPreview
@@ -136,7 +133,7 @@ fun ProgramDetailScreen(
             title = { Text("Delete Program?") },
             text = { Text("This will permanently delete this program and its schedule.") },
             confirmButton = {
-                TextButton(onClick = { showDeleteAlert = false; viewModel.deleteProgram(programId); onBack() }) { Text("Delete", color = Color.Red) }
+                TextButton(onClick = { showDeleteAlert = false; viewModel.deleteProgram(programId); onBack() }) { Text("Delete", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { showDeleteAlert = false }) { Text("Cancel") } }
         )
@@ -150,7 +147,7 @@ fun ProgramDetailScreen(
                 TextButton(onClick = {
                     showRemoveFromLibraryAlert = false
                     scope.launch { if (viewModel.removeFromLibrary(programId)) onBack() else removeFromLibraryFailed = true }
-                }) { Text("Remove", color = Color.Red) }
+                }) { Text("Remove", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { showRemoveFromLibraryAlert = false }) { Text("Cancel") } }
         )
@@ -180,14 +177,14 @@ fun ProgramDetailScreen(
 
     // MARK: Body
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Box {
             FLImageView(ref = (program.thumbnailId ?: program.imageId)?.let { MediaRef.ProgramThumbnail(it.toString()) }, height = 250.dp)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
-                    .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.5f), Color.Transparent)))
+                    .background(Brush.verticalGradient(colors = listOf(FLTheme.colors.scrim, Color.Transparent)))
             )
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp, start = 20.dp, end = 20.dp),
@@ -224,7 +221,7 @@ fun ProgramDetailScreen(
                     CircularProgressIndicator(color = FLPrimary)
                 }
             }
-            Text(text = program.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text(text = program.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             if (program.isSharedWithMe) SharedBadge(sharedByName = viewModel.pendingShare?.sharedByUserName)
 
             viewModel.pendingShare?.let { share ->
@@ -249,7 +246,7 @@ fun ProgramDetailScreen(
             }
 
             if (program.description.isNotEmpty()) {
-                DetailSection("Overview") { Text(program.description, fontSize = 14.sp, color = TextSecondaryColor) }
+                DetailSection("Overview") { Text(program.description, fontSize = 14.sp, color = FLTheme.colors.textSecondary) }
             }
 
             if (program.whoIsFor.isNotEmpty() || program.bestFor.isNotEmpty()) {
@@ -259,7 +256,7 @@ fun ProgramDetailScreen(
             // Equipment (+ muscles worked, hidden) from the effective tag ids on the detail payload — live-only.
             if (viewModel.equipmentNames.isNotEmpty() || (SHOW_MUSCLES_WORKED && viewModel.anatomyNames.isNotEmpty())) {
                 Column(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(16.dp),
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     ContentTagChipRow(title = "Equipment Needed", names = viewModel.equipmentNames, icon = ContentTagKind.EQUIPMENT.icon)
@@ -295,7 +292,7 @@ fun ProgramDetailScreen(
 /** Primary CTA by program state (iOS `ProgramActionView`). */
 @Composable
 private fun ProgramActionBar(programId: String, cta: ProgramCTA, isEnabled: Boolean, onNavigate: (String) -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().background(White).padding(bottom = 14.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface).padding(bottom = 14.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         SeparatorView()
         Box(
             modifier = Modifier
@@ -306,7 +303,7 @@ private fun ProgramActionBar(programId: String, cta: ProgramCTA, isEnabled: Bool
                 .clickable(enabled = isEnabled) { onNavigate(cta.route(programId)) }
         ) { PrimaryButtonView(text = cta.title) }
         when (cta) {
-            ProgramCTA.Start -> Text("Choose your start date and we'll schedule your workouts.", fontSize = 12.sp, color = TextSecondaryColor)
+            ProgramCTA.Start -> Text("Choose your start date and we'll schedule your workouts.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             is ProgramCTA.StartTodaysWorkout -> Text(
                 "View My Program",
                 fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary,
@@ -320,8 +317,8 @@ private fun ProgramActionBar(programId: String, cta: ProgramCTA, isEnabled: Bool
 @Composable
 private fun DetailSection(title: String, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-        Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(16.dp)) { content() }
+        Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+        Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(16.dp)) { content() }
     }
 }
 
@@ -331,10 +328,10 @@ private fun HeaderCircle(icon: ImageVector, description: String, onClick: () -> 
         modifier = Modifier
             .size(36.dp)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(FLTheme.colors.scrim)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = description, tint = White, modifier = Modifier.size(16.dp))
+        Icon(icon, contentDescription = description, tint = Color.White, modifier = Modifier.size(16.dp))  // theme-exempt: over media
     }
 }

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
@@ -39,12 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.calendar.CalendarSyncService
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -76,7 +72,7 @@ fun CalendarSyncSettingsScreen(onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
         Column(
@@ -90,13 +86,13 @@ fun CalendarSyncSettingsScreen(onBack: () -> Unit) {
                 text = "Calendar sync",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimaryColor,
+                color = FLTheme.colors.textPrimary,
                 modifier = Modifier.padding(top = 8.dp)
             )
             Text(
                 text = "Mirror scheduled workouts into your device calendar so they show up alongside your other commitments.",
                 fontSize = 13.sp,
-                color = TextSecondaryColor
+                color = FLTheme.colors.textSecondary
             )
 
             // Master toggle.
@@ -108,11 +104,11 @@ fun CalendarSyncSettingsScreen(onBack: () -> Unit) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Sync to calendar", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                        Text("Sync to calendar", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                         Text(
                             text = if (hasPermission) "Granted" else "Permission needed",
                             fontSize = 11.sp,
-                            color = if (hasPermission) FLPrimary else TextSecondaryColor
+                            color = if (hasPermission) FLPrimary else FLTheme.colors.textSecondary
                         )
                     }
                     Switch(
@@ -132,7 +128,7 @@ fun CalendarSyncSettingsScreen(onBack: () -> Unit) {
                         },
                         colors = SwitchDefaults.colors(
                             checkedTrackColor = FLPrimary,
-                            checkedThumbColor = White
+                            checkedThumbColor = FLTheme.colors.onBrand
                         )
                     )
                 }
@@ -153,12 +149,12 @@ fun CalendarSyncSettingsScreen(onBack: () -> Unit) {
                             text = "Calendar permission needed",
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = TextPrimaryColor
+                            color = FLTheme.colors.textPrimary
                         )
                         Text(
                             text = "If the system prompt isn't appearing, grant access from app settings.",
                             fontSize = 12.sp,
-                            color = TextSecondaryColor
+                            color = FLTheme.colors.textSecondary
                         )
                         Box(
                             modifier = Modifier
@@ -172,7 +168,7 @@ fun CalendarSyncSettingsScreen(onBack: () -> Unit) {
                                 }
                                 .padding(horizontal = 14.dp, vertical = 8.dp)
                         ) {
-                            Text("Open app settings", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = White)
+                            Text("Open app settings", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
                         }
                     }
                 }
@@ -191,18 +187,18 @@ fun CalendarSyncSettingsScreen(onBack: () -> Unit) {
                         text = "Sync now",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextPrimaryColor
+                        color = FLTheme.colors.textPrimary
                     )
                     Text(
                         text = "Push every scheduled workout to your calendar right now.",
                         fontSize = 12.sp,
-                        color = TextSecondaryColor
+                        color = FLTheme.colors.textSecondary
                     )
                     val canSync = enabled && hasPermission && !syncing
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (canSync) FLPrimary else MediumGray)
+                            .background(if (canSync) FLPrimary else FLTheme.colors.textTertiary)
                             .clickable(enabled = canSync) {
                                 syncing = true
                                 scope.launch {
@@ -219,14 +215,14 @@ fun CalendarSyncSettingsScreen(onBack: () -> Unit) {
                             text = if (syncing) "Syncing…" else "Sync now",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = White
+                            color = FLTheme.colors.onBrand
                         )
                     }
                     if (lastSyncCount >= 0) {
                         Text(
                             text = "Last run: $lastSyncCount event${if (lastSyncCount == 1) "" else "s"} mirrored.",
                             fontSize = 11.sp,
-                            color = TextSecondaryColor
+                            color = FLTheme.colors.textSecondary
                         )
                     }
                 }
@@ -236,7 +232,7 @@ fun CalendarSyncSettingsScreen(onBack: () -> Unit) {
             Text(
                 text = "Scheduled background sync runs alongside the data sync; manual sync forces it now.",
                 fontSize = 11.sp,
-                color = TextSecondaryColor
+                color = FLTheme.colors.textSecondary
             )
         }
     }
@@ -248,6 +244,6 @@ private fun Card(content: @Composable () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
     ) { content() }
 }

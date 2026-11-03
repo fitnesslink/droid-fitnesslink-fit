@@ -42,13 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.GroceryList
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.GroceryListsViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -75,7 +71,7 @@ fun GroceryListsScreen(onBack: () -> Unit, onOpenList: (GroceryList) -> Unit) {
 
     LaunchedEffect(Unit) { viewModel.load() }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         PlanTopBar(title = "Grocery Lists", onBack = onBack) {
             IconButton(onClick = { newName = ""; showCreate = true }) { Icon(Icons.Filled.AddCircle, contentDescription = "New list", tint = FLPrimary) }
         }
@@ -89,11 +85,11 @@ fun GroceryListsScreen(onBack: () -> Unit, onOpenList: (GroceryList) -> Unit) {
             ) {
                 viewModel.errorMessage?.let { PlanInlineError(it) }
                 PlanSectionLabel("My Lists")
-                Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+                Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                     if (viewModel.activeLists.isEmpty()) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Text("No active lists", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                            Text("Tap + to start a shopping list.", fontSize = 13.sp, color = TextSecondaryColor)
+                            Text("No active lists", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                            Text("Tap + to start a shopping list.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                         }
                     } else {
                         viewModel.activeLists.forEachIndexed { index, list ->
@@ -104,7 +100,7 @@ fun GroceryListsScreen(onBack: () -> Unit, onOpenList: (GroceryList) -> Unit) {
                 }
                 if (viewModel.archivedLists.isNotEmpty()) {
                     PlanSectionLabel("History")
-                    Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+                    Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                         viewModel.archivedLists.forEachIndexed { index, list ->
                             ListRow(list, archived = true, onClick = { onOpenList(list) }, onLongClick = { menuFor = list })
                             if (index < viewModel.archivedLists.lastIndex) PlanDivider()
@@ -165,10 +161,10 @@ private fun ListRow(list: GroceryList, archived: Boolean, onClick: () -> Unit, o
         modifier = Modifier.fillMaxWidth().combinedClickable(onClick = onClick, onLongClick = onLongClick).padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(if (archived) Icons.Filled.Archive else Icons.Filled.ShoppingCart, contentDescription = null, tint = if (archived) MediumGray else FLPrimary, modifier = Modifier.size(20.dp))
+        Icon(if (archived) Icons.Filled.Archive else Icons.Filled.ShoppingCart, contentDescription = null, tint = if (archived) FLTheme.colors.textTertiary else FLPrimary, modifier = Modifier.size(20.dp))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(list.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                Text(list.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                 if (list.isDefault) {
                     Text(
                         "Default", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary,
@@ -176,9 +172,9 @@ private fun ListRow(list: GroceryList, archived: Boolean, onClick: () -> Unit, o
                     )
                 }
             }
-            Text(listSubtitle(list), fontSize = 12.sp, color = TextSecondaryColor)
+            Text(listSubtitle(list), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray)
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary)
     }
 }
 
@@ -193,7 +189,7 @@ private fun listSubtitle(list: GroceryList): String {
 internal fun ErrorState(message: String, onRetry: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(40.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
         Icon(Icons.Filled.Warning, contentDescription = null, tint = OrangeTheme, modifier = Modifier.size(24.dp))
-        Text(message, fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.padding(vertical = 12.dp))
+        Text(message, fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(vertical = 12.dp))
         TextButton(onClick = onRetry) { Text("Retry", color = FLPrimary, fontWeight = FontWeight.SemiBold) }
     }
 }
@@ -201,7 +197,7 @@ internal fun ErrorState(message: String, onRetry: () -> Unit) {
 @Composable
 internal fun PlanInlineError(message: String) {
     Row(
-        modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(12.dp),
+        modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Icon(Icons.Filled.Warning, contentDescription = null, tint = OrangeTheme, modifier = Modifier.size(16.dp))
@@ -216,7 +212,7 @@ internal fun PlanNameDialog(title: String, message: String?, value: String, onVa
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                message?.let { Text(it, fontSize = 13.sp, color = TextSecondaryColor) }
+                message?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.textSecondary) }
                 PlanTextField(value, onValueChange, "List name")
             }
         },

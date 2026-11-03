@@ -18,7 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.HighlightState
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 /**
  * Small "Shared" pill for content rows + detail headers when the current
@@ -31,7 +31,7 @@ fun SharedBadge(sharedByName: String? = null, modifier: Modifier = Modifier) {
     Row(
         modifier = modifier
             .clip(CircleShape)
-            .background(HighlightState)
+            .background(FLTheme.colors.highlight)
             .padding(horizontal = 8.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)

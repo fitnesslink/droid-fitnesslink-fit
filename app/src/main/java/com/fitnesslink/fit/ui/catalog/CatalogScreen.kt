@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.catalog
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -56,12 +57,8 @@ import com.fitnesslink.fit.ui.components.SharedBadge
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.navigation.CatalogRoutes
 import com.fitnesslink.fit.ui.navigation.MovementRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.CatalogViewModel
 
 /**
@@ -102,7 +99,7 @@ fun CatalogScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderView(onNotificationsTap = onNavigateToNotifications)
 
@@ -152,7 +149,7 @@ private fun CatalogLoadingState() {
     ) {
         CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(44.dp))
         Spacer(modifier = Modifier.height(16.dp))
-        Text(text = "Loading your library…", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+        Text(text = "Loading your library…", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -197,7 +194,7 @@ private fun MyContentRail(
             Text(
                 text = "Tap + to create your first workout, program, or movement.",
                 fontSize = 14.sp,
-                color = TextSecondaryColor,
+                color = FLTheme.colors.textSecondary,
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
         } else {
@@ -331,7 +328,7 @@ fun CatalogItemView(
             .width(160.dp)
             .height(cardHeight)
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
     ) {
         Box {
@@ -348,7 +345,7 @@ fun CatalogItemView(
                     text = item.kindLabel,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = White,
+                    color = FLTheme.colors.onBrand,
                     modifier = Modifier
                         .padding(8.dp)
                         .background(catalogKindBadgeColor(item.kind), RoundedCornerShape(6.dp))
@@ -364,20 +361,20 @@ fun CatalogItemView(
                 text = item.title,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = TextPrimaryColor,
+                color = FLTheme.colors.textPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = item.caption,
                 fontSize = 12.sp,
-                color = TextSecondaryColor,
+                color = FLTheme.colors.textSecondary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             if (showCreatedDate) {
                 item.formattedCreatedAt?.let { created ->
-                    Text(text = "Created $created", fontSize = 11.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(text = "Created $created", fontSize = 11.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
             if (item.isSharedWithMe) SharedBadge()

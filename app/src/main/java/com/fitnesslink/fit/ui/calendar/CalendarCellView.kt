@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.calendar
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
@@ -21,7 +22,6 @@ import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.CalendarCell
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
 
 /**
  * One day of the month grid (iOS `CalendarCellView`). A thin FLPrimary ring
@@ -51,7 +51,7 @@ fun CalendarCellView(cell: CalendarCell, modifier: Modifier = Modifier) {
                 .border(1.5.dp, ringColor, CircleShape)
         ) {
             if (cell.dayNumber > 0) {
-                Text(text = cell.name, fontSize = 18.sp, color = TextPrimaryColor)
+                Text(text = cell.name, fontSize = 18.sp, color = FLTheme.colors.textPrimary)
             }
         }
         Spacer(modifier = Modifier.height(CalendarCellMetrics.indicatorSpacing))

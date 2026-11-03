@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.goals
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -98,7 +99,6 @@ import com.fitnesslink.fit.nutrition.HydrationStore
 import com.fitnesslink.fit.ui.navigation.AppRoute
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.viewmodel.GoalSetupViewModel
 import kotlinx.coroutines.Dispatchers
@@ -143,7 +143,7 @@ fun TypedGoalDetailScreen(goalId: String, onBack: () -> Unit, onNavigate: (Strin
     }
 
     val current = goal
-    Column(Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.clickable(onClick = onBack).padding(6.dp))
@@ -217,7 +217,7 @@ fun TypedGoalDetailScreen(goalId: String, onBack: () -> Unit, onNavigate: (Strin
                     confirmDelete = false
                     scope.launch { GoalStore.delete(current.id) }
                     onBack()
-                }) { Text("Delete Goal", color = Color(0xFFE53935)) }
+                }) { Text("Delete Goal", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text("Cancel") } }
         )
@@ -259,7 +259,7 @@ private fun DetailMenu(goal: Goal, onEdit: () -> Unit, onPin: () -> Unit, onStat
                 DropdownMenuItem(text = { Text("Resume") }, onClick = { open = false; onStatus(GoalStatus.Active) })
             }
             HorizontalDivider()
-            DropdownMenuItem(text = { Text("Delete Goal", color = Color(0xFFE53935)) }, onClick = { open = false; onDelete() })
+            DropdownMenuItem(text = { Text("Delete Goal", color = FLTheme.colors.danger) }, onClick = { open = false; onDelete() })
         }
     }
 }

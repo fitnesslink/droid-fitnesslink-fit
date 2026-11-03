@@ -45,12 +45,8 @@ import com.fitnesslink.fit.model.HydrationGoal
 import com.fitnesslink.fit.model.MealPlanDay
 import com.fitnesslink.fit.model.WaterIntakeEntry
 import com.fitnesslink.fit.model.WaterUnit
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
-import com.fitnesslink.fit.ui.theme.DisabledButton
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.HydrationViewModel
 import com.fitnesslink.fit.viewmodel.MealPlanViewModel
 import java.text.SimpleDateFormat
@@ -84,7 +80,7 @@ fun LogWaterScreen(
     val isBackfilling = !viewModel.isViewingToday
     val dayLabel = "${MealPlanViewModel.weekdayFull(day)}, ${MealPlanViewModel.mediumDay(day)}"
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         PlanTopBar(title = "Log Water", onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 6.dp, bottom = 24.dp),
@@ -104,8 +100,8 @@ fun LogWaterScreen(
             PlanCard(Modifier.padding(horizontal = 20.dp)) {
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(formatAmount(viewModel.totalIntake), fontSize = 26.sp, fontWeight = FontWeight.Bold, color = BlueTheme)
-                    Text(" / ${formatAmount(viewModel.dailyGoalDisplay)} ${viewModel.displayUnit.rawValue}", fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.padding(bottom = 3.dp).weight(1f))
-                    Text("${(viewModel.hydrationProgress * 100).toInt()}%", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                    Text(" / ${formatAmount(viewModel.dailyGoalDisplay)} ${viewModel.displayUnit.rawValue}", fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(bottom = 3.dp).weight(1f))
+                    Text("${(viewModel.hydrationProgress * 100).toInt()}%", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                 }
                 LinearProgressIndicator(progress = { viewModel.hydrationProgress.toFloat() }, modifier = Modifier.fillMaxWidth(), color = BlueTheme, trackColor = BlueTheme.copy(alpha = 0.15f))
             }
@@ -115,7 +111,7 @@ fun LogWaterScreen(
                 viewModel.presetAmounts(unit).forEach { amount ->
                     Text(
                         "+${formatAmount(amount)} ${unit.rawValue}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = BlueTheme, textAlign = TextAlign.Center,
-                        modifier = Modifier.weight(1f).background(White, RoundedCornerShape(12.dp)).clickable(enabled = viewModel.canLog) { viewModel.log(amount, unit) }.padding(vertical = 12.dp)
+                        modifier = Modifier.weight(1f).background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).clickable(enabled = viewModel.canLog) { viewModel.log(amount, unit) }.padding(vertical = 12.dp)
                     )
                 }
             }
@@ -124,7 +120,7 @@ fun LogWaterScreen(
             val recents = viewModel.recentAmounts.filter { it.waterUnit != null }
             if (recents.isNotEmpty()) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Recent", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                    Text("Recent", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         items(recents, key = { it.id }) { recent ->
                             val recentUnit = recent.waterUnit ?: return@items
@@ -138,7 +134,7 @@ fun LogWaterScreen(
             }
 
             // Form
-            Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+            Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                 FieldBlock("Amount") {
                     PlanTextField(amountText, { amountText = it.filter { c -> c.isDigit() || c == '.' } }, "e.g. 12", keyboardType = KeyboardType.Decimal)
                 }
@@ -162,8 +158,8 @@ fun LogWaterScreen(
             // Entries
             if (viewModel.dayEntries.isNotEmpty()) {
                 Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(if (isBackfilling) dayLabel else "Today", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-                    Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+                    Text(if (isBackfilling) dayLabel else "Today", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
+                    Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                         viewModel.dayEntries.forEachIndexed { index, entry ->
                             EntryRow(entry, viewModel.displayUnit) { viewModel.deleteEntry(entry.id) }
                             if (index < viewModel.dayEntries.lastIndex) PlanDivider()
@@ -173,14 +169,14 @@ fun LogWaterScreen(
             }
 
             Box(
-                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(if (isValid && viewModel.canLog) BlueTheme else DisabledButton, RoundedCornerShape(12.dp))
+                modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(if (isValid && viewModel.canLog) BlueTheme else FLTheme.colors.disabled, RoundedCornerShape(12.dp))
                     .clickable(enabled = isValid && viewModel.canLog) {
                         val amount = amountText.toDoubleOrNull() ?: return@clickable
                         viewModel.log(amount, unit, notes)
                         amountText = ""; notes = ""
                     }.padding(vertical = 14.dp),
                 contentAlignment = Alignment.Center
-            ) { Text("Log Water", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White) }
+            ) { Text("Log Water", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand) }
         }
     }
 }
@@ -188,20 +184,20 @@ fun LogWaterScreen(
 @Composable
 private fun FieldBlock(label: String, content: @Composable () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(label, fontSize = 12.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         content()
     }
 }
 
 @Composable
 private fun SegmentedUnits(selected: WaterUnit, onSelect: (WaterUnit) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().background(BackgroundColor, RoundedCornerShape(8.dp)).padding(3.dp)) {
+    Row(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.background, RoundedCornerShape(8.dp)).padding(3.dp)) {
         WaterUnit.entries.forEach { u ->
             val isSelected = u == selected
             Box(
-                modifier = Modifier.weight(1f).background(if (isSelected) White else Color.Transparent, RoundedCornerShape(6.dp)).clickable { onSelect(u) }.padding(vertical = 6.dp),
+                modifier = Modifier.weight(1f).background(if (isSelected) FLTheme.colors.surface else Color.Transparent, RoundedCornerShape(6.dp)).clickable { onSelect(u) }.padding(vertical = 6.dp),
                 contentAlignment = Alignment.Center
-            ) { Text(u.rawValue, fontSize = 13.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal, color = TextPrimaryColor) }
+            ) { Text(u.rawValue, fontSize = 13.sp, fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal, color = FLTheme.colors.textPrimary) }
         }
     }
 }
@@ -211,7 +207,7 @@ private fun SegmentedUnits(selected: WaterUnit, onSelect: (WaterUnit) -> Unit) {
 private fun GoalEditor(goal: HydrationGoal, onChange: (HydrationGoal) -> Unit) {
     var goalText by remember(goal.id, goal.dailyGoal) { mutableStateOf(formatAmount(goal.dailyGoal)) }
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-        Text("Daily goal", fontSize = 14.sp, color = TextSecondaryColor)
+        Text("Daily goal", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             BasicTextField(
                 value = goalText,
@@ -221,11 +217,11 @@ private fun GoalEditor(goal: HydrationGoal, onChange: (HydrationGoal) -> Unit) {
                     cleaned.toDoubleOrNull()?.let { parsed -> if (parsed > 0) onChange(goal.copy(dailyGoal = parsed)) }
                 },
                 singleLine = true,
-                textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, textAlign = TextAlign.End),
+                textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.End),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.width(70.dp)
             )
-            Text(goal.unit.rawValue, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(goal.unit.rawValue, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -235,11 +231,11 @@ private fun EntryRow(entry: WaterIntakeEntry, displayUnit: WaterUnit, onDelete: 
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(Icons.Filled.WaterDrop, contentDescription = null, tint = BlueTheme)
         Column(modifier = Modifier.weight(1f)) {
-            Text("${formatAmount(entry.unit.convert(entry.amount, displayUnit))} ${displayUnit.rawValue}", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-            if (entry.notes.isNotEmpty()) Text(entry.notes, fontSize = 12.sp, color = TextSecondaryColor)
-            Text(timeFormatter.format(entry.loggedAt), fontSize = 11.sp, color = TextSecondaryColor)
+            Text("${formatAmount(entry.unit.convert(entry.amount, displayUnit))} ${displayUnit.rawValue}", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+            if (entry.notes.isNotEmpty()) Text(entry.notes, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+            Text(timeFormatter.format(entry.loggedAt), fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
-        Icon(Icons.Outlined.Delete, contentDescription = "Delete", tint = TextSecondaryColor, modifier = Modifier.clickable(onClick = onDelete))
+        Icon(Icons.Outlined.Delete, contentDescription = "Delete", tint = FLTheme.colors.textSecondary, modifier = Modifier.clickable(onClick = onDelete))
     }
 }
 

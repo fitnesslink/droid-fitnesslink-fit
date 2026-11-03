@@ -25,6 +25,7 @@ import com.fitnesslink.fit.ui.auth.GetStartedScreen
 import com.fitnesslink.fit.ui.auth.SplashScreen
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.fitnesslink.fit.R
@@ -69,8 +70,7 @@ import com.fitnesslink.fit.ui.goals.GoalDetailScreen
 import com.fitnesslink.fit.ui.goals.GoalsListScreen
 import com.fitnesslink.fit.ui.goals.HabitDetailScreen
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 data class BottomNavItem(
     val route: String,
@@ -260,7 +260,7 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
     CompositionLocalProvider(LocalLogoutAction provides onLogout) {
     Scaffold(
         bottomBar = {
-            if (!hideTabBar) NavigationBar(containerColor = White) {
+            if (!hideTabBar) NavigationBar(containerColor = FLTheme.colors.surface) {
                 bottomNavItems.forEachIndexed { index, item ->
                     NavigationBarItem(
                         icon = {
@@ -269,6 +269,11 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                                     if (selectedTab == index) item.selectedIcon else item.unselectedIcon
                                 ),
                                 contentDescription = item.title,
+                                // Unselected icons are grey PNGs: light keeps the PNG's own grey,
+                                // dark tints them so they read on the dark bar. Selected stays teal.
+                                colorFilter = if (selectedTab != index && FLTheme.colors.isDark) {
+                                    ColorFilter.tint(FLTheme.colors.textSecondary)
+                                } else null,
                                 modifier = Modifier.size(24.dp)
                             )
                         },
@@ -278,9 +283,9 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = FLPrimary,
                             selectedTextColor = FLPrimary,
-                            unselectedIconColor = TextSecondaryColor,
-                            unselectedTextColor = TextSecondaryColor,
-                            indicatorColor = White
+                            unselectedIconColor = FLTheme.colors.textSecondary,
+                            unselectedTextColor = FLTheme.colors.textSecondary,
+                            indicatorColor = FLTheme.colors.surface
                         )
                     )
                 }

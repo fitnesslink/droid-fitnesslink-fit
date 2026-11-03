@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -52,14 +53,10 @@ import com.fitnesslink.fit.ui.profile.charts.RpeBadge
 import com.fitnesslink.fit.ui.profile.charts.formatReportDate
 import com.fitnesslink.fit.ui.profile.charts.formatReportDuration
 import com.fitnesslink.fit.ui.profile.charts.themeColor
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutReportViewModel
 import java.util.Calendar
 
@@ -89,7 +86,7 @@ fun ReportDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -113,7 +110,7 @@ fun ReportDetailScreen(
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
 
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = MediumGray.copy(alpha = 0.3f))
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 20.dp), color = FLTheme.colors.textTertiary.copy(alpha = 0.3f))
 
             MetricChart(resolved, viewModel)
 
@@ -163,7 +160,7 @@ private fun MetricHeader(metric: ReportMetric, viewModel: WorkoutReportViewModel
         Icon(metric.imageVector(), contentDescription = null, tint = color, modifier = Modifier.size(24.dp))
         Column(modifier = Modifier.weight(1f)) {
             Text(metric.title, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Text(viewModel.subtitle(metric), fontSize = 14.sp, color = TextSecondaryColor)
+            Text(viewModel.subtitle(metric), fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         }
         Text(viewModel.displayValue(metric), fontSize = 32.sp, fontWeight = FontWeight.Bold, color = color)
     }
@@ -185,7 +182,7 @@ private fun MetricChart(metric: ReportMetric, viewModel: WorkoutReportViewModel)
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(14.dp)
     ) {
         when (metric) {
@@ -241,7 +238,7 @@ private fun SessionRowCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -249,7 +246,7 @@ private fun SessionRowCard(
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(session.workoutName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             // Completion date when finished; start date for legacy / in-progress rows (FTNSSLNK-319).
-            Text(formatReportDate(session.displayDate), fontSize = 12.sp, color = TextSecondaryColor)
+            Text(formatReportDate(session.displayDate), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             val p = session.completionPercent
             if (session.isCompleted && p != null && p < 100) {
                 Text(session.statusLabel, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = OrangeTheme)
@@ -257,7 +254,7 @@ private fun SessionRowCard(
         }
         HighlightValue(session, highlight)
         Spacer(modifier = Modifier.width(6.dp))
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(18.dp))
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -301,13 +298,13 @@ private fun RpeDetail(viewModel: WorkoutReportViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(White)
+                        .background(FLTheme.colors.surface)
                         .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(session.workoutName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                        Text(formatReportDate(session.date), fontSize = 12.sp, color = TextSecondaryColor)
+                        Text(formatReportDate(session.date), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                     RpeBadge(session.rpeValue ?: 0.0)
                 }
@@ -349,31 +346,31 @@ private fun VolumeDetail(viewModel: WorkoutReportViewModel) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(White)
+                            .background(FLTheme.colors.surface)
                             .padding(14.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(session.workoutName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                                Text(formatReportDate(session.date), fontSize = 12.sp, color = TextSecondaryColor)
+                                Text(formatReportDate(session.date), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
                                     "${WeightUnit.displayWholeNumber(session.totalWeightLifted)} $unit",
                                     fontSize = 16.sp, fontWeight = FontWeight.Bold, color = PurpleTheme
                                 )
-                                Text("total volume", fontSize = 11.sp, color = TextSecondaryColor)
+                                Text("total volume", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                             }
                         }
                         // Movement breakdown for this session (same calendar day).
                         val sessionEntries = viewModel.volumeEntries.filter { sameDay(it.date.time, session.date.time) }
                         val byMovement = sessionEntries.groupBy { it.exerciseName }.entries.sortedBy { it.key }
                         if (byMovement.isNotEmpty()) {
-                            HorizontalDivider(color = MediumGray.copy(alpha = 0.3f))
+                            HorizontalDivider(color = FLTheme.colors.textTertiary.copy(alpha = 0.3f))
                             byMovement.forEach { (name, entries) ->
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(name, fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+                                    Text(name, fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
                                     Text(
                                         "${WeightUnit.displayWholeNumber(entries.sumOf { it.volume })} $unit",
                                         fontSize = 13.sp, fontWeight = FontWeight.Medium
@@ -388,7 +385,7 @@ private fun VolumeDetail(viewModel: WorkoutReportViewModel) {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(10.dp))
-                            .background(White)
+                            .background(FLTheme.colors.surface)
                             .padding(14.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -401,7 +398,7 @@ private fun VolumeDetail(viewModel: WorkoutReportViewModel) {
                         }
                         entries.take(5).forEach { entry ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(formatReportDate(entry.date), fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+                                Text(formatReportDate(entry.date), fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
                                 Text(
                                     "${entry.reps} reps x ${WeightUnit.displayString(entry.weight)}",
                                     fontSize = 13.sp, fontWeight = FontWeight.Medium
@@ -437,17 +434,17 @@ private fun PersonalRecordsDetail(viewModel: WorkoutReportViewModel) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(White)
+                        .background(FLTheme.colors.surface)
                         .padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(pr.exerciseName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                        Text(formatReportDate(pr.achievedDate), fontSize = 12.sp, color = TextSecondaryColor)
+                        Text(formatReportDate(pr.achievedDate), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text(WeightUnit.displayString(pr.maxWeight), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
-                        Text("${pr.maxReps} reps", fontSize = 12.sp, color = TextSecondaryColor)
+                        Text("${pr.maxReps} reps", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }
@@ -491,7 +488,7 @@ private fun StreakDetail(viewModel: WorkoutReportViewModel) {
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(session.workoutName, fontSize = 14.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                        Text(formatReportDate(session.date), fontSize = 12.sp, color = TextSecondaryColor)
+                        Text(formatReportDate(session.date), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }
@@ -504,14 +501,14 @@ private fun StreakBadge(title: String, value: Int, unit: String, color: Color, m
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text("$value", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = color)
         Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-        Text(unit, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(unit, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.height(0.dp))
     }
 }

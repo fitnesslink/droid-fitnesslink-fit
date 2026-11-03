@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -49,14 +50,9 @@ import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.network.dto.WorkoutPhaseTemplate
 import com.fitnesslink.fit.network.dto.WorkoutPhaseTemplateSummary
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.workouts.WorkoutPhaseStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -149,7 +145,7 @@ fun PhasePickerSheet(
                             deleteAlertMessage = e.message ?: "Couldn't delete the phase."
                         }
                     }
-                }) { Text("Delete", color = Color.Red) }
+                }) { Text("Delete", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { deleteTarget = null }) { Text("Cancel") } }
         )
@@ -163,7 +159,7 @@ fun PhasePickerSheet(
         )
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.background, contentColor = FLTheme.colors.textPrimary) {
         LazyColumn(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
             item {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -192,7 +188,7 @@ fun PhasePickerSheet(
                 item { SectionHeader("My Templates") }
                 items(templates, key = { "tpl-${it.id}" }) { template ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(White)
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.surface)
                             .clickable(enabled = loadingTemplateId == null) {
                                 templateError = null
                                 loadingTemplateId = template.id
@@ -213,15 +209,15 @@ fun PhasePickerSheet(
                     ) {
                         Icon(Icons.Filled.Layers, contentDescription = null, tint = PurpleTheme, modifier = Modifier.size(18.dp))
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(template.name, fontSize = 15.sp, color = TextPrimaryColor)
-                            Text(if (template.taskCount == 1) "1 task" else "${template.taskCount} tasks", fontSize = 12.sp, color = TextSecondaryColor)
+                            Text(template.name, fontSize = 15.sp, color = FLTheme.colors.textPrimary)
+                            Text(if (template.taskCount == 1) "1 task" else "${template.taskCount} tasks", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                         }
                         if (loadingTemplateId == template.id) CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
                         else if (template.isSystem) PickerBadge("System", FLPrimary)
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                 }
-                templateError?.let { item { Text(it, fontSize = 12.sp, color = Color.Red) } }
+                templateError?.let { item { Text(it, fontSize = 12.sp, color = FLTheme.colors.danger) } }
             }
             item {
                 SectionHeader("Create New Phase")
@@ -233,11 +229,11 @@ fun PhasePickerSheet(
                     if (isCreating) CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                     else Icon(
                         Icons.Filled.AddCircle, contentDescription = "Create phase",
-                        tint = if (newPhaseName.isBlank()) MediumGray else FLPrimary,
+                        tint = if (newPhaseName.isBlank()) FLTheme.colors.textTertiary else FLPrimary,
                         modifier = Modifier.size(28.dp).clickable(enabled = newPhaseName.isNotBlank()) { create() }
                     )
                 }
-                inlineError?.let { Text(it, fontSize = 12.sp, color = Color.Red, modifier = Modifier.padding(top = 4.dp)) }
+                inlineError?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.danger, modifier = Modifier.padding(top = 4.dp)) }
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
@@ -246,7 +242,7 @@ fun PhasePickerSheet(
 
 @Composable
 private fun SectionHeader(title: String) {
-    Text(title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor, modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
+    Text(title, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(top = 14.dp, bottom = 6.dp))
 }
 
 @Composable
@@ -264,7 +260,7 @@ private fun PhaseRow(
 ) {
     Column {
         Row(
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(White)
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.surface)
                 .clickable(enabled = !isAttached, onClick = onPick).padding(horizontal = 12.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
         ) {
@@ -272,11 +268,11 @@ private fun PhaseRow(
                 if (phase.isSystem) Icons.Filled.AutoAwesome else Icons.Filled.Label, contentDescription = null,
                 tint = if (phase.isSystem) FLPrimary else BlueTheme, modifier = Modifier.size(18.dp)
             )
-            Text(phase.name, fontSize = 15.sp, color = if (isAttached) TextSecondaryColor else TextPrimaryColor, modifier = Modifier.weight(1f))
-            if (isAttached) Text("Added", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+            Text(phase.name, fontSize = 15.sp, color = if (isAttached) FLTheme.colors.textSecondary else FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+            if (isAttached) Text("Added", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
             else if (!phase.isSystem) PickerBadge("Custom", BlueTheme)
-            if (onRename != null) Icon(Icons.Filled.Edit, contentDescription = "Rename", tint = MediumGray, modifier = Modifier.size(18.dp).clickable(onClick = onRename))
-            if (onDelete != null) Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = MediumGray, modifier = Modifier.size(18.dp).clickable(onClick = onDelete))
+            if (onRename != null) Icon(Icons.Filled.Edit, contentDescription = "Rename", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp).clickable(onClick = onRename))
+            if (onDelete != null) Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp).clickable(onClick = onDelete))
         }
         Spacer(modifier = Modifier.height(4.dp))
     }

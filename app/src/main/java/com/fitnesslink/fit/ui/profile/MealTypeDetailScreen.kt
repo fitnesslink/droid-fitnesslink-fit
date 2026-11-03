@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.filled.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -43,15 +45,10 @@ import com.fitnesslink.fit.ui.profile.charts.ReportBarChart
 import com.fitnesslink.fit.ui.profile.charts.ReportEmptyDetail
 import com.fitnesslink.fit.ui.profile.charts.ReportMiniStat
 import com.fitnesslink.fit.ui.profile.charts.ReportTimeRangePicker
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.NutritionReportViewModel
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -85,7 +82,7 @@ fun MealTypeDetailScreen(
     val color = mealColor(type)
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 10.dp, bottom = 30.dp),
@@ -94,9 +91,9 @@ fun MealTypeDetailScreen(
             Row(modifier = Modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Icon(mealIcon(type), contentDescription = null, tint = color, modifier = Modifier.size(26.dp))
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(type?.displayName ?: mealType, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                    Text(type?.displayName ?: mealType, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     aggregate?.let {
-                        Text("${it.timesLogged} entries · ${it.percentOfDailyCalories.toInt()}% of daily intake", fontSize = 14.sp, color = TextSecondaryColor)
+                        Text("${it.timesLogged} entries · ${it.percentOfDailyCalories.toInt()}% of daily intake", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }
@@ -109,7 +106,7 @@ fun MealTypeDetailScreen(
             }
 
             aggregate?.let { agg ->
-                Row(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(14.dp)) {
+                Row(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(14.dp)) {
                     ReportMiniStat("Avg Cal", "${agg.avgCalories.toInt()}", Modifier.weight(1f))
                     ReportMiniStat("Avg Protein", "${agg.avgProtein.toInt()}g", Modifier.weight(1f))
                     ReportMiniStat("Avg Carbs", "${agg.avgCarbs.toInt()}g", Modifier.weight(1f))
@@ -119,18 +116,18 @@ fun MealTypeDetailScreen(
 
             val points = dailyCaloriePoints(entries)
             if (points.size >= 2) {
-                Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(14.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(14.dp)) {
                     ReportBarChart(points = points, color = color, height = 160.dp)
                 }
             }
 
             Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Entries", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text("Entries", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 entries.forEach { entry ->
-                    Row(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(10.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(10.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(entry.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                            Text(dateFormat.format(entry.loggedAt), fontSize = 12.sp, color = TextSecondaryColor)
+                            Text(entry.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                            Text(dateFormat.format(entry.loggedAt), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                         }
                         Spacer(modifier = Modifier.size(8.dp))
                         Text("${entry.calories} cal", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = OrangeTheme)
@@ -161,10 +158,11 @@ private fun mealIcon(type: MealType?) = when (type) {
     null -> Icons.Default.Restaurant
 }
 
+@Composable @ReadOnlyComposable
 private fun mealColor(type: MealType?): Color = when (type) {
     MealType.BREAKFAST -> OrangeTheme
     MealType.LUNCH -> FLPrimary
     MealType.DINNER -> BlueTheme
     MealType.SNACK -> PurpleTheme
-    null -> MediumGray
+    null -> FLTheme.colors.textTertiary
 }

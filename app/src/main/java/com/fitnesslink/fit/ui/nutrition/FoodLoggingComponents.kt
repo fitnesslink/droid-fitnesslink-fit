@@ -34,14 +34,9 @@ import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.MealPlanDay
 import com.fitnesslink.fit.model.MealType
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.DisabledButton
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -98,7 +93,7 @@ fun FoodLogCard(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .padding(padding.dp),
         content = content
     )
@@ -106,7 +101,7 @@ fun FoodLogCard(
 
 @Composable
 fun FoodLogSectionTitle(text: String) {
-    Text(text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+    Text(text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 20.dp))
 }
 
 @Composable
@@ -115,15 +110,15 @@ fun FoodLogPrimaryButton(text: String, enabled: Boolean = true, loading: Boolean
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .background(if (enabled && !loading) FLPrimary else DisabledButton, RoundedCornerShape(12.dp))
+            .background(if (enabled && !loading) FLPrimary else FLTheme.colors.disabled, RoundedCornerShape(12.dp))
             .then(if (enabled && !loading) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(vertical = 14.dp),
         contentAlignment = Alignment.Center
     ) {
         if (loading) {
-            CircularProgressIndicator(color = White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+            CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
         } else {
-            Text(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+            Text(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
         }
     }
 }
@@ -134,7 +129,7 @@ fun FoodLogSecondaryButton(text: String, color: Color = FLPrimary, onClick: () -
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 14.dp),
         contentAlignment = Alignment.Center
@@ -152,12 +147,12 @@ fun FoodLogLinkRow(
     enabled: Boolean = true,
     onClick: () -> Unit
 ) {
-    val tint = if (enabled) FLPrimary else TextSecondaryColor
+    val tint = if (enabled) FLPrimary else FLTheme.colors.textSecondary
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -168,7 +163,7 @@ fun FoodLogLinkRow(
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(title, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = tint)
-            if (subtitle != null) Text(subtitle, fontSize = 12.sp, color = TextSecondaryColor)
+            if (subtitle != null) Text(subtitle, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
         Image(painter = painterResource(R.drawable.rightarrow), contentDescription = null, modifier = Modifier.size(8.dp, 14.dp))
     }
@@ -181,11 +176,11 @@ fun MealTypeChips(selected: MealType, onSelect: (MealType) -> Unit) {
         MealType.entries.forEach { meal ->
             Box(
                 modifier = Modifier
-                    .background(if (selected == meal) FLPrimary else BackgroundColor, RoundedCornerShape(8.dp))
+                    .background(if (selected == meal) FLPrimary else FLTheme.colors.background, RoundedCornerShape(8.dp))
                     .clickable { onSelect(meal) }
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
-                Text(meal.displayName, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected == meal) White else TextPrimaryColor)
+                Text(meal.displayName, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected == meal) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
             }
         }
     }
@@ -203,7 +198,7 @@ fun FoodLogMacroSummary(protein: Double, carbs: Double, fat: Double) {
 
 @Composable
 private fun MacroPill(label: String, grams: Double) {
-    Text("$label ${grams.toInt()}g", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+    Text("$label ${grams.toInt()}g", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
 }
 
 @Composable
@@ -222,9 +217,9 @@ fun FoodLogEmptyState(icon: ImageVector, title: String, message: String, modifie
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = MediumGray, modifier = Modifier.size(34.dp))
-        Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-        Text(message, fontSize = 13.sp, color = TextSecondaryColor, textAlign = TextAlign.Center)
+        Icon(icon, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(34.dp))
+        Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+        Text(message, fontSize = 13.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center)
     }
 }
 
@@ -241,16 +236,16 @@ fun ValidatedFormField(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(label, fontSize = 12.sp, color = if (error == null) TextSecondaryColor else OrangeTheme)
+        Text(label, fontSize = 12.sp, color = if (error == null) FLTheme.colors.textSecondary else OrangeTheme)
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
             singleLine = true,
-            textStyle = TextStyle(fontSize = 16.sp, color = TextPrimaryColor),
+            textStyle = TextStyle(fontSize = 16.sp, color = FLTheme.colors.textPrimary),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             modifier = Modifier.fillMaxWidth(),
             decorationBox = { inner ->
-                if (value.isEmpty()) Text(label, fontSize = 16.sp, color = MediumGray)
+                if (value.isEmpty()) Text(label, fontSize = 16.sp, color = FLTheme.colors.textTertiary)
                 inner()
             }
         )
@@ -271,7 +266,7 @@ fun BoxedNumberField(
 ) {
     Box(
         modifier = modifier
-            .background(BackgroundColor, RoundedCornerShape(8.dp))
+            .background(FLTheme.colors.background, RoundedCornerShape(8.dp))
             .padding(vertical = 6.dp, horizontal = 8.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -279,12 +274,12 @@ fun BoxedNumberField(
             value = value,
             onValueChange = onValueChange,
             singleLine = true,
-            textStyle = TextStyle(fontSize = fontSize.sp, color = TextPrimaryColor, textAlign = TextAlign.Center, fontWeight = fontWeight),
+            textStyle = TextStyle(fontSize = fontSize.sp, color = FLTheme.colors.textPrimary, textAlign = TextAlign.Center, fontWeight = fontWeight),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             modifier = Modifier.fillMaxWidth(),
             decorationBox = { inner ->
                 Box(contentAlignment = Alignment.Center) {
-                    if (value.isEmpty()) Text(placeholder, fontSize = fontSize.sp, color = MediumGray)
+                    if (value.isEmpty()) Text(placeholder, fontSize = fontSize.sp, color = FLTheme.colors.textTertiary)
                     inner()
                 }
             }

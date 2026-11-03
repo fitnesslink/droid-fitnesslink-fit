@@ -44,11 +44,8 @@ import com.fitnesslink.fit.model.TaskSetConfig
 import com.fitnesslink.fit.model.WeightUnit
 import com.fitnesslink.fit.model.prescribedDistance
 import com.fitnesslink.fit.session.MovementPerformanceLines
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.DisabledButton
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.InteractiveSessionViewModel
 
 private val durationPresets = listOf(30, 60, 120, 300, 600)
@@ -114,14 +111,14 @@ fun SetLogSheet(viewModel: InteractiveSessionViewModel, onDismiss: () -> Unit) {
         onDismiss()
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.surface) {
         Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(task.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
                 Text(
                     if (task.groupId.isEmpty()) "Set ${viewModel.currentSetNumber} of ${maxOf(task.sets, 1)}"
                     else "Round ${viewModel.currentRound} of ${maxOf(task.rounds ?: task.totalRounds, 1)}",
-                    fontSize = 14.sp, color = TextSecondaryColor
+                    fontSize = 14.sp, color = FLTheme.colors.textSecondary
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -132,7 +129,7 @@ fun SetLogSheet(viewModel: InteractiveSessionViewModel, onDismiss: () -> Unit) {
                 if (task.usesDuration) {
                     FieldColumn("Duration", Modifier.weight(1f)) {
                         Text(InteractiveSessionViewModel.formatDuration(durationSeconds), fontSize = 24.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(BackgroundColor).padding(vertical = 14.dp))
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.background).padding(vertical = 14.dp))
                     }
                 }
             }
@@ -173,21 +170,21 @@ fun SetLogSheet(viewModel: InteractiveSessionViewModel, onDismiss: () -> Unit) {
             }
             previous?.let { Text(it.lastTimeLine, color = FLPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
             topSet?.let {
-                Row { Text("Top set", color = TextSecondaryColor, fontSize = 12.sp); Spacer(Modifier.weight(1f)); Text(MovementPerformanceLines.topSetLine(it), fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+                Row { Text("Top set", color = FLTheme.colors.textSecondary, fontSize = 12.sp); Spacer(Modifier.weight(1f)); Text(MovementPerformanceLines.topSetLine(it), fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
             }
             if (previouslyLogged.isNotEmpty()) {
-                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(BackgroundColor).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("This session", color = TextSecondaryColor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+                Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.background).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("This session", color = FLTheme.colors.textSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
                     previouslyLogged.forEach { config ->
-                        Row { Text("Set ${config.setNumber}", color = TextSecondaryColor, fontSize = 13.sp, modifier = Modifier.width(48.dp)); Text(historyLine(config, task.usesDuration), fontSize = 13.sp, fontWeight = FontWeight.Medium) }
+                        Row { Text("Set ${config.setNumber}", color = FLTheme.colors.textSecondary, fontSize = 13.sp, modifier = Modifier.width(48.dp)); Text(historyLine(config, task.usesDuration), fontSize = 13.sp, fontWeight = FontWeight.Medium) }
                     }
                 }
             }
             Text(
-                "Save Set", color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (canSave) FLPrimary else DisabledButton).clickable(enabled = canSave) { save() }.padding(vertical = 14.dp)
+                "Save Set", color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(if (canSave) FLPrimary else FLTheme.colors.disabled).clickable(enabled = canSave) { save() }.padding(vertical = 14.dp)
             )
-            Text("Cancel", color = TextSecondaryColor, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().clickable { onDismiss() }.padding(vertical = 10.dp))
+            Text("Cancel", color = FLTheme.colors.textSecondary, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().clickable { onDismiss() }.padding(vertical = 10.dp))
             Spacer(Modifier.padding(bottom = 16.dp))
         }
     }
@@ -217,7 +214,7 @@ internal fun historyLine(config: TaskSetConfig, usesDuration: Boolean): String {
 @Composable
 internal fun FieldColumn(label: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(label, color = TextSecondaryColor, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+        Text(label, color = FLTheme.colors.textSecondary, fontSize = 12.sp, fontWeight = FontWeight.Medium)
         content()
     }
 }
@@ -235,8 +232,8 @@ internal fun NumberField(value: String, onChange: (String) -> Unit, decimal: Boo
 @Composable
 internal fun Chip(text: String, active: Boolean, onClick: () -> Unit) {
     Text(
-        text, color = if (active) White else com.fitnesslink.fit.ui.theme.TextPrimaryColor, fontSize = 12.sp, fontWeight = FontWeight.Medium,
-        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(if (active) FLPrimary else BackgroundColor).clickable { onClick() }.padding(horizontal = 10.dp, vertical = 6.dp)
+        text, color = if (active) FLTheme.colors.onBrand else FLTheme.colors.textPrimary, fontSize = 12.sp, fontWeight = FontWeight.Medium,
+        modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(if (active) FLPrimary else FLTheme.colors.background).clickable { onClick() }.padding(horizontal = 10.dp, vertical = 6.dp)
     )
 }
 

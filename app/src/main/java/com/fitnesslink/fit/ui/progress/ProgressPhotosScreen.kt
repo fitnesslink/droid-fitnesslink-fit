@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.progress
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -62,12 +63,7 @@ import com.fitnesslink.fit.model.PhotoAngle
 import com.fitnesslink.fit.model.ProgressPhotoEntry
 import com.fitnesslink.fit.model.WeightEntry
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.ProgressPhotosViewModel
 import java.util.Date
 import java.util.Locale
@@ -92,7 +88,7 @@ fun ProgressPhotosScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -102,7 +98,7 @@ fun ProgressPhotosScreen(
         ) {
             item {
                 Text(
-                    "Progress Photos", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor,
+                    "Progress Photos", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                 )
             }
@@ -144,24 +140,24 @@ fun ProgressPhotosScreen(
                         .padding(horizontal = 20.dp)
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(White)
+                        .background(FLTheme.colors.surface)
                         .clickable { viewModel.showDatePicker = true }
                         .padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Search, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(18.dp))
                     val sd = viewModel.searchDate
                     if (sd != null) {
-                        Text(longDate.format(sd), fontSize = 14.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                        Text(longDate.format(sd), fontSize = 14.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                         Icon(
-                            Icons.Default.Cancel, contentDescription = "Clear date", tint = TextSecondaryColor,
+                            Icons.Default.Cancel, contentDescription = "Clear date", tint = FLTheme.colors.textSecondary,
                             modifier = Modifier
                                 .size(18.dp)
                                 .clickable { viewModel.searchDate = null }
                         )
                     } else {
-                        Text("Search by date", fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+                        Text("Search by date", fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -174,11 +170,11 @@ fun ProgressPhotosScreen(
                             .padding(top = 40.dp, start = 20.dp, end = 20.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = MediumGray)
+                        Icon(Icons.Default.CameraAlt, contentDescription = null, modifier = Modifier.size(48.dp), tint = FLTheme.colors.textTertiary)
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text(if (viewModel.searchDate != null) "No photos on that day" else "No photos yet", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                        Text(if (viewModel.searchDate != null) "No photos on that day" else "No photos yet", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Take progress photos to track your transformation", fontSize = 14.sp, color = TextSecondaryColor)
+                        Text("Take progress photos to track your transformation", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             } else {
@@ -242,14 +238,14 @@ fun PhotoEntryCard(
                 .fillMaxWidth()
                 .combinedClickable(onClick = onClick, onLongClick = { if (onDelete != null) menuOpen = true }),
             shape = RoundedCornerShape(12.dp),
-            colors = CardDefaults.cardColors(containerColor = White)
+            colors = CardDefaults.cardColors(containerColor = FLTheme.colors.surface)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(longDate.format(entry.date), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                    Text(longDate.format(entry.date), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                     Spacer(modifier = Modifier.weight(1f))
-                    Text("${entry.photos.size} angle${if (entry.photos.size == 1) "" else "s"}", fontSize = 12.sp, color = TextSecondaryColor)
-                    Icon(Icons.Default.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp), tint = MediumGray)
+                    Text("${entry.photos.size} angle${if (entry.photos.size == 1) "" else "s"}", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, modifier = Modifier.size(16.dp), tint = FLTheme.colors.textTertiary)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))
@@ -265,30 +261,30 @@ fun PhotoEntryCard(
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                     closestWeight?.let { weight ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.MonitorWeight, contentDescription = null, modifier = Modifier.size(14.dp), tint = TextSecondaryColor)
+                            Icon(Icons.Default.MonitorWeight, contentDescription = null, modifier = Modifier.size(14.dp), tint = FLTheme.colors.textSecondary)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("${String.format(Locale.US, "%.1f", weight.weight)} ${weight.unit.label}", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                            Text("${String.format(Locale.US, "%.1f", weight.weight)} ${weight.unit.label}", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                         }
                     }
                     closestMeasurements?.let { m ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Straighten, contentDescription = null, modifier = Modifier.size(14.dp), tint = TextSecondaryColor)
+                            Icon(Icons.Default.Straighten, contentDescription = null, modifier = Modifier.size(14.dp), tint = FLTheme.colors.textSecondary)
                             Spacer(modifier = Modifier.width(4.dp))
-                            Text("${m.measurements.size} measurements", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                            Text("${m.measurements.size} measurements", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                         }
                     }
                 }
 
                 if (entry.notes.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(6.dp))
-                    Text(entry.notes, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Text(entry.notes, fontSize = 13.sp, color = FLTheme.colors.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             DropdownMenuItem(
-                text = { Text("Delete photos", color = Color(0xFFE53935)) },
-                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color(0xFFE53935)) },
+                text = { Text("Delete photos", color = FLTheme.colors.danger) },
+                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = FLTheme.colors.danger) },
                 onClick = { menuOpen = false; onDelete?.invoke() }
             )
         }

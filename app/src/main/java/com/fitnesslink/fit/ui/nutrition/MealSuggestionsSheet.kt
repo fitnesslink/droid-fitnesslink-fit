@@ -41,14 +41,11 @@ import com.fitnesslink.fit.model.MealType
 import com.fitnesslink.fit.model.NutritionGoal
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.network.dto.DraftMeal
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.AIMealGeneratorViewModel
 import kotlinx.coroutines.launch
 
@@ -73,7 +70,7 @@ fun MealSuggestionsSheet(mealType: MealType, goal: NutritionGoal, onPick: (Draft
     ModalBottomSheet(
         onDismissRequest = { if (!vm.isGenerating) onDismiss() },
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = BackgroundColor
+        containerColor = FLTheme.colors.background
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp),
@@ -83,8 +80,8 @@ fun MealSuggestionsSheet(mealType: MealType, goal: NutritionGoal, onPick: (Draft
 
             if (!isConnected) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Filled.WifiOff, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
-                    Text("You need an active internet connection to generate meal ideas.", fontSize = 13.sp, color = TextSecondaryColor)
+                    Icon(Icons.Filled.WifiOff, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
+                    Text("You need an active internet connection to generate meal ideas.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
             }
 
@@ -117,7 +114,7 @@ fun MealSuggestionsSheet(mealType: MealType, goal: NutritionGoal, onPick: (Draft
             PlanSectionLabel("Ingredients to avoid (optional)")
             PlanCard { PlanTextField(vm.avoidIngredientsText, { vm.avoidIngredientsText = it }, "e.g. mushrooms, cilantro") }
 
-            vm.errorMessage?.let { Text(it, fontSize = 13.sp, color = Color.Red) }
+            vm.errorMessage?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.danger) }
 
             GenerateButton(
                 isGenerating = vm.isGenerating,
@@ -129,7 +126,7 @@ fun MealSuggestionsSheet(mealType: MealType, goal: NutritionGoal, onPick: (Draft
 
             if (vm.suggestions.isNotEmpty()) {
                 PlanSectionLabel("Ideas")
-                Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+                Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                     vm.suggestions.forEachIndexed { index, meal ->
                         SuggestionRow(meal) { onPick(meal) }
                         if (index < vm.suggestions.lastIndex) PlanDivider()
@@ -137,7 +134,7 @@ fun MealSuggestionsSheet(mealType: MealType, goal: NutritionGoal, onPick: (Draft
                 }
             }
             if (!vm.isGenerating && vm.hasGenerated && vm.suggestions.isEmpty() && vm.errorMessage == null) {
-                Text("No ideas came back. Try a different description.", fontSize = 13.sp, color = TextSecondaryColor)
+                Text("No ideas came back. Try a different description.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             }
         }
     }
@@ -147,22 +144,22 @@ fun MealSuggestionsSheet(mealType: MealType, goal: NutritionGoal, onPick: (Draft
 private fun SuggestionRow(meal: DraftMeal, onClick: () -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(meal.recipeName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+            Text(meal.recipeName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
             Text("${meal.calories} cal", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
         }
-        meal.description?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 2) }
+        meal.description?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 2) }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("P: ${planGrams(meal.protein)}", fontSize = 12.sp, color = BlueTheme)
             Text("F: ${planGrams(meal.fat)}", fontSize = 12.sp, color = OrangeTheme)
             Text("C: ${planGrams(meal.carbs)}", fontSize = 12.sp, color = PurpleTheme)
             meal.prepMinutes?.let {
                 Spacer(Modifier.weight(1f))
-                Icon(Icons.Filled.Schedule, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(12.dp))
-                Text("${it}m", fontSize = 12.sp, color = TextSecondaryColor)
+                Icon(Icons.Filled.Schedule, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(12.dp))
+                Text("${it}m", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
         if (meal.ingredients.isNotEmpty()) {
-            Text(meal.ingredients.joinToString(", ") { it.name }, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 2)
+            Text(meal.ingredients.joinToString(", ") { it.name }, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 2)
         }
     }
 }
@@ -177,31 +174,31 @@ internal fun GenerateButton(isGenerating: Boolean, enabled: Boolean, workingLabe
         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
     ) {
         if (isGenerating) {
-            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = White)
+            CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = FLTheme.colors.onBrand)
             Spacer(Modifier.width(8.dp))
-            Text(workingLabel, fontSize = 15.sp, color = White)
+            Text(workingLabel, fontSize = 15.sp, color = FLTheme.colors.onBrand)
         } else {
-            Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = White, modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = White)
+            Text(label, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
         }
     }
 }
 
 @Composable
 internal fun PlanSectionLabel(text: String) {
-    Text(text.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor, modifier = Modifier.padding(top = 4.dp))
+    Text(text.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
 }
 
 @Composable
 internal fun PlanFootnote(text: String) {
-    Text(text, fontSize = 12.sp, color = TextSecondaryColor)
+    Text(text, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
 }
 
 @Composable
 internal fun PlanNumberRow(label: String, value: String, placeholder: String = "—", onChange: (String) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+        Text(label, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
         PlanTextField(
             value, { onChange(it.filter { c -> c.isDigit() }) }, placeholder,
             modifier = Modifier.width(96.dp), keyboardType = KeyboardType.Number, textAlign = TextAlign.End

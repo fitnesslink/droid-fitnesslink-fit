@@ -66,16 +66,11 @@ import com.fitnesslink.fit.session.ExerciseState
 import com.fitnesslink.fit.session.MovementHistoryStore
 import com.fitnesslink.fit.session.SetState
 import com.fitnesslink.fit.ui.components.FLImageView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.InfoColor
-import com.fitnesslink.fit.ui.theme.MediumGray
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.PlaylistEditRequest
 import com.fitnesslink.fit.viewmodel.PlaylistViewModel
 import com.fitnesslink.fit.viewmodel.SessionWorkoutEditor
@@ -106,32 +101,32 @@ fun PlaylistMovementRow(
     var menu by remember { mutableStateOf(false) }
     val hasVideo = task.effectiveMovementVideoId != null
 
-    // Light card per exercise (FTNSSLNK-499): white on the grey page, with a hairline that keeps
+    // Card per exercise (FTNSSLNK-499): surface on the page background, with a hairline that keeps
     // it crisp on a superset / circuit / interval block's accent wash.
     val cardShape = RoundedCornerShape(12.dp)
-    Row(Modifier.fillMaxWidth().clip(cardShape).background(White).border(1.dp, TextPrimaryColor.copy(alpha = 0.06f), cardShape)
+    Row(Modifier.fillMaxWidth().clip(cardShape).background(FLTheme.colors.surface).border(1.dp, FLTheme.colors.textPrimary.copy(alpha = 0.06f), cardShape)
         .padding(vertical = 10.dp, horizontal = 10.dp), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(
             if (isCompleted) Icons.Filled.CheckBox else Icons.Filled.CheckBoxOutlineBlank, contentDescription = if (isCompleted) "Completed" else "Mark completed",
-            tint = if (isCompleted) FLPrimary else MediumGray, modifier = Modifier.size(24.dp).clickable { viewModel.toggleCompleted(task.id) }
+            tint = if (isCompleted) FLPrimary else FLTheme.colors.textTertiary, modifier = Modifier.size(24.dp).clickable { viewModel.toggleCompleted(task.id) }
         )
         Box(Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)).clickable(enabled = hasVideo) { onPlayVideo(task) }, contentAlignment = Alignment.Center) {
             FLImageView(ref = (task.movementThumbnailId ?: task.movementImageId)?.let { MediaRef.MovementThumbnail(it) }, modifier = Modifier.size(50.dp))
-            if (hasVideo) Icon(Icons.Filled.PlayCircle, contentDescription = "Play video", tint = White.copy(alpha = 0.95f), modifier = Modifier.size(22.dp))
+            if (hasVideo) Icon(Icons.Filled.PlayCircle, contentDescription = "Play video", tint = Color.White.copy(alpha = 0.95f), modifier = Modifier.size(22.dp)) // theme-exempt: over media
         }
         if (task.movementId != null) Icon(Icons.Filled.Info, contentDescription = "Movement info", tint = FLPrimary, modifier = Modifier.size(20.dp).padding(top = 2.dp).clickable { onInfo(task) })
         Column(Modifier.weight(1f).clickable { viewModel.openLogSheet(task.id) }, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, textDecoration = if (isCompleted) TextDecoration.LineThrough else null)
+            Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, textDecoration = if (isCompleted) TextDecoration.LineThrough else null)
             if (!task.isInterval) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(task.displayMetric, fontSize = 13.sp, color = TextSecondaryColor)
-                    if (task.rest.isNotEmpty()) Text("• Rest ${task.rest}", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text(task.displayMetric, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
+                    if (task.rest.isNotEmpty()) Text("• Rest ${task.rest}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
             }
             if (states.isNotEmpty()) {
                 PlaylistSetStatusRow(states, exerciseState, unit) { viewModel.openLogSheet(task.id, it) }
                 val latest = viewModel.latestLoggedSetLine(task.id, unit)
-                if (latest != null) Text(latest, fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.padding(top = 8.dp))
+                if (latest != null) Text(latest, fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
                 else if (viewModel.showsLoggingHint(task.id)) Text("↑ Tap a set to log your weight & reps", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary, modifier = Modifier.padding(top = 10.dp))
             }
             SetBreakdown(task)
@@ -144,13 +139,13 @@ fun PlaylistMovementRow(
         val hasEditActions = SessionWorkoutEditor.canSwap(task) || !isGrouped
         if (viewModel.onEditRequest != null && task.isMovement && hasEditActions) {
             Box {
-                Icon(Icons.Filled.MoreVert, contentDescription = "Edit ${task.name}", tint = MediumGray, modifier = Modifier.size(28.dp).clickable { menu = true })
+                Icon(Icons.Filled.MoreVert, contentDescription = "Edit ${task.name}", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(28.dp).clickable { menu = true })
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     if (SessionWorkoutEditor.canSwap(task)) DropdownMenuItem(text = { Text("Swap Exercise") }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.Swap(task.id)) })
                     if (!isGrouped) {
                         if (SessionWorkoutEditor.canEditSets(task)) DropdownMenuItem(text = { Text(SessionWorkoutEditor.editSetsTitle(task)) }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.EditSets(task.id)) })
                         DropdownMenuItem(text = { Text("Add exercise after") }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.Add(task.id)) })
-                        if (SessionWorkoutEditor.canRemove(task)) DropdownMenuItem(text = { Text("Remove exercise", color = Color(0xFFE53935)) }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.Remove(task.id)) })
+                        if (SessionWorkoutEditor.canRemove(task)) DropdownMenuItem(text = { Text("Remove exercise", color = sessionDestructive) }, onClick = { menu = false; viewModel.requestEdit(PlaylistEditRequest.Remove(task.id)) })
                     }
                 }
             }
@@ -168,7 +163,7 @@ private fun SetBreakdown(task: WorkoutTask) {
         if (expanded) task.setConfigs.sortedBy { it.setNumber }.forEach { c ->
             val work = c.durationSeconds?.takeIf { it > 0 }?.let { WorkoutTask.humanizeDuration(it) } ?: "${c.reps} reps"
             val load = c.weightKg?.takeIf { it > 0 }?.let { "  ${com.fitnesslink.fit.model.WeightUnit.displayString(fromLbs = it)}" } ?: ""
-            Text("${if (task.groupId.isEmpty()) "Set" else "Round"} ${c.setNumber}  $work$load", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("${if (task.groupId.isEmpty()) "Set" else "Round"} ${c.setNumber}  $work$load", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -190,7 +185,7 @@ fun PlaylistSetStatusRow(states: List<SetState>, exerciseState: ExerciseState, u
             FlowRow(horizontalArrangement = Arrangement.spacedBy(if (onTapSet == null) 4.dp else 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 states.forEachIndexed { index, state ->
                     val isNext = index == nextIndex && onTapSet != null
-                    val color = if (isNext) FLPrimary else stateColor(state)
+                    val color = if (isNext) FLPrimary else stateColor(state, FLTheme.colors.textTertiary)
                     val filled = state == SetState.COMPLETED
                     Box(
                         Modifier.size(ringSize).clickable(enabled = onTapSet != null) { onTapSet?.invoke(index + 1) },
@@ -205,15 +200,15 @@ fun PlaylistSetStatusRow(states: List<SetState>, exerciseState: ExerciseState, u
                                 SetState.SKIPPED -> Icons.Filled.Block
                                 SetState.INCOMPLETE -> Icons.Filled.PriorityHigh
                             }
-                            icon?.let { Icon(it, contentDescription = "$unit ${index + 1} ${state.rawValue}", tint = if (filled) White else color, modifier = Modifier.size(ringSize * 0.5f)) }
+                            icon?.let { Icon(it, contentDescription = "$unit ${index + 1} ${state.rawValue}", tint = if (filled) FLTheme.colors.onBrand else color, modifier = Modifier.size(ringSize * 0.5f)) }
                         }
                     }
                 }
             }
         } else {
             val done = states.count { it == SetState.COMPLETED }
-            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = if (done == states.size) FLPrimary else TextSecondaryColor, modifier = Modifier.size(14.dp))
-            Text("$done of ${states.size}", fontSize = 11.sp, color = if (done == states.size) FLPrimary else TextSecondaryColor)
+            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = if (done == states.size) FLPrimary else FLTheme.colors.textSecondary, modifier = Modifier.size(14.dp))
+            Text("$done of ${states.size}", fontSize = 11.sp, color = if (done == states.size) FLPrimary else FLTheme.colors.textSecondary)
         }
         when (exerciseState) {
             ExerciseState.SKIPPED -> Tag("SKIPPED")
@@ -223,15 +218,15 @@ fun PlaylistSetStatusRow(states: List<SetState>, exerciseState: ExerciseState, u
     }
 }
 
-private fun stateColor(state: SetState): Color = when (state) {
-    SetState.UPCOMING -> MediumGray
+private fun stateColor(state: SetState, upcoming: Color): Color = when (state) {
+    SetState.UPCOMING -> upcoming
     SetState.ACTIVE, SetState.COMPLETED -> FLPrimary
     SetState.SKIPPED, SetState.INCOMPLETE -> OrangeTheme
 }
 
 @Composable
 private fun Tag(text: String) {
-    Text(text, color = White, fontSize = 10.sp, fontWeight = FontWeight.Black, modifier = Modifier.clip(CircleShape).background(OrangeTheme).padding(horizontal = 6.dp, vertical = 2.dp))
+    Text(text, color = FLTheme.colors.onBrand, fontSize = 10.sp, fontWeight = FontWeight.Black, modifier = Modifier.clip(CircleShape).background(OrangeTheme).padding(horizontal = 6.dp, vertical = 2.dp))
 }
 
 /** Standalone rest row. */
@@ -239,9 +234,9 @@ private fun Tag(text: String) {
 fun PlaylistRestRow(task: WorkoutTask, tint: Color = FLPrimary) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(Icons.Filled.Timer, contentDescription = null, tint = tint, modifier = Modifier.size(18.dp))
-        Text(if (task.restType == RestType.ACTIVE_RECOVERY) "Active Recovery${task.restMovementName?.let { " · $it" } ?: ""}" else "Rest", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text(if (task.restType == RestType.ACTIVE_RECOVERY) "Active Recovery${task.restMovementName?.let { " · $it" } ?: ""}" else "Rest", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
         Spacer(Modifier.weight(1f))
-        Text(formatSeconds(task.restSeconds), fontSize = 13.sp, color = TextSecondaryColor)
+        Text(formatSeconds(task.restSeconds), fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -270,8 +265,8 @@ fun PlaylistGroupContainer(row: TaskRow, viewModel: PlaylistViewModel, onPlayVid
             } else {
                 Row(Modifier.padding(horizontal = 10.dp).padding(top = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (badgeText.isNotEmpty()) Badge(badgeText, badgeColor)
-                    if (summary.isNotEmpty()) Badge(summary, InfoColor)
-                    roundRest?.let { Badge("${formatSeconds(it)} rest", InfoColor) }
+                    if (summary.isNotEmpty()) Badge(summary, FLTheme.colors.textSecondary, textColor = FLTheme.colors.surface)
+                    roundRest?.let { Badge("${formatSeconds(it)} rest", FLTheme.colors.textSecondary, textColor = FLTheme.colors.surface) }
                 }
             }
             Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -290,8 +285,8 @@ fun PlaylistGroupContainer(row: TaskRow, viewModel: PlaylistViewModel, onPlayVid
                     Row(Modifier.padding(vertical = 8.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Spacer(Modifier.width(22.dp))
                         FLImageView(ref = lead.restMovementThumbnailId?.let { MediaRef.MovementThumbnail(it) }, modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)))
-                        Text("RECOVERY", color = White, fontSize = 9.sp, fontWeight = FontWeight.Black, modifier = Modifier.clip(CircleShape).background(OrangeTheme).padding(horizontal = 6.dp, vertical = 2.dp))
-                        Text(lead.restMovementName ?: "Recovery", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                        Text("RECOVERY", color = FLTheme.colors.onBrand, fontSize = 9.sp, fontWeight = FontWeight.Black, modifier = Modifier.clip(CircleShape).background(OrangeTheme).padding(horizontal = 6.dp, vertical = 2.dp))
+                        Text(lead.restMovementName ?: "Recovery", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     }
                 }
             }
@@ -304,9 +299,9 @@ private fun MemberRestChip(task: WorkoutTask, isGroup: Boolean, lastMovementId: 
     if (!isGroup || task.restSeconds <= 0 || task.id == lastMovementId) return
     Row(Modifier.padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Spacer(Modifier.width(22.dp))
-        Row(Modifier.clip(RoundedCornerShape(5.dp)).background(InfoColor).padding(horizontal = 8.dp, vertical = 3.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Icon(Icons.Filled.Timer, contentDescription = null, tint = White, modifier = Modifier.size(10.dp))
-            Text("Rest ${formatSeconds(task.restSeconds)}", color = White, fontSize = 12.sp)
+        Row(Modifier.clip(RoundedCornerShape(5.dp)).background(FLTheme.colors.textSecondary).padding(horizontal = 8.dp, vertical = 3.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Icon(Icons.Filled.Timer, contentDescription = null, tint = FLTheme.colors.surface, modifier = Modifier.size(10.dp))
+            Text("Rest ${formatSeconds(task.restSeconds)}", color = FLTheme.colors.surface, fontSize = 12.sp)
         }
     }
 }
@@ -318,13 +313,13 @@ fun IntervalMetricsGrid(metrics: IntervalMetrics, accent: Color, modifier: Modif
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(Icons.Filled.Timer, contentDescription = null, tint = accent, modifier = Modifier.size(14.dp))
             Badge(metrics.badgeText, accent)
-            metrics.recoveryMovementName?.let { Badge("Recovery · $it", InfoColor) }
+            metrics.recoveryMovementName?.let { Badge("Recovery · $it", FLTheme.colors.textSecondary, textColor = FLTheme.colors.surface) }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             metrics.tiles.forEach { tile ->
-                Column(Modifier.weight(1f).clip(RoundedCornerShape(8.dp)).background(BackgroundColor).padding(vertical = 6.dp, horizontal = 4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(tile.value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, maxLines = 1)
-                    Text(tile.label, fontSize = 9.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Column(Modifier.weight(1f).clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.background).padding(vertical = 6.dp, horizontal = 4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(tile.value, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, maxLines = 1)
+                    Text(tile.label, fontSize = 9.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }

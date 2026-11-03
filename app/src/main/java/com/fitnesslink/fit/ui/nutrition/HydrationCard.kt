@@ -27,8 +27,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.HydrationPresets
 import com.fitnesslink.fit.model.MealPlanDay
 import com.fitnesslink.fit.ui.theme.BlueTheme
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.HydrationViewModel
 import java.util.Date
 
@@ -45,7 +44,7 @@ fun HydrationCardView(date: String, modifier: Modifier = Modifier, onLog: (() ->
     LaunchedEffect(date) { viewModel.loadData(date) }
 
     Column(
-        modifier = modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(16.dp),
+        modifier = modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -68,10 +67,10 @@ fun HydrationCardView(date: String, modifier: Modifier = Modifier, onLog: (() ->
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text(formatAmount(viewModel.totalIntake), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = BlueTheme)
             if (viewModel.dailyGoalDisplay > 0) {
-                Text(" / ${formatAmount(viewModel.dailyGoalDisplay)} ${viewModel.displayUnit.rawValue}", fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.padding(bottom = 2.dp).weight(1f))
-                Text("${(viewModel.hydrationProgress * 100).toInt()}%", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                Text(" / ${formatAmount(viewModel.dailyGoalDisplay)} ${viewModel.displayUnit.rawValue}", fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(bottom = 2.dp).weight(1f))
+                Text("${(viewModel.hydrationProgress * 100).toInt()}%", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
             } else {
-                Text(" ${viewModel.displayUnit.rawValue}", fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.padding(bottom = 2.dp))
+                Text(" ${viewModel.displayUnit.rawValue}", fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(bottom = 2.dp))
             }
         }
 

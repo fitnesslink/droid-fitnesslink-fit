@@ -38,11 +38,8 @@ import com.fitnesslink.fit.nutrition.HydrationStore
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
@@ -74,24 +71,24 @@ fun NutritionDisplaySettingsScreen(onBack: () -> Unit) {
 
     val unitChoices: List<WaterUnit?> = listOf(null, WaterUnit.OZ, WaterUnit.ML)
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(top = 10.dp, bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Display & Units", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text("Display & Units", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             errorMessage?.let { NutritionValidationBanner(it) }
 
             // Micronutrients
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Micronutrients", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Micronutrients", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 NutritionFieldCard {
                     Micronutrient.entries.forEachIndexed { index, micro ->
                         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(micro.displayName, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                                Text(if (micro.unit == "g") "Grams" else "Milligrams", fontSize = 12.sp, color = TextSecondaryColor)
+                                Text(micro.displayName, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                                Text(if (micro.unit == "g") "Grams" else "Milligrams", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                             }
                             Switch(
                                 checked = micro.key in displayed,
@@ -102,7 +99,7 @@ fun NutritionDisplaySettingsScreen(onBack: () -> Unit) {
                                         if (!ok) errorMessage = "Couldn't save that change. Check your connection and try again."
                                     }
                                 },
-                                colors = SwitchDefaults.colors(checkedTrackColor = FLPrimary, checkedThumbColor = White)
+                                colors = SwitchDefaults.colors(checkedTrackColor = FLPrimary, checkedThumbColor = FLTheme.colors.onBrand)
                             )
                         }
                         if (index < Micronutrient.entries.size - 1) SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
@@ -110,13 +107,13 @@ fun NutritionDisplaySettingsScreen(onBack: () -> Unit) {
                 }
                 Text(
                     "Choose which micronutrients appear on your nutrition dashboard. Calories, protein, fat, and carbs are always shown. Your choice syncs across devices.",
-                    fontSize = 12.sp, color = TextSecondaryColor
+                    fontSize = 12.sp, color = FLTheme.colors.textSecondary
                 )
             }
 
             // Water unit
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Water Unit", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Water Unit", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 NutritionFieldCard {
                     unitChoices.forEachIndexed { index, choice ->
                         Row(
@@ -144,7 +141,7 @@ fun NutritionDisplaySettingsScreen(onBack: () -> Unit) {
                                 .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(unitLabel(choice), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                            Text(unitLabel(choice), fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                             Spacer(modifier = Modifier.weight(1f))
                             if (choice == preferredUnit) Icon(Icons.Default.Check, contentDescription = "Selected", tint = FLPrimary, modifier = Modifier.size(18.dp))
                         }
@@ -153,7 +150,7 @@ fun NutritionDisplaySettingsScreen(onBack: () -> Unit) {
                 }
                 Text(
                     "Applied everywhere water is shown — the goal progress, entries, and summaries. Automatic uses your hydration goal's unit.",
-                    fontSize = 12.sp, color = TextSecondaryColor
+                    fontSize = 12.sp, color = FLTheme.colors.textSecondary
                 )
             }
         }

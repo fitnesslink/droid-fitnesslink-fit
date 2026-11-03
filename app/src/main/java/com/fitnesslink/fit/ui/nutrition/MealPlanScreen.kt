@@ -96,17 +96,11 @@ import com.fitnesslink.fit.nutrition.GroceryStore
 import com.fitnesslink.fit.nutrition.MealBuilderStore
 import com.fitnesslink.fit.nutrition.MealPlanStore
 import com.fitnesslink.fit.ui.navigation.MealPlanRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
-import com.fitnesslink.fit.ui.theme.DisabledButton
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.ProgressBG
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.MealPlanViewModel
 import kotlinx.coroutines.launch
 import java.util.Calendar
@@ -160,10 +154,10 @@ fun MealPlanScreen(
         if (viewModel.isWeekEmpty) viewModel.copyPreviousWeek(overwrite = false) else showCopyConfirm = true
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         PlanTopBar(title = "Meal Plan", onBack = onBack) {
             Box {
-                IconButton(onClick = { showMenu = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More", tint = TextPrimaryColor) }
+                IconButton(onClick = { showMenu = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More", tint = FLTheme.colors.textPrimary) }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(text = { Text("Meal Plan Ideas") }, leadingIcon = { Icon(Icons.Filled.AutoAwesome, null, tint = PurpleTheme) },
                         onClick = { showMenu = false; openIdeas() })
@@ -286,9 +280,9 @@ private fun WeekHeader(viewModel: MealPlanViewModel) {
     ) {
         WeekArrow(Icons.AutoMirrored.Filled.KeyboardArrowLeft) { viewModel.goToPreviousWeek() }
         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(viewModel.weekRangeLabel, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text(viewModel.weekRangeLabel, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             if (viewModel.isViewingCurrentWeek) {
-                Text("This week", fontSize = 11.sp, color = TextSecondaryColor)
+                Text("This week", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
             } else {
                 Text(
                     "Jump to this week", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = FLPrimary,
@@ -303,27 +297,27 @@ private fun WeekHeader(viewModel: MealPlanViewModel) {
 @Composable
 private fun WeekArrow(icon: ImageVector, onClick: () -> Unit) {
     Box(
-        modifier = Modifier.size(36.dp).background(White, CircleShape).clickable(onClick = onClick),
+        modifier = Modifier.size(36.dp).background(FLTheme.colors.surface, CircleShape).clickable(onClick = onClick),
         contentAlignment = Alignment.Center
-    ) { Icon(icon, contentDescription = null, tint = TextPrimaryColor) }
+    ) { Icon(icon, contentDescription = null, tint = FLTheme.colors.textPrimary) }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun DayTab(date: String, isSelected: Boolean, calories: Int, isOver: Boolean, onClick: () -> Unit, onLongPress: () -> Unit) {
     val isToday = MealPlanViewModel.isToday(date)
-    val calorieColor = if (isSelected) White else if (isOver) OrangeTheme else TextPrimaryColor
+    val calorieColor = if (isSelected) FLTheme.colors.onBrand else if (isOver) OrangeTheme else FLTheme.colors.textPrimary
     Column(
         modifier = Modifier
             .width(52.dp).height(64.dp)
-            .background(if (isSelected) FLPrimary else White, RoundedCornerShape(12.dp))
+            .background(if (isSelected) FLPrimary else FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .border(if (isToday && !isSelected) 1.5.dp else 0.dp, if (isToday && !isSelected) FLPrimary else Color.Transparent, RoundedCornerShape(12.dp))
             .clip(RoundedCornerShape(12.dp))
             .combinedClickable(onClick = onClick, onLongClick = onLongPress),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        val fg = if (isSelected) White else TextPrimaryColor
+        val fg = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary
         Text(MealPlanViewModel.weekdayShort(date), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = fg)
         Text(MealPlanViewModel.dayNumber(date), fontSize = 16.sp, fontWeight = FontWeight.Bold, color = fg)
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -347,16 +341,16 @@ private fun DailyCalorieHeader(viewModel: MealPlanViewModel) {
         modifier = Modifier
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .border(1.dp, if (state.isOver) OrangeTheme.copy(alpha = 0.5f) else Color.Transparent, RoundedCornerShape(12.dp))
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(MealPlanViewModel.weekdayFull(date), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text(MealPlanViewModel.weekdayFull(date), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             Text(
                 if (target != null) "${MealPlanViewModel.mediumDay(date)} · $cals / $target cal planned" else "${MealPlanViewModel.mediumDay(date)} · $cals cal planned",
-                fontSize = 14.sp, color = TextSecondaryColor
+                fontSize = 14.sp, color = FLTheme.colors.textSecondary
             )
             when (state) {
                 PlannedDayTargetState.OVER -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -377,11 +371,11 @@ private fun DailyCalorieHeader(viewModel: MealPlanViewModel) {
 
 @Composable
 private fun MealSlotCard(meal: MealType, slots: List<MealSlot>, onOpen: (MealSlot) -> Unit, onAdd: () -> Unit) {
-    Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+    Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(planMealIcon(meal), contentDescription = null, tint = planMealColor(meal), modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text(meal.displayName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+            Text(meal.displayName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
             if (slots.isNotEmpty()) Text("${slots.sumOf { it.calories }} cal", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
         }
         PlanDivider()
@@ -392,13 +386,13 @@ private fun MealSlotCard(meal: MealType, slots: List<MealSlot>, onOpen: (MealSlo
             ) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(slot.recipeName.ifEmpty { meal.displayName }, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                        Text(slot.recipeName.ifEmpty { meal.displayName }, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                         if (slot.isAISuggestion) Icon(Icons.Filled.AutoAwesome, contentDescription = "AI suggestion", tint = PurpleTheme, modifier = Modifier.size(12.dp))
                     }
                     PlanMacroRow(slot.protein, slot.fat, slot.carbs)
                 }
-                Text("${slot.calories} cal", fontSize = 13.sp, color = TextSecondaryColor)
-                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray)
+                Text("${slot.calories} cal", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
+                Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary)
             }
             PlanDivider()
         }
@@ -407,7 +401,7 @@ private fun MealSlotCard(meal: MealType, slots: List<MealSlot>, onOpen: (MealSlo
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Icon(Icons.Filled.AddCircle, contentDescription = null, tint = FLPrimary.copy(alpha = 0.6f), modifier = Modifier.size(20.dp))
-            Text(if (slots.isEmpty()) "Add meal" else "Add another", fontSize = 14.sp, color = TextSecondaryColor)
+            Text(if (slots.isEmpty()) "Add meal" else "Add another", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -415,12 +409,12 @@ private fun MealSlotCard(meal: MealType, slots: List<MealSlot>, onOpen: (MealSlo
 @Composable
 private fun EmptyDayPrompt(weekday: String) {
     Column(
-        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(vertical = 20.dp, horizontal = 16.dp),
+        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(vertical = 20.dp, horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Icon(Icons.Filled.Restaurant, contentDescription = null, tint = FLPrimary.copy(alpha = 0.7f), modifier = Modifier.size(22.dp))
-        Text("No meals planned for $weekday", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-        Text("Use “Add meal” under any section below to start planning this day.", fontSize = 12.sp, color = TextSecondaryColor, textAlign = TextAlign.Center)
+        Text("No meals planned for $weekday", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+        Text("Use “Add meal” under any section below to start planning this day.", fontSize = 12.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center)
     }
 }
 
@@ -495,7 +489,7 @@ private fun CopyDaySheet(
         }
     }
 
-    ModalBottomSheet(onDismissRequest = { if (!isWorking) onDismiss() }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = { if (!isWorking) onDismiss() }, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = FLTheme.colors.background) {
         Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             PlanSheetTitle("Copy Day", onCancel = onDismiss, confirm = if (selected.isEmpty()) "Copy" else "Copy to ${selected.size} day${if (selected.size == 1) "" else "s"}",
                 confirmEnabled = selected.isNotEmpty() && !isWorking, isWorking = isWorking, onConfirm = ::attempt)
@@ -503,15 +497,15 @@ private fun CopyDaySheet(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     Icon(Icons.Filled.ContentCopy, contentDescription = null, tint = FLPrimary)
                     Column {
-                        Text("${MealPlanViewModel.weekdayFull(sourceDay)}, ${MealPlanViewModel.mediumDay(sourceDay)}", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-                        Text("$sourceMealCount meal${if (sourceMealCount == 1) "" else "s"} to copy", fontSize = 12.sp, color = TextSecondaryColor)
+                        Text("${MealPlanViewModel.weekdayFull(sourceDay)}, ${MealPlanViewModel.mediumDay(sourceDay)}", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+                        Text("$sourceMealCount meal${if (sourceMealCount == 1) "" else "s"} to copy", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }
-            Text("Pick one or more days to copy this day's meals onto.", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("Pick one or more days to copy this day's meals onto.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             weeks.forEach { week ->
-                Text(MealPlanViewModel.weekRangeLabel(week.first()).uppercase(), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-                Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+                Text(MealPlanViewModel.weekRangeLabel(week.first()).uppercase(), fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
+                Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                     week.forEachIndexed { index, day ->
                         val isSource = day == sourceDay
                         val isSelected = day in selected
@@ -522,13 +516,13 @@ private fun CopyDaySheet(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(MealPlanViewModel.weekdayFull(day), fontSize = 15.sp, color = if (isSource) TextSecondaryColor else TextPrimaryColor)
-                                Text(MealPlanViewModel.mediumDay(day), fontSize = 12.sp, color = TextSecondaryColor)
+                                Text(MealPlanViewModel.weekdayFull(day), fontSize = 15.sp, color = if (isSource) FLTheme.colors.textSecondary else FLTheme.colors.textPrimary)
+                                Text(MealPlanViewModel.mediumDay(day), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                             }
                             when {
-                                isSource -> Text("Copying from", fontSize = 12.sp, color = TextSecondaryColor)
+                                isSource -> Text("Copying from", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                                 isSelected -> Icon(Icons.Filled.CheckCircle, contentDescription = "Selected", tint = FLPrimary)
-                                else -> Icon(Icons.Outlined.Circle, contentDescription = null, tint = MediumGray)
+                                else -> Icon(Icons.Outlined.Circle, contentDescription = null, tint = FLTheme.colors.textTertiary)
                             }
                         }
                         if (index < week.lastIndex) PlanDivider()
@@ -571,7 +565,7 @@ internal fun GenerateGroceryListSheet(weekStart: String, onGenerated: (com.fitne
     var pickingTo by remember { mutableStateOf(false) }
     val dayCount = ((MealPlanDay.parse(toDate).time - MealPlanDay.parse(fromDate).time) / 86_400_000L).toInt() + 1
 
-    ModalBottomSheet(onDismissRequest = { if (!isGenerating) onDismiss() }, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = { if (!isGenerating) onDismiss() }, containerColor = FLTheme.colors.background) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             PlanSheetTitle("Generate Grocery List", onCancel = onDismiss, confirm = "Generate", confirmEnabled = !isGenerating, isWorking = isGenerating) {
                 errorMessage = null
@@ -588,14 +582,14 @@ internal fun GenerateGroceryListSheet(weekStart: String, onGenerated: (com.fitne
                     }
                 }
             }
-            Text("DATE RANGE", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-            Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+            Text("DATE RANGE", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
+            Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                 PlanValueRow("From", MealPlanViewModel.mediumDay(fromDate)) { pickingFrom = true }
                 PlanDivider()
                 PlanValueRow("To", MealPlanViewModel.mediumDay(toDate)) { pickingTo = true }
             }
-            Text("Combines every planned food from $dayCount day${if (dayCount == 1) "" else "s"} into one shopping list.", fontSize = 12.sp, color = TextSecondaryColor)
-            Text("LIST NAME", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+            Text("Combines every planned food from $dayCount day${if (dayCount == 1) "" else "s"} into one shopping list.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+            Text("LIST NAME", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
             PlanCard { PlanTextField(listName, { listName = it }, placeholder = "List name (optional)") }
             errorMessage?.let { Text(it, fontSize = 13.sp, color = OrangeTheme) }
         }
@@ -625,20 +619,20 @@ internal fun planGrams(value: Double): String = "${value.roundToInt()}g"
 @Composable
 internal fun PlanTopBar(title: String, onBack: () -> Unit, actions: @Composable RowScope.() -> Unit = {}) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimaryColor) }
-        Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+        IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = FLTheme.colors.textPrimary) }
+        Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
         actions()
     }
 }
 
 @Composable
 internal fun PlanCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Column(modifier = modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
+    Column(modifier = modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp), content = content)
 }
 
 @Composable
 internal fun PlanDivider(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp).height(1.dp).background(ProgressBG))
+    Box(modifier = modifier.fillMaxWidth().padding(horizontal = 16.dp).height(1.dp).background(FLTheme.colors.progressTrack))
 }
 
 @Composable
@@ -654,55 +648,55 @@ internal fun PlanMacroRow(protein: Double, fat: Double, carbs: Double, fontSize:
 internal fun PlanMacroTag(letter: String, value: Double, color: Color, fontSize: Int = 11) {
     Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(letter, fontSize = fontSize.sp, fontWeight = FontWeight.Bold, color = color)
-        Text(planGrams(value), fontSize = fontSize.sp, color = TextSecondaryColor)
+        Text(planGrams(value), fontSize = fontSize.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
 @Composable
 internal fun PlanBanner(icon: ImageVector, color: Color, text: String, onDismiss: (() -> Unit)? = null) {
     Row(
-        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(12.dp),
+        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
-        Text(text, fontSize = 13.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-        if (onDismiss != null) Icon(Icons.Filled.Close, contentDescription = "Dismiss", tint = TextSecondaryColor, modifier = Modifier.size(16.dp).clickable(onClick = onDismiss))
+        Text(text, fontSize = 13.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+        if (onDismiss != null) Icon(Icons.Filled.Close, contentDescription = "Dismiss", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp).clickable(onClick = onDismiss))
     }
 }
 
 @Composable
 internal fun PlanActionCard(icon: ImageVector, tint: Color, title: String, subtitle: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(16.dp),
+        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(16.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(22.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text(subtitle, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text(subtitle, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray)
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary)
     }
 }
 
 @Composable
 internal fun PlanActionButton(icon: ImageVector, title: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Row(
-        modifier = modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp),
+        modifier = modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = TextPrimaryColor, modifier = Modifier.size(16.dp))
+        Icon(icon, contentDescription = null, tint = FLTheme.colors.textPrimary, modifier = Modifier.size(16.dp))
         Spacer(Modifier.width(6.dp))
-        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+        Text(title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
     }
 }
 
 @Composable
 internal fun PlanPrimaryButton(text: String, enabled: Boolean = true, color: Color = FLPrimary, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
-        modifier = modifier.fillMaxWidth().background(if (enabled) color else DisabledButton, RoundedCornerShape(12.dp)).clickable(enabled = enabled, onClick = onClick).padding(vertical = 14.dp),
+        modifier = modifier.fillMaxWidth().background(if (enabled) color else FLTheme.colors.disabled, RoundedCornerShape(12.dp)).clickable(enabled = enabled, onClick = onClick).padding(vertical = 14.dp),
         contentAlignment = Alignment.Center
-    ) { Text(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White) }
+    ) { Text(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand) }
 }
 
 @Composable
@@ -715,11 +709,11 @@ internal fun PlanTextField(
     singleLine: Boolean = true,
     textAlign: TextAlign = TextAlign.Start
 ) {
-    Box(modifier = modifier.fillMaxWidth().background(BackgroundColor, RoundedCornerShape(8.dp)).padding(horizontal = 12.dp, vertical = 10.dp)) {
-        if (value.isEmpty()) Text(placeholder, fontSize = 15.sp, color = MediumGray, textAlign = textAlign, modifier = Modifier.fillMaxWidth())
+    Box(modifier = modifier.fillMaxWidth().background(FLTheme.colors.background, RoundedCornerShape(8.dp)).padding(horizontal = 12.dp, vertical = 10.dp)) {
+        if (value.isEmpty()) Text(placeholder, fontSize = 15.sp, color = FLTheme.colors.textTertiary, textAlign = textAlign, modifier = Modifier.fillMaxWidth())
         BasicTextField(
             value = value, onValueChange = onValueChange, singleLine = singleLine,
-            textStyle = TextStyle(fontSize = 15.sp, color = TextPrimaryColor, textAlign = textAlign),
+            textStyle = TextStyle(fontSize = 15.sp, color = FLTheme.colors.textPrimary, textAlign = textAlign),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             modifier = Modifier.fillMaxWidth()
         )
@@ -732,18 +726,18 @@ internal fun PlanValueRow(label: String, value: String, onClick: (() -> Unit)? =
         modifier = Modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-        Text(value, fontSize = 15.sp, color = if (onClick != null) FLPrimary else TextSecondaryColor)
+        Text(label, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+        Text(value, fontSize = 15.sp, color = if (onClick != null) FLPrimary else FLTheme.colors.textSecondary)
     }
 }
 
 @Composable
 internal fun PlanSheetTitle(title: String, onCancel: () -> Unit, confirm: String?, confirmEnabled: Boolean = true, isWorking: Boolean = false, onConfirm: () -> Unit = {}) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        TextButton(onClick = onCancel, enabled = !isWorking) { Text("Cancel", color = TextSecondaryColor) }
-        Text(title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+        TextButton(onClick = onCancel, enabled = !isWorking) { Text("Cancel", color = FLTheme.colors.textSecondary) }
+        Text(title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
         if (isWorking) CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp, color = FLPrimary)
-        else if (confirm != null) TextButton(onClick = onConfirm, enabled = confirmEnabled) { Text(confirm, color = if (confirmEnabled) FLPrimary else MediumGray, fontWeight = FontWeight.SemiBold) }
+        else if (confirm != null) TextButton(onClick = onConfirm, enabled = confirmEnabled) { Text(confirm, color = if (confirmEnabled) FLPrimary else FLTheme.colors.textTertiary, fontWeight = FontWeight.SemiBold) }
         else Spacer(Modifier.width(64.dp))
     }
 }
@@ -751,12 +745,13 @@ internal fun PlanSheetTitle(title: String, onCancel: () -> Unit, confirm: String
 /** A ring progress indicator with centered content. */
 @Composable
 internal fun PlanRing(fraction: Float, color: Color, size: androidx.compose.ui.unit.Dp, stroke: androidx.compose.ui.unit.Dp, content: @Composable () -> Unit) {
+    val trackColor = FLTheme.colors.progressTrack
     Box(modifier = Modifier.size(size), contentAlignment = Alignment.Center) {
         androidx.compose.foundation.Canvas(modifier = Modifier.size(size)) {
             val strokePx = stroke.toPx()
             val inset = strokePx / 2
             val arcSize = Size(this.size.width - strokePx, this.size.height - strokePx)
-            drawArc(ProgressBG, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(strokePx))
+            drawArc(trackColor, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(strokePx))
             drawArc(color, -90f, 360f * fraction.coerceIn(0f, 1f), false, Offset(inset, inset), arcSize, style = Stroke(strokePx, cap = StrokeCap.Round))
         }
         content()

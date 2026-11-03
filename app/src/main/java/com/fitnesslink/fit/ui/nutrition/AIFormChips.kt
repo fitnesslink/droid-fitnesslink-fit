@@ -14,13 +14,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 // Shared chip controls for the AI request forms (iOS `AIFormChips.swift`):
-// FLPrimary when selected, BackgroundColor otherwise, rounded 8.
+// FLPrimary when selected, FLTheme.colors.background otherwise, rounded 8.
 
 @Composable
 fun AIChipLabel(text: String, isSelected: Boolean, modifier: Modifier = Modifier) {
@@ -28,9 +26,9 @@ fun AIChipLabel(text: String, isSelected: Boolean, modifier: Modifier = Modifier
         text = text,
         fontSize = 12.sp,
         fontWeight = FontWeight.Medium,
-        color = if (isSelected) White else TextPrimaryColor,
+        color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary,
         modifier = modifier
-            .background(if (isSelected) FLPrimary else BackgroundColor, RoundedCornerShape(8.dp))
+            .background(if (isSelected) FLPrimary else FLTheme.colors.background, RoundedCornerShape(8.dp))
             .padding(horizontal = 10.dp, vertical = 6.dp)
     )
 }

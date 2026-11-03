@@ -20,11 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.MealPlanDay
 import com.fitnesslink.fit.model.NutritionDayDotState
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -66,7 +63,7 @@ fun NutritionWeekStrip(
                 Text(
                     weekdayFormat.format(date).take(3),
                     fontSize = 11.sp,
-                    color = if (isFuture) MediumGray else TextSecondaryColor
+                    color = if (isFuture) FLTheme.colors.textTertiary else FLTheme.colors.textSecondary
                 )
                 Box(
                     modifier = Modifier
@@ -80,9 +77,9 @@ fun NutritionWeekStrip(
                         fontSize = 15.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         color = when {
-                            isSelected -> White
-                            isFuture -> MediumGray
-                            else -> TextPrimaryColor
+                            isSelected -> FLTheme.colors.onBrand
+                            isFuture -> FLTheme.colors.textTertiary
+                            else -> FLTheme.colors.textPrimary
                         }
                     )
                 }

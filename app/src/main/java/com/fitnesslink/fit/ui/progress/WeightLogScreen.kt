@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.progress
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,12 +50,8 @@ import com.fitnesslink.fit.model.WeightEntry
 import com.fitnesslink.fit.model.WeightUnit
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.profile.charts.ReportLineChart
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.viewmodel.WeightLogViewModel
 import java.util.Locale
 
@@ -73,7 +70,7 @@ fun WeightLogScreen(onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -83,7 +80,7 @@ fun WeightLogScreen(onBack: () -> Unit) {
         ) {
             item {
                 Text(
-                    "Weight", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor,
+                    "Weight", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                 )
             }
@@ -95,7 +92,7 @@ fun WeightLogScreen(onBack: () -> Unit) {
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    colors = CardDefaults.cardColors(containerColor = FLTheme.colors.surface)
                 ) {
                     Row(
                         modifier = Modifier
@@ -113,14 +110,14 @@ fun WeightLogScreen(onBack: () -> Unit) {
                             value = viewModel.weightChange?.let { signed(it) } ?: "—",
                             unit = viewModel.preferredUnit.label,
                             label = "Last Change",
-                            color = viewModel.weightChange?.let { if (it <= 0) FLPrimary else OrangeTheme } ?: TextPrimaryColor
+                            color = viewModel.weightChange?.let { if (it <= 0) FLPrimary else OrangeTheme } ?: FLTheme.colors.textPrimary
                         )
                         StatDivider()
                         WeightStatColumn(
                             value = viewModel.allTimeChange?.let { signed(it) } ?: "—",
                             unit = viewModel.preferredUnit.label,
                             label = "Total",
-                            color = viewModel.allTimeChange?.let { if (it <= 0) FLPrimary else OrangeTheme } ?: TextPrimaryColor
+                            color = viewModel.allTimeChange?.let { if (it <= 0) FLPrimary else OrangeTheme } ?: FLTheme.colors.textPrimary
                         )
                     }
                 }
@@ -135,10 +132,10 @@ fun WeightLogScreen(onBack: () -> Unit) {
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                        colors = CardDefaults.cardColors(containerColor = FLTheme.colors.surface)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
-                            Text("Trend", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                            Text("Trend", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                             Spacer(modifier = Modifier.height(12.dp))
                             val values = points.map { it.value }
                             val pad = ((values.max() - values.min()) * 0.15).coerceAtLeast(2.0)
@@ -173,13 +170,13 @@ fun WeightLogScreen(onBack: () -> Unit) {
 
             // History
             item {
-                Text("History", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+                Text("History", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp))
             }
             if (viewModel.entries.isEmpty()) {
                 item {
                     Text(
                         "No weigh-ins yet. Log your first weight to start the trend.",
-                        fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 20.dp)
+                        fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 20.dp)
                     )
                 }
             }
@@ -189,22 +186,22 @@ fun WeightLogScreen(onBack: () -> Unit) {
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp),
                     shape = RoundedCornerShape(10.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    colors = CardDefaults.cardColors(containerColor = FLTheme.colors.surface)
                 ) {
                     Row(
                         modifier = Modifier.padding(start = 14.dp, top = 6.dp, bottom = 6.dp, end = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text(longDate.format(entry.date), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                            if (entry.notes.isNotEmpty()) Text(entry.notes, fontSize = 12.sp, color = TextSecondaryColor)
+                            Text(longDate.format(entry.date), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                            if (entry.notes.isNotEmpty()) Text(entry.notes, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                         }
                         Text(
                             "${fmt(viewModel.displayWeight(entry))} ${viewModel.preferredUnit.label}",
-                            fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor
+                            fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary
                         )
                         IconButton(onClick = { pendingDelete = entry }) {
-                            Icon(Icons.Default.Delete, contentDescription = "Delete weigh-in", tint = MediumGray, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Delete, contentDescription = "Delete weigh-in", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
                         }
                     }
                 }
@@ -232,16 +229,16 @@ private fun StatDivider() {
         modifier = Modifier
             .width(1.dp)
             .height(50.dp)
-            .background(Color(0xFFE0E0E0))
+            .background(FLTheme.colors.divider)
     )
 }
 
 @Composable
-fun WeightStatColumn(value: String, unit: String, label: String, color: Color = TextPrimaryColor) {
+fun WeightStatColumn(value: String, unit: String, label: String, color: Color = FLTheme.colors.textPrimary) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = color)
-        Text(unit, fontSize = 13.sp, color = TextSecondaryColor)
-        Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(unit, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
+        Text(label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
     }
 }
 

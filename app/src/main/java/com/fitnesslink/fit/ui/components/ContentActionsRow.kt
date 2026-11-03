@@ -28,8 +28,9 @@ import androidx.compose.ui.unit.dp
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.dto.ShareableContentKind
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import kotlinx.coroutines.launch
+import com.fitnesslink.fit.ui.theme.AlertRed
 
 /**
  * FA-97 — favorite + share row, slotted into Workout/Program detail
@@ -87,7 +88,7 @@ fun ContentActionsRow(
             Icon(
                 imageVector = if (isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                 contentDescription = if (isFavorite) "Unfavorite" else "Favorite",
-                tint = if (isFavorite) Color(0xFFEF4444) else White,
+                tint = if (isFavorite) AlertRed else FLTheme.colors.onBrand,
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -110,7 +111,7 @@ fun ContentActionsRow(
             Icon(
                 imageVector = Icons.Filled.Share,
                 contentDescription = "Share",
-                tint = White,
+                tint = FLTheme.colors.onBrand,
                 modifier = Modifier.size(18.dp)
             )
         }

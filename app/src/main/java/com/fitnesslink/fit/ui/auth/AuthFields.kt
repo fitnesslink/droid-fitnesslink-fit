@@ -44,16 +44,15 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.UsernameState
 
 /** The pill text-field look shared by every auth form (iOS `capsuleField`). */
 @Composable
 fun pillFieldColors(): TextFieldColors = OutlinedTextFieldDefaults.colors(
-    focusedContainerColor = White,
-    unfocusedContainerColor = White,
-    disabledContainerColor = White,
+    focusedContainerColor = FLTheme.colors.surface,
+    unfocusedContainerColor = FLTheme.colors.surface,
+    disabledContainerColor = FLTheme.colors.surface,
     focusedBorderColor = Color.Transparent,
     unfocusedBorderColor = Color.Transparent,
     disabledBorderColor = Color.Transparent
@@ -125,7 +124,7 @@ fun RevealablePasswordField(
                 Icon(
                     imageVector = if (isRevealed) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
                     contentDescription = if (isRevealed) "Hide password" else "Show password",
-                    tint = TextSecondaryColor
+                    tint = FLTheme.colors.textSecondary
                 )
             }
         }
@@ -157,7 +156,7 @@ fun UsernameField(
             colors = pillFieldColors(),
             singleLine = true,
             prefix = {
-                Text("@", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                Text("@", fontSize = 16.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
             },
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.Ascii,
@@ -177,7 +176,7 @@ fun UsernameField(
                         Icons.Filled.CheckCircle, contentDescription = "Available", tint = FLPrimary
                     )
                     is UsernameState.Unavailable -> Icon(
-                        Icons.Filled.Cancel, contentDescription = "Unavailable", tint = Color.Red
+                        Icons.Filled.Cancel, contentDescription = "Unavailable", tint = FLTheme.colors.danger
                     )
                     UsernameState.Idle -> Unit
                 }
@@ -187,7 +186,7 @@ fun UsernameField(
         if (state is UsernameState.Unavailable) {
             Spacer(modifier = Modifier.height(8.dp))
             Column(modifier = Modifier.padding(horizontal = 4.dp)) {
-                Text(state.reason, fontSize = 12.sp, color = Color.Red)
+                Text(state.reason, fontSize = 12.sp, color = FLTheme.colors.danger)
                 // Tappable alternatives — the point of the endpoint returning
                 // suggestions at all is that the user never has to invent one.
                 if (state.suggestions.isNotEmpty()) {
@@ -223,6 +222,6 @@ fun AuthErrorText(message: String?, modifier: Modifier = Modifier, centered: Boo
         horizontalArrangement = if (centered) Arrangement.Center else Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(text = message, fontSize = 12.sp, color = Color.Red)
+        Text(text = message, fontSize = 12.sp, color = FLTheme.colors.danger)
     }
 }

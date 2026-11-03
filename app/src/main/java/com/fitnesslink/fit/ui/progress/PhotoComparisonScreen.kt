@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.progress
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,12 +45,8 @@ import com.fitnesslink.fit.model.PhotoAngle
 import com.fitnesslink.fit.model.ProgressPhotoEntry
 import com.fitnesslink.fit.progress.MeasurementMath
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.PhotoComparisonViewModel
 import java.util.Locale
 
@@ -70,7 +67,7 @@ fun PhotoComparisonScreen(onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -79,7 +76,7 @@ fun PhotoComparisonScreen(onBack: () -> Unit) {
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp)
                 .clip(RoundedCornerShape(10.dp))
-                .background(White)
+                .background(FLTheme.colors.surface)
         ) {
             PhotoAngle.entries.forEach { angle ->
                 val isSelected = viewModel.selectedAngle == angle
@@ -94,7 +91,7 @@ fun PhotoComparisonScreen(onBack: () -> Unit) {
                     Text(
                         angle.displayName, fontSize = 14.sp,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (isSelected) FLPrimary else TextSecondaryColor
+                        color = if (isSelected) FLPrimary else FLTheme.colors.textSecondary
                     )
                 }
             }
@@ -137,10 +134,10 @@ fun PhotoComparisonScreen(onBack: () -> Unit) {
                                 .fillMaxWidth()
                                 .padding(horizontal = 20.dp),
                             shape = RoundedCornerShape(10.dp),
-                            colors = CardDefaults.cardColors(containerColor = White)
+                            colors = CardDefaults.cardColors(containerColor = FLTheme.colors.surface)
                         ) {
                             Row(modifier = Modifier.padding(14.dp)) {
-                                Text("Weight Change", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                                Text("Weight Change", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                                 Spacer(modifier = Modifier.weight(1f))
                                 Text(
                                     "${if (diff > 0) "+" else ""}${fmt(diff)} ${wA.unit.label}",
@@ -161,19 +158,19 @@ fun PhotoComparisonScreen(onBack: () -> Unit) {
                                 .fillMaxWidth()
                                 .padding(horizontal = 20.dp),
                             shape = RoundedCornerShape(10.dp),
-                            colors = CardDefaults.cardColors(containerColor = White)
+                            colors = CardDefaults.cardColors(containerColor = FLTheme.colors.surface)
                         ) {
                             Column(modifier = Modifier.padding(14.dp)) {
-                                Text("Measurement Changes", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                                Text("Measurement Changes", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                                 Spacer(modifier = Modifier.height(8.dp))
                                 mA.measurements.forEach { ma ->
                                     val mb = mB.measurement(ma.bodyPart) ?: return@forEach
                                     val a = MeasurementMath.displayValue(ma, unit)
                                     val b = MeasurementMath.displayValue(mb, unit)
                                     Row(modifier = Modifier.padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        Text(ma.bodyPart.displayName, fontSize = 13.sp, color = TextPrimaryColor)
+                                        Text(ma.bodyPart.displayName, fontSize = 13.sp, color = FLTheme.colors.textPrimary)
                                         Spacer(modifier = Modifier.weight(1f))
-                                        Text("${fmt(b)} → ${fmt(a)} ${unit.label}", fontSize = 13.sp, color = TextSecondaryColor)
+                                        Text("${fmt(b)} → ${fmt(a)} ${unit.label}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                                         Spacer(modifier = Modifier.width(8.dp))
                                         DeltaChip(a - b)
                                     }
@@ -215,12 +212,12 @@ private fun ComparisonColumn(
             Text(if (entry != null) "Change" else "Select Date", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
         }
         if (entry != null) {
-            Text(longDate.format(entry.date), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text(longDate.format(entry.date), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             ProgressPhotoThumb(photo = entry.photo(angle), angle = angle, height = 200.dp, showLabel = false, modifier = Modifier.fillMaxWidth())
             weightLabel?.let {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Icon(Icons.Default.MonitorWeight, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(12.dp))
-                    Text(it, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                    Icon(Icons.Default.MonitorWeight, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(12.dp))
+                    Text(it, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                 }
             }
         } else {
@@ -232,7 +229,7 @@ private fun ComparisonColumn(
                     .background(Color.Gray.copy(alpha = 0.08f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Select a date", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("Select a date", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
             }
         }
     }
@@ -251,7 +248,7 @@ fun DateEntryPickerDialog(
         title = { Text("Select Date") },
         text = {
             if (entries.isEmpty()) {
-                Text("No photo entries yet.", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("No photo entries yet.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
             } else {
                 LazyColumn {
                     items(entries.size) { index ->
@@ -263,9 +260,9 @@ fun DateEntryPickerDialog(
                                 .padding(vertical = 10.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(longDate.format(entry.date), fontSize = 15.sp, color = TextPrimaryColor)
+                            Text(longDate.format(entry.date), fontSize = 15.sp, color = FLTheme.colors.textPrimary)
                             Spacer(modifier = Modifier.weight(1f))
-                            Text("${entry.photos.size} photo${if (entry.photos.size == 1) "" else "s"}", fontSize = 13.sp, color = TextSecondaryColor)
+                            Text("${entry.photos.size} photo${if (entry.photos.size == 1) "" else "s"}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                             if (selected?.id == entry.id) {
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Icon(Icons.Default.Check, contentDescription = "Selected", tint = FLPrimary, modifier = Modifier.size(18.dp))

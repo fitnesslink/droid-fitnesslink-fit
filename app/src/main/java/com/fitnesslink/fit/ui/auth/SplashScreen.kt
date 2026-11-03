@@ -19,7 +19,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.fitnesslink.fit.R
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * Port of iOS `SplashView`: shown at launch while Firebase resolves the
@@ -40,7 +39,7 @@ fun SplashScreen() {
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black)
+                        colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black) // theme-exempt: over media
                     )
                 )
         )
@@ -54,7 +53,7 @@ fun SplashScreen() {
                 modifier = Modifier.width(134.dp)
             )
             Spacer(modifier = Modifier.height(24.dp))
-            CircularProgressIndicator(color = White, modifier = Modifier.size(28.dp), strokeWidth = 2.dp)
+            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(28.dp), strokeWidth = 2.dp) // theme-exempt: over media
         }
     }
 }

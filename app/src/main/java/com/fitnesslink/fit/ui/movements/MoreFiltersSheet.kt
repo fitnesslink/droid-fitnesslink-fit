@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.movements
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -30,12 +31,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.fitnesslink.fit.movements.TagFilterOptions
 import com.fitnesslink.fit.ui.components.TagOption
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.util.Locale
 
 /** The drawer's full selection, applied in one shot. */
@@ -76,7 +72,7 @@ fun MoreFiltersSheet(
     var drillIn by remember { mutableStateOf<DrillIn?>(null) }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+        Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
             when (drillIn) {
                 DrillIn.ANATOMY -> ClassificationPickerView(
                     title = "Anatomy",
@@ -98,10 +94,10 @@ fun MoreFiltersSheet(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         TextButton(onClick = { draft = MoreFiltersSelection() }, enabled = draft.totalCount > 0) {
-                            Text("Clear All", color = if (draft.totalCount > 0) FLPrimary else MediumGray)
+                            Text("Clear All", color = if (draft.totalCount > 0) FLPrimary else FLTheme.colors.textTertiary)
                         }
                         Text(
-                            "More Filters", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
+                            "More Filters", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary,
                             modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center
                         )
                         TextButton(onClick = { onApply(draft); onDismiss() }) {
@@ -144,7 +140,7 @@ private enum class DrillIn { ANATOMY, EQUIPMENT }
 @Composable
 private fun SectionHeader(title: String) {
     Text(
-        title.uppercase(Locale.US), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor,
+        title.uppercase(Locale.US), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 18.dp, bottom = 6.dp)
     )
 }
@@ -154,16 +150,16 @@ private fun SummaryRow(title: String, count: Int, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-        Text(if (count == 0) "Any" else "$count selected", fontSize = 14.sp, color = TextSecondaryColor)
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray)
+        Text(title, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+        Text(if (count == 0) "Any" else "$count selected", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary)
     }
-    HorizontalDivider(color = BackgroundColor)
+    HorizontalDivider(color = FLTheme.colors.divider)
 }
 
 @Composable

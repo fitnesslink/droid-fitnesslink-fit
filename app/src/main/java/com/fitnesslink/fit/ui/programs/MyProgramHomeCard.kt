@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,8 +38,6 @@ import com.fitnesslink.fit.model.ProgramJourneyState
 import com.fitnesslink.fit.model.ProgramSnapshot
 import com.fitnesslink.fit.programs.UserProgramStore
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.withContext
@@ -101,7 +100,7 @@ fun MyProgramHomeCardContent(
 
     Column(modifier = modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("My Program", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text("My Program", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
             Row(
                 modifier = Modifier.clickable(onClick = onViewAll).padding(vertical = 8.dp, horizontal = 4.dp),
@@ -113,7 +112,7 @@ fun MyProgramHomeCardContent(
             }
         }
 
-        Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White)) {
+        Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface)) {
             ProgramHeroView(
                 imageId = snapshot.heroImageId(),
                 name = snapshot.program.programName,
@@ -161,7 +160,7 @@ fun MyProgramHomeCardContent(
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(Icons.Default.PlayArrow, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))
-                    Text("Today: ${today.title.ifEmpty { "Workout" }}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                    Text("Today: ${today.title.ifEmpty { "Workout" }}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                     Spacer(modifier = Modifier.weight(1f))
                     Text("Start", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
                 }

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -56,15 +57,10 @@ import com.fitnesslink.fit.ui.profile.charts.ReportBarChart
 import com.fitnesslink.fit.ui.profile.charts.ReportLineChart
 import com.fitnesslink.fit.ui.profile.charts.ReportStatCard
 import com.fitnesslink.fit.ui.profile.charts.formatReportDate
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.util.Locale
 import kotlin.math.roundToInt
 
@@ -93,7 +89,7 @@ fun MovementAggregateDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -106,8 +102,8 @@ fun MovementAggregateDetailScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(aggregate?.exerciseName ?: exerciseName, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                Text("Performed in ${aggregate?.timesPerformed ?: 0} sessions", fontSize = 14.sp, color = TextSecondaryColor)
+                Text(aggregate?.exerciseName ?: exerciseName, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                Text("Performed in ${aggregate?.timesPerformed ?: 0} sessions", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
             }
 
             RangeChips(selectedDays = rangeDays, onSelect = { rangeDays = it })
@@ -136,8 +132,8 @@ private fun RangeChips(selectedDays: Int, onSelect: (Int) -> Unit) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(16.dp))
-                    .background(if (selected) FLPrimary else White)
-                    .border(1.dp, if (selected) FLPrimary else TextSecondaryColor.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                    .background(if (selected) FLPrimary else FLTheme.colors.surface)
+                    .border(1.dp, if (selected) FLPrimary else FLTheme.colors.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
                     .clickable { onSelect(days) }
                     .padding(horizontal = 14.dp, vertical = 6.dp)
             ) {
@@ -145,7 +141,7 @@ private fun RangeChips(selectedDays: Int, onSelect: (Int) -> Unit) {
                     text = label,
                     fontSize = 12.sp,
                     fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (selected) White else TextSecondaryColor
+                    color = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textSecondary
                 )
             }
         }
@@ -192,11 +188,11 @@ private fun PrCard(agg: MovementAggregate) {
         Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text("Personal Record", fontSize = 14.sp, fontWeight = FontWeight.Bold)
-            Text(formatReportDate(agg.prDate), fontSize = 12.sp, color = TextSecondaryColor)
+            Text(formatReportDate(agg.prDate), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(WeightUnit.displayString(agg.prWeight), fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
-            Text("${agg.prReps} reps", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("${agg.prReps} reps", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -213,7 +209,7 @@ private fun ProgressionCharts(entries: List<MovementHistoryEntry>) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -221,7 +217,7 @@ private fun ProgressionCharts(entries: List<MovementHistoryEntry>) {
             Text("Weight Progression", fontSize = 15.sp, fontWeight = FontWeight.Bold)
             ReportLineChart(points = weightPoints, color = PurpleTheme, height = 160.dp)
         }
-        HorizontalDivider(color = MediumGray.copy(alpha = 0.3f))
+        HorizontalDivider(color = FLTheme.colors.textTertiary.copy(alpha = 0.3f))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Volume Per Session", fontSize = 15.sp, fontWeight = FontWeight.Bold)
             ReportBarChart(points = volumePoints, color = BlueTheme, height = 140.dp)
@@ -241,14 +237,14 @@ private fun WeightLog(entries: List<MovementHistoryEntry>) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .background(White)
+                    .background(FLTheme.colors.surface)
                     .padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(entry.workoutName, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-                        Text(formatReportDate(entry.sessionDate), fontSize = 12.sp, color = TextSecondaryColor)
+                        Text(formatReportDate(entry.sessionDate), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                     Text(
                         "${WeightUnit.displayWholeNumber(entry.volume)} $unit vol",
@@ -256,11 +252,11 @@ private fun WeightLog(entries: List<MovementHistoryEntry>) {
                     )
                 }
                 if (entry.setDetails.isNotEmpty()) {
-                    HorizontalDivider(color = MediumGray.copy(alpha = 0.3f))
+                    HorizontalDivider(color = FLTheme.colors.textTertiary.copy(alpha = 0.3f))
                     val maxW = entry.setDetails.maxOfOrNull { it.weightLifted }?.takeIf { it > 0 } ?: 1.0
                     entry.setDetails.forEach { set ->
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Set ${set.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.width(46.dp))
+                            Text("Set ${set.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary, modifier = Modifier.width(46.dp))
                             BoxWithConstraints(modifier = Modifier.weight(1f).height(18.dp)) {
                                 val fraction = (set.weightLifted / maxW).coerceIn(0.0, 1.0).toFloat()
                                 val barWidth = (maxWidth * fraction).coerceAtLeast(4.dp)
@@ -275,14 +271,14 @@ private fun WeightLog(entries: List<MovementHistoryEntry>) {
                             val metric = set.durationSeconds?.takeIf { it > 0 }?.let { WorkoutTask.humanizeDuration(it) }
                                 ?: set.distance?.let { DistanceUnit.displayInCurrent(it.value, it.unit) }
                                 ?: "${set.reps} reps"
-                            Text(metric, fontSize = 12.sp, color = TextSecondaryColor, textAlign = TextAlign.End, modifier = Modifier.width(64.dp))
+                            Text(metric, fontSize = 12.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.End, modifier = Modifier.width(64.dp))
                             Text(WeightUnit.displayString(set.weightLifted), fontSize = 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End, modifier = Modifier.width(64.dp))
                         }
                     }
                 } else {
                     Text(
                         "${entry.sets} sets x ${entry.reps} reps @ ${WeightUnit.displayString(entry.weight)}",
-                        fontSize = 13.sp, color = TextSecondaryColor
+                        fontSize = 13.sp, color = FLTheme.colors.textSecondary
                     )
                 }
             }
@@ -296,15 +292,15 @@ private fun EmptyMovementState() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("No history in this window", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text("No history in this window", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             "Try a wider date range, or log a session with this exercise.",
-            fontSize = 13.sp, color = TextSecondaryColor, textAlign = TextAlign.Center
+            fontSize = 13.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center
         )
     }
 }

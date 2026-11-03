@@ -55,7 +55,7 @@ fun NotificationsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -75,7 +75,7 @@ fun NotificationsScreen(
                 }
             }
             IconButton(onClick = { onNavigate(ProfileRouteNames.NOTIFICATION_PREFERENCES) }) {
-                Icon(Icons.Default.Settings, contentDescription = "Notification preferences", tint = TextPrimaryColor)
+                Icon(Icons.Default.Settings, contentDescription = "Notification preferences", tint = FLTheme.colors.textPrimary)
             }
         }
 
@@ -98,7 +98,7 @@ fun NotificationsScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) FLPrimary else BackgroundColor)
+                        .background(if (isSelected) FLPrimary else FLTheme.colors.background)
                         .clickable {
                             viewModel.selectedTab = tab
                             viewModel.loadData()
@@ -106,7 +106,7 @@ fun NotificationsScreen(
                         .padding(horizontal = 14.dp, vertical = 7.dp)
                 ) {
                     Text(tab.label, fontSize = 13.sp, fontWeight = FontWeight.Medium,
-                        color = if (isSelected) White else TextPrimaryColor)
+                        color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
                 }
             }
         }
@@ -116,12 +116,12 @@ fun NotificationsScreen(
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(if (viewModel.isSearching) Icons.Default.Search else Icons.Default.NotificationsOff, contentDescription = null,
-                        tint = MediumGray, modifier = Modifier.size(40.dp))
+                        tint = FLTheme.colors.textTertiary, modifier = Modifier.size(40.dp))
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
                         if (viewModel.isSearching) "No notifications match \"${viewModel.searchText.trim()}\"" else "No notifications",
                         fontSize = 16.sp, fontWeight = FontWeight.Medium,
-                        color = TextSecondaryColor,
+                        color = FLTheme.colors.textSecondary,
                         modifier = Modifier.padding(horizontal = 32.dp)
                     )
                 }
@@ -135,7 +135,7 @@ fun NotificationsScreen(
                 if (today.isNotEmpty()) {
                     item {
                         Text("Today", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                            color = TextSecondaryColor,
+                            color = FLTheme.colors.textSecondary,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
                     }
                     items(today, key = { it.id }) { notification ->
@@ -155,7 +155,7 @@ fun NotificationsScreen(
                 if (yesterday.isNotEmpty()) {
                     item {
                         Text("Yesterday", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                            color = TextSecondaryColor,
+                            color = FLTheme.colors.textSecondary,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
                     }
                     items(yesterday, key = { it.id }) { notification ->
@@ -175,7 +175,7 @@ fun NotificationsScreen(
                 if (earlier.isNotEmpty()) {
                     item {
                         Text("Earlier", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                            color = TextSecondaryColor,
+                            color = FLTheme.colors.textSecondary,
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
                     }
                     items(earlier, key = { it.id }) { notification ->
@@ -217,11 +217,11 @@ fun NotificationRowView(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Red)
+                    .background(FLTheme.colors.danger)
                     .padding(end = 20.dp),
                 contentAlignment = Alignment.CenterEnd
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = White)
+                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = FLTheme.colors.onBrand)
             }
         },
         enableDismissFromStartToEnd = false
@@ -229,7 +229,7 @@ fun NotificationRowView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .background(White)
+                .background(FLTheme.colors.surface)
                 .clickable(onClick = onTap)
                 .padding(vertical = 10.dp, horizontal = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -265,13 +265,13 @@ fun NotificationRowView(
                         fontWeight = if (notification.isRead) FontWeight.Medium else FontWeight.Bold,
                         modifier = Modifier.weight(1f)
                     )
-                    Text(notification.timeAgo, fontSize = 11.sp, color = TextSecondaryColor)
+                    Text(notification.timeAgo, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                 }
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     notification.body,
                     fontSize = 13.sp,
-                    color = TextSecondaryColor,
+                    color = FLTheme.colors.textSecondary,
                     maxLines = 2
                 )
             }

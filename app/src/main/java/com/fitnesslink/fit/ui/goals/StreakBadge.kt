@@ -20,6 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.HabitTier
+import com.fitnesslink.fit.ui.theme.SuccessGreen
+import com.fitnesslink.fit.ui.theme.WarningAmber
+import com.fitnesslink.fit.ui.theme.AlertRed
 
 /**
  * Reusable streak indicator (FA-95). Pairs a flame with a day count and
@@ -71,8 +74,8 @@ fun tierForStreak(days: Int): HabitTier = when {
 }
 
 private fun tierColor(tier: HabitTier): Color = when (tier) {
-    HabitTier.Seedling -> Color(0xFF94A3B8)   // muted slate
-    HabitTier.Sprout -> Color(0xFF22C55E)     // fresh green
-    HabitTier.Growing -> Color(0xFFF59E0B)    // amber
-    HabitTier.Rooted -> Color(0xFFEF4444)     // hot red — earned
+    HabitTier.Seedling -> Color(0xFF94A3B8)   // theme-exempt: tier accent, same in both modes; muted slate
+    HabitTier.Sprout -> SuccessGreen
+    HabitTier.Growing -> WarningAmber
+    HabitTier.Rooted -> AlertRed // earned
 }

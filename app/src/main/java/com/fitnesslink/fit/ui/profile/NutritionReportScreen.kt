@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -31,7 +32,7 @@ fun NutritionReportScreen(
     LaunchedEffect(Unit) { viewModel.loadData() }
     LaunchedEffect(viewModel.selectedTimeRange) { viewModel.loadData() }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 10.dp, bottom = 30.dp)) {
             Text("Nutrition Report", fontSize = 28.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 20.dp))
@@ -52,10 +53,10 @@ fun NutritionReportScreen(
 
 @Composable
 private fun TimeRangePicker(selected: ReportTimeRange, onSelect: (ReportTimeRange) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clip(RoundedCornerShape(8.dp)).background(White)) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.surface)) {
         ReportTimeRange.entries.forEach { range ->
-            Box(modifier = Modifier.weight(1f).clickable { onSelect(range) }.background(if (selected == range) FLPrimary else White).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                Text(range.shortLabel, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected == range) White else TextSecondaryColor)
+            Box(modifier = Modifier.weight(1f).clickable { onSelect(range) }.background(if (selected == range) FLPrimary else FLTheme.colors.surface).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                Text(range.shortLabel, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected == range) FLTheme.colors.onBrand else FLTheme.colors.textSecondary)
             }
         }
     }
@@ -63,10 +64,10 @@ private fun TimeRangePicker(selected: ReportTimeRange, onSelect: (ReportTimeRang
 
 @Composable
 private fun NutritionTabPicker(selected: NutritionReportTab, onSelect: (NutritionReportTab) -> Unit) {
-    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clip(RoundedCornerShape(8.dp)).background(White)) {
+    Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.surface)) {
         NutritionReportTab.entries.forEach { tab ->
-            Box(modifier = Modifier.weight(1f).clickable { onSelect(tab) }.background(if (selected == tab) FLPrimary else White).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
-                Text(tab.label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected == tab) White else TextSecondaryColor)
+            Box(modifier = Modifier.weight(1f).clickable { onSelect(tab) }.background(if (selected == tab) FLPrimary else FLTheme.colors.surface).padding(vertical = 8.dp), contentAlignment = Alignment.Center) {
+                Text(tab.label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected == tab) FLTheme.colors.onBrand else FLTheme.colors.textSecondary)
             }
         }
     }
@@ -104,12 +105,12 @@ private fun NutritionMetricCard(metric: NutritionMetric, viewModel: NutritionRep
         NutritionMetric.LOGGING_STREAK -> Icons.Default.Bolt
         NutritionMetric.CALORIE_SURPLUS -> Icons.Default.SwapVert
     }
-    Column(modifier = modifier.clip(RoundedCornerShape(12.dp)).background(White).clickable(onClick = onClick).padding(16.dp)) {
+    Column(modifier = modifier.clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).clickable(onClick = onClick).padding(16.dp)) {
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
         Spacer(modifier = Modifier.height(8.dp))
-        Text(metric.title, fontSize = 12.sp, color = TextSecondaryColor)
+        Text(metric.title, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         Text(viewModel.displayValue(metric), fontSize = 24.sp, fontWeight = FontWeight.Bold, color = color)
-        Text(viewModel.subtitle(metric), fontSize = 11.sp, color = TextSecondaryColor)
+        Text(viewModel.subtitle(metric), fontSize = 11.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -122,14 +123,14 @@ private fun ByMealContent(viewModel: NutritionReportViewModel, onNavigate: (Stri
             viewModel.mealAggregates.forEach { agg ->
                 val icon = when (agg.mealType) { MealType.BREAKFAST -> Icons.Default.WbSunny; MealType.LUNCH -> Icons.Default.LightMode; MealType.DINNER -> Icons.Default.DarkMode; MealType.SNACK -> Icons.Default.Eco }
                 val color = when (agg.mealType) { MealType.BREAKFAST -> OrangeTheme; MealType.LUNCH -> FLPrimary; MealType.DINNER -> BlueTheme; MealType.SNACK -> PurpleTheme }
-                Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).clickable { onNavigate("mealTypeDetail/${agg.mealType.name}") }.padding(14.dp)) {
+                Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).clickable { onNavigate("mealTypeDetail/${agg.mealType.name}") }.padding(14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(agg.mealType.name.lowercase().replaceFirstChar { it.uppercase() }, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                        Text("${agg.percentOfDailyCalories.toInt()}% of intake", fontSize = 12.sp, color = TextSecondaryColor)
+                        Text("${agg.percentOfDailyCalories.toInt()}% of intake", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                         Spacer(modifier = Modifier.width(8.dp))
-                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp))
                     }
                     Spacer(modifier = Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
@@ -155,20 +156,20 @@ private fun ByFoodContent(viewModel: NutritionReportViewModel, onNavigate: (Stri
             val total = viewModel.foodAggregates.sumOf { it.timesLogged }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Icon(Icons.Default.Eco, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
-                Text("Food Variety: $unique unique foods across $total entries", fontSize = 13.sp, color = TextSecondaryColor)
+                Text("Food Variety: $unique unique foods across $total entries", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             }
             viewModel.foodAggregates.forEach { agg ->
-                Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).clickable { onNavigate("foodItemDetail/${agg.foodName}") }.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).clickable { onNavigate("foodItemDetail/${agg.foodName}") }.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(agg.foodName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                        Text("${agg.timesLogged}x logged · ${agg.avgCalories.toInt()} avg cal", fontSize = 12.sp, color = TextSecondaryColor)
+                        Text("${agg.timesLogged}x logged · ${agg.avgCalories.toInt()} avg cal", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                     Column(horizontalAlignment = Alignment.End) {
                         Text("${agg.totalCalories}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = OrangeTheme)
-                        Text("total cal", fontSize = 10.sp, color = TextSecondaryColor)
+                        Text("total cal", fontSize = 10.sp, color = FLTheme.colors.textSecondary)
                     }
                     Spacer(modifier = Modifier.width(8.dp))
-                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp))
                 }
             }
         }
@@ -179,6 +180,6 @@ private fun ByFoodContent(viewModel: NutritionReportViewModel, onNavigate: (Stri
 private fun MiniS(value: String, label: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-        Text(label, fontSize = 9.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 9.sp, color = FLTheme.colors.textSecondary)
     }
 }

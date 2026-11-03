@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -27,15 +28,11 @@ import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.TaskRow
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.WorkGreen
 
 private const val MAX_RENDERED_ROUNDS = 3
-private val WorkGreen = Color(0xFF22A35A)
 
 /**
  * Read-only round-by-round preview of an interval block (iOS
@@ -57,8 +54,8 @@ fun IntervalTimelinePreview(row: TaskRow) {
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(BlueTheme).padding(horizontal = 12.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Filled.AllInclusive, contentDescription = null, tint = White, modifier = Modifier.size(16.dp))
-                    Text("As many rounds as possible in ${IntervalMath.formatTime(plan.windowSeconds)}", color = White, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    Icon(Icons.Filled.AllInclusive, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
+                    Text("As many rounds as possible in ${IntervalMath.formatTime(plan.windowSeconds)}", color = FLTheme.colors.onBrand, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -69,13 +66,13 @@ fun IntervalTimelinePreview(row: TaskRow) {
                 Icon(Icons.Filled.ArrowDownward, contentDescription = null, tint = OrangeTheme, modifier = Modifier.size(12.dp))
             }
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(BackgroundColor).padding(vertical = 6.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.background).padding(vertical = 6.dp),
                 horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.Repeat, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
+                Icon(Icons.Filled.Repeat, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(14.dp))
                 Text(
                     text = if (plan.sets == 2) " Set 2 repeats the same rounds" else " Sets 2–${plan.sets} repeat the same rounds",
-                    fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor
+                    fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary
                 )
             }
         }
@@ -87,21 +84,21 @@ private fun RoundRows(rounds: Int, work: Int, rest: Int, roundLabel: String, res
     val shown = minOf(MAX_RENDERED_ROUNDS, maxOf(1, rounds))
     for (n in 1..shown) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("$roundLabel $n", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor, modifier = Modifier.width(52.dp))
+            Text("$roundLabel $n", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary, modifier = Modifier.width(52.dp))
             TimelineChip("Work ${work}s", WorkGreen)
-            if (rest > 0 && (n < rounds || restAfterLast)) TimelineChip("Rest ${rest}s", MediumGray)
+            if (rest > 0 && (n < rounds || restAfterLast)) TimelineChip("Rest ${rest}s", FLTheme.colors.textTertiary)
         }
     }
     if (rounds > shown) {
         val more = rounds - shown
-        Text("⋯ $more more ${if (more == 1) "round" else "rounds"}", fontSize = 11.sp, color = TextSecondaryColor, modifier = Modifier.padding(start = 58.dp))
+        Text("⋯ $more more ${if (more == 1) "round" else "rounds"}", fontSize = 11.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(start = 58.dp))
     }
 }
 
 @Composable
 private fun TimelineChip(label: String, color: Color) {
     Text(
-        text = label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = White,
+        text = label, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand,
         modifier = Modifier.clip(CircleShape).background(color).padding(horizontal = 10.dp, vertical = 5.dp)
     )
 }

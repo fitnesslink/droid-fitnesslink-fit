@@ -79,14 +79,9 @@ import com.fitnesslink.fit.network.dto.GroceryStaple
 import com.fitnesslink.fit.nutrition.GroceryAnalyzeRules
 import com.fitnesslink.fit.nutrition.GroceryStore
 import com.fitnesslink.fit.ui.navigation.MealPlanRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.ProgressBG
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.GroceryListDetailViewModel
 import com.fitnesslink.fit.viewmodel.GroceryListsViewModel
 import com.fitnesslink.fit.viewmodel.MealPlanViewModel
@@ -151,11 +146,11 @@ fun GroceryListScreen(onBack: () -> Unit, listId: String? = null, onNavigate: ((
     val checked = viewModel.checkedItems.size
     val listName = viewModel.list?.name ?: "Grocery List"
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         PlanTopBar(title = listName, onBack = onBack) {
             if (viewModel.uncheckedItems.isNotEmpty() && !viewModel.isShowingOfflineCache) {
                 IconButton(onClick = { reorderMode = !reorderMode }) {
-                    Icon(Icons.Filled.SwapVert, contentDescription = "Reorder", tint = if (reorderMode) FLPrimary else TextPrimaryColor)
+                    Icon(Icons.Filled.SwapVert, contentDescription = "Reorder", tint = if (reorderMode) FLPrimary else FLTheme.colors.textPrimary)
                 }
             }
             Box {
@@ -168,7 +163,7 @@ fun GroceryListScreen(onBack: () -> Unit, listId: String? = null, onNavigate: ((
                 }
             }
             Box {
-                IconButton(onClick = { showMenu = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More", tint = TextPrimaryColor) }
+                IconButton(onClick = { showMenu = true }) { Icon(Icons.Filled.MoreVert, contentDescription = "More", tint = FLTheme.colors.textPrimary) }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(text = { Text("Rename") }, onClick = { showMenu = false; renameText = listName; showRename = true })
                     val archived = viewModel.list?.isArchived ?: false
@@ -195,11 +190,11 @@ fun GroceryListScreen(onBack: () -> Unit, listId: String? = null, onNavigate: ((
         if (total > 0) {
             Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("$checked of $total items", fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+                    Text("$checked of $total items", fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
                     Text("${(checked * 100.0 / total.coerceAtLeast(1)).toInt()}%", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
                 }
                 val fraction by animateFloatAsState(checked.toFloat() / total.coerceAtLeast(1), label = "groceryProgress")
-                Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(4.dp)).background(ProgressBG)) {
+                Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(4.dp)).background(FLTheme.colors.progressTrack)) {
                     Box(modifier = Modifier.fillMaxWidth(fraction).fillMaxHeight().background(FLPrimary, RoundedCornerShape(4.dp)))
                 }
             }
@@ -216,9 +211,9 @@ fun GroceryListScreen(onBack: () -> Unit, listId: String? = null, onNavigate: ((
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (viewModel.isShowingOfflineCache) item {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(12.dp)) {
-                        Icon(Icons.Filled.WifiOff, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
-                        Text("Offline — showing your last synced list.", fontSize = 13.sp, color = TextSecondaryColor)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(12.dp)) {
+                        Icon(Icons.Filled.WifiOff, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
+                        Text("Offline — showing your last synced list.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
                 viewModel.errorMessage?.let { msg -> item { PlanInlineError(msg) } }
@@ -231,7 +226,7 @@ fun GroceryListScreen(onBack: () -> Unit, listId: String? = null, onNavigate: ((
                         }
                     }
                     item {
-                        Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+                        Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                             viewModel.visibleStaples.forEachIndexed { index, staple ->
                                 StapleRow(staple, onDismiss = { viewModel.dismissStaple(staple) }, onAdd = { scope.launch { viewModel.addStaple(staple) } })
                                 if (index < viewModel.visibleStaples.lastIndex) PlanDivider()
@@ -268,7 +263,7 @@ fun GroceryListScreen(onBack: () -> Unit, listId: String? = null, onNavigate: ((
                 if (viewModel.checkedItems.isNotEmpty()) {
                     item(key = "header-cart") {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(12.dp))
+                            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(12.dp))
                             PlanSectionLabel("In Cart ($checked)")
                         }
                     }
@@ -342,31 +337,31 @@ private fun GroceryItemRow(item: GroceryItem, enabled: Boolean, reorder: Reorder
         enableDismissFromStartToEnd = false,
         enableDismissFromEndToStart = enabled,
         backgroundContent = {
-            Box(modifier = Modifier.fillMaxSize().background(Color.Red, RoundedCornerShape(12.dp)).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterEnd) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = White)
+            Box(modifier = Modifier.fillMaxSize().background(FLTheme.colors.danger, RoundedCornerShape(12.dp)).padding(horizontal = 16.dp), contentAlignment = Alignment.CenterEnd) {
+                Icon(Icons.Filled.Delete, contentDescription = "Delete", tint = FLTheme.colors.onBrand)
             }
         }
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Icon(
                 if (item.isChecked) Icons.Filled.CheckCircle else Icons.Outlined.Circle, contentDescription = if (item.isChecked) "In cart" else "Not in cart",
-                tint = if (item.isChecked) FLPrimary else MediumGray, modifier = Modifier.size(24.dp).clickable(enabled = enabled, onClick = onToggle)
+                tint = if (item.isChecked) FLPrimary else FLTheme.colors.textTertiary, modifier = Modifier.size(24.dp).clickable(enabled = enabled, onClick = onToggle)
             )
             Column(modifier = Modifier.weight(1f).clickable(enabled = enabled, onClick = onEdit)) {
                 Text(
-                    item.name, fontSize = 15.sp, color = if (item.isChecked) TextSecondaryColor else TextPrimaryColor,
+                    item.name, fontSize = 15.sp, color = if (item.isChecked) FLTheme.colors.textSecondary else FLTheme.colors.textPrimary,
                     textDecoration = if (item.isChecked) TextDecoration.LineThrough else null
                 )
                 val amount = "${item.quantity} ${item.unit}".trim()
-                if (amount.isNotEmpty()) Text(amount, fontSize = 12.sp, color = TextSecondaryColor)
+                if (amount.isNotEmpty()) Text(amount, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
             if (reorder != null) {
-                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Move up", tint = if (reorder.canUp) FLPrimary else MediumGray,
+                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Move up", tint = if (reorder.canUp) FLPrimary else FLTheme.colors.textTertiary,
                     modifier = Modifier.size(24.dp).clickable(enabled = reorder.canUp, onClick = reorder.onUp))
-                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Move down", tint = if (reorder.canDown) FLPrimary else MediumGray,
+                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Move down", tint = if (reorder.canDown) FLPrimary else FLTheme.colors.textTertiary,
                     modifier = Modifier.size(24.dp).clickable(enabled = reorder.canDown, onClick = reorder.onDown))
             }
         }
@@ -377,10 +372,10 @@ private fun GroceryItemRow(item: GroceryItem, enabled: Boolean, reorder: Reorder
 private fun StapleRow(staple: GroceryStaple, onDismiss: () -> Unit, onAdd: () -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(staple.name, fontSize = 15.sp, color = TextPrimaryColor)
-            Text(GroceryAnalyzeRules.stapleSubtitle(staple), fontSize = 12.sp, color = TextSecondaryColor)
+            Text(staple.name, fontSize = 15.sp, color = FLTheme.colors.textPrimary)
+            Text(GroceryAnalyzeRules.stapleSubtitle(staple), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
-        Icon(Icons.Filled.Cancel, contentDescription = "Hide", tint = MediumGray, modifier = Modifier.size(22.dp).clickable(onClick = onDismiss))
+        Icon(Icons.Filled.Cancel, contentDescription = "Hide", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(22.dp).clickable(onClick = onDismiss))
         Icon(Icons.Filled.AddCircle, contentDescription = "Add", tint = FLPrimary, modifier = Modifier.size(24.dp).clickable(onClick = onAdd))
     }
 }
@@ -388,12 +383,12 @@ private fun StapleRow(staple: GroceryStaple, onDismiss: () -> Unit, onAdd: () ->
 @Composable
 private fun EmptyListState(onAdd: () -> Unit, onSearch: () -> Unit) {
     Column(modifier = Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-        Icon(Icons.Filled.ShoppingCart, contentDescription = null, tint = MediumGray, modifier = Modifier.size(34.dp))
+        Icon(Icons.Filled.ShoppingCart, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(34.dp))
         Spacer(Modifier.height(14.dp))
-        Text("Nothing on this list yet", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-        Text("Add items by hand or from the food database.", fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
+        Text("Nothing on this list yet", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+        Text("Add items by hand or from the food database.", fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(top = 4.dp, bottom = 16.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Add Item", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = White,
+            Text("Add Item", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand,
                 modifier = Modifier.background(FLPrimary, RoundedCornerShape(10.dp)).clickable(onClick = onAdd).padding(horizontal = 16.dp, vertical = 10.dp))
             Text("Search Foods", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary,
                 modifier = Modifier.background(FLPrimary.copy(alpha = 0.12f), RoundedCornerShape(10.dp)).clickable(onClick = onSearch).padding(horizontal = 16.dp, vertical = 10.dp))
@@ -460,7 +455,7 @@ private fun GroceryItemFormSheet(
 
     val suggestion = GroceryAnalyzeRules.visibleSuggestion(isNew, analysis, analyzedName, trimmedName, dismissedForName, category)
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = FLTheme.colors.background) {
         Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             PlanSheetTitle(title, onCancel = onDismiss, confirm = "Save", confirmEnabled = trimmedName.isNotEmpty(), isWorking = isChecking, onConfirm = ::attemptSave)
             PlanSectionLabel("Item Details")
@@ -488,7 +483,7 @@ private fun GroceryItemFormSheet(
                             Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(12.dp))
                             Text("Suggested: ${suggestion.displayName}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
                         }
-                        Icon(Icons.Filled.Cancel, contentDescription = "Dismiss suggestion", tint = TextSecondaryColor, modifier = Modifier.size(18.dp).clickable { dismissedForName = trimmedName })
+                        Icon(Icons.Filled.Cancel, contentDescription = "Dismiss suggestion", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(18.dp).clickable { dismissedForName = trimmedName })
                     }
                 }
             }
@@ -548,31 +543,31 @@ internal fun PlanFoodSearchSheet(title: String, initialQuery: String, stayOpenAf
     }
     LaunchedEffect(justAdded) { if (justAdded != null) { delay(1200); justAdded = null } }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true), containerColor = FLTheme.colors.background) {
         Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.92f).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             PlanSheetTitle(title, onCancel = onDismiss, confirm = if (stayOpenAfterPick) "Done" else null, onConfirm = onDismiss)
-            Row(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(10.dp)).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(18.dp))
+            Row(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(10.dp)).padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Icon(Icons.Filled.Search, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(18.dp))
                 PlanTextField(query, { query = it }, "e.g. chicken breast, oats, banana", modifier = Modifier.weight(1f))
-                if (query.isNotEmpty()) Icon(Icons.Filled.Close, contentDescription = "Clear", tint = TextSecondaryColor, modifier = Modifier.size(18.dp).clickable { query = "" })
+                if (query.isNotEmpty()) Icon(Icons.Filled.Close, contentDescription = "Clear", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(18.dp).clickable { query = "" })
             }
             Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
                 when {
                     isSearching -> CircularProgressIndicator(color = FLPrimary, modifier = Modifier.align(Alignment.Center))
-                    errorMessage != null -> Text(errorMessage ?: "", fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.align(Alignment.Center))
+                    errorMessage != null -> Text(errorMessage ?: "", fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.align(Alignment.Center))
                     results.isEmpty() -> Text(
                         if (hasSearched) "No results for “$query”" else "Type to search the food database",
-                        fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.align(Alignment.Center)
+                        fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.align(Alignment.Center)
                     )
-                    else -> LazyColumn(modifier = Modifier.fillMaxSize().background(White, RoundedCornerShape(12.dp))) {
+                    else -> LazyColumn(modifier = Modifier.fillMaxSize().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                         items(results, key = { it.id }) { result ->
                             Row(
                                 modifier = Modifier.fillMaxWidth().clickable { onPick(result); if (stayOpenAfterPick) justAdded = result.name else onDismiss() }.padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(result.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                                    result.brand?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor) }
+                                    Text(result.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                                    result.brand?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.textSecondary) }
                                 }
                                 Icon(Icons.Filled.AddCircle, contentDescription = "Add", tint = FLPrimary, modifier = Modifier.size(20.dp))
                             }
@@ -582,7 +577,7 @@ internal fun PlanFoodSearchSheet(title: String, initialQuery: String, stayOpenAf
                 }
                 justAdded?.let {
                     Text(
-                        "Added $it", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = White,
+                        "Added $it", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.onBrand,
                         modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 16.dp).background(FLPrimary, RoundedCornerShape(20.dp)).padding(horizontal = 16.dp, vertical = 10.dp)
                     )
                 }

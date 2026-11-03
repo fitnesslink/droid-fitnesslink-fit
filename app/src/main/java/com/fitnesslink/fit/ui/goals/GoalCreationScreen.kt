@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.goals
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -84,7 +85,6 @@ import com.fitnesslink.fit.ui.navigation.AppRoute
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.progress.CONNECTED_APPS_ROUTE
 import com.fitnesslink.fit.health.HealthConnectService
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.workout.BrowserMode
 import com.fitnesslink.fit.ui.workout.ExerciseBrowserSheet
@@ -122,7 +122,7 @@ fun GoalCreationScreen(
         if (model.canGoBack) model.back() else onClose()
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor).imePadding()) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background).imePadding()) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 12.dp)
@@ -179,7 +179,7 @@ fun GoalCreationScreen(
             Step.CONFIRMATION -> Unit
             Step.REVIEW -> Column(verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)) {
-                model.errorMessage?.let { Text(it, fontSize = 13.sp, color = Color(0xFFE53935), textAlign = TextAlign.Center) }
+                model.errorMessage?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.danger, textAlign = TextAlign.Center) }
                 GoalPrimaryButton(if (model.isSaving) "Creating…" else "Create Goal", enabled = !model.isSaving) {
                     scope.launch { model.create() }
                 }

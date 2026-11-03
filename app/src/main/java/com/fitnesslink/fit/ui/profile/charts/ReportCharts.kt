@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile.charts
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,8 +24,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.ChartPoint
-import com.fitnesslink.fit.ui.theme.BlendGray
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import java.text.SimpleDateFormat
 import java.util.Locale
 import kotlin.math.max
@@ -41,7 +40,14 @@ fun compactAxisLabel(value: Double): String =
     if (value >= 1000) String.format(Locale.US, "%.1fk", value / 1000).replace(".0k", "k")
     else "${Math.round(value)}"
 
-private val axisLabelStyle = TextStyle(fontSize = 10.sp, color = TextSecondaryColor)
+// Theme-dependent chart chrome (gridlines, axis labels, point fill); series colours come from callers.
+private class ChartChrome(val grid: Color, val label: TextStyle, val pointFill: Color)
+
+@Composable
+private fun rememberChartChrome(): ChartChrome {
+    val c = FLTheme.colors
+    return remember(c) { ChartChrome(c.divider, TextStyle(fontSize = 10.sp, color = c.textSecondary), c.surface) }
+}
 private val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
 
 private const val Y_LABEL_WIDTH_DP = 36f
@@ -81,12 +87,13 @@ fun ReportBarChart(
     yLabel: (Double) -> String = ::compactAxisLabel
 ) {
     val textMeasurer = rememberTextMeasurer()
+    val chrome = rememberChartChrome()
     val sorted = remember(points) { points.sortedBy { it.date } }
     Canvas(modifier = modifier.fillMaxWidth().height(height)) {
         if (sorted.isEmpty()) return@Canvas
         val plot = plotArea()
         val yMax = niceMax(sorted.maxOf { it.value })
-        drawGrid(textMeasurer, plot, 0.0, yMax, yLabel)
+        drawGrid(textMeasurer, chrome, plot, 0.0, yMax, yLabel)
 
         val slot = plot.width / sorted.size
         val barWidth = (slot * 0.6f).coerceAtMost(28.dp.toPx())
@@ -102,7 +109,7 @@ fun ReportBarChart(
                 cornerRadius = CornerRadius(3.dp.toPx(), 3.dp.toPx())
             )
         }
-        drawXLabels(textMeasurer, plot, sorted) { i -> plot.left + slot * i + slot / 2f }
+        drawXLabels(textMeasurer, chrome, plot, sorted) { i -> plot.left + slot * i + slot / 2f }
     }
 }
 
@@ -124,6 +131,7 @@ fun ReportLineChart(
     yLabel: (Double) -> String = ::compactAxisLabel
 ) {
     val textMeasurer = rememberTextMeasurer()
+    val chrome = rememberChartChrome()
     val sorted = remember(points) { points.sortedBy { it.date } }
     Canvas(modifier = modifier.fillMaxWidth().height(height)) {
         if (sorted.isEmpty()) return@Canvas
@@ -131,7 +139,7 @@ fun ReportLineChart(
         val yMin = yRange?.start ?: 0.0
         val yMax = yRange?.endInclusive ?: niceMax(sorted.maxOf { it.value })
         val span = (yMax - yMin).takeIf { it > 0 } ?: 1.0
-        drawGrid(textMeasurer, plot, yMin, yMax, yLabel)
+        drawGrid(textMeasurer, chrome, plot, yMin, yMax, yLabel)
 
         fun xAt(i: Int): Float =
             if (sorted.size == 1) plot.left + plot.width / 2f else plot.left + plot.width * i / (sorted.size - 1)
@@ -166,11 +174,11 @@ fun ReportLineChart(
         }
         if (showPoints) {
             pts.forEach { p ->
-                drawCircle(Color.White, radius = 4.dp.toPx(), center = p)
+                drawCircle(chrome.pointFill, radius = 4.dp.toPx(), center = p)
                 drawCircle(color, radius = 4.dp.toPx(), center = p, style = Stroke(width = 2.dp.toPx()))
             }
         }
-        drawXLabels(textMeasurer, plot, sorted) { i -> xAt(i) }
+        drawXLabels(textMeasurer, chrome, plot, sorted) { i -> xAt(i) }
     }
 }
 
@@ -185,6 +193,7 @@ private fun DrawScope.plotArea(): Plot = Plot(
 
 private fun DrawScope.drawGrid(
     textMeasurer: TextMeasurer,
+    chrome: ChartChrome,
     plot: Plot,
     yMin: Double,
     yMax: Double,
@@ -194,15 +203,16 @@ private fun DrawScope.drawGrid(
     for (i in 0..steps) {
         val fraction = i.toFloat() / steps
         val y = plot.bottom - plot.height * fraction
-        drawLine(BlendGray, Offset(plot.left, y), Offset(plot.right, y), strokeWidth = 1f)
+        drawLine(chrome.grid, Offset(plot.left, y), Offset(plot.right, y), strokeWidth = 1f)
         val value = yMin + (yMax - yMin) * fraction
-        val layout = textMeasurer.measure(yLabel(value), axisLabelStyle)
+        val layout = textMeasurer.measure(yLabel(value), chrome.label)
         drawText(layout, topLeft = Offset(plot.left - layout.size.width - 4.dp.toPx(), y - layout.size.height / 2f))
     }
 }
 
 private fun DrawScope.drawXLabels(
     textMeasurer: TextMeasurer,
+    chrome: ChartChrome,
     plot: Plot,
     points: List<ChartPoint>,
     xAt: (Int) -> Float
@@ -211,7 +221,7 @@ private fun DrawScope.drawXLabels(
     val indices = linkedSetOf(0, points.size / 2, points.size - 1)
     var lastRight = Float.NEGATIVE_INFINITY
     indices.forEach { i ->
-        val layout = textMeasurer.measure(dateFormat.format(points[i].date), axisLabelStyle)
+        val layout = textMeasurer.measure(dateFormat.format(points[i].date), chrome.label)
         val x = (xAt(i) - layout.size.width / 2f).coerceIn(plot.left, max(plot.left, plot.right - layout.size.width))
         if (x < lastRight + 6.dp.toPx()) return@forEach
         drawText(layout, topLeft = Offset(x, plot.bottom + 3.dp.toPx()))

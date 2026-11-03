@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -70,15 +71,10 @@ import com.fitnesslink.fit.model.WorkoutPhase
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.navigation.AppRoute
 import com.fitnesslink.fit.ui.navigation.AppRouter
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutEditorViewModel
 import com.fitnesslink.fit.workouts.WorkoutRowOps
 import com.fitnesslink.fit.workouts.WorkoutStore
@@ -243,7 +239,7 @@ fun WorkoutEditorScreen(
             onDismissRequest = { showDiscardAlert = false },
             title = { Text("Discard Changes?") },
             text = { Text("You have unsaved changes that will be lost.") },
-            confirmButton = { TextButton(onClick = { showDiscardAlert = false; onBack() }) { Text("Discard", color = Color.Red) } },
+            confirmButton = { TextButton(onClick = { showDiscardAlert = false; onBack() }) { Text("Discard", color = FLTheme.colors.danger) } },
             dismissButton = { TextButton(onClick = { showDiscardAlert = false }) { Text("Keep Editing") } }
         )
     }
@@ -254,7 +250,7 @@ fun WorkoutEditorScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(value = renameDraft, onValueChange = { renameDraft = it }, singleLine = true, label = { Text("Phase name") })
-                    Text("Give this phase a name that describes it, e.g. \"Main Set\" or \"Finisher\". The new name applies everywhere you use this phase.", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("Give this phase a name that describes it, e.g. \"Main Set\" or \"Finisher\". The new name applies everywhere you use this phase.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             },
             confirmButton = {
@@ -275,7 +271,7 @@ fun WorkoutEditorScreen(
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(value = saveTemplateName, onValueChange = { saveTemplateName = it }, singleLine = true, label = { Text("Template name") })
-                    Text("Saves this phase and its exercises as a reusable template you can add to any workout.", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("Saves this phase and its exercises as a reusable template you can add to any workout.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             },
             confirmButton = {
@@ -326,14 +322,14 @@ fun WorkoutEditorScreen(
 
     // MARK: Body
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Box(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Header bar
             Row(
-                modifier = Modifier.fillMaxWidth().background(White).padding(horizontal = 20.dp, vertical = 12.dp),
+                modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface).padding(horizontal = 20.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.Close, contentDescription = "Close", tint = TextPrimaryColor,
+                Icon(Icons.Filled.Close, contentDescription = "Close", tint = FLTheme.colors.textPrimary,
                     modifier = Modifier.size(22.dp).clickable { if (viewModel.isDirty) showDiscardAlert = true else onBack() })
                 Spacer(modifier = Modifier.weight(1f))
                 Text(if (viewModel.isNewWorkout) "New Workout" else "Edit Workout", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
@@ -401,14 +397,14 @@ fun WorkoutEditorScreen(
                     .align(Alignment.TopCenter)
                     .padding(horizontal = 16.dp, vertical = 64.dp)
                     .clip(RoundedCornerShape(10.dp))
-                    .background(Color.Red.copy(alpha = 0.92f))
+                    .background(FLTheme.colors.danger.copy(alpha = 0.92f))
                     .padding(horizontal = 14.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                Icon(Icons.Filled.Warning, contentDescription = null, tint = White, modifier = Modifier.size(18.dp))
-                Text(message, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = White, modifier = Modifier.weight(1f))
-                Icon(Icons.Filled.Close, contentDescription = "Dismiss", tint = White,
-                    modifier = Modifier.size(22.dp).clip(CircleShape).background(White.copy(alpha = 0.15f)).clickable { viewModel.saveErrorMessage = null }.padding(4.dp))
+                Icon(Icons.Filled.Warning, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp))
+                Text(message, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.onBrand, modifier = Modifier.weight(1f))
+                Icon(Icons.Filled.Close, contentDescription = "Dismiss", tint = FLTheme.colors.onBrand,
+                    modifier = Modifier.size(22.dp).clip(CircleShape).background(FLTheme.colors.surface.copy(alpha = 0.15f)).clickable { viewModel.saveErrorMessage = null }.padding(4.dp))
             }
         }
     }
@@ -441,28 +437,28 @@ private fun WorkoutHeaderCard(
     val isCustomSelected = minutes > 0 && !WorkoutEditorViewModel.estimatedTimePresets.contains(minutes)
 
     Column(
-        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(16.dp),
+        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         // Image
-        Box(modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(12.dp)).background(BackgroundColor).clickable(onClick = onPickImage)) {
+        Box(modifier = Modifier.fillMaxWidth().height(160.dp).clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.background).clickable(onClick = onPickImage)) {
             val localUri = viewModel.localImageUri
             val imageId = workout.imageId
             when {
                 localUri != null -> AsyncImage(model = localUri, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 imageId != null -> FLImageView(ref = MediaRef.WorkoutThumbnail(imageId.toString()), height = 160.dp)
                 else -> Column(modifier = Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Icon(Icons.Filled.AddAPhoto, contentDescription = null, tint = MediumGray, modifier = Modifier.size(28.dp))
+                    Icon(Icons.Filled.AddAPhoto, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(28.dp))
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Add Workout Image", fontSize = 13.sp, color = MediumGray)
+                    Text("Add Workout Image", fontSize = 13.sp, color = FLTheme.colors.textTertiary)
                 }
             }
             if (localUri != null || imageId != null) {
-                Icon(Icons.Filled.Edit, contentDescription = "Change image", tint = White,
-                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(28.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.4f)).padding(6.dp))
+                Icon(Icons.Filled.Edit, contentDescription = "Change image", tint = Color.White, // theme-exempt: over media
+                    modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(28.dp).clip(CircleShape).background(FLTheme.colors.scrim.copy(alpha = 0.4f)).padding(6.dp))
             }
             if (viewModel.isUploadingImage) {
-                CircularProgressIndicator(color = White, strokeWidth = 2.dp, modifier = Modifier.align(Alignment.Center).size(28.dp))
+                CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.align(Alignment.Center).size(28.dp)) // theme-exempt: over media
             }
         }
 
@@ -486,7 +482,7 @@ private fun WorkoutHeaderCard(
 
         // Estimated time
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Estimated Time", fontSize = 13.sp, color = TextSecondaryColor)
+            Text("Estimated Time", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 WorkoutEditorViewModel.estimatedTimePresets.forEach { m -> EditorChip("$m", minutes == m, onClick = { onPresetTime(m) }) }
             }
@@ -494,16 +490,16 @@ private fun WorkoutHeaderCard(
                 OutlinedTextField(
                     value = customTime, onValueChange = onCustomTimeChange,
                     placeholder = { Text("Custom", fontSize = 13.sp, textAlign = TextAlign.Center) }, singleLine = true,
-                    textStyle = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, color = if (isCustomSelected) FLPrimary else TextPrimaryColor),
+                    textStyle = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Medium, textAlign = TextAlign.Center, color = if (isCustomSelected) FLPrimary else FLTheme.colors.textPrimary),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.width(96.dp)
                 )
-                Text("min", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("min", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Training Level", fontSize = 13.sp, color = TextSecondaryColor)
+            Text("Training Level", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 WorkoutEditorViewModel.trainingLevelOptions.forEach { level ->
                     EditorChip(level, workout.trainingLevels.contains(level), onClick = { viewModel.toggleTrainingLevel(level) })
@@ -512,7 +508,7 @@ private fun WorkoutHeaderCard(
         }
 
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Location", fontSize = 13.sp, color = TextSecondaryColor)
+            Text("Location", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 WorkoutEditorViewModel.locationOptions.forEach { location ->
                     val selected = workout.location == location
@@ -552,14 +548,14 @@ private fun PhaseSection(
                 phase.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = FLPrimary,
                 modifier = if (phase.isSystem) Modifier else Modifier.clickable(onClick = onRename)
             )
-            if (!phase.isSystem) Icon(Icons.Filled.Edit, contentDescription = "Rename", tint = MediumGray, modifier = Modifier.size(12.dp).clickable(onClick = onRename))
+            if (!phase.isSystem) Icon(Icons.Filled.Edit, contentDescription = "Rename", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(12.dp).clickable(onClick = onRename))
             if (exerciseCount > 0) {
-                Text("$exerciseCount", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = White,
+                Text("$exerciseCount", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.onBrand,
                     modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(FLPrimary).padding(horizontal = 6.dp, vertical = 2.dp))
             }
             Spacer(modifier = Modifier.weight(1f))
             Box {
-                Icon(Icons.Filled.MoreVert, contentDescription = "Phase actions", tint = MediumGray, modifier = Modifier.size(22.dp).clickable { showMenu = true })
+                Icon(Icons.Filled.MoreVert, contentDescription = "Phase actions", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(22.dp).clickable { showMenu = true })
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(text = { Text("Duplicate Phase") }, onClick = { showMenu = false; scope.launch { viewModel.duplicatePhase(index) } })
                     if (phase.taskRows.isNotEmpty()) DropdownMenuItem(text = { Text("Save as Template") }, onClick = { showMenu = false; onSaveAsTemplate() })
@@ -568,7 +564,7 @@ private fun PhaseSection(
                 }
             }
             if (phase.taskRows.isEmpty()) {
-                Icon(Icons.Filled.Delete, contentDescription = "Remove phase", tint = MediumGray, modifier = Modifier.size(20.dp).clickable { viewModel.deletePhase(index) })
+                Icon(Icons.Filled.Delete, contentDescription = "Remove phase", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(20.dp).clickable { viewModel.deletePhase(index) })
             }
         }
 
@@ -587,7 +583,7 @@ private fun PhaseSection(
                 viewModel.cancelPendingGroup()
                 viewModel.showExerciseBrowser = true
             }
-            ActionPill("Add Rest", TextSecondaryColor, MediumGray.copy(alpha = 0.12f), Modifier.weight(1f), onClick = onAddRest)
+            ActionPill("Add Rest", FLTheme.colors.textSecondary, FLTheme.colors.textTertiary.copy(alpha = 0.12f), Modifier.weight(1f), onClick = onAddRest)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             GroupAddButton("Superset", PurpleTheme) { viewModel.activePhaseIndex = index; viewModel.pendingGroupType = ExerciseGroupType.Superset; viewModel.showExerciseBrowser = true }
@@ -618,10 +614,10 @@ private fun GroupAddButton(label: String, color: Color, onClick: () -> Unit) {
 @Composable
 private fun MultiSelectBar(viewModel: WorkoutEditorViewModel) {
     val count = viewModel.selectedTaskIds.size
-    Column(modifier = Modifier.fillMaxWidth().background(White).padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface).padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("$count selected", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.weight(1f))
-            Text("Cancel", fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.clickable { viewModel.cancelMultiSelect() })
+            Text("$count selected", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
+            Text("Cancel", fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.clickable { viewModel.cancelMultiSelect() })
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             GroupPill("Superset", count >= WorkoutRowOps.minimumGroupCount(ExerciseGroupType.Superset), Modifier.weight(1f)) { viewModel.groupSelection(ExerciseGroupType.Superset) }
@@ -634,7 +630,7 @@ private fun MultiSelectBar(viewModel: WorkoutEditorViewModel) {
 @Composable
 private fun GroupPill(label: String, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Text(
-        label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = White, textAlign = TextAlign.Center,
+        label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand, textAlign = TextAlign.Center,
         modifier = modifier.clip(RoundedCornerShape(20.dp)).background(FLPrimary.copy(alpha = if (enabled) 1f else 0.4f))
             .clickable(enabled = enabled, onClick = onClick).padding(vertical = 11.dp)
     )

@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -59,14 +60,20 @@ import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.session.MovementPerformanceLines
 import com.fitnesslink.fit.session.SessionFinishRule
 import com.fitnesslink.fit.ui.components.FLImageView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.SessionEditAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+/**
+ * Destructive red for session menus and dialogs (Discard / Remove / Finish anyway). Light keeps the
+ * pre-540 `0xFFE53935` so light mode is unchanged; dark uses the theme's danger. theme-gap: the
+ * light `danger` token is pure red, not this shade.
+ */
+internal val sessionDestructive: Color
+    @Composable @ReadOnlyComposable
+    get() = FLTheme.colors.danger
 
 /**
  * Ellipsis menu in the session info strip (Interactive Mode only — the playlist rows have their own
@@ -88,18 +95,18 @@ fun SessionEditMenu(
 ) {
     var open by remember { mutableStateOf(false) }
     Box {
-        Icon(Icons.Filled.MoreVert, contentDescription = "Edit workout", tint = White.copy(alpha = 0.9f), modifier = Modifier.size(32.dp).clickable { open = true }.padding(6.dp))
+        Icon(Icons.Filled.MoreVert, contentDescription = "Edit workout", tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(32.dp).clickable { open = true }.padding(6.dp)) // theme-exempt: always-dark player (sits on the Interactive video)
         DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
             if (isMovement) {
-                Text("THIS EXERCISE", color = TextSecondaryColor, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                Text("THIS EXERCISE", color = FLTheme.colors.textSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
                 if (canSwap) DropdownMenuItem(text = { Text("Swap Exercise") }, leadingIcon = { Icon(Icons.Filled.SwapHoriz, null) }, onClick = { open = false; onAction(SessionEditAction.Swap) })
                 if (canEditSets) DropdownMenuItem(text = { Text(editSetsTitle) }, leadingIcon = { Icon(Icons.Filled.Tune, null) }, onClick = { open = false; onAction(SessionEditAction.EditSets) })
-                if (canRemove) DropdownMenuItem(text = { Text("Remove Exercise", color = Color(0xFFE53935)) }, leadingIcon = { Icon(Icons.Filled.Delete, null, tint = Color(0xFFE53935)) }, onClick = { open = false; onAction(SessionEditAction.Remove) })
+                if (canRemove) DropdownMenuItem(text = { Text("Remove Exercise", color = sessionDestructive) }, leadingIcon = { Icon(Icons.Filled.Delete, null, tint = sessionDestructive) }, onClick = { open = false; onAction(SessionEditAction.Remove) })
             }
             if (!isWorkoutEditable) {
                 DropdownMenuItem(text = { Text("Save as my workout") }, leadingIcon = { Icon(Icons.Filled.Save, null) }, onClick = { open = false; onAction(SessionEditAction.SaveMyVersion) })
                 Text(if (hasSessionOnlyEdits) "Your changes apply to this session only" else "Changes to this workout apply to this session only",
-                    color = TextSecondaryColor, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
+                    color = FLTheme.colors.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp))
             }
         }
     }
@@ -150,17 +157,17 @@ fun SessionDurationSetsSheet(
     var weightText by remember { mutableStateOf(weightLbs?.let { WeightUnit.displayNumber(it.toDouble()) } ?: "") }
     // 5 s steps under two minutes, 15 s above — fine control for short holds without a hundred taps.
     fun step(up: Boolean): Int = if (up) (if (seconds < 120) 5 else 15) else (if (seconds <= 120) 5 else 15)
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.surface) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("Sets & Time", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text(exerciseName, color = TextSecondaryColor, fontSize = 14.sp)
+            Text(exerciseName, color = FLTheme.colors.textSecondary, fontSize = 14.sp)
             Stepper("Sets", s, 1, 20) { s = it }
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                 Text("Time per set: ${WorkoutRowOps.formatDuration(seconds)}", fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-                Icon(Icons.Filled.RemoveCircle, contentDescription = "Less time", tint = if (seconds > 5) FLPrimary else TextSecondaryColor,
+                Icon(Icons.Filled.RemoveCircle, contentDescription = "Less time", tint = if (seconds > 5) FLPrimary else FLTheme.colors.textSecondary,
                     modifier = Modifier.size(32.dp).clickable(enabled = seconds > 5) { seconds = maxOf(5, seconds - step(up = false)) })
                 Spacer(Modifier.size(12.dp))
-                Icon(Icons.Filled.AddCircle, contentDescription = "More time", tint = if (seconds < 3600) FLPrimary else TextSecondaryColor,
+                Icon(Icons.Filled.AddCircle, contentDescription = "More time", tint = if (seconds < 3600) FLPrimary else FLTheme.colors.textSecondary,
                     modifier = Modifier.size(32.dp).clickable(enabled = seconds < 3600) { seconds = minOf(3600, seconds + step(up = true)) })
             }
             if (weightLbs != null) {
@@ -175,12 +182,12 @@ fun SessionDurationSetsSheet(
                         modifier = Modifier.width(100.dp)
                     )
                     Spacer(Modifier.size(8.dp))
-                    Text(WeightUnit.current.label, color = TextSecondaryColor, fontSize = 14.sp)
+                    Text(WeightUnit.current.label, color = FLTheme.colors.textSecondary, fontSize = 14.sp)
                 }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Cancel", color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.weight(1f).clickable { onDismiss() }.padding(vertical = 12.dp))
-                Text("Save", color = White, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                Text("Cancel", color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.weight(1f).clickable { onDismiss() }.padding(vertical = 12.dp))
+                Text("Save", color = FLTheme.colors.onBrand, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(FLPrimary).clickable {
                         // Null leaves the load alone (no weight row); 0 clears it.
                         val saved = weightLbs?.let {
@@ -201,15 +208,15 @@ fun SessionDurationSetsSheet(
 fun SessionSetsSheet(sets: Int, reps: Int, exerciseName: String, onSave: (Int, Int) -> Unit, onDismiss: () -> Unit) {
     var s by remember { mutableIntStateOf(maxOf(1, sets)) }
     var r by remember { mutableIntStateOf(maxOf(0, reps)) }
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.surface) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("Sets & Reps", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-            Text(exerciseName, color = TextSecondaryColor, fontSize = 14.sp)
+            Text(exerciseName, color = FLTheme.colors.textSecondary, fontSize = 14.sp)
             Stepper("Sets", s, 1, 20) { s = it }
             Stepper("Reps", r, 0, 100) { r = it }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Cancel", color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.weight(1f).clickable { onDismiss() }.padding(vertical = 12.dp))
-                Text("Save", color = White, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                Text("Cancel", color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.weight(1f).clickable { onDismiss() }.padding(vertical = 12.dp))
+                Text("Save", color = FLTheme.colors.onBrand, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
                     modifier = Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(FLPrimary).clickable { onSave(s, r); onDismiss() }.padding(vertical = 12.dp))
             }
             Spacer(Modifier.height(16.dp))
@@ -221,9 +228,9 @@ fun SessionSetsSheet(sets: Int, reps: Int, exerciseName: String, onSave: (Int, I
 private fun Stepper(label: String, value: Int, min: Int, max: Int, onChange: (Int) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
         Text("$label: $value", fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.weight(1f))
-        Icon(Icons.Filled.RemoveCircle, contentDescription = "Fewer $label", tint = if (value > min) FLPrimary else TextSecondaryColor, modifier = Modifier.size(32.dp).clickable(enabled = value > min) { onChange(value - 1) })
+        Icon(Icons.Filled.RemoveCircle, contentDescription = "Fewer $label", tint = if (value > min) FLPrimary else FLTheme.colors.textSecondary, modifier = Modifier.size(32.dp).clickable(enabled = value > min) { onChange(value - 1) })
         Spacer(Modifier.size(12.dp))
-        Icon(Icons.Filled.AddCircle, contentDescription = "More $label", tint = if (value < max) FLPrimary else TextSecondaryColor, modifier = Modifier.size(32.dp).clickable(enabled = value < max) { onChange(value + 1) })
+        Icon(Icons.Filled.AddCircle, contentDescription = "More $label", tint = if (value < max) FLPrimary else FLTheme.colors.textSecondary, modifier = Modifier.size(32.dp).clickable(enabled = value < max) { onChange(value + 1) })
     }
 }
 
@@ -253,7 +260,7 @@ fun FinishConfirmationDialog(message: String, onFinishAnyway: () -> Unit, onCont
         title = { Text(SessionFinishRule.title) },
         text = { Text(message) },
         confirmButton = { TextButton(onClick = onContinue) { Text(SessionFinishRule.continueLabel, color = FLPrimary, fontWeight = FontWeight.SemiBold) } },
-        dismissButton = { TextButton(onClick = onFinishAnyway) { Text(SessionFinishRule.finishAnywayLabel, color = Color(0xFFE53935)) } }
+        dismissButton = { TextButton(onClick = onFinishAnyway) { Text(SessionFinishRule.finishAnywayLabel, color = sessionDestructive) } }
     )
 }
 
@@ -264,7 +271,7 @@ fun ConfirmDialog(title: String, message: String, confirmLabel: String, destruct
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(message) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(confirmLabel, color = if (destructive) Color(0xFFE53935) else FLPrimary, fontWeight = FontWeight.SemiBold) } },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(confirmLabel, color = if (destructive) sessionDestructive else FLPrimary, fontWeight = FontWeight.SemiBold) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
@@ -280,35 +287,35 @@ fun MovementInfoSheet(task: WorkoutTask, onDismiss: () -> Unit) {
         val id = task.movementId ?: run { failed = true; return@LaunchedEffect }
         movement = try { withContext(Dispatchers.IO) { ApiClient.movementApi.get(id) } } catch (_: Exception) { failed = true; null }
     }
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.surface) {
         Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             FLImageView(ref = task.movementThumbnailId?.let { MediaRef.MovementThumbnail(it) }, height = 180.dp, modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)))
-            Text(task.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text(task.name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             topSet?.let {
-                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(BackgroundColor).padding(12.dp)) {
-                    Text("Top set", color = TextSecondaryColor, fontSize = 13.sp); Spacer(Modifier.weight(1f))
+                Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.background).padding(12.dp)) {
+                    Text("Top set", color = FLTheme.colors.textSecondary, fontSize = 13.sp); Spacer(Modifier.weight(1f))
                     Text(MovementPerformanceLines.topSetLine(it), fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
                 }
             }
             val m = movement
             when {
                 m != null -> {
-                    (m.summary ?: m.description)?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 14.sp, color = TextPrimaryColor) }
+                    (m.summary ?: m.description)?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 14.sp, color = FLTheme.colors.textPrimary) }
                     m.sections.sortedBy { it.ordinal }.forEach { section ->
                         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(section.type.uppercase(), color = FLPrimary, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
-                            section.note?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = TextSecondaryColor) }
+                            section.note?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.textSecondary) }
                             section.steps.sortedBy { it.ordinal }.forEachIndexed { i, step ->
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Text("${i + 1}.", color = TextSecondaryColor, fontSize = 14.sp)
+                                    Text("${i + 1}.", color = FLTheme.colors.textSecondary, fontSize = 14.sp)
                                     Column { step.label?.let { Text(it, fontWeight = FontWeight.SemiBold, fontSize = 14.sp) }; Text(step.text, fontSize = 14.sp) }
                                 }
                             }
                         }
                     }
                 }
-                failed -> task.instructions?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 14.sp) } ?: Text("No details available for this movement.", color = TextSecondaryColor, fontSize = 14.sp)
-                else -> Text("Loading…", color = TextSecondaryColor, fontSize = 14.sp)
+                failed -> task.instructions?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 14.sp) } ?: Text("No details available for this movement.", color = FLTheme.colors.textSecondary, fontSize = 14.sp)
+                else -> Text("Loading…", color = FLTheme.colors.textSecondary, fontSize = 14.sp)
             }
             Spacer(Modifier.height(24.dp))
         }

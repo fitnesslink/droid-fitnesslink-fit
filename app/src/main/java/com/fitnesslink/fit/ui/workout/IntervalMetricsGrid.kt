@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,9 +31,6 @@ import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /** Small value-over-label tile shared by the detail / playlist grids and the Edit Interval sheet. */
 @Composable
@@ -47,11 +45,11 @@ fun IntervalStatTile(label: String, value: String, emphasized: Boolean = false, 
             text = value,
             fontSize = if (emphasized) 17.sp else 15.sp,
             fontWeight = FontWeight.Bold,
-            color = if (emphasized) BlueTheme else TextPrimaryColor,
+            color = if (emphasized) BlueTheme else FLTheme.colors.textPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )
-        Text(text = label, fontSize = 10.sp, color = TextSecondaryColor, maxLines = 1)
+        Text(text = label, fontSize = 10.sp, color = FLTheme.colors.textSecondary, maxLines = 1)
     }
 }
 
@@ -70,14 +68,14 @@ fun IntervalMetricsGrid(metrics: IntervalMetrics, accent: Color = BlueTheme) {
                 text = metrics.badgeText,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.ExtraBold,
-                color = White,
+                color = FLTheme.colors.onBrand,
                 modifier = Modifier.background(accent, CircleShape).padding(horizontal = 8.dp, vertical = 4.dp)
             )
             val subtitle = buildList {
                 add("${metrics.exerciseCount} exercise${if (metrics.exerciseCount == 1) "" else "s"}")
                 metrics.recoveryMovementName?.let { add("Recovery: $it") }
             }.joinToString(" · ")
-            Text(text = subtitle, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = subtitle, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
@@ -119,11 +117,11 @@ fun IntervalMetricsLine(metrics: IntervalMetrics, modifier: Modifier = Modifier)
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(text = structure, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            Text(text = "·", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+            Text(text = structure, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = "·", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
             Text(text = metrics.totalText, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = BlueTheme)
         }
-        Text(text = detail, fontSize = 11.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(text = detail, fontSize = 11.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         metrics.recoveryMovementName?.let {
             Text(text = "Recovery: $it", fontSize = 11.sp, fontWeight = FontWeight.Medium, color = OrangeTheme, maxLines = 1)
         }

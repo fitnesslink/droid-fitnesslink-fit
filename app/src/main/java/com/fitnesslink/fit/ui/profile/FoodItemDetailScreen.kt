@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,13 +30,9 @@ import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.profile.charts.ReportBarChart
 import com.fitnesslink.fit.ui.profile.charts.ReportEmptyDetail
 import com.fitnesslink.fit.ui.profile.charts.ReportTimeRangePicker
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.NutritionReportViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -64,15 +61,15 @@ fun FoodItemDetailScreen(
     val aggregate = viewModel.foodAggregates.firstOrNull { it.foodName == foodName }
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 10.dp, bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(foodName, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                aggregate?.let { Text("${it.timesLogged}x logged · ${it.totalCalories} total cal", fontSize = 14.sp, color = TextSecondaryColor) }
+                Text(foodName, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                aggregate?.let { Text("${it.timesLogged}x logged · ${it.totalCalories} total cal", fontSize = 14.sp, color = FLTheme.colors.textSecondary) }
             }
 
             ReportTimeRangePicker(viewModel.selectedTimeRange, { viewModel.selectedTimeRange = it }, Modifier.padding(horizontal = 20.dp))
@@ -83,7 +80,7 @@ fun FoodItemDetailScreen(
             }
 
             aggregate?.let { agg ->
-                Row(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(14.dp)) {
+                Row(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(14.dp)) {
                     StatBlock("${agg.avgCalories.toInt()}", "Avg Cal", OrangeTheme, Modifier.weight(1f))
                     StatBlock("${agg.avgProtein.toInt()}g", "Avg Protein", BlueTheme, Modifier.weight(1f))
                     StatBlock("${agg.totalCalories}", "Total Cal", FLPrimary, Modifier.weight(1f))
@@ -92,22 +89,22 @@ fun FoodItemDetailScreen(
 
             val points = dailyCaloriePoints(entries)
             if (points.size >= 2) {
-                Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(14.dp)) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(14.dp)) {
                     ReportBarChart(points = points, color = OrangeTheme, height = 140.dp)
                 }
             }
 
             Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("History", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text("History", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 entries.forEach { entry ->
-                    Row(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(10.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(10.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(dateFormat.format(entry.loggedAt), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                            Text(entry.mealType.displayName, fontSize = 12.sp, color = TextSecondaryColor)
+                            Text(dateFormat.format(entry.loggedAt), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                            Text(entry.mealType.displayName, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                         }
                         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             Text("${entry.calories} cal", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = OrangeTheme)
-                            Text("P:${entry.protein.toInt()}g C:${entry.carbs.toInt()}g F:${entry.fat.toInt()}g", fontSize = 11.sp, color = TextSecondaryColor)
+                            Text("P:${entry.protein.toInt()}g C:${entry.carbs.toInt()}g F:${entry.fat.toInt()}g", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                         }
                     }
                 }
@@ -120,6 +117,6 @@ fun FoodItemDetailScreen(
 private fun StatBlock(value: String, label: String, color: androidx.compose.ui.graphics.Color, modifier: Modifier = Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = color)
-        Text(label, fontSize = 10.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 10.sp, color = FLTheme.colors.textSecondary)
     }
 }

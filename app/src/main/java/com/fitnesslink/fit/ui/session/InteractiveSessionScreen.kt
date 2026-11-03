@@ -57,12 +57,15 @@ import com.fitnesslink.fit.session.SummaryRPEMode
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.CreateExerciseSheet
 import com.fitnesslink.fit.ui.workout.ExerciseBrowserSheet
 import com.fitnesslink.fit.viewmodel.InteractiveSessionViewModel
 import com.fitnesslink.fit.viewmodel.SessionEditAction
 import com.fitnesslink.fit.viewmodel.SessionWorkoutEditor
+
+// theme-exempt: always-dark player. Interactive Mode is dark in both modes (as on iOS): black
+// stage, video / rest image, white chrome. Sheets and dialogs it opens (SetLogSheet, sets editor,
+// movement info, confirmations) live in their own files and follow the app theme.
 
 /**
  * Interactive Mode (port of iOS `InteractiveSessionView`): full-bleed demo video with the prep /
@@ -141,8 +144,8 @@ fun InteractiveSessionScreen(
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         if (viewModel.isLoadingWorkout && viewModel.workoutTask.id.isEmpty()) {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                CircularProgressIndicator(color = White)
-                Text("Loading workout…", color = White.copy(alpha = 0.8f), fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp))
+                CircularProgressIndicator(color = Color.White)
+                Text("Loading workout…", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp))
             }
         } else {
             SessionContent(viewModel, onInfo = { showMovementInfo = true }, onEdit = { action ->
@@ -261,7 +264,7 @@ private fun SessionContent(viewModel: InteractiveSessionViewModel, onInfo: () ->
 
         Column(Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp).padding(bottom = 34.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             viewModel.phaseLabelText?.let { phase ->
-                Text(phase, color = White.copy(alpha = 0.9f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
+                Text(phase, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
                     modifier = Modifier.clip(CircleShape).background(Color.Black.copy(alpha = 0.45f)).padding(horizontal = 10.dp, vertical = 5.dp))
             }
             val runner = viewModel.intervalRunner
@@ -348,7 +351,7 @@ private fun SessionInfoStrip(viewModel: InteractiveSessionViewModel, onInfo: () 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (isGrouped) WorkoutControlTopView(task, viewModel.currentRound)
-            else viewModel.setHeadlineText?.let { Text(it, color = White, fontSize = 22.sp, fontWeight = FontWeight.Black, maxLines = 1) }
+            else viewModel.setHeadlineText?.let { Text(it, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black, maxLines = 1) }
             Spacer(Modifier.weight(1f))
             if (task.isMovement) SetTimerLabel(viewModel.setTimerText, viewModel.setTimerCountsDown)
             // Hidden when the menu would open empty (FTNSSLNK-515).
@@ -359,16 +362,16 @@ private fun SessionInfoStrip(viewModel: InteractiveSessionViewModel, onInfo: () 
         }
         if (task.isMovement) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(task.name, color = White, fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                if (task.movementId != null) Icon(Icons.Filled.Info, contentDescription = "Movement info", tint = White.copy(alpha = 0.9f), modifier = Modifier.size(20.dp).clickable { onInfo() })
+                Text(task.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                if (task.movementId != null) Icon(Icons.Filled.Info, contentDescription = "Movement info", tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(20.dp).clickable { onInfo() })
             }
             viewModel.currentTargetText?.let { Text(it, color = OrangeTheme, fontSize = 17.sp, fontWeight = FontWeight.Black, maxLines = 1) }
-            previous?.let { Text(it.previousLine, color = White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+            previous?.let { Text(it.previousLine, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
         }
         val progress = viewModel.workoutProgressText
-        if (progress.isNotEmpty()) Text(progress, color = White.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        if (progress.isNotEmpty()) Text(progress, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         if (task.isMovement && !task.instructions.isNullOrBlank()) {
-            HorizontalDivider(color = White.copy(alpha = 0.2f))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
             SessionNoteCard(task.instructions, label = "NOTES", maxLines = 2, isBordered = false)
         }
     }

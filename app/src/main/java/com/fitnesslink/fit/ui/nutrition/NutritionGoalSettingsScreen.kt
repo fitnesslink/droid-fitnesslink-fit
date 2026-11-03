@@ -58,13 +58,9 @@ import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.navigation.NutritionCoreRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.NutritionProfileValidation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -102,7 +98,7 @@ fun NutritionGoalSettingsScreen(
 
     LaunchedEffect(Unit) { NutritionGoalsStore.refresh() }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(top = 10.dp, bottom = 30.dp),
@@ -111,11 +107,11 @@ fun NutritionGoalSettingsScreen(
             // Header
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Your Targets", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                    Text("Your Targets", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     targets?.let { ProvenanceBadge(isManual = it.isManualOverride) }
                 }
                 targets?.effectiveFrom?.takeIf { it.isNotEmpty() }?.let { MealPlanDay.date(it) }?.let { date ->
-                    Text("In effect since ${SimpleDateFormat("MMM d", Locale.getDefault()).format(date)}", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text("In effect since ${SimpleDateFormat("MMM d", Locale.getDefault()).format(date)}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
             }
 
@@ -164,7 +160,7 @@ fun NutritionGoalSettingsScreen(
                         NutritionActionRow(Icons.Default.Tune, "Override Targets Manually", "Set your own calories and macros") { showOverrideSheet = true }
                     } else {
                         Column(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Text("Couldn't load your goals. Check your connection.", fontSize = 14.sp, color = TextSecondaryColor)
+                            Text("Couldn't load your goals. Check your connection.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                             Row(modifier = Modifier.clickable { scope.launch { NutritionGoalsStore.refresh() } }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                 Icon(Icons.Default.Refresh, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))
                                 Text("Retry", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
@@ -205,7 +201,7 @@ private fun LoadedContent(
 ) {
     NutritionTargetsSummaryView(targets = targets)
     if (targets.isManualOverride) {
-        Text("These targets were set manually and override your calculated plan.", fontSize = 13.sp, color = TextSecondaryColor)
+        Text("These targets were set manually and override your calculated plan.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         NutritionActionRow(Icons.Default.Tune, "Override Targets Manually", "Set your own calories and macros", onClick = onOverride)
@@ -223,7 +219,7 @@ private fun LoadedContent(
 @Composable
 private fun ProfileSection(profile: NutritionProfile, onEditProfile: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Profile", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.padding(top = 4.dp))
+        Text("Profile", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(top = 4.dp))
         NutritionFieldCard {
             ProfileRow("Goal", profile.primaryGoalValue?.displayName ?: profile.primaryGoal)
             SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
@@ -238,7 +234,7 @@ private fun ProfileSection(profile: NutritionProfile, onEditProfile: () -> Unit)
             ProfileRow("Workouts", profile.workoutFrequencyValue?.displayName?.let { "$it/week" } ?: profile.workoutFrequency)
         }
         NutritionPrimaryButton(text = "Edit Profile & Recalculate", enabled = true, onClick = onEditProfile)
-        Text("Any profile change recalculates your targets. Past days keep the targets that were in effect on that day.", fontSize = 12.sp, color = TextSecondaryColor)
+        Text("Any profile change recalculates your targets. Past days keep the targets that were in effect on that day.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -253,9 +249,9 @@ private fun timelineText(profile: NutritionProfile): String {
 @Composable
 private fun ProfileRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 14.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.weight(1f))
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
     }
 }
 
@@ -271,19 +267,19 @@ fun ProvenanceBadge(isManual: Boolean, fontSize: Int = 11) {
 
 @Composable
 private fun OnboardingPrompt(onStart: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Icon(Icons.Default.AutoAwesome, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
-            Text("Build your nutrition plan", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Build your nutrition plan", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
         }
         Text(
             "Answer a few questions and we'll calculate your maintenance calories, daily target, and macros — with an explanation for every number.",
-            fontSize = 13.sp, color = TextSecondaryColor
+            fontSize = 13.sp, color = FLTheme.colors.textSecondary
         )
         Box(
             modifier = Modifier.fillMaxWidth().background(FLPrimary, RoundedCornerShape(10.dp)).clickable(onClick = onStart).padding(vertical = 12.dp),
             contentAlignment = Alignment.Center
-        ) { Text("Get Started", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = White) }
+        ) { Text("Get Started", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand) }
     }
 }
 
@@ -291,17 +287,17 @@ private fun OnboardingPrompt(onStart: () -> Unit) {
 @Composable
 fun NutritionActionRow(icon: ImageVector, title: String, subtitle: String, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(14.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(modifier = Modifier.size(36.dp).background(FLPrimary.copy(alpha = 0.12f), RoundedCornerShape(9.dp)), contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(20.dp))
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text(subtitle, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text(subtitle, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(18.dp))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -360,15 +356,15 @@ fun NutritionTargetsOverrideSheet(
         }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.background) {
         Column(
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Override Targets", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text("Override Targets", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             Text(
                 "These numbers replace your calculated targets and are marked as manually set. You can revert to the calculated plan anytime.",
-                fontSize = 13.sp, color = TextSecondaryColor
+                fontSize = 13.sp, color = FLTheme.colors.textSecondary
             )
             NutritionFieldCard {
                 NutritionNumberRow("Daily Calories", calories, "cal", { calories = it })
@@ -413,15 +409,15 @@ private fun TdeeCalculatorCard(onUse: (Int) -> Unit) {
     val activityLevels = listOf("Sedentary", "Lightly Active", "Moderately Active", "Very Active", "Extra Active")
     val multipliers = listOf(1.2, 1.375, 1.55, 1.725, 1.9)
 
-    Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(modifier = Modifier.fillMaxWidth().clickable { expanded = !expanded }, verticalAlignment = Alignment.CenterVertically) {
-            Text("TDEE Calculator", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("TDEE Calculator", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
-            Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = TextSecondaryColor)
+            Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = FLTheme.colors.textSecondary)
         }
         AnimatedVisibility(visible = expanded) {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Column(modifier = Modifier.fillMaxWidth().background(BackgroundColor, RoundedCornerShape(8.dp))) {
+                Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.background, RoundedCornerShape(8.dp))) {
                     NutritionNumberRow("Weight", weight, "lbs", { weight = it })
                     SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
                     NutritionNumberRow("Height", heightCm, "cm", { heightCm = it })
@@ -432,11 +428,11 @@ private fun TdeeCalculatorCard(onUse: (Int) -> Unit) {
                     NutritionSelectablePill("Male", isMale, Modifier.weight(1f)) { isMale = true }
                     NutritionSelectablePill("Female", !isMale, Modifier.weight(1f)) { isMale = false }
                 }
-                Text("Activity Level", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("Activity Level", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 activityLevels.forEachIndexed { index, level ->
                     Row(modifier = Modifier.clickable { activityIndex = index }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Box(modifier = Modifier.size(14.dp).background(if (activityIndex == index) FLPrimary else BackgroundColor, RoundedCornerShape(7.dp)))
-                        Text(level, fontSize = 14.sp, color = TextPrimaryColor)
+                        Box(modifier = Modifier.size(14.dp).background(if (activityIndex == index) FLPrimary else FLTheme.colors.background, RoundedCornerShape(7.dp)))
+                        Text(level, fontSize = 14.sp, color = FLTheme.colors.textPrimary)
                     }
                 }
                 Box(
@@ -447,10 +443,10 @@ private fun TdeeCalculatorCard(onUse: (Int) -> Unit) {
                         calculated = TdeeMath.tdee(weightLbs = w, heightCm = h, age = a, isMale = isMale, multiplier = multipliers[activityIndex])
                     }.padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
-                ) { Text("Calculate", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = White) }
+                ) { Text("Calculate", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand) }
                 calculated?.let { tdee ->
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Text("Estimated TDEE: ", fontSize = 14.sp, color = TextSecondaryColor)
+                        Text("Estimated TDEE: ", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                         Text("$tdee cal/day", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
                         Spacer(modifier = Modifier.weight(1f))
                         Text("Use", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary, modifier = Modifier.clickable { onUse(tdee); calculated = null })

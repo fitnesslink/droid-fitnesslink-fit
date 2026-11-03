@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.movements
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,12 +36,7 @@ import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.movements.classificationNameMatches
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.components.TagOption
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.util.Locale
 
 /** A titled bucket of taxonomy items (iOS `ClassificationGroup`). */
@@ -112,14 +108,14 @@ fun ClassificationPickerView(
         onDone()
     }
 
-    Column(modifier = modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = { cancel() }) { Text("Cancel", color = TextSecondaryColor) }
+            TextButton(onClick = { cancel() }) { Text("Cancel", color = FLTheme.colors.textSecondary) }
             Text(
-                title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
+                title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f)
             )
             TextButton(onClick = onDone) {
@@ -136,7 +132,7 @@ fun ClassificationPickerView(
         if (filteredGroups.isEmpty()) {
             Text(
                 "No matches for “$searchText”",
-                fontSize = 14.sp, color = TextSecondaryColor,
+                fontSize = 14.sp, color = FLTheme.colors.textSecondary,
                 modifier = Modifier.padding(20.dp)
             )
         }
@@ -147,7 +143,7 @@ fun ClassificationPickerView(
                         modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 2.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Selected (${selectedItems.size})", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+                        Text("Selected (${selectedItems.size})", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
                         TextButton(onClick = { selectedIds.toList().forEach(onToggle) }) {
                             Text("Clear", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
                         }
@@ -157,15 +153,15 @@ fun ClassificationPickerView(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(White)
+                            .background(FLTheme.colors.surface)
                             .clickable { deselect(item.id) }
                             .padding(horizontal = 20.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(item.name, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                        Icon(Icons.Default.Cancel, contentDescription = "Remove ${item.name}", tint = MediumGray, modifier = Modifier.size(18.dp))
+                        Text(item.name, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                        Icon(Icons.Default.Cancel, contentDescription = "Remove ${item.name}", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
                     }
-                    HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = BackgroundColor)
+                    HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = FLTheme.colors.background)
                 }
             }
             filteredGroups.forEach { group ->
@@ -175,7 +171,7 @@ fun ClassificationPickerView(
                         group.title.replace("_", " ").split(" ").joinToString(" ") { w ->
                             w.lowercase(Locale.US).replaceFirstChar { it.titlecase(Locale.US) }
                         },
-                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor,
+                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary,
                         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 6.dp)
                     )
                 }
@@ -184,19 +180,19 @@ fun ClassificationPickerView(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(White)
+                            .background(FLTheme.colors.surface)
                             .clickable { if (checked) deselect(item.id) else onToggle(item.id) }
                             .padding(horizontal = 20.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(item.name, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                        Text(item.name, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                         if (checked) {
                             Icon(Icons.Default.Check, contentDescription = "Selected", tint = FLPrimary, modifier = Modifier.size(18.dp))
                         } else {
                             Spacer(modifier = Modifier.size(18.dp))
                         }
                     }
-                    HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = BackgroundColor)
+                    HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = FLTheme.colors.background)
                 }
             }
         }
@@ -218,15 +214,15 @@ fun TagOptionChecklist(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(White)
+                    .background(FLTheme.colors.surface)
                     .clickable { onToggle(option.id) }
                     .padding(horizontal = 20.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(option.name, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                Text(option.name, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                 if (checked) Icon(Icons.Default.Check, contentDescription = "Selected", tint = FLPrimary, modifier = Modifier.size(18.dp))
             }
-            if (index < options.lastIndex) HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = BackgroundColor)
+            if (index < options.lastIndex) HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = FLTheme.colors.background)
         }
     }
 }

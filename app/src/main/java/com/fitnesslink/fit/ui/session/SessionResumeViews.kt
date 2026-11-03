@@ -30,7 +30,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -38,11 +37,7 @@ import com.fitnesslink.fit.session.ActiveWorkoutSession
 import com.fitnesslink.fit.session.InProgressSessionEntry
 import com.fitnesslink.fit.session.SessionDiscardRule
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.HighlightState
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import kotlinx.coroutines.launch
 import androidx.compose.runtime.rememberCoroutineScope
 
@@ -53,29 +48,29 @@ import androidx.compose.runtime.rememberCoroutineScope
 @Composable
 fun SessionResumeCard(entry: InProgressSessionEntry, onResume: () -> Unit, onRestart: () -> Unit, onDiscard: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(HighlightState).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.highlight).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text("Session in progress", color = TextPrimaryColor, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                Text(entry.summaryText(), color = TextSecondaryColor, fontSize = 13.sp)
+                Text("Session in progress", color = FLTheme.colors.textPrimary, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                Text(entry.summaryText(), color = FLTheme.colors.textSecondary, fontSize = 13.sp)
             }
-            Icon(Icons.Filled.Close, contentDescription = "Discard session", tint = MediumGray, modifier = Modifier.size(20.dp).clickable { onDiscard() })
+            Icon(Icons.Filled.Close, contentDescription = "Discard session", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(20.dp).clickable { onDiscard() })
         }
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(
                 modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(FLPrimary).clickable { onResume() }.padding(vertical = 10.dp),
                 horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = White, modifier = Modifier.size(16.dp))
+                Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Resume", color = White, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
+                Text("Resume", color = FLTheme.colors.onBrand, fontWeight = FontWeight.SemiBold, fontSize = 14.sp)
             }
             Box(
-                modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(White).clickable { onRestart() }.padding(vertical = 10.dp),
+                modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.surface).clickable { onRestart() }.padding(vertical = 10.dp),
                 contentAlignment = Alignment.Center
-            ) { Text("Restart from beginning", color = TextPrimaryColor, fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
+            ) { Text("Restart from beginning", color = FLTheme.colors.textPrimary, fontWeight = FontWeight.SemiBold, fontSize = 13.sp) }
         }
     }
 }
@@ -96,21 +91,21 @@ fun ResumeSessionBanner(onResume: (InProgressSessionEntry) -> Unit) {
     }
     if (entries.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-        Text("Continue where you left off", color = TextPrimaryColor, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+        Text("Continue where you left off", color = FLTheme.colors.textPrimary, fontSize = 16.sp, fontWeight = FontWeight.Bold)
         entries.forEach { entry ->
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).clickable { onResume(entry) }.padding(14.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface).clickable { onResume(entry) }.padding(14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Box(Modifier.size(40.dp).clip(CircleShape).background(FLPrimary), contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = White)
+                    Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = FLTheme.colors.onBrand)
                 }
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
-                    Text(entry.workoutName, color = TextPrimaryColor, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                    Text(entry.summaryText(), color = TextSecondaryColor, fontSize = 13.sp)
+                    Text(entry.workoutName, color = FLTheme.colors.textPrimary, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text(entry.summaryText(), color = FLTheme.colors.textSecondary, fontSize = 13.sp)
                 }
-                Icon(Icons.Filled.Close, contentDescription = "Discard session", tint = MediumGray, modifier = Modifier.size(20.dp).clickable { discardTarget = entry })
+                Icon(Icons.Filled.Close, contentDescription = "Discard session", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(20.dp).clickable { discardTarget = entry })
             }
         }
     }
@@ -133,7 +128,7 @@ fun SessionDiscardDialog(workoutName: String, onConfirm: () -> Unit, onDismiss: 
         onDismissRequest = onDismiss,
         title = { Text(SessionDiscardRule.title) },
         text = { Text(SessionDiscardRule.message(workoutName)) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(SessionDiscardRule.confirmLabel, color = Color(0xFFE53935), fontWeight = FontWeight.SemiBold) } },
+        confirmButton = { TextButton(onClick = onConfirm) { Text(SessionDiscardRule.confirmLabel, color = sessionDestructive, fontWeight = FontWeight.SemiBold) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(SessionDiscardRule.cancelLabel) } }
     )
 }

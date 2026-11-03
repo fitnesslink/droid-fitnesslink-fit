@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.Manifest
 import android.content.Intent
 import android.net.Uri
@@ -63,12 +64,7 @@ import com.fitnesslink.fit.settings.Appearance
 import com.fitnesslink.fit.settings.UserSettings
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.navigation.ProfileRouteNames
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -144,7 +140,7 @@ fun PreferencesScreen(onBack: () -> Unit, onNavigate: (String) -> Unit) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier
@@ -153,7 +149,7 @@ fun PreferencesScreen(onBack: () -> Unit, onNavigate: (String) -> Unit) {
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Preferences", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(top = 8.dp))
+            Text("Preferences", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(top = 8.dp))
 
             PrefSection(
                 title = "Appearance",
@@ -172,7 +168,7 @@ fun PreferencesScreen(onBack: () -> Unit, onNavigate: (String) -> Unit) {
                             onClick = { UserSettings.appearance = option },
                             colors = RadioButtonDefaults.colors(selectedColor = FLPrimary)
                         )
-                        Text(option.label, fontSize = 15.sp, color = TextPrimaryColor)
+                        Text(option.label, fontSize = 15.sp, color = FLTheme.colors.textPrimary)
                     }
                     if (index != Appearance.entries.lastIndex) PrefDivider()
                 }
@@ -188,8 +184,8 @@ fun PreferencesScreen(onBack: () -> Unit, onNavigate: (String) -> Unit) {
                 ) {
                     Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text("Notifications", fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(18.dp))
+                    Text("Notifications", fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
                 }
             }
 
@@ -317,11 +313,11 @@ fun PreferencesScreen(onBack: () -> Unit, onNavigate: (String) -> Unit) {
 private fun PrefSection(title: String? = null, footer: String? = null, content: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (title != null) {
-            Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+            Text(title, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
         }
-        Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White)) { content() }
+        Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface)) { content() }
         if (footer != null) {
-            Text(footer, fontSize = 11.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 4.dp))
+            Text(footer, fontSize = 11.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 4.dp))
         }
     }
 }
@@ -335,32 +331,32 @@ private fun PrefToggle(label: String, checked: Boolean, onChange: (Boolean) -> U
             .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+        Text(label, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
         Switch(
             checked = checked,
             onCheckedChange = onChange,
-            colors = SwitchDefaults.colors(checkedTrackColor = FLPrimary, checkedThumbColor = White)
+            colors = SwitchDefaults.colors(checkedTrackColor = FLPrimary, checkedThumbColor = FLTheme.colors.onBrand)
         )
     }
 }
 
 @Composable
 private fun PrefDivider() {
-    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(1.dp).background(TextSecondaryColor.copy(alpha = 0.1f)))
+    Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).height(1.dp).background(FLTheme.colors.textSecondary.copy(alpha = 0.1f)))
 }
 
 @Composable
 private fun <T> SegmentedRow(label: String, options: List<Pair<T, String>>, selected: T, onSelect: (T) -> Unit) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, fontSize = 15.sp, color = TextPrimaryColor)
+        Text(label, fontSize = 15.sp, color = FLTheme.colors.textPrimary)
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             options.forEach { (value, text) ->
                 val isSelected = value == selected
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) FLPrimary else White)
-                        .border(1.dp, if (isSelected) FLPrimary else TextSecondaryColor.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                        .background(if (isSelected) FLPrimary else FLTheme.colors.surface)
+                        .border(1.dp, if (isSelected) FLPrimary else FLTheme.colors.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
                         .clickable { onSelect(value) }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
@@ -368,7 +364,7 @@ private fun <T> SegmentedRow(label: String, options: List<Pair<T, String>>, sele
                         text,
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (isSelected) White else TextSecondaryColor
+                        color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textSecondary
                     )
                 }
             }
@@ -394,20 +390,20 @@ private fun CoachVoiceRow(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column(modifier = Modifier.weight(1f)) {
-                Text("Coach Voice", fontSize = 15.sp, color = TextPrimaryColor)
+                Text("Coach Voice", fontSize = 15.sp, color = FLTheme.colors.textPrimary)
                 if (selectedId == null && automatic != null) {
-                    Text(automatic.title, fontSize = 11.sp, color = TextSecondaryColor)
+                    Text(automatic.title, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                 }
             }
-            Text(selectedTitle, fontSize = 14.sp, color = TextSecondaryColor)
-            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = MediumGray)
+            Text(selectedTitle, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = FLTheme.colors.textTertiary)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
                 text = {
                     Column {
                         Text("Automatic")
-                        automatic?.let { Text(it.title, fontSize = 11.sp, color = TextSecondaryColor) }
+                        automatic?.let { Text(it.title, fontSize = 11.sp, color = FLTheme.colors.textSecondary) }
                     }
                 },
                 onClick = { expanded = false; onSelect(null) }
@@ -417,7 +413,7 @@ private fun CoachVoiceRow(
                     text = {
                         Column {
                             Text(option.title)
-                            Text(option.languageLabel, fontSize = 11.sp, color = TextSecondaryColor)
+                            Text(option.languageLabel, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                         }
                     },
                     onClick = { expanded = false; onSelect(option.id) }
@@ -443,13 +439,13 @@ private fun TargetCalendarRow(
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text("Target Calendar", fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+            Text("Target Calendar", fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
             selected?.color?.let {
                 Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(it)))
                 Spacer(modifier = Modifier.width(8.dp))
             }
-            Text(selected?.displayName ?: "Default", fontSize = 14.sp, color = TextSecondaryColor)
-            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = MediumGray)
+            Text(selected?.displayName ?: "Default", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+            Icon(Icons.Default.ArrowDropDown, contentDescription = null, tint = FLTheme.colors.textTertiary)
         }
         DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             calendars.forEach { cal ->
@@ -459,7 +455,7 @@ private fun TargetCalendarRow(
                             cal.color?.let { Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(Color(it))) }
                             Column {
                                 Text(cal.displayName)
-                                if (cal.accountName.isNotBlank()) Text(cal.accountName, fontSize = 11.sp, color = TextSecondaryColor)
+                                if (cal.accountName.isNotBlank()) Text(cal.accountName, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                             }
                         }
                     },

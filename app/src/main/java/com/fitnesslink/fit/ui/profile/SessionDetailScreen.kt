@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -83,14 +84,10 @@ import com.fitnesslink.fit.ui.profile.charts.ReportMiniStat
 import com.fitnesslink.fit.ui.profile.charts.ReportStatCard
 import com.fitnesslink.fit.ui.profile.charts.formatReportDate
 import com.fitnesslink.fit.ui.profile.charts.formatReportDuration
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Locale
@@ -137,7 +134,7 @@ fun SessionDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             HeaderBackView(onBack = onBack)
@@ -149,7 +146,7 @@ fun SessionDetailScreen(
                         .align(Alignment.CenterEnd)
                         .padding(end = 8.dp)
                 ) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete session", tint = TextSecondaryColor)
+                    Icon(Icons.Default.Delete, contentDescription = "Delete session", tint = FLTheme.colors.textSecondary)
                 }
             }
         }
@@ -173,8 +170,8 @@ fun SessionDetailScreen(
             Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(s.workoutName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(13.dp))
-                    Text(formatReportDate(s.displayDate), fontSize = 14.sp, color = TextSecondaryColor)
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(13.dp))
+                    Text(formatReportDate(s.displayDate), fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                     if (s.isCompleted) {
                         Icon(Icons.Default.CheckCircle, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(12.dp))
                         Text(s.statusLabel, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
@@ -227,10 +224,10 @@ fun SessionDetailScreen(
                             onBack()
                         }
                     }
-                ) { Text("Delete Session", color = Color(0xFFE53935), fontWeight = FontWeight.SemiBold) }
+                ) { Text("Delete Session", color = FLTheme.colors.danger, fontWeight = FontWeight.SemiBold) }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel", color = TextSecondaryColor) }
+                TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel", color = FLTheme.colors.textSecondary) }
             }
         )
     }
@@ -318,7 +315,7 @@ private fun ExerciseBreakdown(
     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Exercises", fontSize = 18.sp, fontWeight = FontWeight.Bold)
         if (grouped.isEmpty()) {
-            Text("No exercise data recorded", fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.padding(top = 8.dp))
+            Text("No exercise data recorded", fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
         } else {
             grouped.forEach { exercise -> ExerciseCard(exercise, setDurations, setDistances, notesByTaskName[exercise.name]) }
         }
@@ -337,7 +334,7 @@ private fun ExerciseCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
@@ -360,22 +357,22 @@ private fun ExerciseCard(
         note?.trainingLog?.takeIf { it.isNotBlank() }?.let { log ->
             Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Icon(Icons.Default.Description, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(12.dp).padding(top = 1.dp))
-                Text(log, fontSize = 13.sp, fontStyle = FontStyle.Italic, color = TextSecondaryColor)
+                Text(log, fontSize = 13.sp, fontStyle = FontStyle.Italic, color = FLTheme.colors.textSecondary)
             }
         }
-        HorizontalDivider(color = MediumGray.copy(alpha = 0.3f))
+        HorizontalDivider(color = FLTheme.colors.textTertiary.copy(alpha = 0.3f))
         exercise.sets.forEach { set ->
             val key = sessionSetKey(set.taskName, set.setNumber)
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 2.dp)) {
-                Text("Set ${set.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.width(50.dp))
+                Text("Set ${set.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary, modifier = Modifier.width(50.dp))
                 Text(setMetricText(set, setDurations[key], setDistances[key]), fontSize = 13.sp)
                 Spacer(modifier = Modifier.weight(1f))
                 if (set.weightLifted > 0) {
                     Text(WeightUnit.displayString(set.weightLifted), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                    Text(" · ", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text(" · ", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                     Text(
                         "${WeightUnit.displayWholeNumber(set.reps * set.weightLifted)} $unit vol",
-                        fontSize = 12.sp, color = TextSecondaryColor
+                        fontSize = 12.sp, color = FLTheme.colors.textSecondary
                     )
                 }
             }
@@ -420,8 +417,8 @@ fun SessionRpeEditSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = Color.Black,
-        contentColor = Color.White
+        containerColor = Color.Black, // theme-exempt: always-dark RPE sheet
+        contentColor = Color.White // theme-exempt: always-dark RPE sheet
     ) {
         Column(
             modifier = Modifier
@@ -431,10 +428,10 @@ fun SessionRpeEditSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text(session.workoutName, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = Color.White.copy(alpha = 0.85f))
-            Text(SessionRpeRule.PROMPT, fontSize = 14.sp, color = Color.White.copy(alpha = 0.7f))
+            Text(session.workoutName, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = Color.White.copy(alpha = 0.85f)) // theme-exempt: always-dark RPE sheet
+            Text(SessionRpeRule.PROMPT, fontSize = 14.sp, color = Color.White.copy(alpha = 0.7f)) // theme-exempt: always-dark RPE sheet
             Text("$value", fontSize = 56.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
-            Text(SessionRpeRule.label(value), fontSize = 15.sp, color = Color.White)
+            Text(SessionRpeRule.label(value), fontSize = 15.sp, color = Color.White) // theme-exempt: always-dark RPE sheet
             Slider(
                 value = value.toFloat(),
                 onValueChange = { value = it.roundToInt() },
@@ -443,18 +440,18 @@ fun SessionRpeEditSheet(
                 colors = SliderDefaults.colors(
                     thumbColor = FLPrimary,
                     activeTrackColor = FLPrimary,
-                    inactiveTrackColor = Color.White.copy(alpha = 0.2f),
+                    inactiveTrackColor = Color.White.copy(alpha = 0.2f), // theme-exempt: always-dark RPE sheet
                     activeTickColor = Color.Transparent,
                     inactiveTickColor = Color.Transparent
                 )
             )
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(SessionRpeRule.MIN_ANCHOR, fontSize = 11.sp, color = Color.White.copy(alpha = 0.55f), modifier = Modifier.weight(1f))
-                Text(SessionRpeRule.MAX_ANCHOR, fontSize = 11.sp, color = Color.White.copy(alpha = 0.55f), textAlign = TextAlign.End)
+                Text(SessionRpeRule.MIN_ANCHOR, fontSize = 11.sp, color = Color.White.copy(alpha = 0.55f), modifier = Modifier.weight(1f)) // theme-exempt: always-dark RPE sheet
+                Text(SessionRpeRule.MAX_ANCHOR, fontSize = 11.sp, color = Color.White.copy(alpha = 0.55f), textAlign = TextAlign.End) // theme-exempt: always-dark RPE sheet
             }
             Text(
                 "You can change this rating once, within 24 hours of finishing.",
-                fontSize = 12.sp, color = Color.White.copy(alpha = 0.55f), textAlign = TextAlign.Center,
+                fontSize = 12.sp, color = Color.White.copy(alpha = 0.55f), textAlign = TextAlign.Center, // theme-exempt: always-dark RPE sheet
                 modifier = Modifier.padding(horizontal = 8.dp)
             )
             Spacer(modifier = Modifier.height(4.dp))
@@ -463,13 +460,13 @@ fun SessionRpeEditSheet(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f).height(50.dp),
                     shape = RoundedCornerShape(25.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.12f), contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White.copy(alpha = 0.12f), contentColor = Color.White) // theme-exempt: always-dark RPE sheet
                 ) { Text("Cancel", fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
                 Button(
                     onClick = { onSave(value) },
                     modifier = Modifier.weight(1f).height(50.dp),
                     shape = RoundedCornerShape(25.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = FLPrimary, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = FLPrimary, contentColor = FLTheme.colors.onBrand)
                 ) { Text("Save", fontSize = 16.sp, fontWeight = FontWeight.SemiBold) }
             }
         }

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile.charts
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +24,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,11 +41,8 @@ import com.fitnesslink.fit.model.SessionRpeRule
 import com.fitnesslink.fit.model.TrendDirection
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -63,15 +62,17 @@ fun formatReportDuration(seconds: Int): String {
 }
 
 /** Theme colour for a metric's name-keyed colour (`ReportMetric.color`). */
+@Composable @ReadOnlyComposable
 fun reportThemeColor(name: String): Color = when (name) {
     "FLPrimary" -> FLPrimary
     "BlueTheme" -> BlueTheme
     "OrangeTheme" -> OrangeTheme
     "PurpleTheme" -> PurpleTheme
-    "MediumGray" -> MediumGray
+    "MediumGray" -> FLTheme.colors.textTertiary
     else -> FLPrimary
 }
 
+@Composable @ReadOnlyComposable
 fun ReportMetric.themeColor(): Color = reportThemeColor(color)
 
 /** Segmented control in the report's style (white pill, brand fill on the selection). */
@@ -87,7 +88,7 @@ fun <T> ReportSegmentedPicker(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
     ) {
         options.forEach { option ->
             val isSelected = option == selected
@@ -95,7 +96,7 @@ fun <T> ReportSegmentedPicker(
                 modifier = Modifier
                     .weight(1f)
                     .clickable { onSelect(option) }
-                    .background(if (isSelected) FLPrimary else White)
+                    .background(if (isSelected) FLPrimary else FLTheme.colors.surface)
                     .padding(vertical = 8.dp),
                 contentAlignment = Alignment.Center
             ) {
@@ -103,7 +104,7 @@ fun <T> ReportSegmentedPicker(
                     text = label(option),
                     fontSize = 13.sp,
                     fontWeight = FontWeight.Medium,
-                    color = if (isSelected) White else TextSecondaryColor
+                    color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textSecondary
                 )
             }
         }
@@ -129,7 +130,7 @@ fun ReportStatCard(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(vertical = 12.dp, horizontal = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -137,7 +138,7 @@ fun ReportStatCard(
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
         Spacer(modifier = Modifier.height(6.dp))
         Text(value, fontSize = 18.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-        Text(label, fontSize = 10.sp, color = TextSecondaryColor, textAlign = TextAlign.Center)
+        Text(label, fontSize = 10.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center)
         if (annotation != null) {
             Text(annotation, fontSize = 9.sp, fontWeight = FontWeight.SemiBold, color = color)
         }
@@ -149,14 +150,15 @@ fun ReportStatCard(
 fun ReportMiniStat(label: String, value: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-        Text(label, fontSize = 9.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 9.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
+@Composable @ReadOnlyComposable
 fun TrendDirection.themeColor(): Color = when (this) {
     TrendDirection.UP -> FLPrimary
     TrendDirection.DOWN -> OrangeTheme
-    TrendDirection.FLAT -> MediumGray
+    TrendDirection.FLAT -> FLTheme.colors.textTertiary
 }
 
 fun TrendDirection.imageVector(): ImageVector = when (this) {
@@ -201,12 +203,13 @@ fun ReportTrendRow(label: String, trend: TrendDirection, modifier: Modifier = Mo
 }
 
 /** Colour band for a numeric RPE (iOS `RPEBadge`). */
+@Composable @ReadOnlyComposable
 fun rpeBandColor(value: Double): Color = when (value.toInt()) {
     in 1..4 -> FLPrimary
     5, 6 -> BlueTheme
     7, 8 -> OrangeTheme
-    9, 10 -> Color(0xFFE53935)
-    else -> TextSecondaryColor
+    9, 10 -> Color(0xFFE53935) // theme-exempt: series colour (RPE band, same in both modes)
+    else -> FLTheme.colors.textSecondary
 }
 
 /** Short descriptor used on the RPE list badges. */
@@ -246,9 +249,9 @@ fun ReportEmptyDetail(message: String = "No data for this period") {
             .padding(top = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(Icons.Default.BarChart, contentDescription = null, tint = MediumGray, modifier = Modifier.size(36.dp))
+        Icon(Icons.Default.BarChart, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(36.dp))
         Spacer(modifier = Modifier.height(12.dp))
-        Text(message, fontSize = 15.sp, color = TextSecondaryColor)
+        Text(message, fontSize = 15.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -274,11 +277,11 @@ fun DeleteSessionDialog(
         },
         confirmButton = {
             TextButton(onClick = { onConfirm(session) }) {
-                Text("Delete Session", color = Color(0xFFE53935), fontWeight = FontWeight.SemiBold)
+                Text("Delete Session", color = FLTheme.colors.danger, fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel", color = TextSecondaryColor) }
+            TextButton(onClick = onDismiss) { Text("Cancel", color = FLTheme.colors.textSecondary) }
         }
     )
 }

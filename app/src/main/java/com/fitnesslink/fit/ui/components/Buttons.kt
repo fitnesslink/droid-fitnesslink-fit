@@ -23,9 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.R
-import com.fitnesslink.fit.ui.theme.DisabledButton
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 @Composable
 fun PrimaryButtonView(
@@ -43,7 +42,7 @@ fun PrimaryButtonView(
             text = text,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
-            color = White
+            color = FLTheme.colors.onBrand
         )
     }
 }
@@ -56,7 +55,7 @@ fun SecondaryButtonView(
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(100.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(100.dp))
             .border(1.dp, FLPrimary, RoundedCornerShape(100.dp))
             .padding(vertical = 9.dp),
         contentAlignment = Alignment.Center
@@ -78,7 +77,7 @@ fun ActionButtonView(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val bgColor = if (isEnabled) FLPrimary else DisabledButton
+    val bgColor = if (isEnabled) FLPrimary else FLTheme.colors.disabled
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -88,13 +87,13 @@ fun ActionButtonView(
         contentAlignment = Alignment.Center
     ) {
         if (isLoading) {
-            CircularProgressIndicator(color = White, modifier = Modifier.size(24.dp))
+            CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(24.dp))
         } else {
             Text(
                 text = text,
                 fontSize = 16.sp,
                 fontWeight = if (isEnabled) FontWeight.SemiBold else FontWeight.Normal,
-                color = White
+                color = FLTheme.colors.onBrand
             )
         }
     }
@@ -112,7 +111,7 @@ fun SocialSignInButton(
     Box(
         modifier = modifier
             .size(56.dp)
-            .background(White, CircleShape)
+            .background(FLTheme.colors.surface, CircleShape)
             .clip(CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center

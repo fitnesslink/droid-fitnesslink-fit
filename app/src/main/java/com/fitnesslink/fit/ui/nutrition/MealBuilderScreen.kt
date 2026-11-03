@@ -67,14 +67,11 @@ import com.fitnesslink.fit.nutrition.NutritionGoalsStore
 import com.fitnesslink.fit.nutrition.NutritionSummaryStore
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import kotlinx.coroutines.launch
 import java.util.Locale
 import java.util.UUID
@@ -167,7 +164,7 @@ fun MealBuilderScreen(
     val headerDate = store.date
     val headerMeal = store.mealType
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         PlanTopBar(title = if (store.isEditing) "Edit Meal" else "Build Meal", onBack = ::leave)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 6.dp, bottom = 24.dp),
@@ -177,11 +174,11 @@ fun MealBuilderScreen(
             Row(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     if (allowLogDirectly) {
-                        Text("Build a meal", fontSize = 14.sp, color = TextSecondaryColor)
-                        Text("New Meal", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                        Text("Build a meal", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+                        Text("New Meal", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     } else {
-                        Text("${com.fitnesslink.fit.viewmodel.MealPlanViewModel.weekdayFull(headerDate)} · ${com.fitnesslink.fit.viewmodel.MealPlanViewModel.mediumDay(headerDate)}", fontSize = 14.sp, color = TextSecondaryColor)
-                        Text(headerMeal.displayName, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                        Text("${com.fitnesslink.fit.viewmodel.MealPlanViewModel.weekdayFull(headerDate)} · ${com.fitnesslink.fit.viewmodel.MealPlanViewModel.mediumDay(headerDate)}", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+                        Text(headerMeal.displayName, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     }
                 }
                 if (!allowLogDirectly) {
@@ -193,29 +190,29 @@ fun MealBuilderScreen(
 
             // Meal name
             PlanCard(Modifier.padding(horizontal = 20.dp)) {
-                Text("Meal name (optional)", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                Text("Meal name (optional)", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                 PlanTextField(mealName, { store.setMealName(it) }, placeholder = if (items.size == 1) items[0].name else "e.g. Power Bowl")
             }
 
             // Totals
             PlanCard(Modifier.padding(horizontal = 20.dp)) {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Meal Total", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                    Text("Meal Total", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                     Text("${store.totalCalories} cal", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
                 }
                 MealMacroSummary(store.totalProtein, store.totalCarbs, store.totalFat)
             }
 
             // Foods
-            Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+            Column(modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 14.dp, bottom = if (items.isEmpty()) 14.dp else 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Foods", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                    if (items.isNotEmpty()) Text("${items.size} item${if (items.size == 1) "" else "s"}", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text("Foods", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                    if (items.isNotEmpty()) Text("${items.size} item${if (items.size == 1) "" else "s"}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
                 if (items.isEmpty()) {
                     Text(
                         "No foods yet — add from search, a barcode, your recents, or enter one manually.",
-                        fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)
+                        fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)
                     )
                 } else {
                     items.forEachIndexed { index, item ->
@@ -231,11 +228,11 @@ fun MealBuilderScreen(
                     modifier = Modifier.fillMaxWidth().background(FLPrimary, RoundedCornerShape(12.dp)).clickable { showSources = true }.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(Icons.Filled.AddCircle, contentDescription = null, tint = White)
-                    Text("Add Food", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White, modifier = Modifier.weight(1f))
-                    Icon(Icons.Filled.Search, null, tint = White, modifier = Modifier.size(18.dp))
-                    Icon(Icons.Filled.QrCodeScanner, null, tint = White, modifier = Modifier.size(18.dp))
-                    Icon(Icons.Filled.Edit, null, tint = White, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Filled.AddCircle, contentDescription = null, tint = FLTheme.colors.onBrand)
+                    Text("Add Food", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand, modifier = Modifier.weight(1f))
+                    Icon(Icons.Filled.Search, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Filled.QrCodeScanner, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp))
+                    Icon(Icons.Filled.Edit, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp))
                 }
                 Row(
                     modifier = Modifier.fillMaxWidth()
@@ -243,12 +240,12 @@ fun MealBuilderScreen(
                         .clickable { showAI = true }.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
-                    Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = White)
+                    Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = FLTheme.colors.onBrand)
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("AI Suggestion", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = White)
-                        Text("Add an idea based on your goals", fontSize = 12.sp, color = White.copy(alpha = 0.85f))
+                        Text("AI Suggestion", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
+                        Text("Add an idea based on your goals", fontSize = 12.sp, color = FLTheme.colors.onBrand.copy(alpha = 0.85f))
                     }
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = White)
+                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.onBrand)
                 }
             }
 
@@ -268,15 +265,15 @@ fun MealBuilderScreen(
                     modifier = Modifier.clickable(enabled = store.canSave) { showTemplate = true },
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(Icons.Filled.Layers, contentDescription = null, tint = if (store.canSave) FLPrimary else TextSecondaryColor, modifier = Modifier.size(16.dp))
-                    Text("Save as Template", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (store.canSave) FLPrimary else TextSecondaryColor)
+                    Icon(Icons.Filled.Layers, contentDescription = null, tint = if (store.canSave) FLPrimary else FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
+                    Text("Save as Template", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (store.canSave) FLPrimary else FLTheme.colors.textSecondary)
                 }
-                templateMessage?.let { Text(it, fontSize = 12.sp, color = if (templateFailed) OrangeTheme else TextSecondaryColor) }
+                templateMessage?.let { Text(it, fontSize = 12.sp, color = if (templateFailed) OrangeTheme else FLTheme.colors.textSecondary) }
             }
 
             if (store.isEditing) {
                 Text(
-                    "Remove Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Red,
+                    "Remove Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.danger,
                     modifier = Modifier.align(Alignment.CenterHorizontally).clickable {
                         val id = store.activeSlotId
                         scope.launch {
@@ -292,10 +289,10 @@ fun MealBuilderScreen(
 
     // Source picker
     if (showSources) {
-        ModalBottomSheet(onDismissRequest = { showSources = false }, containerColor = BackgroundColor) {
+        ModalBottomSheet(onDismissRequest = { showSources = false }, containerColor = FLTheme.colors.background) {
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Add Food", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.padding(vertical = 8.dp))
-                Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+                Text("Add Food", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(vertical = 8.dp))
+                Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                     SourceRow(Icons.Filled.Search, "Search Foods", "Find a food in the database") { goToPicker(FoodLoggingRoutes.foodSearch(headerMeal, headerDate, mode = ADD_TO_MEAL)) }
                     PlanDivider()
                     SourceRow(Icons.Filled.QrCodeScanner, "Scan Barcode", "Look up a packaged food") { goToPicker(FoodLoggingRoutes.barcodeScanner(headerMeal, headerDate, mode = ADD_TO_MEAL)) }
@@ -391,7 +388,7 @@ internal fun MealMacroSummary(protein: Double, carbs: Double, fat: Double) {
 private fun MacroPill(name: String, value: Double, color: Color, modifier: Modifier) {
     Column(modifier = modifier.background(color.copy(alpha = 0.08f), RoundedCornerShape(8.dp)).padding(vertical = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(planGrams(value), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = color)
-        Text(name, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(name, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -400,17 +397,17 @@ private fun StagedFoodRow(item: MealBuilderItem, onRemove: () -> Unit, onServing
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(item.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                Text(portionLabel(item), fontSize = 12.sp, color = TextSecondaryColor)
+                Text(item.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                Text(portionLabel(item), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
-            Text("${item.totalCalories.roundToInt()} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("${item.totalCalories.roundToInt()} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(Modifier.width(8.dp))
-            Icon(Icons.Filled.Delete, contentDescription = "Remove", tint = Color.Red, modifier = Modifier.size(18.dp).clickable(onClick = onRemove))
+            Icon(Icons.Filled.Delete, contentDescription = "Remove", tint = FLTheme.colors.danger, modifier = Modifier.size(18.dp).clickable(onClick = onRemove))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Servings", fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+            Text("Servings", fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
             Icon(Icons.Filled.RemoveCircleOutline, contentDescription = "Fewer", tint = FLPrimary, modifier = Modifier.size(22.dp).clickable { onServings((item.servings - 0.5).coerceAtLeast(0.5)) })
-            Text(servingsLabel(item.servings), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text(servingsLabel(item.servings), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Icon(Icons.Filled.AddCircle, contentDescription = "More", tint = FLPrimary, modifier = Modifier.size(22.dp).clickable { onServings(item.servings + 0.5) })
         }
         PlanMacroRow(item.totalProtein, item.totalFat, item.totalCarbs)
@@ -434,8 +431,8 @@ private fun SourceRow(icon: ImageVector, title: String, subtitle: String, onClic
     ) {
         Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
         Column {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-            Text(subtitle, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+            Text(subtitle, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -466,7 +463,7 @@ internal fun PlanManualFoodSheet(prefillName: String, onAdd: (MealBuilderItem) -
     var servingUnit by remember { mutableStateOf("serving") }
     val isValid = name.trim().isNotEmpty() && (calories.toDoubleOrNull() ?: -1.0) >= 0
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.background) {
         Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             PlanSheetTitle("Enter Manually", onCancel = onDismiss, confirm = "Add", confirmEnabled = isValid) {
                 onAdd(
@@ -479,18 +476,18 @@ internal fun PlanManualFoodSheet(prefillName: String, onAdd: (MealBuilderItem) -
                 )
             }
             PlanCard {
-                Text("FOOD", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                Text("FOOD", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                 PlanTextField(name, { name = it }, "Name")
                 PlanTextField(calories, { calories = it.filter { c -> c.isDigit() || c == '.' } }, "Calories", keyboardType = KeyboardType.Decimal)
             }
             PlanCard {
-                Text("MACROS (GRAMS, OPTIONAL)", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                Text("MACROS (GRAMS, OPTIONAL)", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                 PlanTextField(protein, { protein = it.filter { c -> c.isDigit() || c == '.' } }, "Protein", keyboardType = KeyboardType.Decimal)
                 PlanTextField(fat, { fat = it.filter { c -> c.isDigit() || c == '.' } }, "Fat", keyboardType = KeyboardType.Decimal)
                 PlanTextField(carbs, { carbs = it.filter { c -> c.isDigit() || c == '.' } }, "Carbs", keyboardType = KeyboardType.Decimal)
             }
             PlanCard {
-                Text("SERVING", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                Text("SERVING", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                 PlanTextField(servingSize, { servingSize = it.filter { c -> c.isDigit() || c == '.' } }, "Serving Size", keyboardType = KeyboardType.Decimal)
                 PlanTextField(servingUnit, { servingUnit = it }, "Serving Unit")
             }
@@ -512,20 +509,20 @@ private fun MealDestinationSheet(
     var meal by remember { mutableStateOf(initialMeal) }
     var date by remember { mutableStateOf(initialDate) }
     var picking by remember { mutableStateOf(false) }
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.background) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             PlanSheetTitle("Save Meal", onCancel = onDismiss, confirm = null)
-            Text("MEAL", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+            Text("MEAL", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 MealType.entries.forEach { PlanChipLabel(it.displayName, meal == it) { meal = it } }
             }
-            Text("DAY", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-            Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+            Text("DAY", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
+            Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                 PlanValueRow("Date", "${com.fitnesslink.fit.viewmodel.MealPlanViewModel.weekdayFull(date)}, ${com.fitnesslink.fit.viewmodel.MealPlanViewModel.mediumDay(date)}") { picking = true }
             }
             PlanPrimaryButton("Add to ${meal.displayName} Plan") { onPlan(date, meal) }
             PlanPrimaryButton("Log to ${meal.displayName} Now", color = BlueTheme) { onLog(date, meal) }
-            Text("Add to plan schedules this meal on the chosen day. Log now records it in your food diary right away.", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("Add to plan schedules this meal on the chosen day. Log now records it in your food diary right away.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
     if (picking) PlanDatePickerDialog(date, onPick = { date = it; picking = false }, onDismiss = { picking = false })

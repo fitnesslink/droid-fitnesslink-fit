@@ -1,12 +1,12 @@
 package com.fitnesslink.fit.ui.movements
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.fitnesslink.fit.model.MovementLibraryItem
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.workout.MovementCreateForm
 
 /**
@@ -20,7 +20,7 @@ fun MovementEditorScreen(
     onBack: () -> Unit,
     onCreated: ((MovementLibraryItem) -> Unit)? = null
 ) {
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         MovementCreateForm(
             title = "New Exercise",
             onCancel = onBack,

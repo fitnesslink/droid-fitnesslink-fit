@@ -16,12 +16,14 @@ import androidx.compose.ui.graphics.Color
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.persistence.DatabaseManager
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
+
+// theme-exempt: over media. The black loader precedes the always-dark Workout Summary, so it
+// stays black in both modes (no light flash before the summary).
 
 /**
  * Opens from a completed calendar / Today entry (port of iOS `CompletedWorkoutReportView`):
@@ -46,7 +48,7 @@ fun CompletedWorkoutReportView(workoutId: String, day: String, onBack: () -> Uni
         resolved = true
     }
     when {
-        !resolved -> Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = White) }
+        !resolved -> Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.White) }
         sessionId != null -> WorkoutSummaryReopenView(sessionId!!, onBack)
         else -> LaunchedEffect(Unit) { onOpenWorkout(workoutId) }
     }

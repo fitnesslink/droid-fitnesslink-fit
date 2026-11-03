@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -49,11 +50,7 @@ import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.session.MuxVideoPlayer
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Locale
@@ -78,7 +75,7 @@ fun MovementInfoSheet(task: WorkoutTask, onDismiss: () -> Unit) {
         movement = withContext(Dispatchers.IO) { runCatching { ApiClient.movementApi.get(id) }.getOrNull() }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.background, contentColor = FLTheme.colors.textPrimary) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -122,8 +119,8 @@ fun MovementInfoSheet(task: WorkoutTask, onDismiss: () -> Unit) {
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(6.dp)
                         ) {
-                            Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = White, modifier = Modifier.size(14.dp))
-                            Text("Watch Demo", color = White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            Icon(Icons.Filled.PlayArrow, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(14.dp))
+                            Text("Watch Demo", color = FLTheme.colors.onBrand, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
@@ -160,10 +157,10 @@ fun MovementInfoSheet(task: WorkoutTask, onDismiss: () -> Unit) {
                         Column(
                             modifier = Modifier
                                 .weight(1f)
-                                .background(White, RoundedCornerShape(10.dp))
+                                .background(FLTheme.colors.surface, RoundedCornerShape(10.dp))
                                 .padding(12.dp)
                         ) {
-                            Text(text = label.uppercase(Locale.US), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                            Text(text = label.uppercase(Locale.US), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                             Text(text = value, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
@@ -176,7 +173,7 @@ fun MovementInfoSheet(task: WorkoutTask, onDismiss: () -> Unit) {
             if (!cue.isNullOrEmpty()) {
                 HorizontalDivider()
                 Text("Notes", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-                Text(cue, fontSize = 15.sp, color = TextPrimaryColor)
+                Text(cue, fontSize = 15.sp, color = FLTheme.colors.textPrimary)
             }
 
             // Structured content
@@ -184,18 +181,18 @@ fun MovementInfoSheet(task: WorkoutTask, onDismiss: () -> Unit) {
             val sections = movement?.sections ?: emptyList()
             if (!summary.isNullOrEmpty() || sections.isNotEmpty()) {
                 HorizontalDivider()
-                if (!summary.isNullOrEmpty()) Text(summary, fontSize = 14.sp, color = TextPrimaryColor)
+                if (!summary.isNullOrEmpty()) Text(summary, fontSize = 14.sp, color = FLTheme.colors.textPrimary)
                 sections.sortedBy { it.ordinal }.forEach { section ->
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Text(section.type, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                        section.note?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = TextSecondaryColor) }
+                        section.note?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.textSecondary) }
                         section.steps.sortedBy { it.ordinal }.forEachIndexed { i, step ->
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Text(
                                     text = step.label?.takeIf { it.isNotBlank() } ?: "${i + 1}.",
                                     fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary
                                 )
-                                Text(step.text, fontSize = 14.sp, color = TextPrimaryColor)
+                                Text(step.text, fontSize = 14.sp, color = FLTheme.colors.textPrimary)
                             }
                         }
                     }

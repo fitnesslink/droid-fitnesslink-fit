@@ -62,11 +62,8 @@ import com.fitnesslink.fit.nutrition.deepCopied
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -116,9 +113,9 @@ fun RecentMealLogScreen(
     }
 
     if (meal == null) {
-        Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+        Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
             HeaderBackView(onBack = onBack)
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Meal not found", fontSize = 16.sp, color = TextSecondaryColor) }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Meal not found", fontSize = 16.sp, color = FLTheme.colors.textSecondary) }
         }
         return
     }
@@ -149,27 +146,27 @@ fun RecentMealLogScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 10.dp, bottom = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("${meal.mealType} · ${MealPlanDay.date(meal.date)?.let { formatMediumDay(it) } ?: meal.date}", fontSize = 14.sp, color = TextSecondaryColor)
-                Text("Review & Log", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                Text("Nothing is logged until you tap Log${backfillSuffix(logDate, " · logging to ")}", fontSize = 13.sp, color = TextSecondaryColor)
+                Text("${meal.mealType} · ${MealPlanDay.date(meal.date)?.let { formatMediumDay(it) } ?: meal.date}", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+                Text("Review & Log", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                Text("Nothing is logged until you tap Log${backfillSuffix(logDate, " · logging to ")}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             }
 
             FoodLogCard {
-                Text("Log to", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                Text("Log to", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                 Spacer(Modifier.height(8.dp))
                 MealTypeChips(selected = selectedMeal, onSelect = { selectedMeal = it })
             }
 
             FoodLogCard {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Meal Total", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                    Text("Meal Total", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                     Spacer(Modifier.weight(1f))
                     Text("${foods.mealTotalCalories} cal", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
                 }
@@ -179,14 +176,14 @@ fun RecentMealLogScreen(
 
             FoodLogCard(padding = 0) {
                 Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 14.dp, bottom = if (foods.isEmpty()) 14.dp else 8.dp)) {
-                    Text("Foods", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                    Text("Foods", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                     Spacer(Modifier.weight(1f))
-                    if (foods.isNotEmpty()) Text("${foods.size} item${if (foods.size == 1) "" else "s"}", fontSize = 13.sp, color = TextSecondaryColor)
+                    if (foods.isNotEmpty()) Text("${foods.size} item${if (foods.size == 1) "" else "s"}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
                 if (foods.isEmpty()) {
                     Text(
                         "Everything was removed — add a food back or go back to pick another meal.",
-                        fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)
+                        fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)
                     )
                 } else {
                     foods.forEach { food ->
@@ -201,7 +198,7 @@ fun RecentMealLogScreen(
             }
 
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp))
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
                     .clickable { showSourceSheet = true }.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
@@ -221,7 +218,7 @@ fun RecentMealLogScreen(
     }
 
     if (showSourceSheet) {
-        ModalBottomSheet(onDismissRequest = { showSourceSheet = false }, containerColor = BackgroundColor) {
+        ModalBottomSheet(onDismissRequest = { showSourceSheet = false }, containerColor = FLTheme.colors.background) {
             AddFoodSourceSheetContent(
                 onPick = { route -> showSourceSheet = false; onNavigate(route) },
                 mealType = selectedMeal,
@@ -236,7 +233,7 @@ fun RecentMealLogScreen(
 @Composable
 fun AddFoodSourceSheetContent(onPick: (String) -> Unit, mealType: MealType, date: String, mode: String) {
     Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Add Food", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+        Text("Add Food", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp))
         SourceRow(Icons.Default.Search, "Search Foods", "Find a food in the database") { onPick(FoodLoggingRoutes.foodSearch(mealType, date, mode = mode)) }
         SourceRow(Icons.Default.QrCodeScanner, "Scan Barcode", "Look up a packaged food") { onPick(FoodLoggingRoutes.barcodeScanner(mealType, date, mode)) }
         SourceRow(Icons.Default.History, "Recent & My Foods", "Reuse something you've logged or saved") { onPick(FoodLoggingRoutes.recentFoods(mealType, date, mode)) }
@@ -256,18 +253,18 @@ fun StagedFoodRow(food: MealSlotFood, onRemove: () -> Unit, onServings: (Double)
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(food.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                Text(food.portionLabel, fontSize = 12.sp, color = TextSecondaryColor)
+                Text(food.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                Text(food.portionLabel, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
-            Text("${food.totalCalories.roundToInt()} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("${food.totalCalories.roundToInt()} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(Modifier.width(8.dp))
-            Icon(Icons.Default.Delete, "Remove", tint = Color.Red, modifier = Modifier.size(18.dp).clickable(onClick = onRemove))
+            Icon(Icons.Default.Delete, "Remove", tint = FLTheme.colors.danger, modifier = Modifier.size(18.dp).clickable(onClick = onRemove))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Servings", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("Servings", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             Spacer(Modifier.weight(1f))
             Icon(Icons.Default.RemoveCircle, "Fewer", tint = FLPrimary, modifier = Modifier.size(20.dp).clickable { onServings(maxOf(food.servings - 0.5, 0.5)) })
-            Text(stagedServingsLabel(food.servings), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.widthIn(min = 34.dp))
+            Text(stagedServingsLabel(food.servings), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.widthIn(min = 34.dp))
             Icon(Icons.Default.AddCircle, "More", tint = FLPrimary, modifier = Modifier.size(20.dp).clickable { onServings(food.servings + 0.5) })
         }
     }

@@ -1,5 +1,7 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
+import com.fitnesslink.fit.ui.theme.OrangeTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -39,18 +41,15 @@ import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.Workout
 import com.fitnesslink.fit.network.dto.DraftWorkoutTask
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.AIWorkoutGeneratorViewModel
 import com.fitnesslink.fit.viewmodel.AIWorkoutGeneratorViewModel.DraftBlockKind
 import com.fitnesslink.fit.viewmodel.AIWorkoutGeneratorViewModel.DraftBlockRun
 import kotlinx.coroutines.launch
 import java.util.Locale
+import com.fitnesslink.fit.ui.theme.WorkGreen
 
-private val LibraryGreen = Color(0xFF22A35A)
+private val LibraryGreen = WorkGreen
 
 /**
  * Read-only review of an AI-generated draft (iOS `GeneratedWorkoutReviewView`).
@@ -84,9 +83,9 @@ fun GeneratedWorkoutReviewScreen(
     val newCount = exerciseTasks.size - libraryCount
     val blockCount = phaseGroups.sumOf { AIWorkoutGeneratorViewModel.blockRuns(it.second).size }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
-        Row(modifier = Modifier.fillMaxWidth().background(White).padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-            TextButton(onClick = onBack, enabled = !approving) { Text("Back", color = TextSecondaryColor) }
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
+        Row(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface).padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = onBack, enabled = !approving) { Text("Back", color = FLTheme.colors.textSecondary) }
             Spacer(modifier = Modifier.weight(1f))
             Text("Review Workout", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
             Spacer(modifier = Modifier.weight(1f))
@@ -95,7 +94,7 @@ fun GeneratedWorkoutReviewScreen(
 
         if (draft == null) {
             Column(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                Text("No workout to review.", color = TextSecondaryColor)
+                Text("No workout to review.", color = FLTheme.colors.textSecondary)
             }
         } else {
             Column(
@@ -106,9 +105,9 @@ fun GeneratedWorkoutReviewScreen(
                     Text(draft.name, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     Text(
                         listOfNotNull("${draft.durationMinutes} min", draft.level?.takeIf { it.isNotEmpty() }).joinToString(" · "),
-                        fontSize = 14.sp, color = TextSecondaryColor
+                        fontSize = 14.sp, color = FLTheme.colors.textSecondary
                     )
-                    draft.description?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 14.sp, color = TextSecondaryColor) }
+                    draft.description?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 14.sp, color = FLTheme.colors.textSecondary) }
                     Text(
                         "${exerciseTasks.size} exercises · $libraryCount from your library · $newCount new" +
                             (if (blockCount > 0) " · $blockCount block${if (blockCount == 1) "" else "s"}" else ""),
@@ -121,13 +120,13 @@ fun GeneratedWorkoutReviewScreen(
         }
 
         Row(
-            modifier = Modifier.fillMaxWidth().background(White).padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface).padding(horizontal = 20.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                "Discard", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
+                "Discard", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(BackgroundColor)
+                modifier = Modifier.weight(1f).clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.background)
                     .clickable(enabled = !approving, onClick = onDiscard).padding(vertical = 14.dp)
             )
             Row(
@@ -144,11 +143,11 @@ fun GeneratedWorkoutReviewScreen(
                 horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
             ) {
                 if (approving) {
-                    CircularProgressIndicator(color = White, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
+                    CircularProgressIndicator(color = FLTheme.colors.onBrand, strokeWidth = 2.dp, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Adding…", color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Adding…", color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 } else {
-                    Text("Approve", color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                    Text("Approve", color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -162,10 +161,10 @@ private fun PhaseCard(name: String, tasks: List<DraftWorkoutTask>, resolutions: 
     val folded = runs.flatMap { it.taskIndexes.drop(1) }.toSet()
 
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        Text(name.uppercase(Locale.US), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+        Text(name.uppercase(Locale.US), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
         tasks.forEach { task ->
             val run = runByLead[task.taskIndex]
             when {
@@ -198,11 +197,11 @@ private fun TaskRowView(task: DraftWorkoutTask, run: DraftBlockRun?, resolution:
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Text(if (isRest) "Rest" else task.movementName, fontSize = 15.sp, fontWeight = FontWeight.Medium)
-            Text(metric(task, run), fontSize = 13.sp, color = TextSecondaryColor)
+            Text(metric(task, run), fontSize = 13.sp, color = FLTheme.colors.textSecondary)
         }
         if (!isRest) {
             val inLibrary = AIWorkoutGeneratorViewModel.isFromLibrary(resolution)
-            val color = if (inLibrary) LibraryGreen else Color(0xFFF69833)
+            val color = if (inLibrary) LibraryGreen else OrangeTheme
             Text(
                 if (inLibrary) "In library" else "New", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = color,
                 modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(color.copy(alpha = 0.15f)).padding(horizontal = 8.dp, vertical = 4.dp)

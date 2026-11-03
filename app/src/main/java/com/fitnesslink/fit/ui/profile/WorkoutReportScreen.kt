@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,7 +54,7 @@ fun WorkoutReportScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -159,7 +160,7 @@ private fun MetricCard(
     Column(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
@@ -170,9 +171,9 @@ private fun MetricCard(
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Text(metric.title, fontSize = 12.sp, color = TextSecondaryColor)
+        Text(metric.title, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = color)
-        Text(subtitle, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(subtitle, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -206,7 +207,7 @@ private fun WorkoutAggregateCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(14.dp)
     ) {
@@ -214,7 +215,7 @@ private fun WorkoutAggregateCard(
             Text(agg.workoutName, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
             Text("${agg.timesCompleted}x", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
             Spacer(modifier = Modifier.width(8.dp))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = MediumGray, modifier = Modifier.size(14.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp))
         }
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
@@ -260,15 +261,15 @@ private fun MovementAggregateCard(agg: MovementAggregate, viewModel: WorkoutRepo
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(agg.exerciseName, fontSize = 16.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-            Text("${agg.timesPerformed} sessions", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("${agg.timesPerformed} sessions", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             Spacer(modifier = Modifier.width(8.dp))
-            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = MediumGray, modifier = Modifier.size(14.dp))
+            Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp))
         }
         Spacer(modifier = Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.SpaceEvenly, modifier = Modifier.fillMaxWidth()) {
@@ -307,10 +308,10 @@ fun EmptyState(title: String, subtitle: String) {
             .padding(top = 60.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Icon(Icons.Default.BarChart, contentDescription = null, tint = MediumGray, modifier = Modifier.size(48.dp))
+        Icon(Icons.Default.BarChart, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(48.dp))
         Spacer(modifier = Modifier.height(16.dp))
         Text(title, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-        Text(subtitle, fontSize = 14.sp, color = TextSecondaryColor)
+        Text(subtitle, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
     }
 }
 

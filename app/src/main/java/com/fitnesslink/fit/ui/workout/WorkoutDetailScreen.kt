@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -97,16 +98,10 @@ import com.fitnesslink.fit.ui.components.TrainingLevelInfoView
 import com.fitnesslink.fit.ui.navigation.AppRoute
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.session.SessionResumeCard
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutDetailViewModel
 import com.fitnesslink.fit.workouts.WorkoutStore
 import com.fitnesslink.fit.workouts.WorkoutStructure
@@ -206,7 +201,7 @@ fun WorkoutDetailScreen(
             title = { Text("Delete Workout?") },
             text = { Text("This will permanently delete this workout.") },
             confirmButton = {
-                TextButton(onClick = { showDeleteAlert = false; viewModel.deleteWorkout(workoutId); onBack() }) { Text("Delete", color = Color.Red) }
+                TextButton(onClick = { showDeleteAlert = false; viewModel.deleteWorkout(workoutId); onBack() }) { Text("Delete", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { showDeleteAlert = false }) { Text("Cancel") } }
         )
@@ -220,7 +215,7 @@ fun WorkoutDetailScreen(
                 TextButton(onClick = {
                     showRemoveAlert = false
                     scope.launch { if (viewModel.removeFromLibrary(workoutId)) onBack() else removeFailed = true }
-                }) { Text("Remove", color = Color.Red) }
+                }) { Text("Remove", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { showRemoveAlert = false }) { Text("Cancel") } }
         )
@@ -265,7 +260,7 @@ fun WorkoutDetailScreen(
                 TextButton(onClick = {
                     showRestartConfirm = false
                     viewModel.restartFromBeginning(workoutId) { onStartPlaylist(workoutId) }
-                }) { Text("Restart", color = Color.Red) }
+                }) { Text("Restart", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { showRestartConfirm = false }) { Text("Cancel") } }
         )
@@ -276,7 +271,7 @@ fun WorkoutDetailScreen(
             title = { Text("Discard this session?") },
             text = { Text("Your unfinished session of \"${workout.name}\" will be removed. The workout itself is kept.") },
             confirmButton = {
-                TextButton(onClick = { showDiscardConfirm = false; viewModel.discardSession(workoutId) }) { Text("Discard Session", color = Color.Red) }
+                TextButton(onClick = { showDiscardConfirm = false; viewModel.discardSession(workoutId) }) { Text("Discard Session", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { showDiscardConfirm = false }) { Text("Keep Session") } }
         )
@@ -288,7 +283,7 @@ fun WorkoutDetailScreen(
 
     // MARK: Body
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Box(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
             Box {
                 FLImageView(ref = (workout.thumbnailId ?: workout.imageId)?.let { MediaRef.WorkoutThumbnail(it.toString()) }, height = 250.dp)
@@ -296,7 +291,7 @@ fun WorkoutDetailScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(100.dp)
-                        .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.5f), Color.Transparent)))
+                        .background(Brush.verticalGradient(colors = listOf(FLTheme.colors.scrim, Color.Transparent)))
                 )
                 BackCircleButton(onClick = onBack, modifier = Modifier.padding(top = 12.dp, start = 20.dp))
                 Row(
@@ -313,15 +308,15 @@ fun WorkoutDetailScreen(
                             modifier = Modifier
                                 .height(36.dp)
                                 .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.5f))
+                                .background(FLTheme.colors.scrim)
                                 .clickable(enabled = !isForking && viewModel.pendingShare == null) { showCustomizeConfirm = true }
                                 .padding(horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(5.dp)
                         ) {
-                            if (isForking) CircularProgressIndicator(color = White, strokeWidth = 2.dp, modifier = Modifier.size(14.dp))
-                            else Icon(Icons.Filled.Edit, contentDescription = null, tint = White, modifier = Modifier.size(14.dp))
-                            Text("Customize", color = White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                            if (isForking) CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(14.dp)) // theme-exempt: over media
+                            else Icon(Icons.Filled.Edit, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp)) // theme-exempt: over media
+                            Text("Customize", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) // theme-exempt: over media
                         }
                         if (workout.sharedByUserId != null && viewModel.pendingShare == null) {
                             HeaderCircle(Icons.Filled.PersonRemove, "Remove from library") { showRemoveAlert = true }
@@ -358,7 +353,7 @@ fun WorkoutDetailScreen(
                 }
 
                 if (workout.description.isNotEmpty()) {
-                    Text(text = workout.description, fontSize = 14.sp, color = TextSecondaryColor)
+                    Text(text = workout.description, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 }
 
                 ContentTagChipRow(title = "Equipment Needed", names = viewModel.equipmentNames)
@@ -379,7 +374,7 @@ fun WorkoutDetailScreen(
                 }
             }
 
-            Column(modifier = Modifier.fillMaxWidth().background(White)) {
+            Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface)) {
                 SeparatorView()
                 viewModel.inProgressSession?.let { entry ->
                     Box(modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)) {
@@ -406,10 +401,10 @@ fun WorkoutDetailScreen(
         }
 
         if (viewModel.isLoading && workout.name.isEmpty()) {
-            Box(modifier = Modifier.fillMaxSize().background(BackgroundColor), contentAlignment = Alignment.Center) {
+            Box(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     CircularProgressIndicator(color = FLPrimary)
-                    Text("Loading workout…", color = TextSecondaryColor)
+                    Text("Loading workout…", color = FLTheme.colors.textSecondary)
                 }
             }
         }
@@ -432,11 +427,11 @@ private fun HeaderCircle(icon: androidx.compose.ui.graphics.vector.ImageVector, 
         modifier = Modifier
             .size(36.dp)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(FLTheme.colors.scrim)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = description, tint = White, modifier = Modifier.size(16.dp))
+        Icon(icon, contentDescription = description, tint = Color.White, modifier = Modifier.size(16.dp)) // theme-exempt: over media
     }
 }
 
@@ -444,7 +439,7 @@ private fun HeaderCircle(icon: androidx.compose.ui.graphics.vector.ImageVector, 
 @Composable
 private fun CoachCard(contributor: ProgramContributor) {
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text("About the Coach", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
@@ -455,12 +450,12 @@ private fun CoachCard(contributor: ProgramContributor) {
             )
             Column {
                 Text(contributor.displayName ?: "Coach", fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                contributor.headline?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = TextSecondaryColor) }
+                contributor.headline?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.textSecondary) }
             }
         }
-        contributor.bio?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 14.sp, color = TextPrimaryColor) }
+        contributor.bio?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 14.sp, color = FLTheme.colors.textPrimary) }
         contributor.credentials.sortedBy { it.sortOrder }.takeIf { it.isNotEmpty() }?.let { creds ->
-            Text(creds.joinToString(" · ") { it.displayText }, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(creds.joinToString(" · ") { it.displayText }, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -505,7 +500,7 @@ fun WorkoutMovementView(task: WorkoutTask, onClick: (() -> Unit)? = null) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -518,19 +513,19 @@ fun WorkoutMovementView(task: WorkoutTask, onClick: (() -> Unit)? = null) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = task.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             if (!task.isInterval && task.displayMetric.isNotEmpty()) {
-                Text(text = task.displayMetric, fontSize = 12.sp, color = TextSecondaryColor)
+                Text(text = task.displayMetric, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
             SetBreakdownView(task = task)
             val cue = task.instructions
             if (!cue.isNullOrEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.Top) {
-                    Icon(Icons.Filled.Info, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(12.dp))
-                    Text(text = cue, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    Icon(Icons.Filled.Info, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(12.dp))
+                    Text(text = cue, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
         if (task.rest.isNotEmpty()) {
-            Text(text = "Rest ${task.rest}", fontSize = 11.sp, color = TextSecondaryColor)
+            Text(text = "Rest ${task.rest}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -559,9 +554,9 @@ fun SetBreakdownView(task: WorkoutTask, collapseThreshold: Int = 4) {
         ) {
             Icon(
                 if (isExpanded) Icons.Filled.KeyboardArrowRight else Icons.Filled.KeyboardArrowRight,
-                contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(12.dp)
+                contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(12.dp)
             )
-            Text(text = summary, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+            Text(text = summary, fontSize = 11.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
         }
         if (isExpanded) {
             Column(modifier = Modifier.padding(start = 14.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -569,10 +564,10 @@ fun SetBreakdownView(task: WorkoutTask, collapseThreshold: Int = 4) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(
                             text = "${unit.replaceFirstChar { it.uppercase() }} ${config.setNumber}",
-                            fontSize = 11.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor,
+                            fontSize = 11.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary,
                             modifier = Modifier.width(58.dp)
                         )
-                        Text(text = metricText(task, config), fontSize = 11.sp, color = TextSecondaryColor)
+                        Text(text = metricText(task, config), fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                         config.weightKg?.takeIf { it > 0 }?.let {
                             Text(text = WeightUnit.displayString(fromLbs = it), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
                         }
@@ -598,7 +593,7 @@ fun WorkoutRestView(task: WorkoutTask, highlighted: Boolean = false, tint: Color
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(if (highlighted) tint.copy(alpha = 0.18f) else White)
+            .background(if (highlighted) tint.copy(alpha = 0.18f) else FLTheme.colors.surface)
             .then(if (highlighted) Modifier.border(1.dp, tint.copy(alpha = 0.35f), RoundedCornerShape(8.dp)) else Modifier)
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -609,7 +604,7 @@ fun WorkoutRestView(task: WorkoutTask, highlighted: Boolean = false, tint: Color
             FLImageView(ref = MediaRef.MovementThumbnail(restThumb), modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)))
         } else {
             Box(
-                modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)).background(ImagePlaceholder),
+                modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.imagePlaceholder),
                 contentAlignment = Alignment.Center
             ) {
                 Image(painter = painterResource(R.drawable.rest), contentDescription = "Rest", modifier = Modifier.size(30.dp))
@@ -621,7 +616,7 @@ fun WorkoutRestView(task: WorkoutTask, highlighted: Boolean = false, tint: Color
                 RestType.ACTIVE_RECOVERY -> task.restMovementName?.takeIf { it.isNotEmpty() }?.let { "Active Recovery: $it" } ?: "Active Recovery"
             }
             Text(text = title, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-            Text(text = task.rest, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(text = task.rest, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -672,12 +667,12 @@ fun AdvancedMovementsView(row: TaskRow, onTaskTap: ((WorkoutTask) -> Unit)? = nu
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         if (badge.isNotEmpty()) {
                             Text(
-                                text = badge, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = White,
+                                text = badge, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = FLTheme.colors.onBrand,
                                 modifier = Modifier.background(accent, CircleShape).padding(horizontal = 8.dp, vertical = 4.dp)
                             )
                         }
-                        if (summary.isNotEmpty()) Text(summary, fontSize = 12.sp, color = TextSecondaryColor)
-                        if (restChip != null) Text("· $restChip", fontSize = 12.sp, color = TextSecondaryColor)
+                        if (summary.isNotEmpty()) Text(summary, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+                        if (restChip != null) Text("· $restChip", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
                 row.task?.let { lead -> WorkoutMovementView(task = display(lead), onClick = onTaskTap?.let { tap -> { tap(display(lead)) } }) }
@@ -685,7 +680,7 @@ fun AdvancedMovementsView(row: TaskRow, onTaskTap: ((WorkoutTask) -> Unit)? = nu
                 val lead = row.task
                 if (isInterval && lead != null && lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
                     Row(
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(White).padding(10.dp),
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.surface).padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
@@ -693,13 +688,13 @@ fun AdvancedMovementsView(row: TaskRow, onTaskTap: ((WorkoutTask) -> Unit)? = nu
                         if (thumb != null) {
                             FLImageView(ref = MediaRef.MovementThumbnail(thumb), modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)))
                         } else {
-                            Box(modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)).background(BackgroundColor), contentAlignment = Alignment.Center) {
-                                Icon(Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null, tint = MediumGray)
+                            Box(modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.background), contentAlignment = Alignment.Center) {
+                                Icon(Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null, tint = FLTheme.colors.textTertiary)
                             }
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Text(
-                                text = "RECOVERY", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = White,
+                                text = "RECOVERY", fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = FLTheme.colors.onBrand,
                                 modifier = Modifier.background(OrangeTheme, CircleShape).padding(horizontal = 6.dp, vertical = 2.dp)
                             )
                             Text(lead.restMovementName ?: "Recovery", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)

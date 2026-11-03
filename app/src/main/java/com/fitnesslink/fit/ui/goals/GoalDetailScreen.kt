@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.goals
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,12 +56,7 @@ import com.fitnesslink.fit.model.Habit
 import com.fitnesslink.fit.model.Milestone
 import com.fitnesslink.fit.model.Streak
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.GoalDetailViewModel
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -97,7 +93,7 @@ fun GoalDetailScreen(
         }
     }
     when {
-        !resolved -> Box(Modifier.fillMaxSize().background(BackgroundColor), contentAlignment = Alignment.Center) {
+        !resolved -> Box(Modifier.fillMaxSize().background(FLTheme.colors.background), contentAlignment = Alignment.Center) {
             androidx.compose.material3.CircularProgressIndicator(color = FLPrimary)
         }
         cached?.subtype != null -> TypedGoalDetailScreen(goalId = goalId, onBack = onBack)
@@ -122,7 +118,7 @@ fun LegacyGoalDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             HeaderBackView(onBack = onBack)
@@ -132,11 +128,11 @@ fun LegacyGoalDetailScreen(
                     .padding(end = 16.dp)
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(White)
+                    .background(FLTheme.colors.surface)
                     .clickable(enabled = goal.id.isNotEmpty()) { showDeleteConfirm = true },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete goal", tint = Color(0xFFE53935), modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Delete, contentDescription = "Delete goal", tint = FLTheme.colors.danger, modifier = Modifier.size(18.dp))
             }
         }
         Column(
@@ -152,7 +148,7 @@ fun LegacyGoalDetailScreen(
                 Text(
                     "“$identity”",
                     fontSize = 15.sp, fontWeight = FontWeight.Medium, fontStyle = FontStyle.Italic,
-                    color = TextSecondaryColor, textAlign = TextAlign.Center,
+                    color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp)
@@ -192,17 +188,17 @@ fun LegacyGoalDetailScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(White, RoundedCornerShape(12.dp))
+                            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
                             .padding(16.dp),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Current", fontSize = 12.sp, color = TextSecondaryColor)
-                            Text("${formatOneDecimal(goal.currentValue)} $unit", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                            Text("Current", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+                            Text("${formatOneDecimal(goal.currentValue)} $unit", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                         }
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.End) {
-                            Text("Target", fontSize = 12.sp, color = TextSecondaryColor)
-                            Text("${formatOneDecimal(target)} $unit", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                            Text("Target", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+                            Text("${formatOneDecimal(target)} $unit", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                         }
                     }
                 }
@@ -213,14 +209,14 @@ fun LegacyGoalDetailScreen(
                     modifier = Modifier
                         .padding(horizontal = 20.dp)
                         .fillMaxWidth()
-                        .background(White, RoundedCornerShape(12.dp))
+                        .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
                         .padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(14.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Target Date", fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
-                    Text(mediumDate.format(Date(targetDate)), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                    Text("Target Date", fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
+                    Text(mediumDate.format(Date(targetDate)), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                 }
             }
         }
@@ -235,7 +231,7 @@ fun LegacyGoalDetailScreen(
                 TextButton(onClick = {
                     showDeleteConfirm = false
                     viewModel.deleteGoal()
-                }) { Text("Delete", color = Color(0xFFE53935)) }
+                }) { Text("Delete", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") } }
         )
@@ -255,13 +251,13 @@ fun GoalProgressHeader(goal: Goal, modifier: Modifier = Modifier) {
     ) {
         GoalProgressRing(percent = percent, color = trajectoryColor(goal.trajectoryStatus), size = 120.dp, strokeWidth = 10.dp) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text("${percent.toInt()}%", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                Text("complete", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("${percent.toInt()}%", fontSize = 32.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                Text("complete", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
         Text(
             goal.title.ifBlank { goal.goalType.displayName },
-            fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, textAlign = TextAlign.Center,
+            fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.Center,
             modifier = Modifier.padding(horizontal = 20.dp)
         )
         TrajectoryBadge(goal.trajectoryStatus, filled = true)
@@ -270,7 +266,7 @@ fun GoalProgressHeader(goal: Goal, modifier: Modifier = Modifier) {
 
 @Composable
 private fun SectionTitle(text: String) {
-    Text(text, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+    Text(text, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
 }
 
 /** iOS `HabitRowView`: type icon tile in the tier colour, title, tier badge + anchor, streak badge, chevron. */
@@ -281,7 +277,7 @@ fun HabitRowView(habit: Habit, streak: Streak, onClick: () -> Unit, modifier: Mo
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -296,16 +292,16 @@ fun HabitRowView(habit: Habit, streak: Streak, onClick: () -> Unit, modifier: Mo
             Icon(habitTypeIcon(habit.habitType), contentDescription = null, tint = tierColor, modifier = Modifier.size(18.dp))
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(habit.title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+            Text(habit.title, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 HabitTierPill(habit.tier)
                 habit.anchorBehavior?.takeIf { it.isNotBlank() }?.let { anchor ->
-                    Text(anchor, fontSize = 11.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(anchor, fontSize = 11.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
         if (streak.currentCount > 0) StreakBadge(days = streak.currentCount, tier = habit.tier)
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(14.dp))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp))
     }
 }
 
@@ -322,7 +318,7 @@ fun MilestoneRowView(milestone: Milestone, goalProgress: Double, onAchieve: (() 
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(enabled = !achieved && onAchieve != null) { onAchieve?.invoke() }
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -336,9 +332,9 @@ fun MilestoneRowView(milestone: Milestone, goalProgress: Double, onAchieve: (() 
             contentAlignment = Alignment.Center
         ) {
             if (achieved) {
-                Icon(Icons.Default.Check, contentDescription = "Achieved", tint = White, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Check, contentDescription = "Achieved", tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
             } else {
-                Text("${milestone.targetValue.toInt()}%", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = TextSecondaryColor)
+                Text("${milestone.targetValue.toInt()}%", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textSecondary)
             }
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -346,9 +342,9 @@ fun MilestoneRowView(milestone: Milestone, goalProgress: Double, onAchieve: (() 
                 milestone.title,
                 fontSize = 14.sp,
                 fontWeight = if (isNext) FontWeight.SemiBold else FontWeight.Normal,
-                color = if (achieved) TextPrimaryColor else TextSecondaryColor
+                color = if (achieved) FLTheme.colors.textPrimary else FLTheme.colors.textSecondary
             )
-            milestone.achievedAt?.let { Text(mediumDate.format(Date(it)), fontSize = 11.sp, color = TextSecondaryColor) }
+            milestone.achievedAt?.let { Text(mediumDate.format(Date(it)), fontSize = 11.sp, color = FLTheme.colors.textSecondary) }
         }
         if (isNext) {
             Text(
@@ -386,8 +382,8 @@ private fun AddMilestoneRow(onAdd: (String, Double) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(10.dp))
-            .border(1.dp, MediumGray.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(10.dp))
+            .border(1.dp, FLTheme.colors.textTertiary.copy(alpha = 0.3f), RoundedCornerShape(10.dp))
             .padding(12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -396,25 +392,25 @@ private fun AddMilestoneRow(onAdd: (String, Double) -> Unit) {
             onValueChange = { title = it },
             singleLine = true,
             cursorBrush = SolidColor(FLPrimary),
-            textStyle = TextStyle(fontSize = 14.sp, color = TextPrimaryColor),
+            textStyle = TextStyle(fontSize = 14.sp, color = FLTheme.colors.textPrimary),
             decorationBox = { inner ->
-                if (title.isEmpty()) Text("Milestone name", fontSize = 14.sp, color = TextSecondaryColor)
+                if (title.isEmpty()) Text("Milestone name", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 inner()
             },
             modifier = Modifier.fillMaxWidth()
         )
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Target %:", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("Target %:", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             Spacer(modifier = Modifier.width(8.dp))
             BasicTextField(
                 value = target,
                 onValueChange = { target = it.filter { ch -> ch.isDigit() || ch == '.' } },
                 singleLine = true,
                 cursorBrush = SolidColor(FLPrimary),
-                textStyle = TextStyle(fontSize = 14.sp, color = TextPrimaryColor),
+                textStyle = TextStyle(fontSize = 14.sp, color = FLTheme.colors.textPrimary),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 decorationBox = { inner ->
-                    if (target.isEmpty()) Text("50", fontSize = 14.sp, color = TextSecondaryColor)
+                    if (target.isEmpty()) Text("50", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                     inner()
                 },
                 modifier = Modifier.weight(1f)
@@ -422,14 +418,14 @@ private fun AddMilestoneRow(onAdd: (String, Double) -> Unit) {
         }
         Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
             Text(
-                "Cancel", fontSize = 13.sp, color = TextSecondaryColor,
+                "Cancel", fontSize = 13.sp, color = FLTheme.colors.textSecondary,
                 modifier = Modifier
                     .clickable { expanded = false; title = ""; target = "" }
                     .padding(8.dp)
             )
             Text(
                 "Save", fontSize = 13.sp, fontWeight = FontWeight.SemiBold,
-                color = if (title.isNotBlank()) FLPrimary else MediumGray,
+                color = if (title.isNotBlank()) FLPrimary else FLTheme.colors.textTertiary,
                 modifier = Modifier
                     .clickable(enabled = title.isNotBlank()) {
                         onAdd(title, target.toDoubleOrNull() ?: 0.0)

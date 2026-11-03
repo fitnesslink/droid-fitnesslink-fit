@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.R
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.White
 
 @Composable
 fun WelcomeScreen(
@@ -47,7 +46,7 @@ fun WelcomeScreen(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black),
+                        colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black), // theme-exempt: over media
                     )
                 )
         )
@@ -70,13 +69,13 @@ fun WelcomeScreen(
             Text(
                 text = "Start your fitness journey",
                 fontSize = 20.sp,
-                color = White
+                color = Color.White // theme-exempt: over media
             )
             Text(
                 text = "Fitness for everyone everywhere",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = White
+                color = Color.White // theme-exempt: over media
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -93,7 +92,7 @@ fun WelcomeScreen(
                     text = "Sign Up",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = White
+                    color = Color.White // theme-exempt: over media
                 )
             }
 
@@ -103,7 +102,7 @@ fun WelcomeScreen(
             Text(
                 text = "A FitnessLink subscription is required to use the app. New members can start with a free trial.",
                 fontSize = 12.sp,
-                color = White.copy(alpha = 0.7f),
+                color = Color.White.copy(alpha = 0.7f), // theme-exempt: over media
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -116,7 +115,7 @@ fun WelcomeScreen(
                 Text(
                     text = "Already have an account? ",
                     fontSize = 14.sp,
-                    color = White
+                    color = Color.White // theme-exempt: over media
                 )
                 Text(
                     text = "Login",

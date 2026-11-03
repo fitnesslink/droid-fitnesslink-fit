@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.text.format.DateUtils
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -36,18 +37,16 @@ import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.GoalSummary
 import com.fitnesslink.fit.model.TrajectoryStatus
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.SuccessGreen
+import com.fitnesslink.fit.ui.theme.AlertRed
 
 /** iOS `TrajectoryStatus.displayColor`. */
 fun trajectoryColor(status: TrajectoryStatus): Color = when (status) {
-    TrajectoryStatus.Ahead -> Color(0xFF22C55E)
+    TrajectoryStatus.Ahead -> SuccessGreen
     TrajectoryStatus.OnTrack -> FLPrimary
     TrajectoryStatus.Behind -> OrangeTheme
-    TrajectoryStatus.AtRisk -> Color(0xFFEF4444)
+    TrajectoryStatus.AtRisk -> AlertRed
 }
 
 /** iOS `TrajectoryStatus.sfSymbolName`. */
@@ -68,17 +67,18 @@ fun GoalProgressCard(goal: GoalSummary, onClick: () -> Unit = {}) {
         modifier = Modifier
             .width(150.dp)
             .clip(RoundedCornerShape(14.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(14.dp)
     ) {
         Box(contentAlignment = Alignment.Center, modifier = Modifier.size(56.dp)) {
+            val ringTrack = FLTheme.colors.textTertiary.copy(alpha = 0.25f)
             Canvas(modifier = Modifier.size(56.dp)) {
                 val stroke = 5.dp.toPx()
                 val inset = stroke / 2
                 val arcSize = Size(size.width - stroke, size.height - stroke)
                 drawArc(
-                    color = MediumGray.copy(alpha = 0.25f), startAngle = 0f, sweepAngle = 360f, useCenter = false,
+                    color = ringTrack, startAngle = 0f, sweepAngle = 360f, useCenter = false,
                     topLeft = Offset(inset, inset), size = arcSize, style = Stroke(width = stroke)
                 )
                 drawArc(
@@ -86,13 +86,13 @@ fun GoalProgressCard(goal: GoalSummary, onClick: () -> Unit = {}) {
                     topLeft = Offset(inset, inset), size = arcSize, style = Stroke(width = stroke, cap = StrokeCap.Round)
                 )
             }
-            Text(text = "${percent.toInt()}%", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text(text = "${percent.toInt()}%", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
         }
         Text(
             text = goal.title,
             fontSize = 14.sp,
             fontWeight = FontWeight.SemiBold,
-            color = TextPrimaryColor,
+            color = FLTheme.colors.textPrimary,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
@@ -104,7 +104,7 @@ fun GoalProgressCard(goal: GoalSummary, onClick: () -> Unit = {}) {
             Text(
                 text = DateUtils.getRelativeTimeSpanString(target, System.currentTimeMillis(), DateUtils.DAY_IN_MILLIS).toString(),
                 fontSize = 11.sp,
-                color = TextSecondaryColor
+                color = FLTheme.colors.textSecondary
             )
         }
     }

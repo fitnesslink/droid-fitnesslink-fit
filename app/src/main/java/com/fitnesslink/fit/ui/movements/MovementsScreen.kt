@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.movements
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,13 +58,7 @@ import com.fitnesslink.fit.ui.components.FavoritesFilterControl
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.components.SharedBadge
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.MoreFiltersChip
 import com.fitnesslink.fit.viewmodel.MovementsViewModel
 
@@ -102,7 +97,7 @@ fun MovementsScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
 
         Row(
@@ -120,7 +115,7 @@ fun MovementsScreen(
             ContentLayoutToggle(layout = layout, onChange = { layout = it; runCatching { ContentLayoutPrefs.set(it) } })
             Spacer(modifier = Modifier.width(6.dp))
             FloatingActionButton(onClick = onNavigateToEditor, containerColor = FLPrimary, modifier = Modifier.size(42.dp)) {
-                Text("+", color = White, fontSize = 20.sp)
+                Text("+", color = FLTheme.colors.onBrand, fontSize = 20.sp)
             }
         }
 
@@ -151,11 +146,11 @@ fun MovementsScreen(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(14.dp))
-                        .background(if (selected) FLPrimary else White)
+                        .background(if (selected) FLPrimary else FLTheme.colors.surface)
                         .clickable { viewModel.toggleEquipment(tag.id) }
                         .padding(horizontal = 10.dp, vertical = 6.dp)
                 ) {
-                    Text(tag.name, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (selected) White else TextPrimaryColor)
+                    Text(tag.name, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
                 }
             }
             if (primaryEquipment.isNotEmpty()) item { VerticalDivider(modifier = Modifier.height(20.dp)) }
@@ -182,11 +177,11 @@ fun MovementsScreen(
             ) {
                 Text(
                     if (viewModel.isRefreshing && viewModel.movements.isEmpty()) "Loading movements…" else "No movements match these filters",
-                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor
+                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary
                 )
                 if (viewModel.hasActiveFilters || viewModel.searchText.isNotBlank()) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Clear the filters to see everything.", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text("Clear the filters to see everything.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
             }
         } else {
@@ -219,7 +214,7 @@ private fun FavoriteHeart(isFavorite: Boolean, onToggle: () -> Unit, modifier: M
         Icon(
             if (isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
             contentDescription = if (isFavorite) "Unfavorite" else "Favorite",
-            tint = if (isFavorite) Color.Red else MediumGray,
+            tint = if (isFavorite) FLTheme.colors.danger else FLTheme.colors.textTertiary,
             modifier = Modifier.size(20.dp)
         )
     }
@@ -232,18 +227,18 @@ private fun MovementListRow(movement: MovementLibraryItem, onClick: () -> Unit, 
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)).background(ImagePlaceholder)) {
+        Box(modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.imagePlaceholder)) {
             MovementStore.thumbnailRef(movement)?.let { FLImageView(ref = it, modifier = Modifier.fillMaxSize()) }
         }
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(movement.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (caption.isNotEmpty()) Text(caption, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(movement.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (caption.isNotEmpty()) Text(caption, fontSize = 13.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (movement.isSharedWithMe) SharedBadge()
         }
         FavoriteHeart(movement.isFavorite, onToggleFavorite)
@@ -257,20 +252,20 @@ private fun MovementCardView(movement: MovementLibraryItem, onClick: () -> Unit,
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
     ) {
-        Box(modifier = Modifier.fillMaxWidth().height(160.dp).background(ImagePlaceholder)) {
+        Box(modifier = Modifier.fillMaxWidth().height(160.dp).background(FLTheme.colors.imagePlaceholder)) {
             MovementStore.thumbnailRef(movement)?.let { FLImageView(ref = it, modifier = Modifier.fillMaxSize()) }
             Box(
-                modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).clip(RoundedCornerShape(18.dp)).background(White.copy(alpha = 0.85f))
+                modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).clip(RoundedCornerShape(18.dp)).background(FLTheme.colors.surface.copy(alpha = 0.85f))
             ) {
                 FavoriteHeart(movement.isFavorite, onToggleFavorite)
             }
         }
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(movement.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (caption.isNotEmpty()) Text(caption, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(movement.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (caption.isNotEmpty()) Text(caption, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (movement.isSharedWithMe) SharedBadge()
         }
     }

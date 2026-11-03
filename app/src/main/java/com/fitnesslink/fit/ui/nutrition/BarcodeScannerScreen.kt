@@ -68,13 +68,8 @@ import com.fitnesslink.fit.nutrition.BarcodeScanDestination
 import com.fitnesslink.fit.nutrition.FoodDetailHandoff
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.DisabledButton
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.google.mlkit.vision.barcode.BarcodeScannerOptions
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
@@ -157,7 +152,7 @@ fun BarcodeScannerScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         when (val current = phase) {
             is ScanPhase.Scanning -> when (cameraAuthorized) {
@@ -172,7 +167,7 @@ fun BarcodeScannerScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     CircularProgressIndicator(color = FLPrimary)
                     Spacer(Modifier.height(16.dp))
-                    Text("Looking up ${current.barcode}…", fontSize = 14.sp, color = TextSecondaryColor)
+                    Text("Looking up ${current.barcode}…", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 }
             }
             // Same screen a search selection lands on; its Save pops this container.
@@ -271,14 +266,14 @@ private fun CameraScannerView(onBarcodeScanned: (String) -> Unit, onCameraUnavai
             onClick = { flashEnabled = !flashEnabled; cameraControl?.cameraControl?.enableTorch(flashEnabled) },
             modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
         ) {
-            Icon(if (flashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff, "Toggle flash", tint = Color.White, modifier = Modifier.size(28.dp))
+            Icon(if (flashEnabled) Icons.Default.FlashOn else Icons.Default.FlashOff, "Toggle flash", tint = Color.White, modifier = Modifier.size(28.dp)) // theme-exempt: over media
         }
 
         Column(
-            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color.Black.copy(alpha = 0.7f)).padding(16.dp),
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(Color.Black.copy(alpha = 0.7f)).padding(16.dp), // theme-exempt: over media (camera preview scrim)
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text("Or enter barcode manually", fontSize = 13.sp, color = Color.White)
+            Text("Or enter barcode manually", fontSize = 13.sp, color = Color.White) // theme-exempt: over media
             ManualBarcodeRow(value = manualBarcode, onValueChange = { manualBarcode = it }) {
                 hasScanned = true
                 onBarcodeScanned(manualBarcode)
@@ -293,8 +288,8 @@ private fun CameraScannerView(onBarcodeScanned: (String) -> Unit, onCameraUnavai
 private fun ManualEntryFallback(onBarcodeScanned: (String) -> Unit) {
     var manualBarcode by remember { mutableStateOf("") }
     Column(modifier = Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Barcode Scanner", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-        Text("Camera permission is required for scanning. You can enter a barcode manually below.", fontSize = 14.sp, color = TextSecondaryColor)
+        Text("Barcode Scanner", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+        Text("Camera permission is required for scanning. You can enter a barcode manually below.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         ManualBarcodeRow(value = manualBarcode, onValueChange = { manualBarcode = it }) { onBarcodeScanned(manualBarcode) }
     }
 }
@@ -302,21 +297,21 @@ private fun ManualEntryFallback(onBarcodeScanned: (String) -> Unit) {
 @Composable
 private fun ManualBarcodeRow(value: String, onValueChange: (String) -> Unit, onLookUp: () -> Unit) {
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(modifier = Modifier.weight(1f).background(White, RoundedCornerShape(8.dp)).padding(horizontal = 12.dp, vertical = 10.dp)) {
+        Box(modifier = Modifier.weight(1f).background(FLTheme.colors.surface, RoundedCornerShape(8.dp)).padding(horizontal = 12.dp, vertical = 10.dp)) {
             BasicTextField(
                 value = value, onValueChange = onValueChange, singleLine = true,
-                textStyle = TextStyle(fontSize = 16.sp, color = TextPrimaryColor),
+                textStyle = TextStyle(fontSize = 16.sp, color = FLTheme.colors.textPrimary),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier.fillMaxWidth(),
-                decorationBox = { inner -> if (value.isEmpty()) Text("Enter barcode", fontSize = 16.sp, color = MediumGray); inner() }
+                decorationBox = { inner -> if (value.isEmpty()) Text("Enter barcode", fontSize = 16.sp, color = FLTheme.colors.textTertiary); inner() }
             )
         }
         Box(
-            modifier = Modifier.background(if (value.isEmpty()) DisabledButton else FLPrimary, RoundedCornerShape(8.dp))
+            modifier = Modifier.background(if (value.isEmpty()) FLTheme.colors.disabled else FLPrimary, RoundedCornerShape(8.dp))
                 .then(if (value.isNotEmpty()) Modifier.clickable(onClick = onLookUp) else Modifier)
                 .padding(horizontal = 16.dp, vertical = 10.dp)
         ) {
-            Text("Look Up", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = White)
+            Text("Look Up", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
         }
     }
 }
@@ -327,11 +322,11 @@ private fun ManualBarcodeRow(value: String, onValueChange: (String) -> Unit, onL
 private fun MissView(barcode: String, onSearch: () -> Unit, onManual: () -> Unit, onScanAgain: () -> Unit) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Icon(Icons.Default.QrCodeScanner, null, tint = MediumGray, modifier = Modifier.size(48.dp))
-            Text("No Match Found", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Icon(Icons.Default.QrCodeScanner, null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(48.dp))
+            Text("No Match Found", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             Text(
                 "Barcode $barcode isn't in the food database yet. Search for the food by name, or add it manually — the barcode stays attached so it's recognized next time.",
-                fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 40.dp)
+                fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 40.dp)
             )
             Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 8.dp)) {
                 FoodLogPrimaryButton(text = "Search the Database", onClick = onSearch)
@@ -351,9 +346,9 @@ private fun ErrorView(
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Icon(if (error == BarcodeScanError.PermissionDenied) Icons.Default.PhotoCamera else Icons.Default.Warning, null, tint = MediumGray, modifier = Modifier.size(48.dp))
-            Text(error.title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-            Text(error.userMessage, fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 40.dp))
+            Icon(if (error == BarcodeScanError.PermissionDenied) Icons.Default.PhotoCamera else Icons.Default.Warning, null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(48.dp))
+            Text(error.title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+            Text(error.userMessage, fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 40.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 8.dp)) {
                 if (error == BarcodeScanError.PermissionDenied) {
                     FoodLogPrimaryButton(text = "Open Settings", onClick = onOpenSettings)

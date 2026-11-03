@@ -20,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.PlatformTextStyle
 import androidx.compose.ui.text.TextStyle
@@ -102,6 +103,8 @@ fun HeaderView(modifier: Modifier = Modifier, onNotificationsTap: () -> Unit = {
         Image(
             painter = painterResource(R.drawable.fitnesslink),
             contentDescription = "FitnessLink",
+            // Single-colour (dark) wordmark PNG: template-tint it like iOS (`.renderingMode(.template)`).
+            colorFilter = ColorFilter.tint(FLTheme.colors.textPrimary),
             modifier = Modifier
                 .align(Alignment.Center)
                 .width(134.dp)
@@ -124,6 +127,8 @@ fun HeaderView(modifier: Modifier = Modifier, onNotificationsTap: () -> Unit = {
                     Image(
                         painter = painterResource(R.drawable.notificationbell),
                         contentDescription = null,
+                        // Grey PNG: keep its own grey in light, lift it in dark so it doesn't vanish.
+                        colorFilter = if (FLTheme.colors.isDark) ColorFilter.tint(FLTheme.colors.textSecondary) else null,
                         modifier = Modifier.size(20.dp)
                     )
                     if (unreadCount > 0) {
@@ -191,7 +196,7 @@ private fun UnreadBadge(count: Int, modifier: Modifier = Modifier) {
                 fontSize = 9.sp,
                 lineHeight = 9.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = FLTheme.colors.onBrand,
                 textAlign = TextAlign.Center,
                 platformStyle = PlatformTextStyle(includeFontPadding = false)
             ),
@@ -213,6 +218,7 @@ fun HeaderBackView(
         Image(
             painter = painterResource(R.drawable.back),
             contentDescription = "Back",
+            colorFilter = ColorFilter.tint(FLTheme.colors.textPrimary),
             modifier = Modifier
                 .align(Alignment.CenterStart)
                 .size(20.dp)
@@ -221,6 +227,8 @@ fun HeaderBackView(
         Image(
             painter = painterResource(R.drawable.fitnesslink),
             contentDescription = "FitnessLink",
+            // Single-colour (dark) wordmark PNG: template-tint it like iOS (`.renderingMode(.template)`).
+            colorFilter = ColorFilter.tint(FLTheme.colors.textPrimary),
             modifier = Modifier
                 .align(Alignment.Center)
                 .width(134.dp)

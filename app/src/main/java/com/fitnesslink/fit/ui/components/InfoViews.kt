@@ -16,7 +16,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.R
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 @Composable
 fun TrainingLevelInfoView(level: String, modifier: Modifier = Modifier) {
@@ -27,7 +27,7 @@ fun TrainingLevelInfoView(level: String, modifier: Modifier = Modifier) {
             modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))
-        Text(text = level, fontSize = 13.sp, color = TextSecondaryColor)
+        Text(text = level, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -40,7 +40,7 @@ fun TimeInfoView(time: String, modifier: Modifier = Modifier) {
             modifier = Modifier.size(12.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))
-        Text(text = time, fontSize = 13.sp, color = TextSecondaryColor)
+        Text(text = time, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -53,7 +53,7 @@ fun ExercisesInfoView(count: Int, modifier: Modifier = Modifier) {
             modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))
-        Text(text = "$count exercises", fontSize = 13.sp, color = TextSecondaryColor)
+        Text(text = "$count exercises", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -68,10 +68,10 @@ fun LocationInfoView(location: String, modifier: Modifier = Modifier) {
         Icon(
             imageVector = Icons.Default.Place,
             contentDescription = "Location",
-            tint = TextSecondaryColor,
+            tint = FLTheme.colors.textSecondary,
             modifier = Modifier.size(14.dp)
         )
         Spacer(modifier = Modifier.width(6.dp))
-        Text(text = location, fontSize = 13.sp, color = TextSecondaryColor)
+        Text(text = location, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }

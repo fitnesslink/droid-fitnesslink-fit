@@ -52,13 +52,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.contributors.ContributorStore
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.BlendGray
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.HighlightState
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 // Port of iOS `Views/Components/ContentFilterComponents.swift` + the
 // `ContentLayout` / `ContentLayoutToggle` pair from `WorkoutItemView.swift`.
@@ -84,7 +79,7 @@ fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(if (isSelected) FLPrimary else BackgroundColor)
+            .background(if (isSelected) FLPrimary else FLTheme.colors.background)
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
@@ -92,7 +87,7 @@ fun FilterChip(label: String, isSelected: Boolean, onClick: () -> Unit) {
             text = label,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
-            color = if (isSelected) White else TextPrimaryColor,
+            color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary,
             maxLines = 1
         )
     }
@@ -110,7 +105,7 @@ fun FavoritesFilterControl(favoritesOnly: Boolean, onChange: (Boolean) -> Unit) 
             .fillMaxWidth()
             .height(32.dp)
             .clip(RoundedCornerShape(8.dp))
-            .background(BlendGray)
+            .background(FLTheme.colors.progressTrack)
             .padding(2.dp)
     ) {
         Segment(label = "All", selected = !favoritesOnly, modifier = Modifier.weight(1f)) { onChange(false) }
@@ -124,7 +119,14 @@ private fun Segment(label: String, selected: Boolean, modifier: Modifier, onClic
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(6.dp))
-            .background(if (selected) White else Color.Transparent)
+            .background(
+                when {
+                    !selected -> Color.Transparent
+                    // Raised segment: white in light; a lighter grey than the track in dark.
+                    FLTheme.colors.isDark -> FLTheme.colors.border
+                    else -> FLTheme.colors.surfaceElevated
+                }
+            )
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
@@ -132,7 +134,7 @@ private fun Segment(label: String, selected: Boolean, modifier: Modifier, onClic
             text = label,
             fontSize = 13.sp,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
-            color = TextPrimaryColor,
+            color = FLTheme.colors.textPrimary,
             maxLines = 1
         )
     }
@@ -210,7 +212,7 @@ fun ContributorFilterMenu(
         Row(
             modifier = Modifier
                 .clip(RoundedCornerShape(14.dp))
-                .background(if (isActive) HighlightState else BackgroundColor)
+                .background(if (isActive) FLTheme.colors.highlight else FLTheme.colors.background)
                 .clickable { expanded = true }
                 .padding(horizontal = 10.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -219,21 +221,21 @@ fun ContributorFilterMenu(
             Icon(
                 imageVector = Icons.Default.Person,
                 contentDescription = null,
-                tint = if (isActive) FLPrimary else TextPrimaryColor,
+                tint = if (isActive) FLPrimary else FLTheme.colors.textPrimary,
                 modifier = Modifier.size(13.dp)
             )
             Text(
                 text = selectedLabel,
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (isActive) FLPrimary else TextPrimaryColor,
+                color = if (isActive) FLPrimary else FLTheme.colors.textPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Icon(
                 imageVector = Icons.Default.KeyboardArrowDown,
                 contentDescription = null,
-                tint = if (isActive) FLPrimary else TextPrimaryColor,
+                tint = if (isActive) FLPrimary else FLTheme.colors.textPrimary,
                 modifier = Modifier.size(12.dp)
             )
         }
@@ -265,7 +267,7 @@ fun ContributorFilterMenu(
 @Composable
 private fun MenuEntry(label: String, checked: Boolean, onClick: () -> Unit) {
     DropdownMenuItem(
-        text = { Text(label, fontSize = 14.sp, color = TextPrimaryColor) },
+        text = { Text(label, fontSize = 14.sp, color = FLTheme.colors.textPrimary) },
         leadingIcon = {
             if (checked) {
                 Icon(Icons.Default.Check, contentDescription = "Selected", tint = FLPrimary, modifier = Modifier.size(16.dp))
@@ -288,18 +290,18 @@ fun MoreFiltersButton(activeCount: Int, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(if (active) FLPrimary.copy(alpha = 0.15f) else BackgroundColor)
+            .background(if (active) FLPrimary.copy(alpha = 0.15f) else FLTheme.colors.background)
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp)
             .semantics { contentDescription = if (active) "More filters, $activeCount active" else "More filters" },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Icon(Icons.Default.Tune, contentDescription = null, tint = if (active) FLPrimary else TextPrimaryColor, modifier = Modifier.size(12.dp))
-        Text("More filters", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (active) FLPrimary else TextPrimaryColor)
+        Icon(Icons.Default.Tune, contentDescription = null, tint = if (active) FLPrimary else FLTheme.colors.textPrimary, modifier = Modifier.size(12.dp))
+        Text("More filters", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (active) FLPrimary else FLTheme.colors.textPrimary)
         if (active) {
             Box(modifier = Modifier.clip(androidx.compose.foundation.shape.CircleShape).background(FLPrimary).padding(horizontal = 6.dp, vertical = 1.dp)) {
-                Text("$activeCount", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = White)
+                Text("$activeCount", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.onBrand)
             }
         }
     }
@@ -320,10 +322,10 @@ fun ClearFiltersButton(visible: Boolean, onClick: () -> Unit) {
         Icon(
             imageVector = Icons.Default.Close,
             contentDescription = null,
-            tint = TextSecondaryColor,
+            tint = FLTheme.colors.textSecondary,
             modifier = Modifier.size(12.dp)
         )
-        Text("Clear filters", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+        Text("Clear filters", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
     }
 }
 

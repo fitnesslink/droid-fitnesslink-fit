@@ -49,12 +49,9 @@ import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -131,17 +128,17 @@ fun RecentFoodsScreen(
         onNavigate(FoodLoggingRoutes.foodDetail(result.id, mealType, dateArg, flow.wire))
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Recent Foods", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text("Recent Foods", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 Text(
                     if (flow.stagesIntoMeal) "Adding to the meal you're building" else "Adding to ${mealType.displayName}${backfillSuffix(logDate)}",
-                    fontSize = 12.sp, color = TextSecondaryColor
+                    fontSize = 12.sp, color = FLTheme.colors.textSecondary
                 )
             }
 
@@ -154,7 +151,7 @@ fun RecentFoodsScreen(
 
             // Create Custom Food link
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp))
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
                     .clickable { onNavigateToCustomFoodForm("") }.padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -169,7 +166,7 @@ fun RecentFoodsScreen(
             if (!searching && availableFavorites.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     FoodLogSectionTitle("Favorites")
-                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp))) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                         availableFavorites.forEachIndexed { index, favorite ->
                             val food = favorite.food ?: return@forEachIndexed
                             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -190,7 +187,7 @@ fun RecentFoodsScreen(
             if (!searching && customFoods.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     FoodLogSectionTitle("My Foods")
-                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp))) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                         customFoods.forEachIndexed { index, food ->
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 RecentFoodRow(food, modifier = Modifier.weight(1f).clickable { openTemplate(food) })
@@ -211,12 +208,12 @@ fun RecentFoodsScreen(
                 }
                 recentFoods.isEmpty() -> Text(
                     if (query.isEmpty()) "No foods logged yet. Try adding one via Search or Scan." else "No logged foods match “$query”.",
-                    fontSize = 13.sp, color = TextSecondaryColor, textAlign = TextAlign.Center,
+                    fontSize = 13.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp).padding(top = 20.dp)
                 )
                 else -> Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (!searching) FoodLogSectionTitle("Recent")
-                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp))) {
+                    Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                         recentFoods.forEachIndexed { index, food ->
                             RecentFoodRow(food, modifier = Modifier.fillMaxWidth().clickable { openTemplate(food) })
                             if (index < recentFoods.lastIndex) SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
@@ -232,14 +229,14 @@ fun RecentFoodsScreen(
 private fun RecentFoodRow(food: FoodEntry, modifier: Modifier = Modifier) {
     Row(modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(food.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+            Text(food.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
             // Last-used structured portion when present, legacy serving fields otherwise.
             val qty = food.quantity ?: food.servingSize
-            Text("${qty.roundToInt()} ${food.portionUnit ?: food.servingUnit}", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("${qty.roundToInt()} ${food.portionUnit ?: food.servingUnit}", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("${food.calories} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text("P:${food.protein.toInt()}  F:${food.fat.toInt()}  C:${food.carbs.toInt()}", fontSize = 11.sp, color = TextSecondaryColor)
+            Text("${food.calories} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text("P:${food.protein.toInt()}  F:${food.fat.toInt()}  C:${food.carbs.toInt()}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -248,16 +245,16 @@ private fun RecentFoodRow(food: FoodEntry, modifier: Modifier = Modifier) {
 private fun FavoriteRow(food: FavoriteFoodSummary, modifier: Modifier = Modifier) {
     Row(modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(food.description, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+            Text(food.description, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
             val brand = food.brandOwner ?: food.brandName
             when {
-                !brand.isNullOrEmpty() -> Text(brand, fontSize = 12.sp, color = TextSecondaryColor)
-                !food.householdServingText.isNullOrEmpty() -> Text(food.householdServingText, fontSize = 12.sp, color = TextSecondaryColor)
+                !brand.isNullOrEmpty() -> Text(brand, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+                !food.householdServingText.isNullOrEmpty() -> Text(food.householdServingText, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("${food.calories.roundToInt()} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text("P:${food.protein.toInt()}  F:${food.fat.toInt()}  C:${food.carbs.toInt()}", fontSize = 11.sp, color = TextSecondaryColor)
+            Text("${food.calories.roundToInt()} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text("P:${food.protein.toInt()}  F:${food.fat.toInt()}  C:${food.carbs.toInt()}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }

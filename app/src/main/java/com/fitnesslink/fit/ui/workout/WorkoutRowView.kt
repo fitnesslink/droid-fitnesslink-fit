@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -28,9 +29,6 @@ import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.model.WorkoutList
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.SharedBadge
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * Tappable heart used on catalog cards / rows. With a null [onToggle] it
@@ -64,7 +62,7 @@ fun WorkoutRowView(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -79,12 +77,12 @@ fun WorkoutRowView(
                 text = workout.name,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = TextPrimaryColor,
+                color = FLTheme.colors.textPrimary,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             if (workout.time.isNotEmpty()) {
-                Text(text = workout.time, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 1)
+                Text(text = workout.time, fontSize = 13.sp, color = FLTheme.colors.textSecondary, maxLines = 1)
             }
             if (workout.isSharedWithMe) {
                 Spacer(modifier = Modifier.height(4.dp))

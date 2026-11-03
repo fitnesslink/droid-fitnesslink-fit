@@ -34,12 +34,9 @@ import com.fitnesslink.fit.nutrition.FoodNutrientBasis
 import com.fitnesslink.fit.nutrition.ManualFoodForm
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 /**
  * FTNSSLNK-202: create / edit / delete a saved custom food (iOS
@@ -112,10 +109,10 @@ fun CustomFoodFormScreen(entryId: String, onBack: () -> Unit) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         if (entryMissing) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Custom food not found", fontSize = 16.sp, color = TextSecondaryColor) }
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Custom food not found", fontSize = 16.sp, color = FLTheme.colors.textSecondary) }
             return
         }
         Column(
@@ -123,15 +120,15 @@ fun CustomFoodFormScreen(entryId: String, onBack: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(if (isEditing) "Edit Custom Food" else "New Custom Food", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text(if (isEditing) "Edit Custom Food" else "New Custom Food", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 Text(
                     if (isEditing) "Changes apply to future logs only — entries you already logged keep their values"
                     else "Saved foods rank at the top of Food Search and never expire",
-                    fontSize = 13.sp, color = TextSecondaryColor
+                    fontSize = 13.sp, color = FLTheme.colors.textSecondary
                 )
             }
 
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp))) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                 Field("Food Name", form.name, { form = form.copy(name = it) }, form, ManualFoodForm.Field.NAME)
                 SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
                 Field("Calories", form.calories, { form = form.copy(calories = it) }, form, ManualFoodForm.Field.CALORIES, KeyboardType.Decimal)
@@ -148,13 +145,13 @@ fun CustomFoodFormScreen(entryId: String, onBack: () -> Unit) {
             }
 
             FoodLogCard {
-                Text("Default Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                Text("Default Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                 Spacer(Modifier.height(8.dp))
                 MealTypeChips(selected = selectedMeal, onSelect = { selectedMeal = it })
             }
 
             FoodLogPrimaryButton(text = if (isEditing) "Save Changes" else "Create Food", enabled = form.isValid, loading = isSaving, onClick = ::save)
-            if (isEditing) FoodLogSecondaryButton(text = "Delete Custom Food", color = Color.Red, onClick = ::deleteTemplate)
+            if (isEditing) FoodLogSecondaryButton(text = "Delete Custom Food", color = FLTheme.colors.danger, onClick = ::deleteTemplate)
         }
     }
 }

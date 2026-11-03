@@ -28,8 +28,10 @@ import com.fitnesslink.fit.session.SessionTransitionEngine
 import com.fitnesslink.fit.session.UpNextDescriptor
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.White
 import java.util.Locale
+
+// theme-exempt: always-dark player. The rest / preparation overlay draws on the Interactive
+// video or rest image, dark in both modes as on iOS, so its white-on-dark palette is fixed.
 
 /**
  * Text block at the top of the rest / preparation overlay (port of iOS `RestTextView`). Two forms:
@@ -74,7 +76,7 @@ private fun PreparationBody(
         PhaseTransitionBlock(phaseChange)
     } else {
         Text(
-            "GET READY", color = if (block == null) White else White.copy(alpha = 0.75f),
+            "GET READY", color = if (block == null) Color.White else Color.White.copy(alpha = 0.75f),
             fontSize = if (block == null) 34.sp else 13.sp, fontWeight = FontWeight.Black,
             letterSpacing = if (block == null) 0.sp else 3.sp
         )
@@ -83,9 +85,9 @@ private fun PreparationBody(
         BlockBlock(block, upNext?.name, coachingCue, tint)
     } else {
         if (phaseName != null && phaseChange == null) SessionStructureTag(phaseName.uppercase(Locale.US), FLPrimary.copy(alpha = 0.4f))
-        upNext?.let { Text(it.name, color = White, fontSize = 26.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp)) }
+        upNext?.let { Text(it.name, color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp)) }
         structureLabel?.let { SessionStructureTag(it, null) }
-        if (!prescription.isNullOrEmpty()) Text(prescription, color = White, fontSize = 20.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp))
+        if (!prescription.isNullOrEmpty()) Text(prescription, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp))
         // Same boxed NOTES card as the rest screen and the block form (FTNSSLNK-506); hidden for a blank cue.
         SessionNoteCard(coachingCue, maxLines = 2, modifier = Modifier.padding(horizontal = 28.dp))
     }
@@ -99,10 +101,10 @@ private fun RestBody(
     secondsRemaining: Int, totalSeconds: Int, upNextStructureLabel: String?, upNextPrescription: String?, upNextNote: String?
 ) {
     when (val headline = SessionRestHeadline.headline(task, isTransientRest)) {
-        SessionRestHeadline.Rest -> Text(headline.title, color = White, fontSize = 44.sp, fontWeight = FontWeight.Black)
+        SessionRestHeadline.Rest -> Text(headline.title, color = Color.White, fontSize = 44.sp, fontWeight = FontWeight.Black)
         is SessionRestHeadline.ActiveRecovery -> {
-            Text(headline.title, color = White.copy(alpha = 0.85f), fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
-            headline.movement?.let { Text(it.uppercase(Locale.US), color = White, fontSize = 22.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center) }
+            Text(headline.title, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+            headline.movement?.let { Text(it.uppercase(Locale.US), color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center) }
         }
     }
     SessionCountdownRing(secondsRemaining, totalSeconds, caption = "SECONDS", tint = FLPrimary)
@@ -112,10 +114,10 @@ private fun RestBody(
     }
     if (upNext != null) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("UP NEXT", color = White.copy(alpha = 0.7f), fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
-            Text(upNext.name, color = White, fontSize = 24.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp))
+            Text("UP NEXT", color = Color.White.copy(alpha = 0.7f), fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+            Text(upNext.name, color = Color.White, fontSize = 24.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp))
             upNextStructureLabel?.let { SessionStructureTag(it, null) }
-            if (!upNextPrescription.isNullOrEmpty()) Text(upNextPrescription, color = White, fontSize = 20.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp))
+            if (!upNextPrescription.isNullOrEmpty()) Text(upNextPrescription, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp))
         }
         SessionNoteCard(upNextNote, maxLines = 2, modifier = Modifier.padding(horizontal = 28.dp))
     }
@@ -125,18 +127,18 @@ private fun RestBody(
 private fun BlockBlock(block: PreparationBlockSummary, upNextName: String?, coachingCue: String?, tint: Color) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         SessionStructureTag(block.title, tint)
-        upNextName?.let { Text(it, color = White, fontSize = 26.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp)) }
+        upNextName?.let { Text(it, color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp)) }
         Text(block.detail, color = OrangeTheme, fontSize = 15.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(horizontal = 20.dp))
-        if (block.members.size > 1) Text("${block.members.size} EXERCISES", color = White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
+        if (block.members.size > 1) Text("${block.members.size} EXERCISES", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
         Column(verticalArrangement = Arrangement.spacedBy(5.dp), modifier = Modifier.padding(top = 6.dp, start = 36.dp, end = 36.dp).fillMaxWidth()) {
             block.members.forEach { member ->
                 val isCurrent = member.ordinal == block.currentOrdinal
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Box(Modifier.size(24.dp).clip(CircleShape).background(if (isCurrent) tint else White.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
-                        Text("${member.ordinal}", color = if (isCurrent) White else White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Black)
+                    Box(Modifier.size(24.dp).clip(CircleShape).background(if (isCurrent) tint else Color.White.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
+                        Text("${member.ordinal}", color = if (isCurrent) Color.White else Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Black)
                     }
-                    Text(member.name, color = if (isCurrent) White else White.copy(alpha = 0.65f), fontSize = 15.sp, fontWeight = if (isCurrent) FontWeight.Black else FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                    member.metric?.let { Text(it, color = White.copy(alpha = if (isCurrent) 0.9f else 0.6f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
+                    Text(member.name, color = if (isCurrent) Color.White else Color.White.copy(alpha = 0.65f), fontSize = 15.sp, fontWeight = if (isCurrent) FontWeight.Black else FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                    member.metric?.let { Text(it, color = Color.White.copy(alpha = if (isCurrent) 0.9f else 0.6f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
                 }
             }
         }
@@ -150,8 +152,8 @@ private fun PhaseTransitionBlock(change: SessionTransitionEngine.PhaseChange) {
         if (change.completedPhaseName.isNotEmpty()) {
             Text("${change.completedPhaseName.uppercase(Locale.US)} COMPLETE ✓", color = OrangeTheme, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, textAlign = TextAlign.Center)
         }
-        Text("NEXT PHASE", color = White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
-        Text(change.nextPhaseName, color = White, fontSize = 34.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp))
-        if (change.summary.isNotEmpty()) Text(change.summary, color = White.copy(alpha = 0.85f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+        Text("NEXT PHASE", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+        Text(change.nextPhaseName, color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center, maxLines = 2, modifier = Modifier.padding(horizontal = 24.dp))
+        if (change.summary.isNotEmpty()) Text(change.summary, color = Color.White.copy(alpha = 0.85f), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
     }
 }

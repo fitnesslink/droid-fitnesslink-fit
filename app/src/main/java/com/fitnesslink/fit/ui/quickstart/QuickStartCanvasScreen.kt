@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.quickstart
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -78,16 +79,10 @@ import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.session.PlaylistSetStatusRow
 import com.fitnesslink.fit.session.SessionDiscardRule
 import com.fitnesslink.fit.ui.session.WorkoutCompletedScreen
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.BrowserMode
 import com.fitnesslink.fit.ui.workout.CreateExerciseSheet
 import com.fitnesslink.fit.ui.workout.ExerciseBrowserSheet
@@ -163,11 +158,11 @@ fun QuickStartCanvasScreen(
         return
     }
 
-    Column(Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         // Top bar: X = save & exit; ⋯ = pause / rename / focus / discard
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Close, contentDescription = "Save and exit — your workout keeps running", tint = TextPrimaryColor, modifier = Modifier.size(28.dp).clickable { onBack() }.padding(2.dp))
-            Text("Quick Start", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+            Icon(Icons.Filled.Close, contentDescription = "Save and exit — your workout keeps running", tint = FLTheme.colors.textPrimary, modifier = Modifier.size(28.dp).clickable { onBack() }.padding(2.dp))
+            Text("Quick Start", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
             var menu by remember { mutableStateOf(false) }
             Box {
                 Icon(Icons.Filled.MoreHoriz, contentDescription = "Workout options", tint = FLPrimary, modifier = Modifier.size(28.dp).clickable { menu = true })
@@ -175,7 +170,7 @@ fun QuickStartCanvasScreen(
                     DropdownMenuItem(text = { Text(if (viewModel.isPaused) "Resume Timer" else "Pause Timer") }, onClick = { menu = false; viewModel.togglePause() })
                     DropdownMenuItem(text = { Text("Rename Workout") }, onClick = { menu = false; workoutNameDraft = viewModel.workout.name; showRenameWorkout = true })
                     DropdownMenuItem(text = { Text("Change Training Focus") }, onClick = { menu = false; showFocusPicker = true })
-                    DropdownMenuItem(text = { Text("Discard Session", color = Color(0xFFE53935)) }, onClick = { menu = false; showDiscardConfirm = true })
+                    DropdownMenuItem(text = { Text("Discard Session", color = FLTheme.colors.danger) }, onClick = { menu = false; showDiscardConfirm = true })
                 }
             }
         }
@@ -184,9 +179,9 @@ fun QuickStartCanvasScreen(
             TimerCard(viewModel)
             InfoCard(viewModel, onRename = { workoutNameDraft = viewModel.workout.name; showRenameWorkout = true }, onFocus = { showFocusPicker = true })
             if (viewModel.workout.phases.isEmpty()) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).padding(vertical = 36.dp, horizontal = 20.dp)) {
-                    Icon(Icons.Filled.Layers, contentDescription = null, tint = MediumGray, modifier = Modifier.size(36.dp))
-                    Text("Add your first phase to start building your workout.", fontSize = 15.sp, color = TextSecondaryColor, textAlign = TextAlign.Center)
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface).padding(vertical = 36.dp, horizontal = 20.dp)) {
+                    Icon(Icons.Filled.Layers, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(36.dp))
+                    Text("Add your first phase to start building your workout.", fontSize = 15.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center)
                 }
             } else {
                 viewModel.workout.phases.forEachIndexed { index, phase ->
@@ -212,21 +207,21 @@ fun QuickStartCanvasScreen(
                 modifier = Modifier.fillMaxWidth().height(50.dp).clip(RoundedCornerShape(14.dp)).background(if (empty) FLPrimary else FLPrimary.copy(alpha = 0.12f))
                     .border(1.dp, FLPrimary.copy(alpha = 0.6f), RoundedCornerShape(14.dp)).clickable { showPhasePicker = true }
             ) {
-                Icon(Icons.Filled.AddCircle, contentDescription = null, tint = if (empty) White else FLPrimary, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.AddCircle, contentDescription = null, tint = if (empty) FLTheme.colors.onBrand else FLPrimary, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Add Phase", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = if (empty) White else FLPrimary)
+                Text("Add Phase", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = if (empty) FLTheme.colors.onBrand else FLPrimary)
             }
         }
 
         // Finish (PRD §40) — a real inset so an empty canvas never slides Add Phase under it.
-        Box(Modifier.fillMaxWidth().background(BackgroundColor).padding(horizontal = 20.dp, vertical = 8.dp)) {
+        Box(Modifier.fillMaxWidth().background(FLTheme.colors.background).padding(horizontal = 20.dp, vertical = 8.dp)) {
             Row(
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(14.dp)).background(PurpleTheme).clickable { viewModel.requestFinish() }
             ) {
-                Icon(Icons.Filled.Flag, contentDescription = null, tint = White, modifier = Modifier.size(18.dp))
+                Icon(Icons.Filled.Flag, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Finish Workout", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+                Text("Finish Workout", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
             }
         }
     }
@@ -317,7 +312,7 @@ fun QuickStartCanvasScreen(
             title = { Text("Finish Workout?") },
             text = { Text(viewModel.finishConfirmationMessage) },
             confirmButton = { TextButton(onClick = { viewModel.confirmFinish() }) { Text("Finish Workout", color = FLPrimary, fontWeight = FontWeight.SemiBold) } },
-            dismissButton = { TextButton(onClick = { viewModel.continueWorkout() }) { Text("Continue Workout", color = TextSecondaryColor) } }
+            dismissButton = { TextButton(onClick = { viewModel.continueWorkout() }) { Text("Continue Workout", color = FLTheme.colors.textSecondary) } }
         )
     }
     if (showDiscardConfirm) {
@@ -325,7 +320,7 @@ fun QuickStartCanvasScreen(
             onDismissRequest = { showDiscardConfirm = false },
             title = { Text(SessionDiscardRule.title) },
             text = { Text("Your logged sets and this Quick Start workout are removed. Nothing is saved to your history.") },
-            confirmButton = { TextButton(onClick = { showDiscardConfirm = false; viewModel.discard { goHome() } }) { Text(SessionDiscardRule.confirmLabel, color = Color(0xFFE53935), fontWeight = FontWeight.SemiBold) } },
+            confirmButton = { TextButton(onClick = { showDiscardConfirm = false; viewModel.discard { goHome() } }) { Text(SessionDiscardRule.confirmLabel, color = FLTheme.colors.danger, fontWeight = FontWeight.SemiBold) } },
             dismissButton = { TextButton(onClick = { showDiscardConfirm = false }) { Text(SessionDiscardRule.cancelLabel) } }
         )
     }
@@ -335,13 +330,13 @@ fun QuickStartCanvasScreen(
 
 @Composable
 private fun TimerCard(viewModel: QuickStartViewModel) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).padding(16.dp)) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface).padding(16.dp)) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(Modifier.size(8.dp).clip(CircleShape).background(if (viewModel.isPaused) OrangeTheme else FLPrimary))
                 Text(if (viewModel.isPaused) "Paused" else "Workout in progress", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (viewModel.isPaused) OrangeTheme else FLPrimary)
             }
-            Text(viewModel.timerText, fontSize = 40.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, maxLines = 1)
+            Text(viewModel.timerText, fontSize = 40.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, maxLines = 1)
         }
         RoundControl(if (viewModel.isPaused) Icons.Filled.PlayArrow else Icons.Filled.Pause, if (viewModel.isPaused) "Resume timer" else "Pause timer") { viewModel.togglePause() }
         RoundControl(Icons.Filled.Stop, "Finish workout") { viewModel.requestFinish() }
@@ -350,27 +345,27 @@ private fun TimerCard(viewModel: QuickStartViewModel) {
 
 @Composable
 private fun RoundControl(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, onClick: () -> Unit) {
-    Box(Modifier.size(48.dp).clip(CircleShape).border(1.5.dp, MediumGray.copy(alpha = 0.6f), CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(icon, contentDescription = label, tint = TextPrimaryColor, modifier = Modifier.size(20.dp))
+    Box(Modifier.size(48.dp).clip(CircleShape).border(1.5.dp, FLTheme.colors.textTertiary.copy(alpha = 0.6f), CircleShape).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+        Icon(icon, contentDescription = label, tint = FLTheme.colors.textPrimary, modifier = Modifier.size(20.dp))
     }
 }
 
 @Composable
 private fun InfoCard(viewModel: QuickStartViewModel, onRename: () -> Unit, onFocus: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).padding(14.dp)) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface).padding(14.dp)) {
         Box(Modifier.size(48.dp).clip(CircleShape).background(PurpleTheme.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
             Icon(focusIcon(viewModel.focus.symbol), contentDescription = null, tint = PurpleTheme, modifier = Modifier.size(22.dp))
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(viewModel.workout.name.ifEmpty { "Quick Start" }, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                Icon(Icons.Filled.Edit, contentDescription = "Rename workout", tint = MediumGray, modifier = Modifier.size(14.dp).clickable(onClick = onRename))
+                Text(viewModel.workout.name.ifEmpty { "Quick Start" }, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                Icon(Icons.Filled.Edit, contentDescription = "Rename workout", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp).clickable(onClick = onRename))
             }
-            Text("${viewModel.focus.name} ›", fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.clickable(onClick = onFocus))
+            Text("${viewModel.focus.name} ›", fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.clickable(onClick = onFocus))
         }
         Column(horizontalAlignment = Alignment.End) {
-            Text("${viewModel.exerciseCount}", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-            Text(if (viewModel.exerciseCount == 1) "exercise" else "exercises", fontSize = 11.sp, color = TextSecondaryColor)
+            Text("${viewModel.exerciseCount}", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+            Text(if (viewModel.exerciseCount == 1) "exercise" else "exercises", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -391,7 +386,7 @@ private fun QuickStartPhaseCard(
     val otherPhases = viewModel.workout.phases.mapIndexedNotNull { i, p -> if (i == index) null else i to p.name }
     var menu by remember(phase.id) { mutableStateOf(false) }
 
-    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White)) {
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface)) {
         Box(Modifier.width(4.dp).fillMaxHeight().padding(vertical = 10.dp).clip(RoundedCornerShape(2.dp)).background(color))
         Column(Modifier.weight(1f).padding(14.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -399,26 +394,26 @@ private fun QuickStartPhaseCard(
                     Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
                 }
                 Column(Modifier.weight(1f)) {
-                    Text(phase.name, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(if (exerciseCount == 1) "1 exercise" else "$exerciseCount exercises", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text(phase.name, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(if (exerciseCount == 1) "1 exercise" else "$exerciseCount exercises", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
-                Icon(if (isCollapsed) Icons.Filled.ExpandMore else Icons.Filled.ExpandLess, contentDescription = if (isCollapsed) "Expand ${phase.name}" else "Collapse ${phase.name}", tint = TextSecondaryColor, modifier = Modifier.size(28.dp).clickable(onClick = onToggleCollapsed))
+                Icon(if (isCollapsed) Icons.Filled.ExpandMore else Icons.Filled.ExpandLess, contentDescription = if (isCollapsed) "Expand ${phase.name}" else "Collapse ${phase.name}", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(28.dp).clickable(onClick = onToggleCollapsed))
                 Box {
-                    Icon(Icons.Filled.MoreHoriz, contentDescription = "${phase.name} options", tint = TextSecondaryColor, modifier = Modifier.size(28.dp).clickable { menu = true })
+                    Icon(Icons.Filled.MoreHoriz, contentDescription = "${phase.name} options", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(28.dp).clickable { menu = true })
                     DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                         if (!phase.isSystem) DropdownMenuItem(text = { Text("Rename Phase") }, onClick = { menu = false; onRename() })
                         if (index > 0) DropdownMenuItem(text = { Text("Move Up") }, onClick = { menu = false; viewModel.movePhase(index, up = true) })
                         if (index < phaseCount - 1) DropdownMenuItem(text = { Text("Move Down") }, onClick = { menu = false; viewModel.movePhase(index, up = false) })
-                        DropdownMenuItem(text = { Text("Delete Phase", color = Color(0xFFE53935)) }, onClick = { menu = false; onDelete() })
+                        DropdownMenuItem(text = { Text("Delete Phase", color = FLTheme.colors.danger) }, onClick = { menu = false; onDelete() })
                     }
                 }
             }
             if (!isCollapsed) {
                 if (phase.taskRows.isEmpty()) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)) {
-                        Box(Modifier.size(52.dp).clip(CircleShape).background(BackgroundColor), contentAlignment = Alignment.Center) { Icon(Icons.Filled.FitnessCenter, contentDescription = null, tint = MediumGray, modifier = Modifier.size(22.dp)) }
-                        Text("No exercises added yet", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-                        Text("Add exercises to start building this phase.", fontSize = 13.sp, color = TextSecondaryColor, textAlign = TextAlign.Center)
+                        Box(Modifier.size(52.dp).clip(CircleShape).background(FLTheme.colors.background), contentAlignment = Alignment.Center) { Icon(Icons.Filled.FitnessCenter, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(22.dp)) }
+                        Text("No exercises added yet", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+                        Text("Add exercises to start building this phase.", fontSize = 13.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center)
                     }
                 } else {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -439,8 +434,8 @@ private fun QuickStartPhaseCard(
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FooterButton("Add Exercise", Icons.Filled.AddCircle, White, FLPrimary, Modifier.weight(1f), onAddExercise)
-                        FooterButton("Add Rest", Icons.Filled.Timer, TextPrimaryColor, BackgroundColor, Modifier.weight(1f), onAddRest)
+                        FooterButton("Add Exercise", Icons.Filled.AddCircle, FLTheme.colors.onBrand, FLPrimary, Modifier.weight(1f), onAddExercise)
+                        FooterButton("Add Rest", Icons.Filled.Timer, FLTheme.colors.textPrimary, FLTheme.colors.background, Modifier.weight(1f), onAddRest)
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         GroupButton("Superset", PurpleTheme, Modifier.weight(1f)) { onAddGroup(ExerciseGroupType.Superset) }
@@ -455,10 +450,10 @@ private fun QuickStartPhaseCard(
 
 @Composable
 private fun RestRow(task: WorkoutTask, onRemove: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(BackgroundColor.copy(alpha = 0.6f)).padding(horizontal = 8.dp, vertical = 6.dp)) {
-        Icon(Icons.Filled.Timer, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
-        Text("Rest · ${task.rest.ifEmpty { WorkoutRowOps.formatRest(task.restSeconds) }}", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.weight(1f))
-        Icon(Icons.Filled.Close, contentDescription = "Remove rest", tint = TextSecondaryColor, modifier = Modifier.size(24.dp).clickable(onClick = onRemove).padding(4.dp))
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.background.copy(alpha = 0.6f)).padding(horizontal = 8.dp, vertical = 6.dp)) {
+        Icon(Icons.Filled.Timer, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
+        Text("Rest · ${task.rest.ifEmpty { WorkoutRowOps.formatRest(task.restSeconds) }}", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
+        Icon(Icons.Filled.Close, contentDescription = "Remove rest", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(24.dp).clickable(onClick = onRemove).padding(4.dp))
     }
 }
 
@@ -475,14 +470,14 @@ private fun GroupRow(
     var menu by remember(lead.id) { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(color.copy(alpha = 0.06f)).border(1.dp, color.copy(alpha = 0.35f), RoundedCornerShape(12.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(type.label.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Black, color = White, modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(color).padding(horizontal = 8.dp, vertical = 3.dp))
+            Text(type.label.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Black, color = FLTheme.colors.onBrand, modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(color).padding(horizontal = 8.dp, vertical = 3.dp))
             if (type == ExerciseGroupType.Interval) (row.intervalMode ?: lead.intervalMode)?.let { Text(it.displayName.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = color) }
-            Text(when (rounds) { 0 -> "No rounds logged yet"; 1 -> "1 round logged"; else -> "$rounds rounds logged" }, fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+            Text(when (rounds) { 0 -> "No rounds logged yet"; 1 -> "1 round logged"; else -> "$rounds rounds logged" }, fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
             Box {
-                Icon(Icons.Filled.MoreHoriz, contentDescription = "${type.label} options", tint = TextSecondaryColor, modifier = Modifier.size(24.dp).clickable { menu = true })
+                Icon(Icons.Filled.MoreHoriz, contentDescription = "${type.label} options", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(24.dp).clickable { menu = true })
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     otherPhases.forEach { (i, name) -> DropdownMenuItem(text = { Text("Move to $name") }, onClick = { menu = false; viewModel.moveTask(lead.id, i) }) }
-                    DropdownMenuItem(text = { Text("Remove ${type.label}", color = Color(0xFFE53935)) }, onClick = { menu = false; onRemoveGroup(lead.id) })
+                    DropdownMenuItem(text = { Text("Remove ${type.label}", color = FLTheme.colors.danger) }, onClick = { menu = false; onRemoveGroup(lead.id) })
                 }
             }
         }
@@ -513,13 +508,13 @@ private fun QuickStartExerciseRow(
         else -> "$loggedCount ${unit.lowercase()}s · last ${QuickStartPlan.setLine(lastSet)}"
     }
     var menu by remember(task.id) { mutableStateOf(false) }
-    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(BackgroundColor.copy(alpha = 0.6f)).padding(10.dp)) {
+    Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.background.copy(alpha = 0.6f)).padding(10.dp)) {
         val thumb = (task.movementThumbnailId ?: task.movementImageId)?.let { MediaRef.MovementThumbnail(it) }
-        Box(Modifier.size(56.dp).clip(RoundedCornerShape(10.dp)).background(ImagePlaceholder)) { if (thumb != null) FLImageView(ref = thumb, modifier = Modifier.size(56.dp)) }
+        Box(Modifier.size(56.dp).clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.imagePlaceholder)) { if (thumb != null) FLImageView(ref = thumb, modifier = Modifier.size(56.dp)) }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(task.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(task.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 2, overflow = TextOverflow.Ellipsis)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(subtitle, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                Text(subtitle, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
                 note?.rpe?.let { Text("RPE $it", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = PurpleTheme, modifier = Modifier.clip(RoundedCornerShape(4.dp)).background(PurpleTheme.copy(alpha = 0.12f)).padding(horizontal = 5.dp, vertical = 1.dp)) }
             }
             PlaylistSetStatusRow(states = states, exerciseState = if (loggedCount > 0) ExerciseState.IN_PROGRESS else ExerciseState.UPCOMING, unit = unit, onTapSet = onTapSet)
@@ -527,11 +522,11 @@ private fun QuickStartExerciseRow(
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             task.movementId?.let { id -> Icon(Icons.Filled.Info, contentDescription = "About ${task.name}", tint = FLPrimary, modifier = Modifier.size(28.dp).clickable { onOpenMovement(id) }.padding(4.dp)) }
             Box {
-                Icon(Icons.Filled.MoreVert, contentDescription = "${task.name} options", tint = TextSecondaryColor, modifier = Modifier.size(28.dp).clickable { menu = true }.padding(4.dp))
+                Icon(Icons.Filled.MoreVert, contentDescription = "${task.name} options", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(28.dp).clickable { menu = true }.padding(4.dp))
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
                     DropdownMenuItem(text = { Text("Log $unit ${loggedCount + 1}") }, onClick = { menu = false; onTapSet(loggedCount + 1) })
                     otherPhases.forEach { (i, name) -> DropdownMenuItem(text = { Text("Move to $name") }, onClick = { menu = false; onMove(i) }) }
-                    DropdownMenuItem(text = { Text("Remove Exercise", color = Color(0xFFE53935)) }, onClick = { menu = false; onRemove() })
+                    DropdownMenuItem(text = { Text("Remove Exercise", color = FLTheme.colors.danger) }, onClick = { menu = false; onRemove() })
                 }
             }
         }
@@ -561,12 +556,12 @@ private fun TextDialog(title: String, value: String, onChange: (String) -> Unit,
         title = { Text(title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                message?.let { Text(it, fontSize = 13.sp, color = TextSecondaryColor) }
+                message?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.textSecondary) }
                 OutlinedTextField(value = value, onValueChange = onChange, singleLine = true, placeholder = { Text(placeholder) }, modifier = Modifier.fillMaxWidth())
             }
         },
         confirmButton = { TextButton(onClick = onConfirm, enabled = value.isNotBlank()) { Text(confirmLabel, color = FLPrimary, fontWeight = FontWeight.SemiBold) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = TextSecondaryColor) } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = FLTheme.colors.textSecondary) } }
     )
 }
 
@@ -576,7 +571,7 @@ private fun ConfirmDialog(title: String, message: String, confirmLabel: String, 
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(message) },
-        confirmButton = { TextButton(onClick = onConfirm) { Text(confirmLabel, color = Color(0xFFE53935), fontWeight = FontWeight.SemiBold) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = TextSecondaryColor) } }
+        confirmButton = { TextButton(onClick = onConfirm) { Text(confirmLabel, color = FLTheme.colors.danger, fontWeight = FontWeight.SemiBold) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel", color = FLTheme.colors.textSecondary) } }
     )
 }

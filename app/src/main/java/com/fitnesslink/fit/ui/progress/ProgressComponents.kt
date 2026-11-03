@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.progress
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,11 +56,7 @@ import com.fitnesslink.fit.model.PhotoAngle
 import com.fitnesslink.fit.progress.MeasurementMath
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -103,15 +100,15 @@ fun MeasurementBreakdownView(
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         MeasurementMath.grouped(entry).forEach { (category, parts) ->
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(category, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                Text(category, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                 parts.forEach { m ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(bodyPartIcon(m.bodyPart), contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(m.bodyPart.displayName, fontSize = 14.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                        Text(m.bodyPart.displayName, fontSize = 14.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                         Text(
                             "${formatMeasurement(MeasurementMath.displayValue(m, unit))} ${unit.label}",
-                            fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor
+                            fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary
                         )
                         MeasurementMath.delta(entry, previous, m.bodyPart, unit)?.let { change ->
                             Spacer(modifier = Modifier.width(8.dp))
@@ -129,7 +126,7 @@ fun DeltaChip(change: Double) {
     val color = when {
         change < 0 -> FLPrimary
         change > 0 -> OrangeTheme
-        else -> TextSecondaryColor
+        else -> FLTheme.colors.textSecondary
     }
     Text(
         formatSignedDelta(change),
@@ -165,18 +162,18 @@ fun ProgressPhotoThumb(photo: AnglePhoto?, angle: PhotoAngle, height: Dp, modifi
             ) {
                 Icon(
                     Icons.Default.Person, contentDescription = angle.displayName,
-                    tint = if (photo != null) MediumGray else MediumGray.copy(alpha = 0.5f), modifier = Modifier.size(if (height > 150.dp) 40.dp else 20.dp)
+                    tint = if (photo != null) FLTheme.colors.textTertiary else FLTheme.colors.textTertiary.copy(alpha = 0.5f), modifier = Modifier.size(if (height > 150.dp) 40.dp else 20.dp)
                 )
-                if (photo == null) Text(angle.displayName, fontSize = 9.sp, color = MediumGray.copy(alpha = 0.6f))
+                if (photo == null) Text(angle.displayName, fontSize = 9.sp, color = FLTheme.colors.textTertiary.copy(alpha = 0.6f))
             }
         }
         if (showLabel && photo != null) {
             Text(
-                angle.displayName, fontSize = 10.sp, fontWeight = FontWeight.Medium, color = White,
+                angle.displayName, fontSize = 10.sp, fontWeight = FontWeight.Medium, color = Color.White, // theme-exempt: over media
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(4.dp)
-                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                    .background(Color.Black.copy(alpha = 0.5f), RoundedCornerShape(4.dp)) // theme-exempt: over media
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             )
         }
@@ -197,9 +194,9 @@ fun DatePickerField(date: Date, onDateChange: (Date) -> Unit, modifier: Modifier
             .padding(horizontal = 12.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Default.CalendarToday, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
+        Icon(Icons.Default.CalendarToday, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
         Spacer(modifier = Modifier.width(8.dp))
-        Text(label, fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+        Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
         Text(longDate.format(date), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
     }
     if (open) {
@@ -244,7 +241,7 @@ fun ConfirmDeleteDialog(title: String, message: String, onConfirm: () -> Unit, o
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(message) },
-        confirmButton = { TextButton(onClick = { onDismiss(); onConfirm() }) { Text("Delete", color = Color(0xFFE53935)) } },
+        confirmButton = { TextButton(onClick = { onDismiss(); onConfirm() }) { Text("Delete", color = FLTheme.colors.danger) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }

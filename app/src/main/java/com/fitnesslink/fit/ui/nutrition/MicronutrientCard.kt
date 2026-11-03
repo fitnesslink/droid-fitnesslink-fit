@@ -22,9 +22,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.api.Micronutrient
 import com.fitnesslink.fit.network.dto.MicroSummaryLine
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * Micronutrients card (FTNSSLNK-216/217): consumed vs target for the user's
@@ -43,12 +42,12 @@ fun MicronutrientCard(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text("Micronutrients", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Micronutrients", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
             Row(
                 modifier = Modifier.clickable(onClick = onEdit),

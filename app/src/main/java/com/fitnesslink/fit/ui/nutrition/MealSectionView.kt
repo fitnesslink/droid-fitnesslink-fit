@@ -36,13 +36,10 @@ import com.fitnesslink.fit.network.dto.QuickLogMealSource
 import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.nutrition.NutritionFeatureFlags
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import java.util.Locale
 
 /**
@@ -71,14 +68,14 @@ fun MealSectionView(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(mealType.displayName, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text(mealType.displayName, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
-            Text("$totalCalories cal", fontSize = 14.sp, color = TextSecondaryColor)
+            Text("$totalCalories cal", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
             if (allowsLogging) {
                 if (onSnap != null && NutritionFeatureFlags.snapMealEnabled) {
                     Icon(
@@ -106,7 +103,7 @@ fun MealSectionView(
         }
 
         if (entries.isEmpty()) {
-            Text("No entries yet", fontSize = 14.sp, color = MediumGray, modifier = Modifier.padding(vertical = 4.dp))
+            Text("No entries yet", fontSize = 14.sp, color = FLTheme.colors.textTertiary, modifier = Modifier.padding(vertical = 4.dp))
             if (allowsLogging && quickLogSource != null && onQuickLog != null) {
                 QuickLogChip(source = quickLogSource, label = quickLogLabel, isLogging = isQuickLogging, onTap = onQuickLog)
             }
@@ -120,15 +117,15 @@ fun MealSectionView(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text(entry.name, fontSize = 14.sp, color = TextPrimaryColor)
+                        Text(entry.name, fontSize = 14.sp, color = FLTheme.colors.textPrimary)
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            Text(portionLabel(entry), fontSize = 12.sp, color = TextSecondaryColor)
+                            Text(portionLabel(entry), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                             entry.aiBadgeText?.let { badge ->
                                 Text(badge, fontSize = 10.sp, fontWeight = FontWeight.Medium, color = PurpleTheme)
                             }
                         }
                     }
-                    Text("${entry.calories} cal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                    Text("${entry.calories} cal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                 }
                 if (index < entries.size - 1) SeparatorView()
             }
@@ -166,7 +163,7 @@ private fun QuickLogChip(source: QuickLogMealSource, label: String, isLogging: B
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
             Text(label, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
             val items = if (source.entryCount == 1) "1 item" else "${source.entryCount} items"
-            Text("$items · ${Math.round(source.calories)} cal", fontSize = 11.sp, color = TextSecondaryColor)
+            Text("$items · ${Math.round(source.calories)} cal", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
         Icon(Icons.Default.AddCircleOutline, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
     }
@@ -189,6 +186,6 @@ fun MealMacroSummary(protein: Double, carbs: Double, fat: Double, modifier: Modi
 private fun MacroDot(label: String, grams: Double, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(modifier = Modifier.size(6.dp).background(color, CircleShape))
-        Text("$label ${Math.round(grams)}g", fontSize = 13.sp, color = TextSecondaryColor)
+        Text("$label ${Math.round(grams)}g", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }

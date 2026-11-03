@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.calendar
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -44,10 +45,6 @@ import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.NetworkMonitor
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.Date
@@ -110,15 +107,15 @@ fun CalendarProgramPickerSheet(
                 .fillMaxSize()
                 .padding(top = 48.dp)
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .background(White)
+                .background(FLTheme.colors.surface)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Schedule Program", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Cancel", tint = TextPrimaryColor) }
+                    Text("Schedule Program", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Cancel", tint = FLTheme.colors.textPrimary) }
                 }
                 CalendarPickerFilterBar(
                     state = filters,
@@ -130,11 +127,11 @@ fun CalendarProgramPickerSheet(
                 if (filtered.isEmpty()) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.Layers, contentDescription = null, tint = MediumGray, modifier = Modifier.size(32.dp))
+                            Icon(Icons.Default.Layers, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(32.dp))
                             Spacer(modifier = Modifier.height(12.dp))
                             Text(
                                 if (filters.hasActiveFilters || filters.searchText.isNotEmpty()) "No programs match these filters" else "No programs found",
-                                fontSize = 15.sp, color = TextSecondaryColor
+                                fontSize = 15.sp, color = FLTheme.colors.textSecondary
                             )
                         }
                     }
@@ -149,14 +146,14 @@ fun CalendarProgramPickerSheet(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Column(modifier = Modifier.weight(1f)) {
-                                    Text(program.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                                    Text(program.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                                     if (program.time.isNotEmpty()) {
-                                        Text(program.time, fontSize = 12.sp, color = TextSecondaryColor)
+                                        Text(program.time, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                                     }
                                 }
                                 Icon(Icons.Default.EventAvailable, contentDescription = "Schedule", tint = FLPrimary, modifier = Modifier.size(20.dp))
                             }
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = MediumGray.copy(alpha = 0.2f))
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = FLTheme.colors.textTertiary.copy(alpha = 0.2f))
                         }
                     }
                 }

@@ -51,8 +51,8 @@ import com.fitnesslink.fit.auth.AuthConfig
 import com.fitnesslink.fit.auth.AuthManager
 import com.fitnesslink.fit.ui.components.ActionButtonView
 import com.fitnesslink.fit.ui.components.SocialSignInButton
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.LoginViewModel
 import com.fitnesslink.fit.viewmodel.SignUpViewModel
 
@@ -95,7 +95,7 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black)))
+                .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black))) // theme-exempt: over media
         )
         Column(modifier = Modifier.fillMaxSize()) {
             Image(
@@ -118,7 +118,7 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-                        .background(BackgroundColor)
+                        .background(FLTheme.colors.background)
                         .padding(top = 20.dp)
                         .imePadding()
                 ) {
@@ -233,7 +233,7 @@ private fun LoginContent(
                 Text(
                     text = viewModel.errorMessage ?: "Invalid email or password",
                     fontSize = 11.sp,
-                    color = Color.Red,
+                    color = FLTheme.colors.danger,
                     modifier = Modifier.weight(1f)
                 )
             } else {
@@ -415,7 +415,7 @@ private fun LoginSeparator() {
             fontSize = 14.sp,
             color = FLPrimary,
             modifier = Modifier
-                .background(BackgroundColor)
+                .background(FLTheme.colors.background)
                 .padding(horizontal = 10.dp)
         )
     }

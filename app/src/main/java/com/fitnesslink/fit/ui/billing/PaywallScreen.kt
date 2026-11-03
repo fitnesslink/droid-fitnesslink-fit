@@ -68,7 +68,6 @@ import com.fitnesslink.fit.billing.RestoreResult
 import com.fitnesslink.fit.network.dto.BillingTerm
 import com.fitnesslink.fit.ui.components.ActionButtonView
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.launch
 
 /**
@@ -116,7 +115,7 @@ fun PaywallScreen(
     val selected = offers.firstOrNull { it.term == selectedTerm } ?: offers.firstOrNull()
     val monthly = offers.firstOrNull { it.term == BillingTerm.MONTHLY }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) { // theme-exempt: over media
         Image(
             painter = painterResource(R.drawable.welcome),
             contentDescription = null,
@@ -126,7 +125,7 @@ fun PaywallScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Black)))
+                .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Black))) // theme-exempt: over media
         )
 
         Column(
@@ -144,12 +143,12 @@ fun PaywallScreen(
                 modifier = Modifier.width(134.dp)
             )
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Everything, unlocked", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = White)
+            Text("Everything, unlocked", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White) // theme-exempt: over media
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 "Workouts, programs, nutrition and progress tracking — one membership.",
                 fontSize = 15.sp,
-                color = White.copy(alpha = 0.75f),
+                color = Color.White.copy(alpha = 0.75f), // theme-exempt: over media
                 textAlign = TextAlign.Center
             )
             // iOS 21ce001 (App Review 5.6): the requirement must be stated, not implied.
@@ -157,7 +156,7 @@ fun PaywallScreen(
                 "A subscription is required to use FitnessLink.",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = White,
+                color = Color.White, // theme-exempt: over media
                 textAlign = TextAlign.Center
             )
 
@@ -175,14 +174,14 @@ fun PaywallScreen(
                 isLoadingProducts && offers.isEmpty() -> Box(
                     modifier = Modifier.fillMaxWidth().height(160.dp),
                     contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator(color = White) }
+                ) { CircularProgressIndicator(color = Color.White) } // theme-exempt: over media
 
                 loadError != null && offers.isEmpty() -> Column(
                     modifier = Modifier.fillMaxWidth().height(160.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(loadError ?: "", fontSize = 14.sp, color = White.copy(alpha = 0.8f), textAlign = TextAlign.Center)
+                    Text(loadError ?: "", fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f), textAlign = TextAlign.Center) // theme-exempt: over media
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         "Try Again",
@@ -217,7 +216,7 @@ fun PaywallScreen(
             // Notices
             val entitlementError = (entitlementState as? EntitlementState.Error)?.message
             if (entitlementError != null && errorMessage == null) {
-                Notice(entitlementError, Color(0xFFFFB74D))
+                Notice(entitlementError, Color(0xFFFFB74D)) // theme-exempt: over media
                 Text(
                     "Retry",
                     fontSize = 14.sp,
@@ -229,22 +228,22 @@ fun PaywallScreen(
                 )
             }
             if (collided.isNotEmpty() && errorMessage == null) {
-                Notice(BillingException.AlreadyLinkedToAnotherAccount.message ?: "", Color(0xFFFFB74D))
+                Notice(BillingException.AlreadyLinkedToAnotherAccount.message ?: "", Color(0xFFFFB74D)) // theme-exempt: over media
             }
             if (pendingPayments.isNotEmpty() && errorMessage == null) {
-                Notice(BillingException.PaymentPending.message ?: "", White.copy(alpha = 0.85f))
+                Notice(BillingException.PaymentPending.message ?: "", Color.White.copy(alpha = 0.85f)) // theme-exempt: over media
             }
             if (unconfirmed.isNotEmpty() && errorMessage == null) {
-                Notice(BillingException.VerificationDelayed(duringRestore = false).message ?: "", Color(0xFFFFB74D))
+                Notice(BillingException.VerificationDelayed(duringRestore = false).message ?: "", Color(0xFFFFB74D)) // theme-exempt: over media
             }
             if (purchaseStalled && errorMessage == null) {
                 Notice(
                     "Google Play didn't respond. Tap to try again — if it keeps happening, close and reopen FitnessLink.",
-                    Color(0xFFFFB74D)
+                    Color(0xFFFFB74D) // theme-exempt: over media
                 )
             }
-            errorMessage?.let { Notice(it, Color(0xFFEF5350)) }
-            infoMessage?.let { if (errorMessage == null) Notice(it, White.copy(alpha = 0.85f)) }
+            errorMessage?.let { Notice(it, Color(0xFFEF5350)) } // theme-exempt: over media
+            infoMessage?.let { if (errorMessage == null) Notice(it, Color.White.copy(alpha = 0.85f)) } // theme-exempt: over media
 
             ActionButtonView(
                 text = BillingPresentation.ctaText(selected?.trialPeriod),
@@ -282,20 +281,20 @@ fun PaywallScreen(
                 Text(
                     BillingPresentation.disclosure(it.formattedPrice, it.billingPeriod, it.trialPeriod),
                     fontSize = 12.sp,
-                    color = White.copy(alpha = 0.6f),
+                    color = Color.White.copy(alpha = 0.6f), // theme-exempt: over media
                     textAlign = TextAlign.Center
                 )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
             if (isRestoring) {
-                CircularProgressIndicator(color = White, modifier = Modifier.size(20.dp))
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp)) // theme-exempt: over media
             } else {
                 Text(
                     "Restore Purchases",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = White,
+                    color = Color.White, // theme-exempt: over media
                     modifier = Modifier.clickable {
                         errorMessage = null
                         infoMessage = null
@@ -336,7 +335,7 @@ fun PaywallScreen(
             Text(
                 "Sign Out",
                 fontSize = 13.sp,
-                color = White.copy(alpha = 0.5f),
+                color = Color.White.copy(alpha = 0.5f), // theme-exempt: over media
                 modifier = Modifier.clickable(onClick = onLogout).padding(8.dp)
             )
         }
@@ -350,14 +349,14 @@ fun PaywallScreen(
                 .padding(top = 12.dp, end = 16.dp)
                 .size(36.dp)
                 .clip(CircleShape)
-                .background(White.copy(alpha = 0.18f))
+                .background(Color.White.copy(alpha = 0.18f)) // theme-exempt: over media
                 .clickable(onClick = onLogout),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.Close,
                 contentDescription = "Close",
-                tint = White,
+                tint = Color.White, // theme-exempt: over media
                 modifier = Modifier.size(18.dp)
             )
         }
@@ -368,7 +367,7 @@ fun PaywallScreen(
 private fun BenefitRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
-        Text(text, fontSize = 15.sp, color = White.copy(alpha = 0.9f))
+        Text(text, fontSize = 15.sp, color = Color.White.copy(alpha = 0.9f)) // theme-exempt: over media
     }
 }
 
@@ -378,7 +377,7 @@ private fun PlanCard(title: String, priceLine: String, trialLine: String?, isSel
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(White.copy(alpha = if (isSelected) 0.16f else 0.08f))
+            .background(Color.White.copy(alpha = if (isSelected) 0.16f else 0.08f)) // theme-exempt: over media
             .border(1.5.dp, if (isSelected) FLPrimary else Color.Transparent, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(16.dp),
@@ -388,14 +387,14 @@ private fun PlanCard(title: String, priceLine: String, trialLine: String?, isSel
         Icon(
             if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
             contentDescription = null,
-            tint = if (isSelected) FLPrimary else White.copy(alpha = 0.4f),
+            tint = if (isSelected) FLPrimary else Color.White.copy(alpha = 0.4f), // theme-exempt: over media
             modifier = Modifier.size(22.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White) // theme-exempt: over media
             // Price and duration straight from Play — backend display prices are reporting-only.
             if (trialLine != null) Text(trialLine, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
-            Text(priceLine, fontSize = 13.sp, color = White.copy(alpha = 0.7f))
+            Text(priceLine, fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f)) // theme-exempt: over media
         }
         if (savingsBadge != null) {
             Box(
@@ -404,7 +403,7 @@ private fun PlanCard(title: String, priceLine: String, trialLine: String?, isSel
                     .background(FLPrimary)
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Text(savingsBadge, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = White)
+                Text(savingsBadge, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White) // theme-exempt: over media
             }
         }
     }
@@ -423,7 +422,7 @@ private fun Notice(text: String, color: Color) {
 
 @Composable
 private fun LinkText(text: String, onClick: () -> Unit) {
-    Text(text, fontSize = 12.sp, color = White.copy(alpha = 0.7f), modifier = Modifier.clickable(onClick = onClick))
+    Text(text, fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f), modifier = Modifier.clickable(onClick = onClick)) // theme-exempt: over media
 }
 
 /** Walk the ContextWrapper chain to the hosting Activity (needed by `launchBillingFlow`). */

@@ -56,14 +56,11 @@ import com.fitnesslink.fit.media.UploadRecord
 import com.fitnesslink.fit.media.UploadState
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.session.MuxVideoPlayer
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.MyVideosViewModel
+import com.fitnesslink.fit.ui.theme.WorkGreen
 
 /**
  * FB-89 port of iOS `MyVideosView` + `VideoUploadRow` (parity 4.7). Pick a
@@ -81,9 +78,9 @@ fun MyVideosScreen(onBack: () -> Unit) {
         uri?.let { viewModel.upload(it) }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
-        Text("My Videos", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
+        Text("My Videos", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp))
 
         Row(
             modifier = Modifier
@@ -99,12 +96,12 @@ fun MyVideosScreen(onBack: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (viewModel.isImporting) {
-                CircularProgressIndicator(color = White, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
             } else {
-                Icon(Icons.Default.AddCircle, contentDescription = null, tint = White, modifier = Modifier.size(20.dp))
+                Icon(Icons.Default.AddCircle, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(20.dp))
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Text(if (viewModel.isImporting) "Importing..." else "Upload Video", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+            Text(if (viewModel.isImporting) "Importing..." else "Upload Video", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
         }
 
         if (viewModel.records.isEmpty()) {
@@ -113,11 +110,11 @@ fun MyVideosScreen(onBack: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Icon(Icons.Default.VideocamOff, contentDescription = null, tint = MediumGray, modifier = Modifier.size(44.dp))
-                Text("No videos yet", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Icon(Icons.Default.VideocamOff, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(44.dp))
+                Text("No videos yet", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Text(
                     "Pick a video from your library to upload.",
-                    fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center,
+                    fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 40.dp)
                 )
             }
@@ -151,7 +148,7 @@ fun MyVideosScreen(onBack: () -> Unit) {
 
     viewModel.playingUrl?.let { url ->
         Dialog(onDismissRequest = { viewModel.playingUrl = null }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-            Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+            Box(modifier = Modifier.fillMaxSize().background(Color.Black)) { // theme-exempt: over media
                 MuxVideoPlayer(
                     ref = null,
                     url = url,
@@ -166,7 +163,7 @@ fun MyVideosScreen(onBack: () -> Unit) {
                 Icon(
                     Icons.Default.Close,
                     contentDescription = "Close",
-                    tint = White,
+                    tint = Color.White, // theme-exempt: over media
                     modifier = Modifier
                         .align(Alignment.TopEnd)
                         .padding(16.dp)
@@ -183,8 +180,8 @@ fun VideoUploadRow(record: UploadRecord, state: UploadState, onPlay: () -> Unit,
     val (icon, tint) = when (state) {
         is UploadState.Queued, is UploadState.Uploading -> Icons.Default.Upload to FLPrimary
         is UploadState.Processing -> Icons.Default.HourglassBottom to OrangeTheme
-        is UploadState.Ready -> Icons.Default.CheckCircle to Color(0xFF2E9E6B)
-        is UploadState.Failed -> Icons.Default.Warning to Color.Red
+        is UploadState.Ready -> Icons.Default.CheckCircle to WorkGreen
+        is UploadState.Failed -> Icons.Default.Warning to FLTheme.colors.danger
     }
     val statusLabel = when (state) {
         is UploadState.Queued -> "Queued"
@@ -195,22 +192,22 @@ fun VideoUploadRow(record: UploadRecord, state: UploadState, onPlay: () -> Unit,
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(24.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(record.fileName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(statusLabel, fontSize = 13.sp, color = TextSecondaryColor)
+                Text(record.fileName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(statusLabel, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             }
             when (state) {
                 is UploadState.Ready -> Box(
                     modifier = Modifier.size(36.dp).clip(CircleShape).background(FLPrimary).clickable(onClick = onPlay),
                     contentAlignment = Alignment.Center
-                ) { Icon(Icons.Default.PlayArrow, contentDescription = "Play", tint = White) }
+                ) { Icon(Icons.Default.PlayArrow, contentDescription = "Play", tint = FLTheme.colors.onBrand) }
                 is UploadState.Failed, is UploadState.Processing -> Icon(
-                    Icons.Default.Delete, contentDescription = "Remove", tint = Color.Red,
+                    Icons.Default.Delete, contentDescription = "Remove", tint = FLTheme.colors.danger,
                     modifier = Modifier.size(32.dp).clickable(onClick = onRemove).padding(6.dp)
                 )
                 else -> Unit
@@ -220,7 +217,7 @@ fun VideoUploadRow(record: UploadRecord, state: UploadState, onPlay: () -> Unit,
             is UploadState.Queued -> LinearProgressIndicator(progress = { 0f }, modifier = Modifier.fillMaxWidth(), color = FLPrimary)
             is UploadState.Uploading -> LinearProgressIndicator(progress = { state.fraction }, modifier = Modifier.fillMaxWidth(), color = FLPrimary)
             is UploadState.Processing -> LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(3.dp), color = OrangeTheme)
-            is UploadState.Failed -> Text(state.message, fontSize = 12.sp, color = Color.Red, maxLines = 3)
+            is UploadState.Failed -> Text(state.message, fontSize = 12.sp, color = FLTheme.colors.danger, maxLines = 3)
             is UploadState.Ready -> Unit
         }
     }

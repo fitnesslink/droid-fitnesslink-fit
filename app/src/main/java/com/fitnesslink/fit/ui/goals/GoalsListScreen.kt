@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.goals
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -63,9 +64,7 @@ import com.fitnesslink.fit.goals.deadlineText
 import com.fitnesslink.fit.goals.phase
 import com.fitnesslink.fit.model.Goal
 import com.fitnesslink.fit.model.GoalStatus
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -115,7 +114,7 @@ fun GoalsListScreen(
     val paused = goals.filter { it.status == GoalStatus.Paused }
     val finished = goals.filter { it.status == GoalStatus.Completed || it.status == GoalStatus.Archived }
 
-    Column(Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.clickable(onClick = onBack).padding(6.dp))
@@ -130,7 +129,7 @@ fun GoalsListScreen(
             } else if (goals.isEmpty()) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp),
                     modifier = Modifier.fillMaxWidth().padding(top = 80.dp)) {
-                    Icon(Icons.Filled.TrackChanges, contentDescription = null, tint = MediumGray, modifier = Modifier.size(48.dp))
+                    Icon(Icons.Filled.TrackChanges, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(48.dp))
                     Text("No active goals", fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
                     Text("Set a goal to start tracking your progress.", fontSize = 14.sp, color = goalSecondaryText(), textAlign = TextAlign.Center)
                     GoalPrimaryButton("Set Your First Goal", modifier = Modifier.widthIn(max = 260.dp), onClick = onCreateGoal)

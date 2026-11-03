@@ -24,9 +24,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.components.ActionButtonView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.LoginViewModel
 
 /**
@@ -45,7 +44,7 @@ fun ForgotPasswordSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = BackgroundColor
+        containerColor = FLTheme.colors.background
     ) {
         Column(
             modifier = Modifier
@@ -69,7 +68,7 @@ private fun FormContent(viewModel: LoginViewModel) {
     Text(
         "Enter your email address and we'll send you a link to reset your password.",
         fontSize = 14.sp,
-        color = TextSecondaryColor
+        color = FLTheme.colors.textSecondary
     )
     Spacer(modifier = Modifier.height(16.dp))
     CapsuleTextField(
@@ -112,7 +111,7 @@ private fun SentContent(email: String, onDone: () -> Unit) {
         Text(
             "If an account exists for $email, a password reset link is on its way. Follow it to set a new password, then log in.",
             fontSize = 14.sp,
-            color = TextSecondaryColor,
+            color = FLTheme.colors.textSecondary,
             textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))

@@ -9,6 +9,12 @@ val OrangeTheme = Color(0xFFF69833)
 val PurpleTheme = Color(0xFF8B5CF6)
 val BlueTheme = Color(0xFF3B82F6)
 val ProgressHighlight = Color(0xFF23AF8D)
+// Status accents, same in both modes.
+val SuccessGreen = Color(0xFF22C55E)
+val WorkGreen = Color(0xFF22A35A)
+val WarningAmber = Color(0xFFF59E0B)
+val AlertRed = Color(0xFFEF4444)
+val NutritionOverColor = Color(0xFFF2A516)
 
 // Legacy light-only neutrals (FTNSSLNK-540). They render light in Dark
 // appearance; new code uses FLTheme.colors. Mapping: ui/theme/README.md.

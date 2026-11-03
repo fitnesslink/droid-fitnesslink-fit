@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,10 +42,6 @@ import com.fitnesslink.fit.model.WeightUnit
 import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutEditorViewModel
 import com.fitnesslink.fit.workouts.WorkoutRowOps
 
@@ -62,7 +59,7 @@ fun MovementEditorRow(task: WorkoutTask, phaseIndex: Int, isSelected: Boolean, v
     var showMoveMenu by remember(taskId) { mutableStateOf(false) }
     val otherPhases = viewModel.workout.phases.withIndex().filter { it.index != phaseIndex }
 
-    Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(White)) {
+    Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.surface)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(12.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -71,14 +68,14 @@ fun MovementEditorRow(task: WorkoutTask, phaseIndex: Int, isSelected: Boolean, v
             if (viewModel.isMultiSelectMode) {
                 Icon(
                     if (isSelected) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
-                    contentDescription = "Select", tint = if (isSelected) FLPrimary else MediumGray,
+                    contentDescription = "Select", tint = if (isSelected) FLPrimary else FLTheme.colors.textTertiary,
                     modifier = Modifier.size(22.dp).clickable { viewModel.toggleTaskSelection(taskId) }
                 )
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(22.dp)) {
-                    Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Move up", tint = MediumGray,
+                    Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "Move up", tint = FLTheme.colors.textTertiary,
                         modifier = Modifier.size(18.dp).clickable { viewModel.moveExerciseUp(taskId, phaseIndex) })
-                    Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Move down", tint = MediumGray,
+                    Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "Move down", tint = FLTheme.colors.textTertiary,
                         modifier = Modifier.size(18.dp).clickable { viewModel.moveExerciseDown(taskId, phaseIndex) })
                 }
             }
@@ -87,32 +84,32 @@ fun MovementEditorRow(task: WorkoutTask, phaseIndex: Int, isSelected: Boolean, v
             if (thumbId != null) {
                 FLImageView(ref = MediaRef.MovementThumbnail(thumbId), modifier = Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)))
             } else {
-                Box(modifier = Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).background(ImagePlaceholder))
+                Box(modifier = Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.imagePlaceholder))
             }
 
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(task.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
-                Text(summaryText(task), fontSize = 12.sp, color = TextSecondaryColor)
+                Text(summaryText(task), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
 
             if (!viewModel.isMultiSelectMode) {
-                Icon(Icons.Filled.Link, contentDescription = "Group with others", tint = MediumGray,
+                Icon(Icons.Filled.Link, contentDescription = "Group with others", tint = FLTheme.colors.textTertiary,
                     modifier = Modifier.size(22.dp).clickable { viewModel.enterMultiSelect(taskId) })
             }
             Icon(
                 if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                contentDescription = if (isExpanded) "Collapse" else "Expand", tint = MediumGray,
+                contentDescription = if (isExpanded) "Collapse" else "Expand", tint = FLTheme.colors.textTertiary,
                 modifier = Modifier.size(22.dp).clickable { viewModel.expandedTaskId = if (isExpanded) null else taskId }
             )
             Box {
-                Icon(Icons.Filled.MoreHoriz, contentDescription = "Row actions", tint = MediumGray,
+                Icon(Icons.Filled.MoreHoriz, contentDescription = "Row actions", tint = FLTheme.colors.textTertiary,
                     modifier = Modifier.size(22.dp).clickable { showMenu = true })
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(text = { Text("Swap Exercise") }, onClick = { showMenu = false; viewModel.replaceExerciseTaskId = taskId })
                     if (otherPhases.isNotEmpty()) {
                         DropdownMenuItem(text = { Text("Move to phase…") }, onClick = { showMenu = false; showMoveMenu = true })
                     }
-                    DropdownMenuItem(text = { Text("Remove", color = Color.Red) }, onClick = { showMenu = false; viewModel.removeExercise(taskId, phaseIndex) })
+                    DropdownMenuItem(text = { Text("Remove", color = FLTheme.colors.danger) }, onClick = { showMenu = false; viewModel.removeExercise(taskId, phaseIndex) })
                 }
                 DropdownMenu(expanded = showMoveMenu, onDismissRequest = { showMoveMenu = false }) {
                     otherPhases.forEach { (index, phase) ->
@@ -132,8 +129,8 @@ fun MovementEditorRow(task: WorkoutTask, phaseIndex: Int, isSelected: Boolean, v
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp),
                     modifier = Modifier.clickable { viewModel.removeExercise(taskId, phaseIndex) }
                 ) {
-                    Icon(Icons.Filled.Delete, contentDescription = null, tint = Color.Red, modifier = Modifier.size(14.dp))
-                    Text("Remove", fontSize = 13.sp, color = Color.Red)
+                    Icon(Icons.Filled.Delete, contentDescription = null, tint = FLTheme.colors.danger, modifier = Modifier.size(14.dp))
+                    Text("Remove", fontSize = 13.sp, color = FLTheme.colors.danger)
                 }
             }
         }

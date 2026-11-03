@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,12 +47,7 @@ import com.fitnesslink.fit.model.SetPreset
 import com.fitnesslink.fit.model.TaskSetConfig
 import com.fitnesslink.fit.model.WeightUnit
 import com.fitnesslink.fit.model.WorkoutTask
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutEditorViewModel
 import com.fitnesslink.fit.workouts.WorkoutRowOps
 
@@ -64,11 +60,11 @@ fun EditorChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: 
         text = label,
         fontSize = 12.sp,
         fontWeight = FontWeight.Medium,
-        color = if (selected) White else TextPrimaryColor,
+        color = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary,
         maxLines = 1,
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(if (selected) FLPrimary else BackgroundColor)
+            .background(if (selected) FLPrimary else FLTheme.colors.background)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp)
     )
@@ -79,7 +75,7 @@ fun EditorChip(label: String, selected: Boolean, onClick: () -> Unit, modifier: 
 fun EditorStepper(value: Int, onChange: (Int) -> Unit, min: Int, max: Int, step: Int = 1, suffix: String = "", valueWidth: Int = 36) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Icon(
-            Icons.Filled.RemoveCircle, contentDescription = "Decrease", tint = MediumGray,
+            Icons.Filled.RemoveCircle, contentDescription = "Decrease", tint = FLTheme.colors.textTertiary,
             modifier = Modifier.size(24.dp).clickable { onChange(maxOf(min, value - step)) }
         )
         Text(text = "$value$suffix", fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center, modifier = Modifier.width(valueWidth.dp))
@@ -93,7 +89,7 @@ fun EditorStepper(value: Int, onChange: (Int) -> Unit, min: Int, max: Int, step:
 @Composable
 private fun StepperWithLabel(label: String, content: @Composable () -> Unit) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         content()
     }
 }
@@ -133,11 +129,11 @@ fun SetEditorView(task: WorkoutTask, viewModel: WorkoutEditorViewModel, isGroupe
                     EditorStepper(task.reps, { viewModel.updateTaskSets(taskId, task.sets, it, weightLbs) }, min = 1, max = 100)
                 }
             } else {
-                Text("Timed work — Work / Rest are set on the interval.", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("Timed work — Work / Rest are set on the interval.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         } else {
             // Reps / Time toggle
-            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(BackgroundColor)) {
+            Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.background)) {
                 ModePill("Reps", !task.usesDuration, Modifier.weight(1f)) { viewModel.setUsesDuration(taskId, false); showCustomDuration = false }
                 ModePill("Time", task.usesDuration, Modifier.weight(1f)) { viewModel.setUsesDuration(taskId, true) }
             }
@@ -164,7 +160,7 @@ fun SetEditorView(task: WorkoutTask, viewModel: WorkoutEditorViewModel, isGroupe
 
             if (task.usesDuration) {
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Duration", fontSize = 11.sp, color = TextSecondaryColor)
+                    Text("Duration", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         durationPresets.forEach { secs ->
                             EditorChip(WorkoutRowOps.formatDuration(secs), task.durationSeconds == secs && !showCustomDuration, onClick = {
@@ -218,7 +214,7 @@ fun SetEditorView(task: WorkoutTask, viewModel: WorkoutEditorViewModel, isGroupe
             if (!isGrouped) {
                 HorizontalDivider()
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Rest Between Sets", fontSize = 11.sp, color = TextSecondaryColor)
+                    Text("Rest Between Sets", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         EditorChip("None", task.restSeconds == 0 && !showCustomRest, onClick = { showCustomRest = false; viewModel.updateExerciseRest(taskId, 0) })
                         restPresets.forEach { secs ->
@@ -235,7 +231,7 @@ fun SetEditorView(task: WorkoutTask, viewModel: WorkoutEditorViewModel, isGroupe
                                 customRest = raw.filter(Char::isDigit)
                                 customRest.toIntOrNull()?.takeIf { it > 0 }?.let { viewModel.updateExerciseRest(taskId, it) }
                             }
-                            Text("seconds", fontSize = 11.sp, color = TextSecondaryColor)
+                            Text("seconds", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                         }
                     }
                 }
@@ -251,7 +247,7 @@ fun SetEditorView(task: WorkoutTask, viewModel: WorkoutEditorViewModel, isGroupe
 private fun ModePill(label: String, active: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Text(
         text = label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
-        color = if (active) White else TextPrimaryColor,
+        color = if (active) FLTheme.colors.onBrand else FLTheme.colors.textPrimary,
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
             .background(if (active) FLPrimary else Color.Transparent)
@@ -265,7 +261,7 @@ private fun ModePill(label: String, active: Boolean, modifier: Modifier, onClick
 fun InstructionsField(value: String, onValueChange: (String) -> Unit, label: String = "Notes", placeholder: String = "Movement cues") {
     var text by remember(value) { mutableStateOf(value) }
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         OutlinedTextField(
             value = text,
             onValueChange = { text = it; onValueChange(it) },
@@ -313,7 +309,7 @@ private fun WeightField(lbs: Double?, onChangeLbs: (Double?) -> Unit) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.width(72.dp)
             )
-            Text(WeightUnit.current.label, fontSize = 11.sp, color = TextSecondaryColor)
+            Text(WeightUnit.current.label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -337,7 +333,7 @@ private fun PerSetRow(task: WorkoutTask, config: TaskSetConfig, viewModel: Worko
     fun lbs(): Double? = weight.toDoubleOrNull()?.let { WeightUnit.storageLbs(fromDisplay = it) }?.takeIf { it > 0 }
 
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text("$perRowLabel ${config.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor, modifier = Modifier.width(64.dp))
+        Text("$perRowLabel ${config.setNumber}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary, modifier = Modifier.width(64.dp))
         if (task.usesDuration) {
             // FTNSSLNK-511: timed sets are Time + Weight only (plank 0:30 /
             // 0:45 / 1:00) — no per-set rep target. The draft text commits
@@ -374,7 +370,7 @@ private fun PerSetRow(task: WorkoutTask, config: TaskSetConfig, viewModel: Worko
                 textStyle = TextStyle(fontSize = 14.sp, textAlign = TextAlign.Center),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.width(60.dp)
             )
-            Text("reps", fontSize = 11.sp, color = TextSecondaryColor)
+            Text("reps", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
         OutlinedTextField(
             value = weight,
@@ -388,7 +384,7 @@ private fun PerSetRow(task: WorkoutTask, config: TaskSetConfig, viewModel: Worko
             textStyle = TextStyle(fontSize = 14.sp, textAlign = TextAlign.Center),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), modifier = Modifier.width(72.dp)
         )
-        Text(WeightUnit.current.label, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(WeightUnit.current.label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.weight(1f))
     }
 }

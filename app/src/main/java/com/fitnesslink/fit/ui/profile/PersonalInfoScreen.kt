@@ -1,5 +1,7 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
+import androidx.compose.ui.graphics.Color
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -59,7 +61,7 @@ fun PersonalInfoScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -99,10 +101,10 @@ fun PersonalInfoScreen(
                         modifier = Modifier
                             .size(100.dp)
                             .clip(CircleShape)
-                            .background(Black.copy(alpha = 0.4f)),
+                            .background(Color.Black.copy(alpha = 0.4f)), // theme-exempt: over media
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator(color = White)
+                        CircularProgressIndicator(color = Color.White) // theme-exempt: over media
                     }
                 }
 
@@ -116,7 +118,7 @@ fun PersonalInfoScreen(
                         .background(FLPrimary),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = White, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.CameraAlt, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(14.dp))
                 }
             }
 
@@ -128,12 +130,12 @@ fun PersonalInfoScreen(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(if (viewModel.isActive) FLPrimary else MediumGray)
+                        .background(if (viewModel.isActive) FLPrimary else FLTheme.colors.textTertiary)
                 )
                 Text(
                     if (viewModel.isActive) "Active" else "Inactive",
                     fontSize = 13.sp, fontWeight = FontWeight.Medium,
-                    color = if (viewModel.isActive) FLPrimary else MediumGray
+                    color = if (viewModel.isActive) FLPrimary else FLTheme.colors.textTertiary
                 )
             }
 
@@ -145,7 +147,7 @@ fun PersonalInfoScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(White)
+                    .background(FLTheme.colors.surface)
             ) {
                 FieldRow("First Name", viewModel.firstName, { viewModel.firstName = it })
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -171,8 +173,8 @@ fun PersonalInfoScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
-                    Text("Member since $memberSinceText", fontSize = 14.sp, color = TextSecondaryColor)
+                    Icon(Icons.Default.CalendarToday, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(14.dp))
+                    Text("Member since $memberSinceText", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 }
             }
 
@@ -199,11 +201,11 @@ fun PersonalInfoScreen(
                 shape = RoundedCornerShape(26.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = FLPrimary,
-                    disabledContainerColor = DisabledButton
+                    disabledContainerColor = FLTheme.colors.disabled
                 )
             ) {
                 if (viewModel.isSaving) {
-                    CircularProgressIndicator(color = White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
                     Text("Save Changes", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                 }
@@ -217,7 +219,7 @@ fun PersonalInfoScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 20.dp)
                     .clip(RoundedCornerShape(12.dp))
-                    .background(White)
+                    .background(FLTheme.colors.surface)
             ) {
                 Row(
                     modifier = Modifier
@@ -229,7 +231,7 @@ fun PersonalInfoScreen(
                     Icon(Icons.Default.CreditCard, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(12.dp))
                     Text("Billing & Subscription", fontSize = 15.sp, modifier = Modifier.weight(1f))
-                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(14.dp))
+                    Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp))
                 }
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 Row(
@@ -289,7 +291,7 @@ fun PersonalInfoScreen(
 @Composable
 private fun FieldRow(label: String, value: String, onValueChange: (String) -> Unit, keyboardType: KeyboardType = KeyboardType.Text) {
     Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
-        Text(label, fontSize = 12.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.height(4.dp))
         TextField(
             value = value,
@@ -298,8 +300,8 @@ private fun FieldRow(label: String, value: String, onValueChange: (String) -> Un
             textStyle = LocalTextStyle.current.copy(fontSize = 16.sp),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = White,
-                unfocusedContainerColor = White,
+                focusedContainerColor = FLTheme.colors.surface,
+                unfocusedContainerColor = FLTheme.colors.surface,
                 focusedIndicatorColor = FLPrimary,
                 unfocusedIndicatorColor = androidx.compose.ui.graphics.Color.Transparent
             ),

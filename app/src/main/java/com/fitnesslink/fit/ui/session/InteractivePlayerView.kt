@@ -40,7 +40,7 @@ import com.fitnesslink.fit.media.MediaURLProvider
 import com.fitnesslink.fit.media.MuxStatus
 import com.fitnesslink.fit.media.MuxUrls
 import com.fitnesslink.fit.ui.components.FLImageView
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
+import com.fitnesslink.fit.ui.theme.FLTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -374,7 +374,7 @@ fun MuxVideoPlayer(
     val showingFrames = shouldAttemptPlayback && controller.isShowingFrames
 
     Box(
-        modifier = modifier.background(if (fill) ImagePlaceholder else Color.Black),
+        modifier = modifier.background(if (fill) FLTheme.colors.imagePlaceholder else Color.Black), // theme-exempt: over media (letterbox)
         contentAlignment = Alignment.Center
     ) {
         // Poster beneath the player until frames paint — first paint is the
@@ -409,10 +409,10 @@ fun MuxVideoPlayer(
 
         if (shouldAttemptPlayback && (controller.isLoading || controller.isBuffering)) {
             Box(
-                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.35f)), // theme-exempt: over media
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = Color.White)
+                CircularProgressIndicator(color = Color.White) // theme-exempt: over media
             }
         }
     }

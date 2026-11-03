@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.movements
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -73,11 +74,8 @@ import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.components.ShareSheet
 import com.fitnesslink.fit.ui.components.SharedBadge
 import com.fitnesslink.fit.ui.session.MuxVideoPlayer
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.NoPreviewPlaceholder
 import com.fitnesslink.fit.ui.workout.WatchDemoButton
 import kotlinx.coroutines.launch
@@ -208,7 +206,7 @@ fun MovementDetailScreen(
                             ownerActionError = MovementStore.userMessage(e, "delete")
                         } finally { isDeleting = false }
                     }
-                }) { Text("Delete Movement", color = Color.Red) }
+                }) { Text("Delete Movement", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { showDeleteConfirm = false }) { Text("Cancel") } }
         )
@@ -236,7 +234,7 @@ fun MovementDetailScreen(
                             errorMessage = "Something went wrong removing this movement. Please try again."
                         }
                     }
-                }) { Text("Remove", color = Color.Red) }
+                }) { Text("Remove", color = FLTheme.colors.danger) }
             },
             dismissButton = { TextButton(onClick = { showRemoveAlert = false }) { Text("Cancel") } }
         )
@@ -251,7 +249,7 @@ fun MovementDetailScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         // Hero
         Box(modifier = Modifier.fillMaxWidth().height(if (showVideo && videoId != null) heroHeight else 250.dp)) {
             when {
@@ -275,11 +273,11 @@ fun MovementDetailScreen(
                                 .padding(top = 56.dp, end = 12.dp)
                                 .size(34.dp)
                                 .clip(CircleShape)
-                                .background(Color.Black.copy(alpha = 0.55f))
+                                .background(Color.Black.copy(alpha = 0.55f))  // theme-exempt: over media
                                 .clickable { showFullscreen = true },
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(Icons.Default.Fullscreen, contentDescription = "Fullscreen", tint = White, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Default.Fullscreen, contentDescription = "Fullscreen", tint = Color.White, modifier = Modifier.size(18.dp))  // theme-exempt: over media
                         }
                     }
                 }
@@ -287,7 +285,7 @@ fun MovementDetailScreen(
                     if (posterRef != null) {
                         FLImageView(ref = posterRef, modifier = Modifier.fillMaxSize())
                     } else {
-                        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.9f)))
+                        Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.9f)))  // theme-exempt: over media
                     }
                     if (videoId != null) {
                         WatchDemoButton(modifier = Modifier.align(Alignment.BottomEnd).padding(12.dp), onClick = { showVideo = true })
@@ -301,7 +299,7 @@ fun MovementDetailScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp)
-                    .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.5f), Color.Transparent)))
+                    .background(Brush.verticalGradient(listOf(FLTheme.colors.scrim, Color.Transparent)))
             )
             Row(
                 modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(top = 12.dp, start = 20.dp, end = 20.dp),
@@ -323,8 +321,8 @@ fun MovementDetailScreen(
                                         onClick = { showOwnerMenu = false; showEditSheet = true }
                                     )
                                     DropdownMenuItem(
-                                        text = { Text("Delete Movement", color = Color.Red) },
-                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) },
+                                        text = { Text("Delete Movement", color = FLTheme.colors.danger) },
+                                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = FLTheme.colors.danger) },
                                         onClick = { showOwnerMenu = false; showDeleteConfirm = true }
                                     )
                                 }
@@ -335,7 +333,7 @@ fun MovementDetailScreen(
                 }
             }
             if (isDeleting || (isLoading && movement == null && fallback == null)) {
-                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = White)
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = Color.White)  // theme-exempt: over media
             }
         }
 
@@ -343,7 +341,7 @@ fun MovementDetailScreen(
             modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(displayName, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text(displayName, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
 
             if (movement?.isSharedWithMe == true || fallback?.isSharedWithMe == true) SharedBadge()
 
@@ -391,12 +389,12 @@ fun MovementDetailScreen(
 
             if (movement?.summary.isNullOrBlank() && movement?.sections.isNullOrEmpty()) {
                 val description = movement?.description ?: fallback?.description
-                if (!description.isNullOrBlank()) Text(description, fontSize = 15.sp, color = TextPrimaryColor)
+                if (!description.isNullOrBlank()) Text(description, fontSize = 15.sp, color = FLTheme.colors.textPrimary)
             }
         }
 
         // Action bar
-        Column(modifier = Modifier.fillMaxWidth().background(White)) {
+        Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface)) {
             SeparatorView()
             Box(modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp).clickable { onBuildWorkout(movementId) }) {
                 PrimaryButtonView(text = "Build a Workout")
@@ -411,11 +409,11 @@ private fun HeroIconButton(icon: androidx.compose.ui.graphics.vector.ImageVector
         modifier = Modifier
             .size(36.dp)
             .clip(CircleShape)
-            .background(Color.Black.copy(alpha = 0.5f))
+            .background(FLTheme.colors.scrim)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(icon, contentDescription = description, tint = White, modifier = Modifier.size(16.dp))
+        Icon(icon, contentDescription = description, tint = Color.White, modifier = Modifier.size(16.dp))  // theme-exempt: over media
     }
 }
 
@@ -423,7 +421,7 @@ private fun HeroIconButton(icon: androidx.compose.ui.graphics.vector.ImageVector
 @Composable
 private fun FullscreenVideoPlayer(videoId: String, url: String?, onClose: () -> Unit) {
     Dialog(onDismissRequest = onClose, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {  // theme-exempt: over media
             MuxVideoPlayer(
                 ref = MediaRef.MovementVideo(videoId),
                 modifier = Modifier.fillMaxSize(),
@@ -438,11 +436,11 @@ private fun FullscreenVideoPlayer(videoId: String, url: String?, onClose: () -> 
                     .padding(top = 16.dp, end = 16.dp)
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.6f))
+                    .background(Color.Black.copy(alpha = 0.6f))  // theme-exempt: over media
                     .clickable(onClick = onClose),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = White, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White, modifier = Modifier.size(18.dp))  // theme-exempt: over media
             }
         }
     }

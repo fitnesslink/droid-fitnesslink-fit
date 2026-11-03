@@ -42,14 +42,11 @@ import com.fitnesslink.fit.R
 import com.fitnesslink.fit.auth.AuthManager
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.ui.navigation.AppRoute
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 /**
  * Port of iOS `Views/Personalization/GetStartedView.swift` (FTNSSLNK-356).
@@ -70,7 +67,7 @@ fun GetStartedScreen(onFinish: (route: String?) -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         Column(
             modifier = Modifier
@@ -81,7 +78,7 @@ fun GetStartedScreen(onFinish: (route: String?) -> Unit) {
             Image(
                 painter = painterResource(R.drawable.logo),
                 contentDescription = "FitnessLink",
-                colorFilter = ColorFilter.tint(TextPrimaryColor),
+                colorFilter = ColorFilter.tint(FLTheme.colors.textPrimary),
                 modifier = Modifier
                     .align(Alignment.CenterHorizontally)
                     .padding(top = 24.dp)
@@ -102,13 +99,13 @@ fun GetStartedScreen(onFinish: (route: String?) -> Unit) {
                 text = if (firstName.isEmpty()) "You're all set" else "You're all set, $firstName",
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimaryColor,
+                color = FLTheme.colors.textPrimary,
                 modifier = Modifier.padding(top = 20.dp)
             )
             Text(
                 text = "Your profile is ready. Choose how you want to start training — you can always do the rest later.",
                 fontSize = 15.sp,
-                color = TextSecondaryColor,
+                color = FLTheme.colors.textSecondary,
                 modifier = Modifier.padding(top = 8.dp)
             )
 
@@ -171,7 +168,7 @@ private fun OptionCard(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(14.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -186,10 +183,10 @@ private fun OptionCard(
             Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text(subtitle, fontSize = 13.sp, color = TextSecondaryColor)
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text(subtitle, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
         }
-        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = TextSecondaryColor)
+        Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = FLTheme.colors.textSecondary)
     }
 }
 

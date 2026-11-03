@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -60,13 +61,8 @@ import com.fitnesslink.fit.network.dto.SubscriptionDto
 import com.fitnesslink.fit.ui.billing.openUrl
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -106,7 +102,7 @@ fun BillingScreen(onBack: () -> Unit) {
 
     LaunchedEffect(Unit) { load() }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier
@@ -115,7 +111,7 @@ fun BillingScreen(onBack: () -> Unit) {
                 .padding(horizontal = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Subscription", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(top = 8.dp))
+            Text("Subscription", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(top = 8.dp))
 
             if (isLoading && subscription == null) {
                 Box(modifier = Modifier.fillMaxWidth().padding(top = 60.dp), contentAlignment = Alignment.Center) {
@@ -134,13 +130,13 @@ fun BillingScreen(onBack: () -> Unit) {
                     }
                 }
                 Column(
-                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(18.dp),
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(18.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp)
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             BillingPresentation.planName(entitlement, subscription),
-                            fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
+                            fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary,
                             modifier = Modifier.weight(1f)
                         )
                         StatusPill(pill)
@@ -168,12 +164,12 @@ fun BillingScreen(onBack: () -> Unit) {
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Icon(Icons.Default.Warning, contentDescription = null, tint = OrangeTheme)
-                        Text(banner.text, fontSize = 13.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                        if (banner.opensPlay) Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
+                        Text(banner.text, fontSize = 13.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                        if (banner.opensPlay) Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
                     }
                 }
 
-                Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White)) {
+                Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface)) {
                     when (val manage = BillingPresentation.manageAction(entitlement, subscription)) {
                         BillingPresentation.ManageAction.OpenPlay -> ActionRow("Manage subscription", Icons.Default.Settings) {
                             message = null
@@ -198,11 +194,11 @@ fun BillingScreen(onBack: () -> Unit) {
                     Text(BillingException.AlreadyLinkedToAnotherAccount.message ?: "", fontSize = 13.sp, color = OrangeTheme, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
                 if (pendingPayments.isNotEmpty()) {
-                    Text(BillingException.PaymentPending.message ?: "", fontSize = 13.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    Text(BillingException.PaymentPending.message ?: "", fontSize = 13.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
 
                 message?.let {
-                    Text(it, fontSize = 13.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    Text(it, fontSize = 13.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
                 }
             }
             Spacer(modifier = Modifier.size(16.dp))
@@ -236,18 +232,18 @@ private fun StatusPill(pill: BillingPresentation.StatusPill) {
     val bg = when (pill.tone) {
         BillingPresentation.PillTone.BRAND -> FLPrimary
         BillingPresentation.PillTone.WARNING -> OrangeTheme
-        BillingPresentation.PillTone.NEUTRAL -> MediumGray
+        BillingPresentation.PillTone.NEUTRAL -> FLTheme.colors.textTertiary
     }
     Box(modifier = Modifier.clip(CircleShape).background(bg).padding(horizontal = 10.dp, vertical = 5.dp)) {
-        Text(pill.label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Text(pill.label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.onBrand)
     }
 }
 
 @Composable
 private fun InfoLine(icon: ImageVector, text: String) {
     Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Icon(icon, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
-        Text(text, fontSize = 14.sp, color = TextSecondaryColor)
+        Icon(icon, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
+        Text(text, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -259,7 +255,7 @@ private fun InfoRow(icon: ImageVector, text: String) {
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Icon(icon, contentDescription = null, tint = FLPrimary)
-        Text(text, fontSize = 13.sp, color = TextSecondaryColor)
+        Text(text, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -271,8 +267,8 @@ private fun ActionRow(title: String, icon: ImageVector, onClick: () -> Unit) {
     ) {
         Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
         Spacer(modifier = Modifier.width(12.dp))
-        Text(title, fontSize = 16.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
+        Text(title, fontSize = 16.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+        Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
     }
 }
 
@@ -284,8 +280,8 @@ private fun RestoreRow(isRestoring: Boolean, onClick: () -> Unit) {
     ) {
         Icon(Icons.Default.Refresh, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
         Spacer(modifier = Modifier.width(12.dp))
-        Text(if (isRestoring) "Restoring…" else "Restore Purchases", fontSize = 16.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+        Text(if (isRestoring) "Restoring…" else "Restore Purchases", fontSize = 16.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
         if (isRestoring) CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(16.dp))
-        else Icon(Icons.Default.ChevronRight, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
+        else Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
     }
 }

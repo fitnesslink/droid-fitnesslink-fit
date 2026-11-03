@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -35,11 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.components.ActionButtonView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * Stepper sheet for the "workouts this week" display goal (iOS
@@ -52,7 +49,7 @@ fun WeeklyGoalSheet(current: Int, onSave: (Int) -> Unit, onCancel: () -> Unit) {
     var goal by remember { mutableIntStateOf(current.coerceIn(1, 14)) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    ModalBottomSheet(onDismissRequest = onCancel, sheetState = sheetState, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onCancel, sheetState = sheetState, containerColor = FLTheme.colors.background) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp),
@@ -69,14 +66,14 @@ fun WeeklyGoalSheet(current: Int, onSave: (Int) -> Unit, onCancel: () -> Unit) {
                     modifier = Modifier.clickable(onClick = onCancel)
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Text(text = "Weekly Workout Goal", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text(text = "Weekly Workout Goal", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Spacer(modifier = Modifier.weight(1f))
                 Spacer(modifier = Modifier.size(44.dp, 1.dp))
             }
             Text(
                 text = "How many workouts do you want to complete each week?",
                 fontSize = 15.sp,
-                color = TextSecondaryColor,
+                color = FLTheme.colors.textSecondary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 4.dp)
             )
@@ -105,9 +102,9 @@ private fun StepButton(icon: ImageVector, description: String, onClick: () -> Un
         modifier = Modifier
             .size(44.dp)
             .clip(CircleShape)
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
     ) {
-        Icon(imageVector = icon, contentDescription = description, tint = TextPrimaryColor, modifier = Modifier.size(20.dp))
+        Icon(imageVector = icon, contentDescription = description, tint = FLTheme.colors.textPrimary, modifier = Modifier.size(20.dp))
     }
 }

@@ -38,12 +38,8 @@ import com.fitnesslink.fit.model.NutritionCalendarMonth
 import com.fitnesslink.fit.model.NutritionDayDotState
 import com.fitnesslink.fit.network.dto.NutritionDayRollup
 import com.fitnesslink.fit.nutrition.NutritionSummaryStore
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -73,7 +69,7 @@ fun NutritionCalendarSheet(
         range?.days?.forEach { rollupsByDay[it.date] = it }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.background) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -81,7 +77,7 @@ fun NutritionCalendarSheet(
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
-                "Select Day", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
+                "Select Day", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary,
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -90,7 +86,7 @@ fun NutritionCalendarSheet(
                     modifier = Modifier.size(32.dp).clickable { monthAnchor = NutritionCalendarMonth.firstOfMonth(monthAnchor, -1) }
                 )
                 Spacer(modifier = Modifier.weight(1f))
-                Text(monthFormat.format(monthAnchor), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text(monthFormat.format(monthAnchor), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Spacer(modifier = Modifier.weight(1f))
                 Icon(
                     Icons.Default.ChevronRight, contentDescription = "Next month", tint = FLPrimary,
@@ -100,7 +96,7 @@ fun NutritionCalendarSheet(
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
                 listOf("S", "M", "T", "W", "T", "F", "S").forEach { symbol ->
                     Text(
-                        symbol, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor,
+                        symbol, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary,
                         modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                 }
@@ -134,9 +130,9 @@ fun NutritionCalendarSheet(
                                                 dayFormat.format(date), fontSize = 15.sp,
                                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                                 color = when {
-                                                    isSelected -> White
-                                                    isFuture -> MediumGray
-                                                    else -> TextPrimaryColor
+                                                    isSelected -> FLTheme.colors.onBrand
+                                                    isFuture -> FLTheme.colors.textTertiary
+                                                    else -> FLTheme.colors.textPrimary
                                                 }
                                             )
                                         }

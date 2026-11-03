@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.progress
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,11 +53,7 @@ import com.fitnesslink.fit.model.BodyPart
 import com.fitnesslink.fit.model.MeasurementEntry
 import com.fitnesslink.fit.model.MeasurementUnit
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.viewmodel.MeasurementsViewModel
 
 /**
@@ -91,7 +88,7 @@ fun MeasurementsLogScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -101,7 +98,7 @@ fun MeasurementsLogScreen(
         ) {
             item {
                 Text(
-                    "Measurements", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor,
+                    "Measurements", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
                 )
             }
@@ -113,12 +110,12 @@ fun MeasurementsLogScreen(
                             .fillMaxWidth()
                             .padding(horizontal = 20.dp),
                         shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                        colors = CardDefaults.cardColors(containerColor = FLTheme.colors.surface)
                     ) {
                         Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text("Latest — ", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-                                Text(longDate.format(latest.date), fontSize = 14.sp, color = TextSecondaryColor)
+                                Text("Latest — ", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+                                Text(longDate.format(latest.date), fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                             }
                             MeasurementBreakdownView(
                                 entry = latest,
@@ -149,14 +146,14 @@ fun MeasurementsLogScreen(
                 item {
                     Text(
                         "No measurements yet. Log your first set to start tracking changes.",
-                        fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 20.dp)
+                        fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 20.dp)
                     )
                 }
             }
 
             if (viewModel.entries.size > 1) {
                 item {
-                    Text("History", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+                    Text("History", fontSize = 18.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp))
                 }
                 items(viewModel.entries, key = { it.id }) { entry ->
                     Card(
@@ -165,7 +162,7 @@ fun MeasurementsLogScreen(
                             .padding(horizontal = 20.dp)
                             .clickable { openEntry(entry.id) },
                         shape = RoundedCornerShape(10.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White)
+                        colors = CardDefaults.cardColors(containerColor = FLTheme.colors.surface)
                     ) {
                         Row(
                             modifier = Modifier.padding(start = 14.dp, top = 6.dp, bottom = 6.dp, end = 4.dp),
@@ -173,15 +170,15 @@ fun MeasurementsLogScreen(
                         ) {
                             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(longDate.format(entry.date), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                                    Text("${entry.measurements.size} parts", fontSize = 12.sp, color = TextSecondaryColor)
+                                    Text(longDate.format(entry.date), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                                    Text("${entry.measurements.size} parts", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                                 }
-                                if (entry.notes.isNotEmpty()) Text(entry.notes, fontSize = 12.sp, color = TextSecondaryColor)
+                                if (entry.notes.isNotEmpty()) Text(entry.notes, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                             }
                             IconButton(onClick = { pendingDelete = entry }) {
-                                Icon(Icons.Default.Delete, contentDescription = "Delete entry", tint = MediumGray, modifier = Modifier.size(18.dp))
+                                Icon(Icons.Default.Delete, contentDescription = "Delete entry", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
                             }
-                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
                         }
                     }
                 }
@@ -226,13 +223,13 @@ fun AddMeasurementDialog(viewModel: MeasurementsViewModel, onDismiss: () -> Unit
                     }
                 }
                 item { DatePickerField(date = viewModel.newDate, onDateChange = { viewModel.newDate = it }) }
-                item { Text("Select body parts to measure", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor) }
+                item { Text("Select body parts to measure", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary) }
 
                 val grouped = BodyPart.entries.groupBy { it.category }
                 BodyPart.categoryOrder.forEach { category ->
                     grouped[category]?.let { parts ->
                         item {
-                            Text(category, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor, modifier = Modifier.padding(top = 4.dp))
+                            Text(category, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(top = 4.dp))
                         }
                         items(parts) { part ->
                             val selected = viewModel.selectedParts.contains(part)
@@ -244,7 +241,7 @@ fun AddMeasurementDialog(viewModel: MeasurementsViewModel, onDismiss: () -> Unit
                                 )
                                 Icon(bodyPartIcon(part), contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text(part.displayName, fontSize = 14.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                                Text(part.displayName, fontSize = 14.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                                 if (selected) {
                                     OutlinedTextField(
                                         value = viewModel.values[part] ?: "",

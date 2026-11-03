@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -34,9 +35,6 @@ import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.model.api.ProgramContributor
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * "About the Coach" (iOS `ProgramContributorView`): the contributor's name,
@@ -49,12 +47,12 @@ import com.fitnesslink.fit.ui.theme.White
 fun ProgramContributorCard(contributor: ProgramContributor, modifier: Modifier = Modifier, showTitle: Boolean = true) {
     val context = LocalContext.current
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (showTitle) Text("About the Coach", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+        if (showTitle) Text("About the Coach", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(White)
+                .background(FLTheme.colors.surface)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -66,21 +64,21 @@ fun ProgramContributorCard(contributor: ProgramContributor, modifier: Modifier =
                     Icon(Icons.Default.AccountCircle, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(52.dp))
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(contributor.displayName ?: "Coach", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                    contributor.headline?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = TextSecondaryColor) }
+                    Text(contributor.displayName ?: "Coach", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                    contributor.headline?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.textSecondary) }
                 }
             }
 
-            contributor.bio?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = TextSecondaryColor) }
+            contributor.bio?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.textSecondary) }
 
             val credentials = contributor.credentials.sortedBy { it.sortOrder }
             if (credentials.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Credentials", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                    Text("Credentials", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                     credentials.forEach { credential ->
                         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.Verified, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(15.dp))
-                            Text(credential.displayText, fontSize = 13.sp, color = TextPrimaryColor)
+                            Text(credential.displayText, fontSize = 13.sp, color = FLTheme.colors.textPrimary)
                         }
                     }
                 }
@@ -89,13 +87,13 @@ fun ProgramContributorCard(contributor: ProgramContributor, modifier: Modifier =
             val achievements = contributor.achievements.sortedBy { it.sortOrder }
             if (achievements.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Achievements", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                    Text("Achievements", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                     achievements.forEach { achievement ->
                         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(15.dp))
                             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(achievement.displayTitle, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                                achievement.description?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor) }
+                                Text(achievement.displayTitle, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                                achievement.description?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.textSecondary) }
                             }
                         }
                     }

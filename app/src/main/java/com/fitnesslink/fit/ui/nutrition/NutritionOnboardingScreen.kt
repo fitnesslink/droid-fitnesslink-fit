@@ -73,18 +73,11 @@ import com.fitnesslink.fit.model.api.estimatedGoalDateValue
 import com.fitnesslink.fit.model.api.whyText
 import com.fitnesslink.fit.network.dto.NutritionTargets
 import com.fitnesslink.fit.ui.components.SeparatorView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.BlueTheme
-import com.fitnesslink.fit.ui.theme.DisabledButton
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.InfoColor
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.ProgressBG
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.NutritionOnboardingViewModel
 import com.fitnesslink.fit.viewmodel.NutritionOnboardingViewModel.Step
 import com.fitnesslink.fit.viewmodel.NutritionProfileValidation
@@ -111,23 +104,23 @@ fun NutritionOnboardingScreen(
 ) {
     val scope = rememberCoroutineScope()
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         // Header: back / step counter / progress capsule
         Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
                         .size(36.dp)
-                        .background(White, CircleShape)
+                        .background(FLTheme.colors.surface, CircleShape)
                         .clickable { if (viewModel.isFirstStep) onBack() else viewModel.goBack() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.ChevronLeft, contentDescription = "Back", tint = FLPrimary)
                 }
                 Spacer(modifier = Modifier.weight(1f))
-                Text("Step ${viewModel.stepIndex + 1} of ${viewModel.stepCount}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                Text("Step ${viewModel.stepIndex + 1} of ${viewModel.stepCount}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
             }
-            Box(modifier = Modifier.fillMaxWidth().height(6.dp).background(ProgressBG, RoundedCornerShape(3.dp))) {
+            Box(modifier = Modifier.fillMaxWidth().height(6.dp).background(FLTheme.colors.progressTrack, RoundedCornerShape(3.dp))) {
                 Box(modifier = Modifier.fillMaxWidth(viewModel.progress).height(6.dp).background(FLPrimary, RoundedCornerShape(3.dp)))
             }
         }
@@ -139,7 +132,7 @@ fun NutritionOnboardingScreen(
                 .padding(horizontal = 20.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text(viewModel.step.title, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text(viewModel.step.title, fontSize = 26.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
 
             when (viewModel.step) {
                 Step.STATS -> StatsStep(viewModel)
@@ -182,14 +175,14 @@ fun NutritionOnboardingScreen(
 @Composable
 private fun StatsStep(vm: NutritionOnboardingViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("A few basics so we can estimate how much energy your body uses.", fontSize = 14.sp, color = TextSecondaryColor)
+        Text("A few basics so we can estimate how much energy your body uses.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         NutritionFieldCard {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Name", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("Name", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 Spacer(modifier = Modifier.weight(1f))
                 BasicTextField(
                     value = vm.name, onValueChange = { vm.name = it }, singleLine = true,
-                    textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, textAlign = TextAlign.End),
+                    textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.End),
                     modifier = Modifier.width(160.dp)
                 )
             }
@@ -218,7 +211,7 @@ private fun StatsStep(vm: NutritionOnboardingViewModel) {
 @Composable
 private fun ActivityStep(vm: NutritionOnboardingViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("How active is your typical day, outside of workouts? This sets the multiplier on your resting burn.", fontSize = 14.sp, color = TextSecondaryColor)
+        Text("How active is your typical day, outside of workouts? This sets the multiplier on your resting burn.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         NutritionActivityLevel.entries.forEach { level ->
             NutritionOptionCard(title = level.displayName, detail = level.detail, selected = vm.activityLevel == level) { vm.activityLevel = level }
         }
@@ -228,7 +221,7 @@ private fun ActivityStep(vm: NutritionOnboardingViewModel) {
 @Composable
 private fun FrequencyStep(vm: NutritionOnboardingViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("How many days a week do you work out? This helps us align your nutrition with your training.", fontSize = 14.sp, color = TextSecondaryColor)
+        Text("How many days a week do you work out? This helps us align your nutrition with your training.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         NutritionWorkoutFrequency.entries.forEach { band ->
             NutritionOptionCard(title = "${band.displayName} per week", detail = null, selected = vm.workoutFrequency == band) { vm.workoutFrequency = band }
         }
@@ -238,7 +231,7 @@ private fun FrequencyStep(vm: NutritionOnboardingViewModel) {
 @Composable
 private fun GoalStep(vm: NutritionOnboardingViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("What's your primary goal? This drives the direction of your calories and your macro split.", fontSize = 14.sp, color = TextSecondaryColor)
+        Text("What's your primary goal? This drives the direction of your calories and your macro split.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         NutritionPrimaryGoal.entries.forEach { goal ->
             NutritionOptionCard(title = goal.displayName, detail = goal.detail, icon = goal.icon(), selected = vm.primaryGoal == goal) { vm.primaryGoal = goal }
         }
@@ -248,7 +241,7 @@ private fun GoalStep(vm: NutritionOnboardingViewModel) {
 @Composable
 private fun TimelineStep(vm: NutritionOnboardingViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("How quickly do you want to get there? A longer timeline means a gentler daily change — we cap the pace either way to keep it safe.", fontSize = 14.sp, color = TextSecondaryColor)
+        Text("How quickly do you want to get there? A longer timeline means a gentler daily change — we cap the pace either way to keep it safe.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         NutritionGoalTimeline.entries.forEach { option ->
             NutritionOptionCard(title = option.displayName, detail = null, selected = vm.timeline == option) { vm.timeline = option }
         }
@@ -263,12 +256,12 @@ private fun TimelineStep(vm: NutritionOnboardingViewModel) {
 @Composable
 private fun DietaryStep(vm: NutritionOnboardingViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        Text("Optional — used to tailor meal suggestions. Skip if nothing applies.", fontSize = 14.sp, color = TextSecondaryColor)
-        Text("Dietary Preferences", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text("Optional — used to tailor meal suggestions. Skip if nothing applies.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+        Text("Dietary Preferences", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
         NutritionChipGrid(NutritionOnboardingViewModel.dietaryPreferenceOptions, vm.dietaryPreferences) { option ->
             vm.dietaryPreferences = if (option in vm.dietaryPreferences) vm.dietaryPreferences - option else vm.dietaryPreferences + option
         }
-        Text("Allergies", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.padding(top = 4.dp))
+        Text("Allergies", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(top = 4.dp))
         NutritionChipGrid(NutritionOnboardingViewModel.allergyOptions, vm.allergies) { option ->
             vm.allergies = if (option in vm.allergies) vm.allergies - option else vm.allergies + option
         }
@@ -287,18 +280,18 @@ private fun SummaryStep(vm: NutritionOnboardingViewModel) {
             vm.isLoadingPreview -> Row(modifier = Modifier.fillMaxWidth().padding(vertical = 40.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
                 Spacer(modifier = Modifier.width(10.dp))
-                Text("Calculating your plan…", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("Calculating your plan…", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
             }
             targets != null -> {
                 val greeting = vm.name.trim()
                 Text(
                     if (greeting.isEmpty()) "Here's your personalized plan." else "$greeting, here's your personalized plan.",
-                    fontSize = 14.sp, color = TextSecondaryColor
+                    fontSize = 14.sp, color = FLTheme.colors.textSecondary
                 )
                 NutritionTargetsSummaryView(targets = targets, useMetricUnits = vm.useMetricUnits)
                 Text(
                     "Save to start tracking against these targets. You can edit your profile or override any number later from Goals.",
-                    fontSize = 13.sp, color = TextSecondaryColor
+                    fontSize = 13.sp, color = FLTheme.colors.textSecondary
                 )
             }
             else -> Row(
@@ -317,26 +310,26 @@ private fun SummaryStep(vm: NutritionOnboardingViewModel) {
 /** Plain surface card wrapper for stacked field rows (iOS `NutritionFieldCard`). */
 @Composable
 fun NutritionFieldCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Column(modifier = modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)), content = content)
+    Column(modifier = modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)), content = content)
 }
 
 @Composable
 fun NutritionNumberRow(label: String, value: String, unit: String, onValueChange: (String) -> Unit, width: Int = 70) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 14.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.weight(1f))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             BasicTextField(
                 value = value, onValueChange = onValueChange, singleLine = true,
-                textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, textAlign = TextAlign.End),
+                textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.End),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 modifier = Modifier.width(width.dp),
                 decorationBox = { inner ->
-                    if (value.isEmpty()) Text("0", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MediumGray, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
+                    if (value.isEmpty()) Text("0", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textTertiary, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
                     inner()
                 }
             )
-            Text(unit, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(unit, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -344,14 +337,14 @@ fun NutritionNumberRow(label: String, value: String, unit: String, onValueChange
 @Composable
 fun NutritionTextRow(label: String, value: String, placeholder: String, onValueChange: (String) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text(label, fontSize = 14.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.width(12.dp))
         BasicTextField(
             value = value, onValueChange = onValueChange, singleLine = true,
-            textStyle = TextStyle(fontSize = 15.sp, color = TextPrimaryColor, textAlign = TextAlign.End),
+            textStyle = TextStyle(fontSize = 15.sp, color = FLTheme.colors.textPrimary, textAlign = TextAlign.End),
             modifier = Modifier.weight(1f),
             decorationBox = { inner ->
-                if (value.isEmpty()) Text(placeholder, fontSize = 15.sp, color = MediumGray, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
+                if (value.isEmpty()) Text(placeholder, fontSize = 15.sp, color = FLTheme.colors.textTertiary, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
                 inner()
             }
         )
@@ -368,7 +361,7 @@ fun NutritionDateRow(label: String, date: Date, minDate: Date? = null, maxDate: 
         modifier = Modifier.fillMaxWidth().clickable { showPicker = true }.padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 14.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.weight(1f))
         Text(format.format(date), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
     }
@@ -393,7 +386,7 @@ fun NutritionDateRow(label: String, date: Date, minDate: Date? = null, maxDate: 
                     showPicker = false
                 }) { Text("Done", color = FLPrimary, fontWeight = FontWeight.SemiBold) }
             },
-            dismissButton = { TextButton(onClick = { showPicker = false }) { Text("Cancel", color = TextSecondaryColor) } }
+            dismissButton = { TextButton(onClick = { showPicker = false }) { Text("Cancel", color = FLTheme.colors.textSecondary) } }
         ) {
             DatePicker(state = state)
         }
@@ -404,12 +397,12 @@ fun NutritionDateRow(label: String, date: Date, minDate: Date? = null, maxDate: 
 fun NutritionSelectablePill(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
         modifier = modifier
-            .background(if (selected) FLPrimary else White, RoundedCornerShape(10.dp))
+            .background(if (selected) FLPrimary else FLTheme.colors.surface, RoundedCornerShape(10.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 11.dp),
         contentAlignment = Alignment.Center
     ) {
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (selected) White else TextPrimaryColor)
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
     }
 }
 
@@ -417,9 +410,9 @@ fun NutritionSelectablePill(label: String, selected: Boolean, modifier: Modifier
 @Composable
 fun NutritionUnitsRow(useMetric: Boolean, onChange: (Boolean) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Text("Units", fontSize = 14.sp, color = TextSecondaryColor)
+        Text("Units", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.weight(1f))
-        Row(modifier = Modifier.width(170.dp).background(White, RoundedCornerShape(8.dp)).padding(2.dp)) {
+        Row(modifier = Modifier.width(170.dp).background(FLTheme.colors.surface, RoundedCornerShape(8.dp)).padding(2.dp)) {
             listOf(false to "lb / ft", true to "kg / cm").forEach { (metric, label) ->
                 Box(
                     modifier = Modifier
@@ -429,7 +422,7 @@ fun NutritionUnitsRow(useMetric: Boolean, onChange: (Boolean) -> Unit) {
                         .padding(vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (useMetric == metric) White else TextPrimaryColor)
+                    Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (useMetric == metric) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
                 }
             }
         }
@@ -457,13 +450,13 @@ fun NutritionBodyStatsCard(
             NutritionNumberRow("Goal Weight", goalKg, "kg", onGoalKg)
         } else {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Height", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("Height", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 Spacer(modifier = Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     SmallNumberField(feet, "5", onFeet)
-                    Text("ft", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("ft", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     SmallNumberField(inches, "10", onInches)
-                    Text("in", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("in", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             }
             SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
@@ -478,11 +471,11 @@ fun NutritionBodyStatsCard(
 private fun SmallNumberField(value: String, placeholder: String, onChange: (String) -> Unit) {
     BasicTextField(
         value = value, onValueChange = onChange, singleLine = true,
-        textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, textAlign = TextAlign.End),
+        textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.End),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         modifier = Modifier.width(40.dp),
         decorationBox = { inner ->
-            if (value.isEmpty()) Text(placeholder, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = MediumGray, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
+            if (value.isEmpty()) Text(placeholder, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textTertiary, textAlign = TextAlign.End, modifier = Modifier.fillMaxWidth())
             inner()
         }
     )
@@ -493,20 +486,20 @@ fun NutritionOptionCard(title: String, detail: String?, selected: Boolean, icon:
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(if (selected) FLPrimary else White, RoundedCornerShape(12.dp))
+            .background(if (selected) FLPrimary else FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        if (icon != null) Icon(icon, contentDescription = null, tint = if (selected) White else FLPrimary, modifier = Modifier.size(24.dp))
+        if (icon != null) Icon(icon, contentDescription = null, tint = if (selected) FLTheme.colors.onBrand else FLPrimary, modifier = Modifier.size(24.dp))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (selected) White else TextPrimaryColor)
-            if (detail != null) Text(detail, fontSize = 12.sp, color = if (selected) White.copy(alpha = 0.85f) else TextSecondaryColor)
+            Text(title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
+            if (detail != null) Text(detail, fontSize = 12.sp, color = if (selected) FLTheme.colors.onBrand.copy(alpha = 0.85f) else FLTheme.colors.textSecondary)
         }
         Icon(
             if (selected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
-            contentDescription = null, tint = if (selected) White else MediumGray, modifier = Modifier.size(20.dp)
+            contentDescription = null, tint = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textTertiary, modifier = Modifier.size(20.dp)
         )
     }
 }
@@ -519,11 +512,11 @@ fun NutritionChipGrid(options: List<String>, selection: Set<String>, onToggle: (
             val isSelected = option in selection
             Box(
                 modifier = Modifier
-                    .background(if (isSelected) FLPrimary else White, RoundedCornerShape(9.dp))
+                    .background(if (isSelected) FLPrimary else FLTheme.colors.surface, RoundedCornerShape(9.dp))
                     .clickable { onToggle(option) }
                     .padding(horizontal = 14.dp, vertical = 9.dp)
             ) {
-                Text(option, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (isSelected) White else TextPrimaryColor)
+                Text(option, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
             }
         }
     }
@@ -545,13 +538,13 @@ fun NutritionPrimaryButton(text: String, enabled: Boolean, loading: Boolean = fa
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(if (enabled) FLPrimary else DisabledButton, RoundedCornerShape(12.dp))
+            .background(if (enabled) FLPrimary else FLTheme.colors.disabled, RoundedCornerShape(12.dp))
             .clickable(enabled = enabled && !loading, onClick = onClick)
             .padding(vertical = 15.dp),
         contentAlignment = Alignment.Center
     ) {
-        if (loading) CircularProgressIndicator(color = White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-        else Text(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+        if (loading) CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+        else Text(text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
     }
 }
 
@@ -597,14 +590,14 @@ fun NutritionTargetsSummaryView(targets: NutritionTargets, useMetricUnits: Boole
 
 @Composable
 private fun TargetMetricCard(label: String, value: String, unit: String?, why: String?, accent: Color) {
-    Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
             Spacer(modifier = Modifier.weight(1f))
             Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = accent)
             if (unit != null) {
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(unit, fontSize = 12.sp, color = TextSecondaryColor)
+                Text(unit, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
         if (why != null) WhyDisclosure(text = why)
@@ -614,11 +607,11 @@ private fun TargetMetricCard(label: String, value: String, unit: String?, why: S
 @Composable
 private fun MacroTile(name: String, grams: Double, why: String?, color: Color, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.background(White, RoundedCornerShape(12.dp)).padding(vertical = 12.dp, horizontal = 8.dp),
+        modifier = modifier.background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(vertical = 12.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text("${NutritionProfileValidation.formatNumber(Math.rint(grams))} g", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = color)
-        Text(name, fontSize = 12.sp, color = TextSecondaryColor)
+        Text(name, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         if (why != null) WhyDisclosure(text = why, compact = true)
     }
 }
@@ -629,12 +622,12 @@ fun WhyDisclosure(text: String, compact: Boolean = false) {
     var expanded by remember { mutableStateOf(false) }
     Column(horizontalAlignment = if (compact) Alignment.CenterHorizontally else Alignment.Start, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(modifier = Modifier.clickable { expanded = !expanded }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            Icon(Icons.Default.HelpOutline, contentDescription = null, tint = InfoColor, modifier = Modifier.size(if (compact) 13.dp else 14.dp))
-            if (!compact) Text(if (expanded) "Hide" else "Why this number?", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = InfoColor)
-            else Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = InfoColor, modifier = Modifier.size(12.dp))
+            Icon(Icons.Default.HelpOutline, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(if (compact) 13.dp else 14.dp))
+            if (!compact) Text(if (expanded) "Hide" else "Why this number?", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
+            else Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(12.dp))
         }
         AnimatedVisibility(visible = expanded) {
-            Text(text, fontSize = 12.sp, color = TextSecondaryColor, textAlign = if (compact) TextAlign.Center else TextAlign.Start)
+            Text(text, fontSize = 12.sp, color = FLTheme.colors.textSecondary, textAlign = if (compact) TextAlign.Center else TextAlign.Start)
         }
     }
 }
