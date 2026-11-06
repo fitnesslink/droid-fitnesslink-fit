@@ -278,8 +278,8 @@ class PlayBillingRulesTests {
     @Test
     fun `play manage link is product-specific when known, generic otherwise`() {
         assertEquals(
-            "https://play.google.com/store/account/subscriptions?sku=com.fitnesslink.monthly&package=com.fitnesslink.fit",
-            AppLinks.playSubscriptions("com.fitnesslink.monthly", "com.fitnesslink.fit")
+            "https://play.google.com/store/account/subscriptions?sku=com.fitnesslink.monthly&package=fit.fitnesslink",
+            AppLinks.playSubscriptions("com.fitnesslink.monthly", "fit.fitnesslink")
         )
         assertEquals("https://play.google.com/store/account/subscriptions", AppLinks.playSubscriptions(null, "com.fitnesslink.fit"))
     }
