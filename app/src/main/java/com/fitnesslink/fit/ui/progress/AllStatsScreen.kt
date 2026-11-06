@@ -82,7 +82,7 @@ fun AllStatsScreen(onBack: () -> Unit, onNavigate: (String) -> Unit) {
 
             if (!healthConnected) {
                 HealthConnectPrompt(
-                    "Unlock steps, sleep, heart rate and HRV from Health Connect or a connected wearable.",
+                    "Steps, sleep, heart rate and HRV come from Health Connect or a connected wearable.",
                     onClick = { onNavigate(CONNECTED_APPS_ROUTE) },
                     modifier = Modifier.padding(horizontal = 20.dp)
                 )

@@ -175,7 +175,7 @@ sealed class GoalAction {
             LogWater -> "Log Water"
             LogSleep -> "Log Sleep"
             LogWorkout -> "Log Workout"
-            ConnectHealth -> "Connect Data Source"
+            ConnectHealth -> "Data Source Options"
             is CheckIn -> "Complete Habit"
             is LogAmount -> "Log Activity"
         }

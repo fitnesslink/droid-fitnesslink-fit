@@ -372,8 +372,8 @@ object WhyExplanationText {
                 val adjust = absNum("adjustmentKcal") ?: return null
                 val target = num("dailyCalorieTarget") ?: return null
                 var text = "Your target of $target calories sits $adjust below your maintenance ($maint), creating the daily deficit that drives weight loss on your timeline."
-                if (flag("capApplied")) text += " The deficit was capped so the pace stays safe and sustainable."
-                if (flag("floorApplied")) text += " It was also raised to the minimum safe daily intake."
+                if (flag("capApplied")) text += " The deficit was capped to keep the pace gradual."
+                if (flag("floorApplied")) text += " It was also raised to the minimum daily intake FitnessLink allows."
                 text
             }
             "why.target.surplus" -> {
@@ -412,7 +412,7 @@ object WhyExplanationText {
                 val daily = absNum("dailyAdjustKcal") ?: return null
                 if (weekly == 0.0) return "Your calories match what you burn, so your weight is projected to hold steady week to week."
                 val direction = if (weekly < 0) "lose" else "gain"
-                "A $daily-calorie daily adjustment projects to about ${format(abs(weekly))} kg per week — roughly 7,700 calories equal 1 kg of body weight. You should $direction at this steady, sustainable pace."
+                "A $daily-calorie daily adjustment projects to about ${format(abs(weekly))} kg per week — roughly 7,700 calories equal 1 kg of body weight. At this pace you would $direction gradually, though real results vary."
             }
             "why.completion.projected" -> {
                 val current = num("currentWeightKg") ?: return null
@@ -487,6 +487,10 @@ fun com.fitnesslink.fit.network.dto.NutritionTargets.explanation(forMetric: Stri
 /** Rendered "why" copy for [metric], or null when the server sent no (known) explanation. */
 fun com.fitnesslink.fit.network.dto.NutritionTargets.whyText(metric: String): String? =
     explanation(metric)?.let { WhyExplanationText.render(it) }
+
+/** Linked sources for [metric]'s "why" copy; empty when the number has no calculation to cite. */
+fun com.fitnesslink.fit.network.dto.NutritionTargets.whyCitations(metric: String): List<com.fitnesslink.fit.model.NutritionCitation> =
+    explanation(metric)?.let { com.fitnesslink.fit.model.NutritionCitation.forWhyKey(it.key) } ?: emptyList()
 
 val com.fitnesslink.fit.network.dto.NutritionTargets.estimatedGoalDateValue: Date?
     get() = estimatedGoalDate?.let { MealPlanDay.date(it) }

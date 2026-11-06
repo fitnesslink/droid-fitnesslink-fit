@@ -59,5 +59,6 @@ fun MicronutrientCard(
             }
         }
         micros.forEach { micro -> MicroBarView(micro = micro, line = lineFor(micro)) }
+        NutritionSourcesLink(title = "Targets: FDA Daily Values · Sources")
     }
 }

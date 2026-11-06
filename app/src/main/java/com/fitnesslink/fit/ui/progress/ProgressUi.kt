@@ -326,7 +326,7 @@ fun QuickStatCard(result: MetricResult, onNavigate: (String) -> Unit, modifier: 
         Text(result.metric.shortTitle, fontSize = 11.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
         when (result.availability) {
             MetricAvailability.AVAILABLE -> MetricChangeLabel(result)
-            MetricAvailability.NOT_CONNECTED -> Text("Connect", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
+            MetricAvailability.NOT_CONNECTED -> Text("Not connected", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
             MetricAvailability.NO_DATA -> Text("No data yet", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
         Spacer(Modifier.weight(1f, fill = false))
@@ -380,7 +380,7 @@ fun ChevronRight(size: Dp = 18.dp) {
     )
 }
 
-/** "Connect Health Connect" prompt used wherever a metric needs a health source (PRD §9.2). */
+/** Neutral Health Connect row wherever a metric needs a health source (PRD §9.2): it states what the source is for and never pushes the user to grant access. */
 @Composable
 fun HealthConnectPrompt(message: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
     Row(
@@ -395,7 +395,7 @@ fun HealthConnectPrompt(message: String, onClick: () -> Unit, modifier: Modifier
     ) {
         Icon(Icons.Filled.MonitorHeart, contentDescription = null, tint = FLTheme.colors.danger, modifier = Modifier.size(24.dp))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Connect Health Connect", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text("Health Connect (optional)", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Text(message, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
         ChevronRight(16.dp)

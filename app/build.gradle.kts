@@ -7,13 +7,12 @@ plugins {
 
 android {
     namespace = "com.fitnesslink.fit"
-    // 36 because connect-client 1.1.0 requires it; targetSdk (runtime behaviour) stays 35.
     compileSdk = 36
 
     defaultConfig {
         applicationId = "com.fitnesslink.fit"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0"
 

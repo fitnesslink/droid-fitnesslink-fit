@@ -88,4 +88,11 @@ object ApiConfiguration {
     }
 
     fun baseUrl(service: ApiService): String = environment.baseUrl(service, ngrokUrl)
+
+    /** Host root without the `/{module}/api/v1` suffix. TV pairing is mounted at `tv/pair` on the host. */
+    fun hostRoot(): String = when (environment) {
+        ApiEnvironment.LOCAL -> "http://10.0.2.2:${ApiService.CORE.localPort}/"
+        ApiEnvironment.NGROK -> "${ngrokUrl.trimEnd('/')}/"
+        ApiEnvironment.PRODUCTION -> "https://api.fitnesslink.fit/"
+    }
 }

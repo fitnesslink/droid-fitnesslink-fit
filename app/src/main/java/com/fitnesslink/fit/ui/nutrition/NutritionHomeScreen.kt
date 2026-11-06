@@ -215,6 +215,9 @@ fun NutritionHomeScreen(
                     )
                 }
             }
+
+            // Citations stay easy to find from the top of the Nutrition tab.
+            NutritionSourcesRow(modifier = Modifier.padding(horizontal = 20.dp))
         }
     }
 }

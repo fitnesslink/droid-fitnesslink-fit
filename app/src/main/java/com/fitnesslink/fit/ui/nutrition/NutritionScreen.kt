@@ -192,6 +192,7 @@ fun NutritionScreen(
                         Text(if (over) "Over" else "Remaining", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
+                NutritionSourcesLink()
             }
 
             // 6. Macro bars

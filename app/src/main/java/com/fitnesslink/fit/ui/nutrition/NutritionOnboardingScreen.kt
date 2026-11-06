@@ -70,6 +70,8 @@ import com.fitnesslink.fit.model.api.NutritionPrimaryGoal
 import com.fitnesslink.fit.model.api.NutritionSex
 import com.fitnesslink.fit.model.api.NutritionWorkoutFrequency
 import com.fitnesslink.fit.model.api.estimatedGoalDateValue
+import com.fitnesslink.fit.model.NutritionCitation
+import com.fitnesslink.fit.model.api.whyCitations
 import com.fitnesslink.fit.model.api.whyText
 import com.fitnesslink.fit.network.dto.NutritionTargets
 import com.fitnesslink.fit.ui.components.SeparatorView
@@ -241,7 +243,7 @@ private fun GoalStep(vm: NutritionOnboardingViewModel) {
 @Composable
 private fun TimelineStep(vm: NutritionOnboardingViewModel) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("How quickly do you want to get there? A longer timeline means a gentler daily change — we cap the pace either way to keep it safe.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+        Text("How quickly do you want to get there? A longer timeline means a gentler daily change — we cap the pace either way to keep it gradual.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         NutritionGoalTimeline.entries.forEach { option ->
             NutritionOptionCard(title = option.displayName, detail = null, selected = vm.timeline == option) { vm.timeline = option }
         }
@@ -568,12 +570,12 @@ fun NutritionPrimaryGoal.icon(): ImageVector = when (this) {
 @Composable
 fun NutritionTargetsSummaryView(targets: NutritionTargets, useMetricUnits: Boolean = false, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TargetMetricCard("Maintenance Calories", NutritionProfileValidation.formatNumber(Math.rint(targets.maintenanceCalories)), "cal/day", targets.whyText("MaintenanceCalories"), BlueTheme)
-        TargetMetricCard("Daily Target", NutritionProfileValidation.formatNumber(Math.rint(targets.dailyCalorieTarget)), "cal/day", targets.whyText("DailyCalorieTarget"), FLPrimary)
+        TargetMetricCard("Maintenance Calories", NutritionProfileValidation.formatNumber(Math.rint(targets.maintenanceCalories)), "cal/day", targets.whyText("MaintenanceCalories"), BlueTheme, targets.whyCitations("MaintenanceCalories"))
+        TargetMetricCard("Daily Target", NutritionProfileValidation.formatNumber(Math.rint(targets.dailyCalorieTarget)), "cal/day", targets.whyText("DailyCalorieTarget"), FLPrimary, targets.whyCitations("DailyCalorieTarget"))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            MacroTile("Protein", targets.proteinGrams, targets.whyText("ProteinGrams"), BlueTheme, Modifier.weight(1f))
-            MacroTile("Carbs", targets.carbGrams, targets.whyText("CarbGrams"), PurpleTheme, Modifier.weight(1f))
-            MacroTile("Fat", targets.fatGrams, targets.whyText("FatGrams"), OrangeTheme, Modifier.weight(1f))
+            MacroTile("Protein", targets.proteinGrams, targets.whyText("ProteinGrams"), BlueTheme, Modifier.weight(1f), targets.whyCitations("ProteinGrams"))
+            MacroTile("Carbs", targets.carbGrams, targets.whyText("CarbGrams"), PurpleTheme, Modifier.weight(1f), targets.whyCitations("CarbGrams"))
+            MacroTile("Fat", targets.fatGrams, targets.whyText("FatGrams"), OrangeTheme, Modifier.weight(1f), targets.whyCitations("FatGrams"))
         }
         val weekly = targets.weeklyWeightChangeKg
         val rateText = when {
@@ -582,14 +584,15 @@ fun NutritionTargetsSummaryView(targets: NutritionTargets, useMetricUnits: Boole
             else -> (if (weekly < 0) "−" else "+") + String.format(Locale.US, "%.1f", abs(weekly) / NutritionProfileValidation.KG_PER_LB)
         }
         val rateUnit = if (weekly == 0.0) null else if (useMetricUnits) "kg/week" else "lbs/week"
-        TargetMetricCard("Weekly Progress Rate", rateText, rateUnit, targets.whyText("WeeklyWeightChangeKg"), PurpleTheme)
+        TargetMetricCard("Weekly Progress Rate", rateText, rateUnit, targets.whyText("WeeklyWeightChangeKg"), PurpleTheme, targets.whyCitations("WeeklyWeightChangeKg"))
         val completion = targets.estimatedGoalDateValue?.let { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(it) } ?: "Not applicable"
-        TargetMetricCard("Estimated Completion", completion, null, targets.whyText("EstimatedGoalDate"), OrangeTheme)
+        TargetMetricCard("Estimated Completion", completion, null, targets.whyText("EstimatedGoalDate"), OrangeTheme, targets.whyCitations("EstimatedGoalDate"))
+        NutritionSourcesRow()
     }
 }
 
 @Composable
-private fun TargetMetricCard(label: String, value: String, unit: String?, why: String?, accent: Color) {
+private fun TargetMetricCard(label: String, value: String, unit: String?, why: String?, accent: Color, citations: List<NutritionCitation> = emptyList()) {
     Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
             Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
@@ -600,25 +603,25 @@ private fun TargetMetricCard(label: String, value: String, unit: String?, why: S
                 Text(unit, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
-        if (why != null) WhyDisclosure(text = why)
+        if (why != null) WhyDisclosure(text = why, citations = citations)
     }
 }
 
 @Composable
-private fun MacroTile(name: String, grams: Double, why: String?, color: Color, modifier: Modifier = Modifier) {
+private fun MacroTile(name: String, grams: Double, why: String?, color: Color, modifier: Modifier = Modifier, citations: List<NutritionCitation> = emptyList()) {
     Column(
         modifier = modifier.background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(vertical = 12.dp, horizontal = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Text("${NutritionProfileValidation.formatNumber(Math.rint(grams))} g", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = color)
         Text(name, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
-        if (why != null) WhyDisclosure(text = why, compact = true)
+        if (why != null) WhyDisclosure(text = why, compact = true, citations = citations)
     }
 }
 
 /** "Why this number?" expander — collapsed by default. */
 @Composable
-fun WhyDisclosure(text: String, compact: Boolean = false) {
+fun WhyDisclosure(text: String, compact: Boolean = false, citations: List<NutritionCitation> = emptyList()) {
     var expanded by remember { mutableStateOf(false) }
     Column(horizontalAlignment = if (compact) Alignment.CenterHorizontally else Alignment.Start, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(modifier = Modifier.clickable { expanded = !expanded }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -627,7 +630,10 @@ fun WhyDisclosure(text: String, compact: Boolean = false) {
             else Icon(if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(12.dp))
         }
         AnimatedVisibility(visible = expanded) {
-            Text(text, fontSize = 12.sp, color = FLTheme.colors.textSecondary, textAlign = if (compact) TextAlign.Center else TextAlign.Start)
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(text, fontSize = 12.sp, color = FLTheme.colors.textSecondary, textAlign = if (compact) TextAlign.Center else TextAlign.Start)
+                NutritionCitationLinks(citations)
+            }
         }
     }
 }

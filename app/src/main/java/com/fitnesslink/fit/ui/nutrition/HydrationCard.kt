@@ -86,6 +86,10 @@ fun HydrationCardView(date: String, modifier: Modifier = Modifier, onLog: (() ->
                 }
             }
         }
+
+        if (viewModel.dailyGoalDisplay > 0) {
+            NutritionSourcesLink(title = "About water goals · Sources")
+        }
     }
 }
 

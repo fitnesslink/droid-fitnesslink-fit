@@ -63,7 +63,7 @@ import kotlinx.coroutines.launch
  *
  * Health Connect is Android's Apple Health: Wear OS, Garmin, Oura, WHOOP and
  * Fitbit all write into it, so connecting it covers them without vendor
- * SDKs. Connect asks for every read type FitnessLink uses; Disconnect stops
+ * SDKs. Continue asks for every read type FitnessLink uses; Disconnect stops
  * reading and revokes those permissions ([HealthConnectService]).
  */
 @Composable
@@ -159,7 +159,7 @@ fun ConnectedAppsScreen(onBack: () -> Unit) {
                                     }
                                 },
                                 colors = ButtonDefaults.buttonColors(containerColor = FLPrimary, contentColor = FLTheme.colors.onBrand)
-                            ) { Text("Connect") }
+                            ) { Text("Continue") }
                         }
                     }
                     if (availability == Availability.AVAILABLE) {
@@ -172,12 +172,12 @@ fun ConnectedAppsScreen(onBack: () -> Unit) {
                 }
             }
             if (declined) {
-                GroupFooter("No access was granted, so FitnessLink can't read Health Connect. Tap Connect to choose again, or allow access in Health Connect's settings.")
+                GroupFooter("No access was granted, so FitnessLink can't read Health Connect. Tap Continue to choose again, or allow access in Health Connect's settings.")
             }
             GroupFooter(
-                "FitnessLink reads steps, active calories, exercise minutes, sleep, resting heart rate, HRV and body fat " +
+                "Health Connect is optional. FitnessLink reads steps, active calories, exercise minutes, sleep, resting heart rate, HRV and body fat " +
                     "from Health Connect to power your Progress stats and goals. It never writes to Health Connect. " +
-                    "To choose exactly what FitnessLink can read, tap Manage access."
+                    "Continue opens the Health Connect permission screen, where you choose what to share. To change this later, tap Manage access."
             )
 
             GroupHeader("Wearables")
@@ -207,8 +207,8 @@ fun ConnectedAppsScreen(onBack: () -> Unit) {
                 }
             }
             GroupFooter(
-                "These devices sync to FitnessLink through Health Connect. Turn on Health Connect sharing in the device's own app, " +
-                    "then connect Health Connect above. " +
+                "These devices sync to FitnessLink through Health Connect. If you'd like to use one, turn on Health Connect sharing in the device's own app " +
+                    "and set up Health Connect above. " +
                     "Not every device records every metric — HRV and sleep stages, for example, need a compatible wearable."
             )
         }

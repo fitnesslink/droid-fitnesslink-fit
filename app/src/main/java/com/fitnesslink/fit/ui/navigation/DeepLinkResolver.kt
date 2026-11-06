@@ -1,5 +1,7 @@
 package com.fitnesslink.fit.ui.navigation
 
+import com.fitnesslink.fit.ui.profile.TvPairingCode
+
 /**
  * Port of iOS `Services/DeepLinkResolver.swift` (FTNSSLNK-261). Shared by
  * push-notification taps and (eventually) the inbox rows.
@@ -11,7 +13,9 @@ package com.fitnesslink.fit.ui.navigation
  *   System broadcasts: deepLink is null (tapping just marks the row read).
  * Legacy user-to-user share rows still exist in prod with a scheme:
  *   "fitnesslink://shared/{workout|program|movement|mealplan}/{id}"
- * Those are normalized to the same detail routes below.
+ * Those are normalized to the same detail routes below. A TV's pairing QR is
+ *   "fitnesslink://tv-pair?code=ABC234"
+ * which opens Connect TV with the code filled in. Only that route reads a query.
  *
  * Returns a Navigation-Compose route string for `MainTabNavigation`, or null
  * when the link is unknown (tapping then just opens the app).
@@ -24,7 +28,14 @@ object DeepLinkResolver {
         if (normalized.startsWith(SCHEME_PREFIX)) {
             normalized = normalized.removePrefix(SCHEME_PREFIX)
         }
-        val parts = normalized.split("/").filter { it.isNotEmpty() }
+        val path = normalized.substringBefore('?')
+        val parts = path.split("/").filter { it.isNotEmpty() }
+
+        if (parts.firstOrNull() == "tv-pair") {
+            val code = normalized.substringAfter('?', "").split('&')
+                .firstOrNull { it.startsWith("code=") }?.removePrefix("code=").orEmpty()
+            return ProfileRouteNames.connectTV(TvPairingCode.sanitize(code).code)
+        }
 
         // Legacy share links: shared/{kind}/{id}
         if (parts.firstOrNull() == "shared") {

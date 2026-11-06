@@ -103,6 +103,28 @@ class GoalsPRDTests {
         assertTrue(model.recommendation.basis.contains("estimate"))
     }
 
+    /** The Sources screen states this pace and its limits, so the copy has to stay in step. */
+    @Test fun sourcesCopyMatchesTheWeightLossPace() {
+        val model = GoalSetupViewModel(GoalType.BodyComposition, FakeEnv(), today)
+        model.weightUnit = WeightUnit.LBS
+
+        // 0.5% of 400 lb = 2 lb/week, limited to 1.5 → 15 lb in 10 weeks.
+        model.baselineText = "400"
+        model.targetText = "385"
+        assertEquals(10, model.recommendation.weeks)
+
+        // 0.5% of 80 lb = 0.4 lb/week, raised to 0.5 → 10 lb in 20 weeks.
+        model.baselineText = "80"
+        model.targetText = "70"
+        assertEquals(20, model.recommendation.weeks)
+
+        val method = com.fitnesslink.fit.model.NutritionMethod.all.first { it.title == "Weight-loss goal pace" }
+        assertTrue(method.explanation.contains("0.5% of your body weight"))
+        assertTrue(method.explanation.contains("between 0.5 and 1.5 lb"))
+        assertTrue(method.explanation.contains("about 1% of your body weight"))
+        assertEquals(listOf(com.fitnesslink.fit.model.NutritionCitation.CDC_LOSING_WEIGHT), method.citations)
+    }
+
     @Test fun builtGoalCarriesDefinitionAndStableId() {
         val model = GoalSetupViewModel(GoalType.BodyComposition, FakeEnv(), today)
         model.weightUnit = WeightUnit.LBS

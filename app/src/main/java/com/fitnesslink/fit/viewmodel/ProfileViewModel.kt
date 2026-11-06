@@ -54,6 +54,7 @@ class ProfileViewModel : ViewModel() {
         2 -> "personalizationProfile"
         4 -> "preferences"
         5 -> "billing"
+        11 -> ProfileRouteNames.CONNECT_TV
         12 -> "connectedApps"
         13 -> ProfileRouteNames.NOTIFICATION_PREFERENCES
         14 -> "calendarSyncSettings"
@@ -71,6 +72,7 @@ class ProfileViewModel : ViewModel() {
             ProfileMenu(id = 2, text = "Personalization", icon = "pencil"),
             ProfileMenu(id = 4, text = "Preferences", icon = "gear"),
             ProfileMenu(id = 5, text = "Subscription", icon = "card"),
+            ProfileMenu(id = 11, text = "Connect TV", icon = "tv"),
             ProfileMenu(id = 12, text = "Connected Apps & Devices", icon = "watch"),
             // Android extras (Appendix B)
             ProfileMenu(id = 13, text = "Notifications", icon = "bell"),

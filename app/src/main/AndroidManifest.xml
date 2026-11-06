@@ -83,6 +83,13 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- A TV's pairing QR. It only fills in the code: connecting still takes a tap. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="fitnesslink" android:host="tv-pair" />
+            </intent-filter>
         </activity>
 
         <!-- Health Connect privacy rationale. Android 13 and lower open it with

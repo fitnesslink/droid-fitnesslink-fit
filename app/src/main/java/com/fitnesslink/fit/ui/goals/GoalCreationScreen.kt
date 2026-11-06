@@ -83,6 +83,7 @@ import com.fitnesslink.fit.model.WeightUnit
 import com.fitnesslink.fit.nutrition.NutritionGoalsStore
 import com.fitnesslink.fit.ui.navigation.AppRoute
 import com.fitnesslink.fit.ui.navigation.AppRouter
+import com.fitnesslink.fit.ui.nutrition.NutritionSourcesLink
 import com.fitnesslink.fit.ui.progress.CONNECTED_APPS_ROUTE
 import com.fitnesslink.fit.health.HealthConnectService
 import com.fitnesslink.fit.ui.theme.FLPrimary
@@ -599,6 +600,7 @@ private fun CalorieTarget(model: GoalSetupViewModel) {
         GoalCard(if (rec.personalized) "Recommended for you" else "Current target") {
             Text("${GoalFormat.number(rec.value, 0)} cal per day", fontSize = 22.sp, fontWeight = FontWeight.Bold)
             GoalNote(rec.basis)
+            if (rec.personalized) NutritionSourcesLink()
             GoalLinkButton("Use this target") { model.calorieUseRange = false; model.targetText = GoalSetupViewModel.plain(rec.value, 0) }
         }
     } else {
@@ -754,6 +756,8 @@ private fun TimeFrameStep(model: GoalSetupViewModel) {
         }
         if (rec.basis.isNotEmpty()) GoalNote(if (rec.personalized) rec.basis else "${rec.basis} This is a general suggestion, not a personalized prediction.")
         else GoalNote("Choose any duration that suits you — there isn't enough information for a recommendation.")
+        // This step recommends a weight-loss pace, so its source stays easy to find here.
+        if (model.subtype == GoalSubtype.LoseWeight) NutritionSourcesLink(title = "How this pace is estimated · Sources")
     }
 }
 

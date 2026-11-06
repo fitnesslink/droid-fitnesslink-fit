@@ -2,8 +2,11 @@ package com.fitnesslink.fit.ui.navigation
 
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.fitnesslink.fit.ui.notifications.NotificationPreferencesScreen
+import com.fitnesslink.fit.ui.profile.ConnectTVScreen
 import com.fitnesslink.fit.ui.profile.PreferencesScreen
 import com.fitnesslink.fit.ui.videos.MyVideosScreen
 
@@ -12,6 +15,10 @@ object ProfileRouteNames {
     const val PREFERENCES = "preferences"
     const val NOTIFICATION_PREFERENCES = "notificationPreferences"
     const val MY_VIDEOS = "myVideos"
+    const val CONNECT_TV = "connectTV"
+
+    /** Connect TV with its code filled in, from a TV's pairing QR. */
+    fun connectTV(code: String?): String = if (code.isNullOrEmpty()) CONNECT_TV else "$CONNECT_TV?code=$code"
 }
 
 /**
@@ -34,6 +41,15 @@ fun NavGraphBuilder.profileRoutes(navController: NavHostController) {
         NotificationPreferencesScreen(
             onBack = { navController.popBackStack() },
             onNavigate = { route -> navController.navigate(route) }
+        )
+    }
+    composable(
+        "${ProfileRouteNames.CONNECT_TV}?code={code}",
+        arguments = listOf(navArgument("code") { type = NavType.StringType; nullable = true; defaultValue = null })
+    ) { entry ->
+        ConnectTVScreen(
+            prefilledCode = entry.arguments?.getString("code"),
+            onBack = { navController.popBackStack() }
         )
     }
     composable(ProfileRouteNames.MY_VIDEOS) {

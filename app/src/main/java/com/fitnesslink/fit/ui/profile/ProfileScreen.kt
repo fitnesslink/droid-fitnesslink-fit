@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VideoLibrary
+import androidx.compose.material.icons.filled.Tv
 import androidx.compose.material.icons.filled.Watch
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -220,6 +221,7 @@ private fun profileMenuIcon(key: String): ImageVector? = when (key) {
     "gear" -> Icons.Filled.Settings
     "card" -> Icons.Filled.CreditCard
     "watch" -> Icons.Filled.Watch
+    "tv" -> Icons.Filled.Tv
     "bell" -> Icons.Filled.Notifications
     "calendar" -> Icons.Filled.CalendarMonth
     "video" -> Icons.Filled.VideoLibrary

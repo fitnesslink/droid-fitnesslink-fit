@@ -444,6 +444,7 @@ private fun TdeeCalculatorCard(onUse: (Int) -> Unit) {
                     }.padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) { Text("Calculate", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand) }
+                NutritionSourcesLink()
                 calculated?.let { tdee ->
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text("Estimated TDEE: ", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
