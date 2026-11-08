@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -120,6 +121,11 @@ fun LoginScreen(
                         .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
                         .background(FLTheme.colors.background)
                         .padding(top = 20.dp)
+                        // Edge-to-edge: the sheet background runs under the
+                        // nav bar, but content (Google button) must clear it.
+                        // navigationBarsPadding consumes those insets first so
+                        // imePadding only adds the keyboard's extra height.
+                        .navigationBarsPadding()
                         .imePadding()
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
