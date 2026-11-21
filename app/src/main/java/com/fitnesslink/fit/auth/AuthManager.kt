@@ -625,6 +625,7 @@ object AuthManager {
         NotificationBadge.clear()
         runCatching { com.fitnesslink.fit.billing.EntitlementStore.reset() }
         runCatching { com.fitnesslink.fit.nutrition.NutritionGoalsStore.reset() }
+        runCatching { com.fitnesslink.fit.onboarding.HomeRecommendationsStore.reset() }
         runCatching { com.fitnesslink.fit.nutrition.DisplayedNutrientsStore.reset() }
         runCatching { com.fitnesslink.fit.nutrition.NutritionSummaryStore.invalidateAll() }
         runCatching { com.fitnesslink.fit.billing.PlayBillingManager.reset() }

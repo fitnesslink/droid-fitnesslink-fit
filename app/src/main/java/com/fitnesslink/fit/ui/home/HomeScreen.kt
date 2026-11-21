@@ -39,6 +39,10 @@ import com.fitnesslink.fit.ui.session.ResumeSessionBanner
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.viewmodel.HomeViewModel
 import com.fitnesslink.fit.viewmodel.WeeklyWorkoutGoalPrefs
+import com.fitnesslink.fit.onboarding.HomeRecommendationsStore
+import com.fitnesslink.fit.persistence.DatabaseManager
+import com.fitnesslink.fit.programs.UserProgramStore
+import java.util.Calendar
 
 /**
  * Home tab (port of iOS `HomeView`). Section order matches iOS: date strip,
@@ -67,6 +71,30 @@ fun HomeScreen(
         WeeklyWorkoutGoalPrefs.initialize(context)
         viewModel.onAppear()
     }
+    // Onboarding PRD v1.1 §25: first-run "Recommended for You".
+    val recs = HomeRecommendationsStore
+    LaunchedEffect(Unit) {
+        recs.loadCache(context)
+        recs.refresh(context)
+    }
+    // True when training is on the books — an active program or any workout
+    // scheduled from today on. Only evaluated while the first-run section is live.
+    fun hasPlannedTraining(): Boolean {
+        if (UserProgramStore.active() != null || viewModel.todayWorkouts.isNotEmpty()) return true
+        val startOfToday = Calendar.getInstance().apply {
+            set(Calendar.HOUR_OF_DAY, 0); set(Calendar.MINUTE, 0); set(Calendar.SECOND, 0); set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+        return runCatching { DatabaseManager.calendarContent() }.getOrDefault(emptyList())
+            .any { it.workoutId.isNotEmpty() && (it.scheduledDate ?: 0L) >= startOfToday }
+    }
+    val firstRunActive = recs.isFirstRunActive
+    val plannedTraining = firstRunActive && hasPlannedTraining()
+    // §25.5: starting a program or scheduling a workout (anywhere) ends the
+    // first-run section and restores Today's Workout.
+    LaunchedEffect(firstRunActive, plannedTraining) {
+        if (firstRunActive && plannedTraining) recs.endFirstRun("Graduated")
+    }
+    val showsRecommendations = firstRunActive && viewModel.isSelectedDateToday && !plannedTraining
     // App returning to the foreground (also covers the day rolling over).
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
@@ -101,13 +129,19 @@ fun HomeScreen(
                 onSelect = viewModel::selectDay
             )
 
-            TodayWorkoutView(
-                workouts = viewModel.todayWorkouts,
-                title = viewModel.workoutSectionTitle,
-                isRestDay = viewModel.isProgramRestDay,
-                tomorrowWorkout = viewModel.tomorrowWorkout,
-                onNavigate = onNavigate
-            )
+            // Onboarding PRD v1.1 §25.2: for first-run users the recommendations
+            // take Today's Workout's slot (today only); the rest of Home is unchanged.
+            if (showsRecommendations) {
+                HomeRecommendationsSection(onNavigate = onNavigate)
+            } else {
+                TodayWorkoutView(
+                    workouts = viewModel.todayWorkouts,
+                    title = viewModel.workoutSectionTitle,
+                    isRestDay = viewModel.isProgramRestDay,
+                    tomorrowWorkout = viewModel.tomorrowWorkout,
+                    onNavigate = onNavigate
+                )
+            }
 
             // Programs agent: renders nothing when no program is active.
             MyProgramHomeCard(

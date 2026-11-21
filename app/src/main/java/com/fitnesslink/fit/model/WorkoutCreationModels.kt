@@ -49,7 +49,15 @@ data class TaskSetConfig(
     val durationSeconds: Int? = null,
     /** Logged distance for cardio / distance work, in [distanceUnit] ("km" | "mi"). Session logs only. */
     val distance: Double? = null,
-    val distanceUnit: String? = null
+    val distanceUnit: String? = null,
+    /**
+     * Universal Workout Logging (PRD §7.2, §5.2): the user's Set RPE (1–10), treadmill-style
+     * speed (always stored in mph, shown in the user's distance unit per hour) and incline (%).
+     * Session logs only — never part of a programmed set config. Null keys are omitted on encode.
+     */
+    val rpe: Int? = null,
+    val speedMph: Double? = null,
+    val incline: Double? = null
 ) {
     /** The logged distance with its unit, when both are present. */
     val distanceValue: DistanceValue?

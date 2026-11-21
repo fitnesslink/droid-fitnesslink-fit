@@ -76,7 +76,8 @@ object SessionRecorder {
                 workoutSessionId = sessionId, workoutTaskId = s.task.id, workoutId = workoutId, programId = null,
                 userId = userId, logDate = now, reps = s.reps, setNumber = s.setNumber,
                 intervalSeconds = s.intervalSeconds, weightLifted = s.weightLbs, taskName = s.task.name,
-                movementId = s.task.movementId, distance = s.distance?.value, distanceUnit = s.distance?.unit?.rawValue
+                movementId = s.task.movementId, distance = s.distance?.value, distanceUnit = s.distance?.unit?.rawValue,
+                setRpe = s.setRpe, speedMph = s.speedMph, incline = s.incline
             )
         }
 

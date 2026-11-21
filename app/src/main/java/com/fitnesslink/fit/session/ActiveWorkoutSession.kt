@@ -137,6 +137,9 @@ object ActiveWorkoutSession {
     var requiredIterations: Map<String, Int> = emptyMap()
         private set
 
+    /** [requiredIterations] as the workout programs them, before any session-only added / deleted sets. */
+    private var baseRequiredIterations: Map<String, Int> = emptyMap()
+
     private var registeredTasks: Map<String, WorkoutTask> = emptyMap()
 
     /** The set the interactive cursor is on — reported as ACTIVE until it has an outcome. */
@@ -313,6 +316,7 @@ object ActiveWorkoutSession {
         actualSetLogs = emptyMap()
         progress = SessionProgress()
         requiredIterations = emptyMap()
+        baseRequiredIterations = emptyMap()
         registeredTasks = emptyMap()
         activeSet = null
         legacyCompletedTaskIds = emptySet()
@@ -436,15 +440,20 @@ object ActiveWorkoutSession {
     // MARK: - Per-set logging
 
     fun logSet(taskId: String, setNumber: Int, weightLbs: Double?, reps: Int, durationSeconds: Int? = null,
-               distance: Double? = null, distanceUnit: String? = null) {
+               distance: Double? = null, distanceUnit: String? = null,
+               rpe: Int? = null, speedMph: Double? = null, incline: Double? = null) {
         val unit = DistanceUnit.fromWire(distanceUnit)
         val loggedDistance = if (unit != null && distance != null && distance > 0) DistanceValue(distance, unit) else null
         val byTask = (actualSetLogs[taskId] ?: emptyMap()).toMutableMap()
-        byTask[setNumber] = TaskSetConfig(
+        val config = TaskSetConfig(
             setNumber = setNumber, reps = reps, weightKg = weightLbs, durationSeconds = durationSeconds,
-            distance = loggedDistance?.value, distanceUnit = loggedDistance?.unit?.rawValue
+            distance = loggedDistance?.value, distanceUnit = loggedDistance?.unit?.rawValue,
+            rpe = rpe?.let(RPEScale::clamp), speedMph = speedMph?.takeIf { it > 0 }, incline = incline?.takeIf { it > 0 }
         )
+        byTask[setNumber] = config
         actualSetLogs = actualSetLogs + (taskId to byTask)
+        // A logged set has no draft (Universal Logging): its values live in the log from here on.
+        progress.setDraft(taskId, setNumber, null, userModified = false)
         progress.log(taskId, setNumber, durationSeconds, loggedDistance?.value ?: 0.0, loggedDistance?.unit?.rawValue ?: DistanceUnit.KM.rawValue)
         persistProgress()
         val wid = workoutId ?: return
@@ -452,7 +461,8 @@ object ActiveWorkoutSession {
         DatabaseManager.upsertSessionHistoryEntry(
             sessionId = sessionId, taskId = taskId, workoutId = wid, userId = userId, setNumber = setNumber,
             reps = reps, weightLbs = weightLbs, taskName = task?.name ?: "", durationSeconds = durationSeconds,
-            movementId = task?.movementId, distance = loggedDistance?.value, distanceUnit = loggedDistance?.unit?.rawValue
+            movementId = task?.movementId, distance = loggedDistance?.value, distanceUnit = loggedDistance?.unit?.rawValue,
+            setRpe = config.rpe, speedMph = config.speedMph, incline = config.incline
         )
     }
 
@@ -478,7 +488,11 @@ object ActiveWorkoutSession {
 
     /** Tell the session which tasks it runs on — every movement's set / round count. */
     fun registerTasks(tasks: List<WorkoutTask>) {
-        requiredIterations = SessionProgress.requiredIterations(tasks)
+        baseRequiredIterations = SessionProgress.requiredIterations(tasks)
+        // Session-only added / deleted sets (Universal Logging §6.6).
+        val required = baseRequiredIterations.toMutableMap()
+        for ((taskId, plan) in progress.setPlans) if (required[taskId] != null) required[taskId] = maxOf(plan.size, 1)
+        requiredIterations = required
         registeredTasks = tasks.associateBy { it.id }
         MovementHistoryStore.seedIfNeeded(tasks.mapNotNull { if (it.isMovement) it.movementId else null })
         if (legacyCompletedTaskIds.isEmpty()) { bump(); return }
@@ -519,6 +533,200 @@ object ActiveWorkoutSession {
             DatabaseManager.updateSessionProgress(sessionId, progress.encodedJSON(), completionPercent, completedTaskIds)
         }
         bump()
+    }
+
+    // MARK: - Universal Workout Logging (PRD v2.0)
+    //
+    // The session side of the one logging screen all three modes open (`UniversalLogSheet`).
+    // Values save as they are typed (§6.1); a set only counts once the user taps its completion
+    // circle (§6.2). Values on an incomplete set are a *draft* on [progress] — persisted with the
+    // session row, never in history or totals. A completed set's values are its log
+    // ([actualSetLogs] + the live history row), so editing it keeps the checkmark and re-counts
+    // immediately (§6.3). Added / deleted sets and added metrics are session-only (§6.6, §5.5):
+    // the workout template is never touched.
+
+    /** Session sets of a task, each the programmed set it stands for (0 = added by the user). */
+    fun sessionSetPlan(taskId: String): List<Int> =
+        progress.setPlan(taskId) ?: SessionSetPlan.programmed(baseRequiredIterations[taskId] ?: requiredIterations[taskId] ?: 1)
+
+    fun setCount(taskId: String): Int = sessionSetPlan(taskId).size
+
+    /** The programmed target of a session set; null for an added set or a Quick Start session (no artificial prescriptions). */
+    fun prescribedSet(task: WorkoutTask, setNumber: Int): TaskSetConfig? {
+        if (lastMode == SessionMode.QUICK_START) return null
+        return SessionSetPlan.prescribed(task, sessionSetPlan(task.id), setNumber)
+    }
+
+    /** What the user has recorded on a set: the log when it is completed, else its draft. Null = nothing entered (the target shows instead). */
+    fun actualValues(taskId: String, setNumber: Int): TaskSetConfig? {
+        val log = actualSetLogs[taskId]?.get(setNumber)
+        if (isSetCompleted(taskId, setNumber) && log != null) return log
+        return progress.draft(taskId, setNumber) ?: log
+    }
+
+    fun isSetCompleted(taskId: String, setNumber: Int): Boolean = progress.state(taskId, setNumber) == SetState.COMPLETED
+
+    /** The set the screen highlights on open (§3.2): the interactive cursor's set when it is this task, else the first incomplete set. */
+    fun highlightedSet(taskId: String): Int? {
+        val active = activeSet
+        if (active != null && active.taskId == taskId && active.iteration <= setCount(taskId)) return active.iteration
+        val n = setCount(taskId)
+        if (n <= 0) return null
+        return (1..n).firstOrNull { !isSetCompleted(taskId, it) }
+    }
+
+    /**
+     * Auto-save one set's values (§6.1, §16.3). A completed set is re-logged in place (stays
+     * completed, stats update); anything else becomes a user-modified draft. No duplicate rows
+     * either way — the history id is deterministic and a draft is one entry.
+     */
+    fun updateSetValues(task: WorkoutTask, setNumber: Int, values: TaskSetConfig) {
+        val v = values.copy(setNumber = setNumber)
+        if (isSetCompleted(task.id, setNumber)) {
+            logValues(task.id, setNumber, v)
+        } else {
+            progress.setDraft(task.id, setNumber, if (UniversalSetValues.hasAnyValue(v)) v else null, userModified = true)
+            persistProgress()
+        }
+    }
+
+    /**
+     * Completion circle (§6.2, §6.4). Completing records the set's values — what was entered, else
+     * the untouched target — as its log; a set with nothing at all is completed without a log.
+     * Unchecking keeps every value as a draft and takes the set out of the counts.
+     */
+    fun toggleSetCompletion(task: WorkoutTask, setNumber: Int) {
+        val id = task.id
+        if (isSetCompleted(id, setNumber)) {
+            // clearLoggedSet → SessionProgress.clearLog puts a completed set (logged or not) back to
+            // upcoming and drops its live history row; the values come back as a draft.
+            val values = actualSetLogs[id]?.get(setNumber)
+            clearLoggedSet(id, setNumber)
+            if (values != null && UniversalSetValues.hasAnyValue(values)) progress.setDraft(id, setNumber, values, userModified = true)
+            persistProgress()
+            return
+        }
+        val values = progress.draft(id, setNumber) ?: prescribedSet(task, setNumber)
+        if (values != null && UniversalSetValues.hasAnyValue(values)) {
+            logValues(id, setNumber, values)
+        } else {
+            progress.setDraft(id, setNumber, null, userModified = false)
+            completeSet(id, setNumber)
+        }
+    }
+
+    /**
+     * + Add Set (§6.6): a session-only set at the end. It inherits the previous set's performance —
+     * the last completed set's actual values in Quick Start (§2.1), else the set above's entered
+     * values or target — as an untouched, incomplete draft (§16.5). Returns the new set's number.
+     */
+    fun addSet(task: WorkoutTask): Int {
+        val plan = sessionSetPlan(task.id) + 0
+        progress.setSetPlan(task.id, plan)
+        val n = plan.size
+        requiredIterations = requiredIterations + (task.id to n)
+        val completed = (n - 1 downTo 1).firstOrNull { isSetCompleted(task.id, it) }
+        val completedLog = completed?.let { actualSetLogs[task.id]?.get(it) }
+        val source: TaskSetConfig? = when {
+            completedLog != null -> completedLog
+            lastMode == SessionMode.QUICK_START || n <= 1 -> null
+            else -> actualValues(task.id, n - 1) ?: prescribedSet(task, n - 1)
+        }
+        if (source != null && UniversalSetValues.hasAnyValue(source)) {
+            progress.setDraft(task.id, n, UniversalSetValues.carryForward(source, n), userModified = false)
+        }
+        persistProgress()
+        return n
+    }
+
+    /**
+     * Delete Set (§6.8, after confirmation): removes only that session set, renumbers the ones after
+     * it (state, logs, drafts and live history rows move down), and recounts. The template is untouched.
+     */
+    fun deleteSet(task: WorkoutTask, setNumber: Int) {
+        val id = task.id
+        val plan = sessionSetPlan(id).toMutableList()
+        val count = plan.size
+        if (setNumber < 1 || setNumber > count) return
+        plan.removeAt(setNumber - 1)
+        val logs = actualSetLogs[id] ?: emptyMap()
+        // Drop every live history row of the task from the deleted set up; the shifted logs are
+        // re-written under their new numbers.
+        for (n in setNumber..count) if (logs[n] != null) DatabaseManager.deleteSessionHistoryEntry(sessionId, id, n)
+        val shifted = mutableMapOf<Int, TaskSetConfig>()
+        for ((n, log) in logs) {
+            if (n == setNumber) continue
+            val number = if (n > setNumber) n - 1 else n
+            shifted[number] = log.copy(setNumber = number)
+        }
+        actualSetLogs = if (shifted.isEmpty()) actualSetLogs - id else actualSetLogs + (id to shifted)
+        progress.removeIteration(id, setNumber, count)
+        progress.setSetPlan(id, plan)
+        requiredIterations = requiredIterations + (id to maxOf(plan.size, 1))
+        val active = activeSet
+        if (active != null && active.taskId == id && active.iteration > setNumber) activeSet = ActiveSetKey(id, active.iteration - 1)
+        persistProgress()
+        val wid = workoutId ?: return
+        for ((n, log) in shifted) {
+            if (n < setNumber) continue
+            DatabaseManager.upsertSessionHistoryEntry(
+                sessionId = sessionId, taskId = id, workoutId = wid, userId = userId, setNumber = n,
+                reps = log.reps, weightLbs = log.weightKg, taskName = task.name, durationSeconds = log.durationSeconds,
+                movementId = task.movementId, distance = log.distance, distanceUnit = log.distanceUnit,
+                setRpe = log.rpe, speedMph = log.speedMph, incline = log.incline
+            )
+        }
+    }
+
+    // Metrics (§5.3–5.5)
+
+    fun addedMetrics(taskId: String): List<LogMetric> = progress.addedMetrics(taskId).mapNotNull { LogMetric.fromRaw(it) }
+
+    fun addMetric(taskId: String, metric: LogMetric) {
+        val list = progress.addedMetrics(taskId)
+        if (list.contains(metric.rawValue)) return
+        progress.setAddedMetrics(taskId, list + metric.rawValue)
+        persistProgress()
+    }
+
+    /** Whether any set of the task holds a value for [metric] — removing it then needs confirmation (§5.5). */
+    fun hasValues(taskId: String, metric: LogMetric): Boolean {
+        val n = setCount(taskId)
+        if (n <= 0) return false
+        return (1..n).any { s -> actualValues(taskId, s)?.let { UniversalSetValues.value(metric, it) } != null }
+    }
+
+    /** Remove an added metric: its column goes and its values are cleared on every set; nothing else changes (§5.5). */
+    fun removeMetric(task: WorkoutTask, metric: LogMetric) {
+        val id = task.id
+        progress.setAddedMetrics(id, progress.addedMetrics(id).filter { it != metric.rawValue })
+        val n = setCount(id)
+        for (setNumber in 1..maxOf(n, 0)) {
+            progress.draft(id, setNumber)?.let { draft ->
+                val cleared = UniversalSetValues.clearing(metric, draft)
+                progress.setDraft(id, setNumber, if (UniversalSetValues.hasAnyValue(cleared)) cleared else null, userModified = false)
+            }
+            val log = actualSetLogs[id]?.get(setNumber)
+            if (isSetCompleted(id, setNumber) && log != null) logValues(id, setNumber, UniversalSetValues.clearing(metric, log))
+        }
+        persistProgress()
+    }
+
+    // Workout end (§11.3)
+
+    /** Incomplete sets holding user-entered values, in workout order. */
+    fun unconfirmedSets(tasks: List<WorkoutTask>): List<Pair<WorkoutTask, Int>> {
+        val found = progress.unconfirmedSets()
+        if (found.isEmpty()) return emptyList()
+        return tasks.flatMap { task -> found.filter { it.taskId == task.id }.map { task to it.iteration } }
+    }
+
+    /** The unconfirmed-set alert's rows for a workout's tasks. */
+    fun unconfirmedSetItems(tasks: List<WorkoutTask>): List<UnconfirmedSetItem> =
+        unconfirmedSets(tasks).map { (task, n) -> UnconfirmedSetItem(task, n, actualValues(task.id, n)) }
+
+    private fun logValues(taskId: String, setNumber: Int, v: TaskSetConfig) {
+        logSet(taskId, setNumber, v.weightKg, v.reps, v.durationSeconds, v.distance, v.distanceUnit, v.rpe, v.speedMph, v.incline)
     }
 
     // MARK: - Breadcrumbs

@@ -207,6 +207,7 @@ object ApiClient {
     val bodyTrackingApi: BodyTrackingApi by lazy { core() }
     val calendarApi: CalendarApi by lazy { core() }
     val personalizationApi: PersonalizationApi by lazy { core() }
+    val onboardingApi: OnboardingApi by lazy { core() }
     val classificationApi: ClassificationApi by lazy { core() }
     val contributorApi: ContributorApi by lazy { core() }
     val reportApi: ReportApi by lazy { core() }

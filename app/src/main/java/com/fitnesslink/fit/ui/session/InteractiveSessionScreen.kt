@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -173,7 +174,22 @@ fun InteractiveSessionScreen(
         )
     }
 
-    if (viewModel.showLogSheet) SetLogSheet(viewModel) { viewModel.showLogSheet = false }
+    // Universal Workout Logging (PRD v2.0 §2.3): opens over the guided workout; the workout + set timers keep running.
+    if (viewModel.showLogSheet) key(viewModel.workoutTask.id) {
+        UniversalLogSheet(viewModel.workoutTask, UniversalLogMode.INTERACTIVE, viewModel.logSheetSetNumber) { viewModel.showLogSheet = false }
+    }
+    viewModel.reviewLogTarget?.let { (task, setNumber) ->
+        key(task.id, setNumber) { UniversalLogSheet(task, UniversalLogMode.INTERACTIVE, setNumber) { viewModel.reviewLogTarget = null } }
+    }
+    // Workout-end unconfirmed sets (Universal Logging §11.3).
+    if (viewModel.showUnconfirmedSets) {
+        UnconfirmedSetsSheet(
+            items = viewModel.unconfirmedSetItems,
+            onReview = { viewModel.reviewUnconfirmedSets() },
+            onFinish = { viewModel.finishWithoutCompleting() },
+            onDismiss = { viewModel.showUnconfirmedSets = false }
+        )
+    }
     if (showMovementInfo) MovementInfoSheet(viewModel.workoutTask) { showMovementInfo = false }
     editAction?.let { action ->
         ExerciseBrowserSheet(

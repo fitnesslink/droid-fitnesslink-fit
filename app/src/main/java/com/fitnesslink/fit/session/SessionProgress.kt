@@ -2,6 +2,7 @@ package com.fitnesslink.fit.session
 
 import com.fitnesslink.fit.model.DistanceUnit
 import com.fitnesslink.fit.model.DistanceValue
+import com.fitnesslink.fit.model.TaskSetConfig
 import com.fitnesslink.fit.model.WorkoutTask
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -38,7 +39,11 @@ enum class ExerciseState {
  * task from the caller. JSON goes in the `workout_sessions.progressJson`
  * column with the same shape iOS writes (`{"entries":{"taskId#n":{...}}}`).
  */
-class SessionProgress private constructor(private val map: LinkedHashMap<String, Entry>) {
+class SessionProgress private constructor(
+    private val map: LinkedHashMap<String, Entry>,
+    private val plans: LinkedHashMap<String, List<Int>> = LinkedHashMap(),
+    private val metrics: LinkedHashMap<String, List<String>> = LinkedHashMap()
+) {
 
     constructor() : this(LinkedHashMap())
 
@@ -49,8 +54,22 @@ class SessionProgress private constructor(private val map: LinkedHashMap<String,
         val durationSeconds: Int? = null,
         /** Logged distance (FTNSSLNK-409) in [distanceUnit] ("km" | "mi"). */
         val distance: Double? = null,
-        val distanceUnit: String? = null
+        val distanceUnit: String? = null,
+        /**
+         * Universal Logging (PRD §6.1, §16.2): values entered on a set that is NOT completed yet —
+         * auto-saved, never counted. A completed set keeps its values in the session's logs instead.
+         */
+        val draft: TaskSetConfig? = null,
+        /**
+         * The draft holds values the user typed or changed (PRD §16.5, §16.10). Untouched prescribed
+         * targets and Quick Start carry-forward values leave it false/null, so they never trigger the
+         * workout-end unconfirmed-set alert.
+         */
+        val userModified: Boolean? = null
     ) {
+        /** Nothing worth keeping: no outcome, no log, no draft. */
+        val isBlank: Boolean get() = state == SetState.UPCOMING && !metricsLogged && draft == null
+
         val distanceValue: DistanceValue?
             get() {
                 val d = distance ?: return null
@@ -63,13 +82,24 @@ class SessionProgress private constructor(private val map: LinkedHashMap<String,
     /** `"<taskId>#<iteration>"` → entry. Absent = upcoming + not logged. */
     val entries: Map<String, Entry> get() = map
 
-    val isEmpty: Boolean get() = map.isEmpty()
+    /**
+     * Session-only set list per task (Universal Logging PRD §6.6, §6.8): each element is the
+     * programmed set number that session set stands for, 0 for a set the user added. Absent = the
+     * programmed sets 1…n unchanged. Adding / deleting sets edits this, never the workout template.
+     */
+    val setPlans: Map<String, List<Int>> get() = plans
 
-    fun copy(): SessionProgress = SessionProgress(LinkedHashMap(map))
+    /** Optional metrics the user added per task (PRD §5.3), as `LogMetric` raw values, in the order added. */
+    val addedMetrics: Map<String, List<String>> get() = metrics
 
-    override fun equals(other: Any?): Boolean = other is SessionProgress && other.map == map
-    override fun hashCode(): Int = map.hashCode()
-    override fun toString(): String = "SessionProgress($map)"
+    val isEmpty: Boolean get() = map.isEmpty() && plans.isEmpty() && metrics.isEmpty()
+
+    fun copy(): SessionProgress = SessionProgress(LinkedHashMap(map), LinkedHashMap(plans), LinkedHashMap(metrics))
+
+    override fun equals(other: Any?): Boolean =
+        other is SessionProgress && other.map == map && other.plans == plans && other.metrics == metrics
+    override fun hashCode(): Int = (map.hashCode() * 31 + plans.hashCode()) * 31 + metrics.hashCode()
+    override fun toString(): String = "SessionProgress($map, plans=$plans, metrics=$metrics)"
 
     // MARK: - Reads
 
@@ -159,7 +189,7 @@ class SessionProgress private constructor(private val map: LinkedHashMap<String,
         var e = map[k] ?: return
         e = e.copy(metricsLogged = false, durationSeconds = null, distance = null, distanceUnit = null)
         if (e.state == SetState.COMPLETED) e = e.copy(state = SetState.UPCOMING)
-        if (e.state == SetState.UPCOMING && !e.metricsLogged) map.remove(k) else map[k] = e
+        if (e.isBlank) map.remove(k) else map[k] = e
     }
 
     /** Skip Set: this one set is recorded incomplete. */
@@ -192,11 +222,90 @@ class SessionProgress private constructor(private val map: LinkedHashMap<String,
             val k = key(taskId, i)
             val e = map[k] ?: continue
             val reverted = e.copy(state = SetState.UPCOMING, durationSeconds = null)
-            if (reverted.metricsLogged) map[k] = reverted else map.remove(k)
+            if (reverted.isBlank) map.remove(k) else map[k] = reverted
         }
     }
 
-    fun removeAll() = map.clear()
+    fun removeAll() {
+        map.clear()
+        plans.clear()
+        metrics.clear()
+    }
+
+    // MARK: - Universal Logging (drafts, set plans, metrics)
+
+    /** A task + 1-based iteration, as the unconfirmed-set alert lists them. */
+    data class TaskIteration(val taskId: String, val iteration: Int)
+
+    /** Values entered on a not-yet-completed set (null when none). */
+    fun draft(taskId: String, iteration: Int): TaskSetConfig? = map[key(taskId, iteration)]?.draft
+
+    fun isUserModified(taskId: String, iteration: Int): Boolean = map[key(taskId, iteration)]?.userModified ?: false
+
+    /**
+     * Store (or clear, with null) a set's draft. `userModified` only ever latches on: once the user
+     * has typed into a set, a later programmatic refill doesn't make it "untouched" again.
+     */
+    fun setDraft(taskId: String, iteration: Int, values: TaskSetConfig?, userModified: Boolean) {
+        val k = key(taskId, iteration)
+        var e = (map[k] ?: Entry(SetState.UPCOMING)).copy(draft = values)
+        if (values == null) e = e.copy(userModified = null)
+        else if (userModified || e.userModified == true) e = e.copy(userModified = true)
+        if (e.isBlank) map.remove(k) else map[k] = e
+    }
+
+    /** Every draft of a task, by iteration. */
+    fun drafts(taskId: String): Map<Int, TaskSetConfig> {
+        val prefix = "$taskId#"
+        val out = LinkedHashMap<Int, TaskSetConfig>()
+        for ((k, e) in map) {
+            if (!k.startsWith(prefix)) continue
+            val draft = e.draft ?: continue
+            val n = k.substring(prefix.length).toIntOrNull() ?: continue
+            out[n] = draft
+        }
+        return out
+    }
+
+    /**
+     * Incomplete sets holding user-entered values (PRD §11.3 / §16.10): what the workout-end
+     * "You Have Unconfirmed Sets" alert lists. Completed sets, untouched prescriptions /
+     * carry-forward values and empty sets are excluded. Ordered by task id then iteration.
+     */
+    fun unconfirmedSets(): List<TaskIteration> = map.mapNotNull { (k, e) ->
+        val draft = e.draft
+        if (e.state == SetState.COMPLETED || e.userModified != true || draft == null || !UniversalSetValues.hasAnyValue(draft)) return@mapNotNull null
+        val hash = k.lastIndexOf('#')
+        if (hash < 0) return@mapNotNull null
+        val n = k.substring(hash + 1).toIntOrNull() ?: return@mapNotNull null
+        TaskIteration(k.substring(0, hash), n)
+    }.sortedWith(compareBy<TaskIteration> { it.taskId }.thenBy { it.iteration })
+
+    fun setPlan(taskId: String): List<Int>? = plans[taskId]
+
+    fun setSetPlan(taskId: String, plan: List<Int>?) {
+        if (plan == null) plans.remove(taskId) else plans[taskId] = plan.toList()
+    }
+
+    fun addedMetrics(taskId: String): List<String> = metrics[taskId] ?: emptyList()
+
+    fun setAddedMetrics(taskId: String, metrics: List<String>) {
+        if (metrics.isEmpty()) this.metrics.remove(taskId) else this.metrics[taskId] = metrics.toList()
+    }
+
+    /**
+     * Delete one session set and close the gap (PRD §6.8): every entry of [taskId] above
+     * [iteration] moves down by one. Other tasks are untouched.
+     */
+    fun removeIteration(taskId: String, iteration: Int, count: Int) {
+        if (count < 1 || iteration < 1 || iteration > count) return
+        map.remove(key(taskId, iteration))
+        if (iteration >= count) return
+        for (n in (iteration + 1)..count) {
+            val e = map.remove(key(taskId, n)) ?: continue
+            map[key(taskId, n - 1)] = e
+        }
+    }
 
     // MARK: - Resume cursor
 
@@ -271,11 +380,16 @@ class SessionProgress private constructor(private val map: LinkedHashMap<String,
     // MARK: - JSON
 
     fun encodedJSON(): String? {
-        if (map.isEmpty()) return null
-        return gson.toJson(Wire(entries = map))
+        if (isEmpty) return null
+        return gson.toJson(Wire(entries = map, setPlans = plans.takeIf { it.isNotEmpty() }, addedMetrics = metrics.takeIf { it.isNotEmpty() }))
     }
 
-    private data class Wire(val entries: Map<String, Entry> = emptyMap())
+    /** `setPlans` / `addedMetrics` are optional so rows written before Universal Logging decode unchanged. */
+    private data class Wire(
+        val entries: Map<String, Entry>? = emptyMap(),
+        val setPlans: Map<String, List<Int>>? = null,
+        val addedMetrics: Map<String, List<String>>? = null
+    )
 
     companion object {
         private val gson: Gson = GsonBuilder().create()
@@ -286,8 +400,17 @@ class SessionProgress private constructor(private val map: LinkedHashMap<String,
             if (json.isNullOrBlank()) return null
             return try {
                 val wire = gson.fromJson(json, Wire::class.java) ?: return null
-                val entries = wire.entries
-                SessionProgress(LinkedHashMap(entries.filterValues { it != null }))
+                @Suppress("SENSELESS_COMPARISON")
+                val entries = (wire.entries ?: emptyMap()).filterValues { it != null && it.state != null }
+                val plans = (wire.setPlans ?: emptyMap()).mapNotNull { (k, v) ->
+                    @Suppress("SENSELESS_COMPARISON")
+                    if (v == null) null else k to v.filterNotNull().map { (it as Number).toInt() }
+                }.toMap()
+                val metrics = (wire.addedMetrics ?: emptyMap()).mapNotNull { (k, v) ->
+                    @Suppress("SENSELESS_COMPARISON")
+                    if (v == null) null else k to v.filterNotNull()
+                }.toMap()
+                SessionProgress(LinkedHashMap(entries), LinkedHashMap(plans), LinkedHashMap(metrics))
             } catch (_: Exception) {
                 null
             }

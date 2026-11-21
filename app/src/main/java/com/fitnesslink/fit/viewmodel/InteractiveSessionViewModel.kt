@@ -47,6 +47,7 @@ import com.fitnesslink.fit.session.SessionTransitionEngine.RestKind
 import com.fitnesslink.fit.session.SessionTransitionEngine.Transition
 import com.fitnesslink.fit.session.SessionWorkoutRefresh
 import com.fitnesslink.fit.session.SetState
+import com.fitnesslink.fit.session.UnconfirmedSetItem
 import com.fitnesslink.fit.session.UpNextDescriptor
 import com.fitnesslink.fit.session.WorkoutSummaryStats
 import kotlinx.coroutines.Job
@@ -101,6 +102,10 @@ class InteractiveSessionViewModel : ViewModel() {
     var isWorkoutComplete by mutableStateOf(false)
         private set
     var showLogSheet by mutableStateOf(false)
+    /** Workout-end "You Have Unconfirmed Sets" sheet (Universal Logging §11.3). */
+    var showUnconfirmedSets by mutableStateOf(false)
+    /** The logging screen opened by Review Sets — on the affected exercise, which may not be the one under the cursor. */
+    var reviewLogTarget by mutableStateOf<Pair<WorkoutTask, Int>?>(null)
     var showFinishConfirmation by mutableStateOf(false)
         private set
     var workoutName by mutableStateOf("")
@@ -883,11 +888,29 @@ class InteractiveSessionViewModel : ViewModel() {
     // MARK: - Finish / discard
 
     private fun requestWorkoutComplete() {
+        // Unconfirmed sets first (Universal Logging §11.3).
+        if (unconfirmedSetItems.isNotEmpty()) { stopSetTimer(); showUnconfirmedSets = true; return }
         if (incompleteExerciseCount == 0) { currentSet = 1; currentRound = 1; completeWorkout() }
         else { stopSetTimer(); showFinishConfirmation = true }
     }
 
     fun finishAnyway() { showFinishConfirmation = false; currentSet = 1; currentRound = 1; completeWorkout() }
+
+    /** Incomplete sets holding entered values (Universal Logging §11.3). */
+    val unconfirmedSetItems: List<UnconfirmedSetItem> get() = session.unconfirmedSetItems(workoutTasks.filter { it.isMovement })
+
+    /** "Finish Without Completing": finish with the sets left incomplete. */
+    fun finishWithoutCompleting() { showUnconfirmedSets = false; finishAnyway() }
+
+    /** "Review Sets": open the logging screen on the first affected set. The cursor stays put; the user finishes again when ready. */
+    fun reviewUnconfirmedSets() {
+        showUnconfirmedSets = false
+        syncSetTimer()
+        reviewLogTarget = unconfirmedSetItems.firstOrNull()?.let { it.task to it.setNumber }
+    }
+
+    /** The set the logging screen highlights when opened from the player: the cursor's set / round. */
+    val logSheetSetNumber: Int get() = currentIteration
 
     fun continueWorkout() {
         showFinishConfirmation = false

@@ -423,6 +423,8 @@ object WhyExplanationText {
                 } ?: dateStr
                 "Moving from $current kg to $goal kg at your projected weekly rate puts your estimated finish around $dateText. Consistency matters more than any single day."
             }
+            "why.completion.noTarget" ->
+                "You didn't set a target weight, so there's no estimated finish date. Your calories follow the weekly pace you chose, and you can add a target anytime."
             "why.completion.notApplicable" -> {
                 val goal = str("primaryGoal")?.let { NutritionPrimaryGoal.fromRaw(it)?.displayName?.lowercase(Locale.US) } ?: "maintenance-style"
                 "A $goal plan doesn't target a weight change, so there's no completion date — the plan simply keeps you fueled at the right level."

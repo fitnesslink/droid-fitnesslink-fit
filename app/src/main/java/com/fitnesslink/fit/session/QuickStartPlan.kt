@@ -74,7 +74,9 @@ object QuickStartPlan {
         val isGroup = row.advancedTasks.isNotEmpty() || row.isSuperset || row.isCircuit || row.isInterval
         if (isGroup) {
             val members = listOfNotNull(row.task) + row.advancedTasks
-            val rounds = maxOf(1, members.maxOfOrNull { logs(it.id).size } ?: 1)
+            // Highest logged set number, not the count: with explicit set completion (Universal
+            // Logging) set 3 can be logged while set 2 is still open, and its row must survive.
+            val rounds = maxOf(1, members.maxOfOrNull { m -> logs(m.id).maxOfOrNull { it.setNumber } ?: 0 } ?: 1)
             val lead = row.task?.let { plan(it, logs(it.id), rounds).copy(rounds = rounds, totalRounds = rounds) }
             val advanced = row.advancedTasks.map { plan(it, logs(it.id), rounds).copy(rounds = rounds, totalRounds = rounds) }
             return row.copy(task = lead, advancedTasks = advanced, totalRounds = rounds, rounds = "$rounds rounds")
@@ -82,7 +84,7 @@ object QuickStartPlan {
         val task = row.task ?: return row
         if (!task.isMovement) return row
         val logged = logs(task.id)
-        return row.copy(task = plan(task, logged, maxOf(1, logged.size)))
+        return row.copy(task = plan(task, logged, maxOf(1, logged.maxOfOrNull { it.setNumber } ?: 0)))
     }
 
     /**

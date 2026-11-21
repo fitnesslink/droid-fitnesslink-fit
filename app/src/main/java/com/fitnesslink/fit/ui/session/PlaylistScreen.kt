@@ -36,6 +36,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -189,7 +190,19 @@ fun PlaylistScreen(
     infoTask?.let { task -> MovementInfoSheet(task) { infoTask = null } }
     viewModel.logTargetTaskId?.let { id ->
         val task = viewModel.workout.allTasks.firstOrNull { it.id == id }
-        if (task != null) PlaylistMovementLogSheet(viewModel, task, viewModel.logTargetSetNumber) { viewModel.closeLogSheet() } else viewModel.closeLogSheet()
+        // Universal Workout Logging (PRD v2.0 §2.2): targets show, actuals auto-save, circles complete sets.
+        if (task != null) key(id, viewModel.logTargetSetNumber) {
+            UniversalLogSheet(task, UniversalLogMode.PLAYLIST, viewModel.logTargetSetNumber) { viewModel.closeLogSheet() }
+        } else viewModel.closeLogSheet()
+    }
+    // Workout-end unconfirmed sets (Universal Logging §11.3).
+    if (viewModel.showUnconfirmedSets) {
+        UnconfirmedSetsSheet(
+            items = viewModel.unconfirmedSetItems,
+            onReview = { viewModel.reviewUnconfirmedSet(it) },
+            onFinish = { viewModel.finishWithoutCompleting() },
+            onDismiss = { viewModel.showUnconfirmedSets = false }
+        )
     }
     pickerRequest?.let { request ->
         ExerciseBrowserSheet(

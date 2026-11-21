@@ -1,6 +1,9 @@
 package com.fitnesslink.fit.ui.quickstart
 
 import com.fitnesslink.fit.ui.theme.FLTheme
+import com.fitnesslink.fit.ui.session.UniversalLogMode
+import com.fitnesslink.fit.ui.session.UniversalLogSheet
+import com.fitnesslink.fit.ui.session.UnconfirmedSetsSheet
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -48,6 +51,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -253,14 +257,21 @@ fun QuickStartCanvasScreen(
         RestDurationPickerSheet(initialSeconds = 60, title = "Add Rest", confirmLabel = "Add", onConfirm = { seconds -> viewModel.addRest(index, seconds); restPhase = null }, onCancel = { restPhase = null })
     }
     logTarget?.let { target ->
-        ExerciseLogSheet(
-            task = target.task, sessionId = viewModel.sessionId, loggedSets = viewModel.loggedSets(target.task.id),
-            initialSetNumber = target.setNumber, note = viewModel.exerciseNote(target.task.id),
-            unit = if (target.task.groupId.isEmpty()) "Set" else "Round",
-            onSaveSet = { number, weight, reps, seconds, distance -> viewModel.logSet(target.task.id, number, weight, reps, seconds, distance) },
-            onDeleteSet = { number -> viewModel.deleteSet(target.task.id, number) },
-            onSaveNote = { rpe, log -> viewModel.saveExerciseNote(target.task, rpe, log) },
-            onDismiss = { logTarget = null }
+        // Universal Workout Logging: the same screen Playlist and Interactive open (PRD v2.0 §2.1).
+        key(target) {
+            UniversalLogSheet(
+                task = target.task, mode = UniversalLogMode.QUICK_START, initialSetNumber = target.setNumber,
+                onChange = { viewModel.universalLogChanged() }, onDismiss = { logTarget = null }
+            )
+        }
+    }
+    // Workout-end unconfirmed sets (Universal Logging §11.3).
+    if (viewModel.showUnconfirmedSets) {
+        UnconfirmedSetsSheet(
+            items = viewModel.unconfirmedSetItems,
+            onReview = { item -> viewModel.showUnconfirmedSets = false; logTarget = LogTarget(item.task, item.setNumber) },
+            onFinish = { viewModel.finishWithoutCompleting() },
+            onDismiss = { viewModel.showUnconfirmedSets = false }
         )
     }
 
@@ -524,7 +535,7 @@ private fun QuickStartExerciseRow(
             Box {
                 Icon(Icons.Filled.MoreVert, contentDescription = "${task.name} options", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(28.dp).clickable { menu = true }.padding(4.dp))
                 DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                    DropdownMenuItem(text = { Text("Log $unit ${loggedCount + 1}") }, onClick = { menu = false; onTapSet(loggedCount + 1) })
+                    DropdownMenuItem(text = { Text("Log Exercise") }, onClick = { menu = false; onTapSet(states.indexOfFirst { it != SetState.COMPLETED }.takeIf { it >= 0 }?.plus(1) ?: (states.size + 1)) })
                     otherPhases.forEach { (i, name) -> DropdownMenuItem(text = { Text("Move to $name") }, onClick = { menu = false; onMove(i) }) }
                     DropdownMenuItem(text = { Text("Remove Exercise", color = FLTheme.colors.danger) }, onClick = { menu = false; onRemove() })
                 }

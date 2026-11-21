@@ -109,14 +109,14 @@ fun AppNavigation() {
                 // reactively — the user profile itself, so a restored
                 // session honours a server-side requirePersonalization flip.
                 showPersonalization || currentUser?.requirePersonalization == true -> {
-                    PersonalizationScreen(
+                    // Onboarding PRD v1.1: the personalized onboarding
+                    // (fitness profile → nutrition targets → catalog matching)
+                    // replaces the legacy questionnaire and lands on Home, where
+                    // "Recommended for You" takes over from Get Started.
+                    com.fitnesslink.fit.ui.onboarding.OnboardingFlowScreen(
                         onComplete = {
                             showPersonalization = false
-                            // Flip the in-memory flag NOW so this branch
-                            // releases immediately; the async server POST in
-                            // the flow's view model re-confirms it later.
                             AuthManager.markPersonalizationComplete()
-                            showGetStarted = true
                         }
                     )
                 }
@@ -554,9 +554,17 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                 )
             }
             composable("personalizationProfile") {
-                PersonalizationScreen(
-                    onComplete = { navController.popBackStack() },
-                    onBack = { navController.popBackStack() }
+                // Onboarding PRD v1.1: edits the nine fitness questions that
+                // drive recommendations (replaces the legacy questionnaire).
+                com.fitnesslink.fit.ui.onboarding.OnboardingFlowScreen(
+                    mode = com.fitnesslink.fit.onboarding.OnboardingMode.EDIT_TRAINING,
+                    onComplete = { navController.popBackStack() }
+                )
+            }
+            composable("recommendations") {
+                com.fitnesslink.fit.ui.home.RecommendationsListScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigate = { route -> navController.navigate(route) }
                 )
             }
             composable("nutritionReport") {

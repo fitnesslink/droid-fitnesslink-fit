@@ -38,6 +38,7 @@ import com.fitnesslink.fit.session.SessionMode
 import com.fitnesslink.fit.session.SessionProgress
 import com.fitnesslink.fit.session.SessionRecorder
 import com.fitnesslink.fit.session.SetState
+import com.fitnesslink.fit.session.UnconfirmedSetItem
 import com.fitnesslink.fit.session.WorkoutSummaryStats
 import com.fitnesslink.fit.sync.SyncDomain
 import com.fitnesslink.fit.sync.SyncManager
@@ -89,6 +90,8 @@ class QuickStartViewModel : ViewModel() {
         private set
     var collapsedPhaseIds by mutableStateOf<Set<String>>(emptySet())
     var showFinishConfirmation by mutableStateOf(false)
+    /** Workout-end "You Have Unconfirmed Sets" sheet (Universal Logging §11.3). */
+    var showUnconfirmedSets by mutableStateOf(false)
     var isWorkoutComplete by mutableStateOf(false)
         private set
     var completedElapsedSeconds: Int? = null
@@ -342,8 +345,24 @@ class QuickStartViewModel : ViewModel() {
 
     fun loggedSets(taskId: String): List<TaskSetConfig> = (session.actualSetLogs[taskId] ?: emptyMap()).values.sortedBy { it.setNumber }
 
-    /** The Set Logging Circles: every logged set a ✓ and one open ⊕ after them — it never disappears (PRD §21–23). */
-    fun setStates(taskId: String): List<SetState> = List(loggedSets(taskId).size) { SetState.COMPLETED } + SetState.UPCOMING
+    /**
+     * The Set Logging Circles of an exercise: one per session set (✓ completed, ○ still open), plus
+     * an open ⊕ once every set is complete — it is how the user comes back for one more set
+     * (Quick Start PRD §21–23; Universal Logging §6.2).
+     */
+    fun setStates(taskId: String): List<SetState> {
+        val states = session.setStates(taskId)
+        return if (states.all { it == SetState.COMPLETED }) states + SetState.UPCOMING else states
+    }
+
+    /** After any edit on the Universal Logging screen: mirror the plan to the logs and re-read the exercise notes it wrote. */
+    fun universalLogChanged() {
+        syncPlanToLogs()
+        exerciseNotes = DatabaseManager.sessionExerciseNotes(session.sessionId).associateBy { it.taskId }
+    }
+
+    /** Incomplete sets with entered values (Universal Logging §11.3). */
+    val unconfirmedSetItems: List<UnconfirmedSetItem> get() = session.unconfirmedSetItems(movementTasks)
 
     fun nextSetNumber(taskId: String): Int = loggedSets(taskId).size + 1
 
@@ -396,7 +415,16 @@ class QuickStartViewModel : ViewModel() {
 
     val finishConfirmationMessage: String get() = QuickStartPlan.finishMessage(unloggedExerciseCount, loggedSetCount)
 
-    fun requestFinish() { showFinishConfirmation = true }
+    /** Unconfirmed sets first (Universal Logging §11.3); "Finish Without Completing" then goes on to the usual confirmation. */
+    fun requestFinish() {
+        if (unconfirmedSetItems.isNotEmpty()) showUnconfirmedSets = true else showFinishConfirmation = true
+    }
+
+    /** "Finish Without Completing": the entered values stay drafts, the sets stay incomplete. */
+    fun finishWithoutCompleting() {
+        showUnconfirmedSets = false
+        confirmFinish()
+    }
 
     fun confirmFinish() {
         showFinishConfirmation = false
