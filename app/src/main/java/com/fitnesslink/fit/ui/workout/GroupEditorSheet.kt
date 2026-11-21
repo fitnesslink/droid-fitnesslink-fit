@@ -53,6 +53,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitnesslink.fit.model.EmomMath
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.IntervalMetrics
 import com.fitnesslink.fit.model.IntervalMode
@@ -147,7 +148,7 @@ fun GroupEditorView(row: TaskRow, phaseIndex: Int, viewModel: WorkoutEditorViewM
                 )
             }
 
-            if (row.isInterval && lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
+            if (row.isInterval && EmomMath.plan(row) == null && lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -174,7 +175,10 @@ private fun GroupMemberRow(
     val isExpanded = viewModel.expandedTaskId == task.id
     var showMenu by remember(task.id) { mutableStateOf(false) }
     val editorTask = task.copy(isInterval = task.isInterval || row.isInterval, intervalMode = task.intervalMode ?: row.intervalMode)
+    val isEmom = row.isInterval && (row.intervalMode ?: editorTask.intervalMode) == IntervalMode.EMOM
     val metric = when {
+        // EMOM member rows show the exercise target only — never the interval (PRD §3.3).
+        isEmom -> EmomMath.targetText(editorTask)
         editorTask.isInterval -> if (IntervalMath.usesRepTargets(row.intervalMode ?: editorTask.intervalMode) && editorTask.reps > 0) "${editorTask.reps} reps" else ""
         editorTask.usesDuration -> WorkoutRowOps.formatDuration(editorTask.durationSeconds ?: 0)
         editorTask.reps > 0 -> "${editorTask.reps} reps"
@@ -211,7 +215,7 @@ private fun GroupMemberRow(
         }
         if (isExpanded) {
             Box(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 10.dp)) {
-                SetEditorView(task = editorTask, viewModel = viewModel, isGrouped = true)
+                SetEditorView(task = editorTask, viewModel = viewModel, isGrouped = true, emomIntervalSeconds = if (isEmom) EmomMath.plan(row)?.intervalSeconds else null)
             }
         }
     }
@@ -225,11 +229,14 @@ internal fun RolePill(label: String, color: Color) {
     )
 }
 
-/** Read-only interval summary; tapping opens [IntervalEditSheet]. */
+/** Read-only interval summary; tapping opens [IntervalEditSheet] (or [EmomEditSheet] for EMOM). */
 @Composable
 private fun IntervalSummaryCard(row: TaskRow, viewModel: WorkoutEditorViewModel, modifier: Modifier = Modifier) {
     var showEdit by remember(row.task?.id) { mutableStateOf(false) }
-    Row(
+    val emom = EmomMath.plan(row)
+    if (emom != null) {
+        EmomSummaryCard(emom, modifier) { showEdit = true }
+    } else Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
@@ -247,7 +254,29 @@ private fun IntervalSummaryCard(row: TaskRow, viewModel: WorkoutEditorViewModel,
     if (showEdit) {
         // Re-read the live row so edits inside the sheet reflect immediately.
         val liveRow = viewModel.workout.phases.flatMap { it.taskRows }.firstOrNull { it.task?.id == row.task?.id } ?: row
-        IntervalEditSheet(row = liveRow, viewModel = viewModel, onDismiss = { showEdit = false })
+        if (EmomMath.plan(liveRow) != null) EmomEditSheet(row = liveRow, viewModel = viewModel, onDismiss = { showEdit = false })
+        else IntervalEditSheet(row = liveRow, viewModel = viewModel, onDismiss = { showEdit = false })
+    }
+}
+
+/** EMOM builder card (PRD §3.3): "20-min EMOM · 60s Interval · 20:00", Edit ›, then Duration / Interval / Rounds / Cycles tiles. */
+@Composable
+private fun EmomSummaryCard(plan: com.fitnesslink.fit.model.EmomPlan, modifier: Modifier, onEdit: () -> Unit) {
+    Column(
+        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLPrimary.copy(alpha = 0.06f))
+            .clickable(onClick = onEdit).padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(EmomMath.summaryTitle(plan), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 2, modifier = Modifier.weight(1f))
+            Text("Edit", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
+            Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            EmomMath.builderTiles(plan).forEach { tile ->
+                IntervalStatTile(label = tile.label, value = tile.value, modifier = Modifier.weight(1f))
+            }
+        }
     }
 }
 

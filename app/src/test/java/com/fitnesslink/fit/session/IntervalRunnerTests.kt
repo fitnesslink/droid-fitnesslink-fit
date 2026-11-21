@@ -125,9 +125,10 @@ class IntervalRunnerTests {
     }
 
     @Test fun testEmomRunsEveryMinuteToItsBoundary() {
+        // Legacy minutes row: 60 s interval, the stored work-per-minute is ignored; a rep-based round's WORK is the whole interval.
         val phases = harness(makeGroup(IntervalMode.EMOM, work = 40, window = 180, sets = 1)).runToCompletion()
-        assertEquals(listOf(IntervalPhase.WORK, IntervalPhase.REST, IntervalPhase.WORK, IntervalPhase.REST, IntervalPhase.WORK, IntervalPhase.REST), phases.map { it.first })
-        assertEquals(listOf(40, 20, 40, 20, 40, 20), phases.map { it.second })
+        assertEquals(listOf(IntervalPhase.WORK, IntervalPhase.WORK, IntervalPhase.WORK), phases.map { it.first })
+        assertEquals(listOf(60, 60, 60), phases.map { it.second })
         assertEquals(180, phases.sumOf { it.second })
     }
 
@@ -604,11 +605,10 @@ class IntervalRunnerTests {
 
         val emom = harness(makeGroup(IntervalMode.EMOM, work = 40, window = 120))
         emom.finishPhase()
-        assertFalse(emom.runner.leadsIntoWork)
-        emom.finishPhase()
+        assertEquals(IntervalPhase.WORK, emom.runner.phase)
         assertTrue(emom.runner.leadsIntoWork)
-        emom.finishPhase(); emom.finishPhase()
-        assertEquals(IntervalPhase.REST, emom.runner.phase)
+        emom.finishPhase()
+        assertEquals(2, emom.runner.currentRound)
         assertFalse(emom.runner.leadsIntoWork)
 
         val amrap = harness(makeGroup(IntervalMode.AMRAP, window = 600, sets = 2, setRest = 60))
@@ -675,16 +675,16 @@ class IntervalRunnerTests {
         val h = harness(makeGroup(IntervalMode.EMOM, work = 40, window = 120))
         h.finishPhase()
         h.advance(25)
-        assertEquals(15, h.runner.secondsRemaining)
+        assertEquals(35, h.runner.secondsRemaining)
         h.runner.markEmomRoundDone()
         assertEquals(IntervalPhase.REST, h.runner.phase)
-        assertEquals(15 + 20, h.runner.secondsRemaining)
+        assertEquals(35, h.runner.secondsRemaining)
         assertEquals(35 + 60, h.runner.blockRemainingSeconds)
         h.advance(34)
         assertEquals(IntervalPhase.REST, h.runner.phase)
         h.advance(1)
         assertEquals(IntervalPhase.WORK, h.runner.phase)
         assertEquals(2, h.runner.currentRound)
-        assertEquals(40, h.runner.secondsRemaining)
+        assertEquals(60, h.runner.secondsRemaining)
     }
 }

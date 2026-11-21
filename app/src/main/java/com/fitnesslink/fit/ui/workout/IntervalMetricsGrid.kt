@@ -25,6 +25,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitnesslink.fit.model.EmomMath
+import com.fitnesslink.fit.model.EmomText
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.IntervalMetrics
 import com.fitnesslink.fit.model.IntervalMode
@@ -61,6 +63,7 @@ fun IntervalStatTile(label: String, value: String, emphasized: Boolean = false, 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun IntervalMetricsGrid(metrics: IntervalMetrics, accent: Color = BlueTheme) {
+    if (metrics.emom != null) { EmomMetricsHeader(metrics, accent); return }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(Icons.Filled.Timer, contentDescription = null, tint = accent, modifier = Modifier.size(14.dp))
@@ -91,6 +94,41 @@ fun IntervalMetricsGrid(metrics: IntervalMetrics, accent: Color = BlueTheme) {
 }
 
 /**
+ * EMOM header for Workout Overview and Playlist (PRD §5, §6): "INTERVAL · EMOM" + "2 exercises",
+ * Duration / Interval / Rounds / Cycles as a 2×2 grid (one row of three for a single exercise),
+ * then "How this EMOM works" and the generated instruction.
+ */
+@Composable
+fun EmomMetricsHeader(metrics: IntervalMetrics, accent: Color = BlueTheme, modifier: Modifier = Modifier) {
+    val emom = metrics.emom ?: return
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(Icons.Filled.Timer, contentDescription = null, tint = accent, modifier = Modifier.size(14.dp))
+            Text(
+                text = metrics.badgeText, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold, color = FLTheme.colors.onBrand,
+                modifier = Modifier.background(accent, CircleShape).padding(horizontal = 8.dp, vertical = 4.dp)
+            )
+            Text("${emom.exerciseCount} exercise${if (emom.exerciseCount == 1) "" else "s"}", fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1)
+        }
+        val tiles = EmomMath.overviewTiles(emom)
+        val perRow = if (tiles.size == 4) 2 else tiles.size
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            tiles.chunked(maxOf(1, perRow)).forEach { rowTiles ->
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                    rowTiles.forEach { tile -> IntervalStatTile(label = tile.label, value = tile.value, modifier = Modifier.weight(1f)) }
+                }
+            }
+        }
+        metrics.emomInstruction?.let { text ->
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(EmomText.heading, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                Text(text, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
+            }
+        }
+    }
+}
+
+/**
  * Compact two-line metrics block for the builder's interval card: the dense
  * structure line with the total emphasized, a detail line, and the recovery
  * movement on its own line when set.
@@ -103,13 +141,13 @@ fun IntervalMetricsLine(metrics: IntervalMetrics, modifier: Modifier = Modifier)
             val core = "${plan.roundsPerSet} × ${plan.workSeconds}s/${plan.restSeconds}s"
             if (plan.sets > 1) "${plan.sets} × ($core)" else core
         }
-        IntervalMode.EMOM -> "${if (plan.sets > 1) "${plan.sets} × " else ""}${plan.roundsPerSet} min EMOM · ${plan.workSeconds}s work"
+        IntervalMode.EMOM -> metrics.emom?.let { EmomMath.summaryTitle(it) } ?: "EMOM"
         IntervalMode.AMRAP -> "${if (plan.sets > 1) "${plan.sets} × " else ""}${IntervalMath.formatTime(plan.windowSeconds)} AMRAP"
     }
     val detail = buildList {
         when (metrics.mode) {
             IntervalMode.TABATA, IntervalMode.HIIT -> { add("Work ${plan.workSeconds}s"); add("Rest ${plan.restSeconds}s"); add("${plan.roundsPerSet} rounds") }
-            IntervalMode.EMOM -> { add("${plan.roundsPerSet} min"); add("Work ${plan.workSeconds}s/min") }
+            IntervalMode.EMOM -> metrics.emom?.let { add(EmomMath.roundsCyclesLine(it)) }
             IntervalMode.AMRAP -> add("${IntervalMath.formatTime(plan.windowSeconds)} window")
         }
         if (plan.sets > 1) { add("${plan.sets} sets"); add("${metrics.betweenSetsText} between sets") }

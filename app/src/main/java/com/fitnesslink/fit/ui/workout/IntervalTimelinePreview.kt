@@ -48,7 +48,11 @@ fun IntervalTimelinePreview(row: TaskRow) {
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         when (plan.mode) {
             IntervalMode.TABATA, IntervalMode.HIIT -> RoundRows(plan.roundsPerSet, plan.workSeconds, plan.restSeconds, "Round", restAfterLast = false)
-            IntervalMode.EMOM -> RoundRows(plan.roundsPerSet, plan.workSeconds, plan.restSeconds, "Min", restAfterLast = true)
+            IntervalMode.EMOM -> {
+                val emom = com.fitnesslink.fit.model.EmomMath.plan(row)
+                EmomPreviewRows(com.fitnesslink.fit.model.EmomMath.members(row), emom?.intervalSeconds ?: plan.workSeconds)
+                emom?.let { Text(com.fitnesslink.fit.model.EmomMath.previewFooter(it), fontSize = 11.sp, color = FLTheme.colors.textSecondary) }
+            }
             IntervalMode.AMRAP -> {
                 Row(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(BlueTheme).padding(horizontal = 12.dp, vertical = 10.dp),

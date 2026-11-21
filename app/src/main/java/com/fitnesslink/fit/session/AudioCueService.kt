@@ -43,6 +43,8 @@ object AudioCueService {
     /** The phrase most recently handed to the synthesizer (meaningful only while speaking). */
     private var currentPhrase: VoicePhrase? = null
     private var speaking = false
+    /** Priority level of the EMOM coach announcement in flight (null when none / non-coach speech). */
+    private var coachLevelInFlight: Int? = null
 
     /**
      * FTNSSLNK-498: the user's music is ducked only for the length of each spoken announcement —
@@ -89,7 +91,7 @@ object AudioCueService {
     private fun fire(utteranceId: String?) {
         if (utteranceId == null) return
         val handler = completions.remove(utteranceId)
-        if (completions.isEmpty()) { speaking = false; currentPhrase = null; releaseDuck() }
+        if (completions.isEmpty()) { speaking = false; currentPhrase = null; coachLevelInFlight = null; releaseDuck() }
         handler?.invoke()
     }
 
@@ -147,8 +149,21 @@ object AudioCueService {
     fun resetCountdownCues() = scheduler.resetCountdown()
 
     /** Route an interval-runner event (`finalRound` → "Final round"; `leadsToWork` → spoken 3-2-1). */
-    fun handle(event: IntervalRunner.Event, finalRound: Boolean = false, leadsToWork: Boolean = false) {
-        for (output in IntervalCueRouter.outputs(event, finalRound, leadsToWork, policy)) perform(output)
+    fun handle(event: IntervalRunner.Event, finalRound: Boolean = false, leadsToWork: Boolean = false, voice: Boolean = true) {
+        for (output in IntervalCueRouter.outputs(event, finalRound, leadsToWork, policy, voice)) perform(output)
+    }
+
+    /**
+     * EMOM coach speech (PRD §8): a cue lower in priority than the coach phrase in flight is
+     * dropped (never queued); an equal-or-higher one interrupts. Mute / voice-off suppress it.
+     */
+    fun speakCoach(cue: EmomCue) {
+        if (!policy.voiceOn || cue.lines.isEmpty()) return
+        val inFlight = if (speaking) coachLevelInFlight else null
+        if (CoachSpeechArbiter.decide(cue.level, inFlight) == CoachSpeechArbiter.Decision.DROP) return
+        if (speaking) stopSpeaking()
+        speakSequence(cue.lines.map { VoicePhrase.Coach(it, cue.level) }, null)
+        if (speaking) coachLevelInFlight = cue.level
     }
 
     /** Skip Set / Skip Exercise / Skip Block: a short neutral tone plus a light tap — no speech. */
@@ -237,6 +252,7 @@ object AudioCueService {
         completions.clear()
         speaking = false
         currentPhrase = null
+        coachLevelInFlight = null
         try { tts?.stop() } catch (_: Exception) {}
         releaseDuck()
         pending.forEach { it() }

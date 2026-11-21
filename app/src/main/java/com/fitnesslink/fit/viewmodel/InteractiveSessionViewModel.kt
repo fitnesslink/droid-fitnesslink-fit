@@ -10,6 +10,7 @@ import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.model.DistanceRule
 import com.fitnesslink.fit.model.DistanceUnit
 import com.fitnesslink.fit.model.DistanceValue
+import com.fitnesslink.fit.model.EmomMath
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.IntervalPhase
@@ -24,6 +25,9 @@ import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.session.ActiveWorkoutSession
 import com.fitnesslink.fit.session.AudioCueService
+import com.fitnesslink.fit.session.EmomCoach
+import com.fitnesslink.fit.session.EmomCueContext
+import com.fitnesslink.fit.session.EmomOutcomeWriter
 import com.fitnesslink.fit.session.IntervalRunner
 import com.fitnesslink.fit.session.MovementHistoryStore
 import com.fitnesslink.fit.session.MovementPreviousWeight
@@ -116,6 +120,10 @@ class InteractiveSessionViewModel : ViewModel() {
         private set
     var intervalRunner: IntervalRunner? = null
         private set
+    /** EMOM voice coach (PRD §8); one per session so its phrase rotations carry across blocks. */
+    private val emomCoach = EmomCoach()
+    /** True while an EMOM block's runner is live. */
+    val isEmomRunning: Boolean get() = intervalRunner?.let { it.emomPlan != null && it.phase != IntervalPhase.DONE } == true
     var phaseOptions by mutableStateOf<List<PhaseOption>>(emptyList())
         private set
     var isWorkoutEditable by mutableStateOf(false)
@@ -279,6 +287,11 @@ class InteractiveSessionViewModel : ViewModel() {
             if (runner != null && runner.phase != IntervalPhase.DONE) {
                 val next = runner.nextExercise
                 val slot = runner.nextSlot
+                if (next != null && slot != null && runner.emomPlan != null) {
+                    // EMOM REST card (§7.3): "Push-ups · 10 reps" / "Round 3 / 20".
+                    return descriptor(next, UpNextDescriptor.Kind.NextExercise, prescription = EmomMath.displayTarget(next),
+                        detail = "Round ${slot.second} / ${runner.roundsTotal}", startsIn = null)
+                }
                 if (next != null && slot != null) {
                     val detail = if (runner.intervalMode != IntervalMode.AMRAP) {
                         if (runner.setsTotal > 1) "Set ${slot.first} · Round ${slot.second} of ${runner.roundsTotal}" else "Round ${slot.second} of ${runner.roundsTotal}"
@@ -425,7 +438,7 @@ class InteractiveSessionViewModel : ViewModel() {
             val runner = intervalRunner ?: return false
             return when (runner.phase) {
                 IntervalPhase.PREPARE, IntervalPhase.BETWEEN_SETS_REST -> true
-                IntervalPhase.REST -> runner.leadTask?.restType != RestType.ACTIVE_RECOVERY
+                IntervalPhase.REST -> runner.emomPlan != null || runner.leadTask?.restType != RestType.ACTIVE_RECOVERY
                 IntervalPhase.WORK, IntervalPhase.DONE -> false
             }
         }
@@ -526,6 +539,7 @@ class InteractiveSessionViewModel : ViewModel() {
             return
         }
         val runner = intervalRunner
+        if (runner != null && runner.phase != IntervalPhase.DONE && runner.emomPlan != null) { emomNext(runner); return }
         if (runner != null && runner.phase != IntervalPhase.DONE) { clearPauseForAdvance(); runner.skip(); bump(); return }
         apply(engine.next(cursor), completing = true)
     }
@@ -544,6 +558,20 @@ class InteractiveSessionViewModel : ViewModel() {
         // A paused rest kept its remainder for a resume that will never come — the rest is being left.
         restPausedRemainingMs = null
         intervalRunner?.resume()
+    }
+
+    /** EMOM Next / Skip Round (§7.2): stop speech, next round at its full interval, or leave after the last. */
+    private fun emomNext(runner: IntervalRunner) {
+        AudioCueService.silenceVoice()
+        clearPauseForAdvance()
+        if (!runner.emomNext()) { exitIntervalGroup(); return }
+        bump()
+    }
+
+    /** Leave the whole interval block (Skip Block); EMOM speech stops at once. */
+    fun leaveIntervalBlock() {
+        if (isEmomRunning) AudioCueService.silenceVoice()
+        exitIntervalGroup()
     }
 
     fun startWork() {
@@ -685,6 +713,7 @@ class InteractiveSessionViewModel : ViewModel() {
         removeRestTimer()
         val runner = intervalRunner
         if (runner != null && runner.phase != IntervalPhase.DONE) {
+            if (runner.emomPlan != null) AudioCueService.silenceVoice()
             if (runner.back()) { bump(); return }
             val blockStart = currentGroupRange()?.first ?: position
             if (blockStart <= 0) return
@@ -744,10 +773,20 @@ class InteractiveSessionViewModel : ViewModel() {
 
     private fun currentGroupRange(): IntRange? = engine.groupRange(position)
 
+    /** The preparation screen leads into an EMOM block — its last five seconds are spoken (§7.1). */
+    private val isPreparingEmomBlock: Boolean
+        get() {
+            if (!isPreparing) return false
+            val range = currentGroupRange() ?: return false
+            val lead = workoutTasks[range.first]
+            return lead.isInterval && lead.intervalMode == IntervalMode.EMOM
+        }
+
     /** The Up Next skip affordance. */
     fun getNextExercise() {
         val runner = intervalRunner
         if (runner != null) {
+            if (runner.emomPlan != null) AudioCueService.silenceVoice()
             if (runner.phase != IntervalPhase.DONE && runner.jumpToNextWork()) { bump(); return }
             exitIntervalGroup(); return
         }
@@ -763,7 +802,11 @@ class InteractiveSessionViewModel : ViewModel() {
     val canSkipSet: Boolean
         get() = workoutTask.isMovement && !workoutTask.isInterval && !workoutTask.isRest && intervalRunner == null && activeRestKind == null && !isWorkoutComplete
     val canSkipExercise: Boolean get() = canSkipSet || (intervalRunner != null && !isWorkoutComplete)
-    val skipExerciseLabel: String get() = if (currentGroupRange() != null) "Skip Block" else "Skip Exercise"
+    val skipExerciseLabel: String get() = when {
+        isEmomRunning -> "Skip Round"
+        currentGroupRange() != null -> "Skip Block"
+        else -> "Skip Exercise"
+    }
 
     fun skipCurrentSet() {
         if (!canSkipSet) return
@@ -776,7 +819,10 @@ class InteractiveSessionViewModel : ViewModel() {
 
     fun skipCurrentExercise() {
         if (!canSkipExercise) return
-        if (intervalRunner != null) { AudioCueService.skipped(); exitIntervalGroup(); return }
+        val runner = intervalRunner
+        // EMOM: Skip = Next (never marks the round complete, §7.2).
+        if (runner != null && isEmomRunning) { AudioCueService.skipped(); emomNext(runner); return }
+        if (runner != null) { AudioCueService.skipped(); exitIntervalGroup(); return }
         clearTransientState()
         stopSetTimer()
         val range = currentGroupRange()
@@ -797,6 +843,8 @@ class InteractiveSessionViewModel : ViewModel() {
 
     fun toggleVideoState() {
         isVideoPaused = !isVideoPaused
+        // EMOM: pause stops speech immediately; resume never replays missed cues (§8).
+        if (isVideoPaused && isEmomRunning) AudioCueService.silenceVoice()
         if (isVideoPaused) { stopSetTimer(); pauseRestTimer(); intervalRunner?.pause() }
         else { if (isRest) { if (!isAwaitingPrepCue) setRestTimer() } else syncSetTimer(); intervalRunner?.resume() }
         bump()
@@ -1145,6 +1193,7 @@ class InteractiveSessionViewModel : ViewModel() {
             runner = IntervalRunner(row, prepareSeconds, clock)
             runner.onEvent = { handleRunnerEvent(it, runner) }
             intervalRunner = runner
+            if (runner.emomPlan != null) emomCoach.beginBlock()
             runner.start()
         }
         if (isVideoPaused) runner.pause()
@@ -1159,7 +1208,10 @@ class InteractiveSessionViewModel : ViewModel() {
 
     private fun handleRunnerEvent(event: IntervalRunner.Event, runner: IntervalRunner) {
         if (runner !== intervalRunner) return
-        AudioCueService.handle(event, finalRound = runner.isFinalRound, leadsToWork = runner.leadsIntoWork)
+        val isEmom = runner.emomPlan != null
+        // EMOM keeps today's beeps / haptics but speaks through its own coach (§8).
+        AudioCueService.handle(event, finalRound = runner.isFinalRound, leadsToWork = runner.leadsIntoWork, voice = !isEmom)
+        if (isEmom) for (cue in emomCoach.cues(event, EmomCueContext.from(runner))) AudioCueService.speakCoach(cue)
         session.intervalSnapshot = if (runner.phase == IntervalPhase.DONE) null else runner.snapshot()
         if (event == IntervalRunner.Event.BlockComplete) {
             viewModelScope.launch { if (runner === intervalRunner) exitIntervalGroup() }
@@ -1187,10 +1239,12 @@ class InteractiveSessionViewModel : ViewModel() {
         val roundsDone: Int? = runner?.takeIf { it.phase != IntervalPhase.DONE }?.let { r ->
             maxOf(0, r.currentSet - 1) * maxOf(r.roundsTotal, 1) + maxOf(0, r.currentRound - 1)
         }
+        // EMOM (§7.2): every round's outcome lands on its member's cycle iteration.
+        val emomWrites = runner?.emomPlan?.let { plan -> EmomOutcomeWriter.writes(plan, runner.memberTasks.map { it.id }, runner.emomOutcomes) }
         cancelRunner()
         val range = currentGroupRange() ?: return
         val finishedLead = workoutTasks[range.first]
-        recordIntervalBlockOutcome(range, roundsDone)
+        if (emomWrites != null) session.recordEmomOutcomes(emomWrites) else recordIntervalBlockOutcome(range, roundsDone)
         currentRound = 1
         var transition = engine.afterItem(range.last)
         val recoveryRest = finishedLead.roundRestSeconds
@@ -1240,7 +1294,7 @@ class InteractiveSessionViewModel : ViewModel() {
         if (seconds == restSecondsRemaining) return
         restSecondsRemaining = seconds
         rest = formatRestTime(seconds)
-        if (isPreparing) AudioCueService.play(SessionCueEvent.PrepTick(seconds))
+        if (isPreparing) AudioCueService.play(SessionCueEvent.PrepTick(seconds, spokenFrom = if (isPreparingEmomBlock) 5 else 3))
         else if (activeRestKind != null || workoutTask.isRest) AudioCueService.play(SessionCueEvent.RestTick(seconds))
     }
 

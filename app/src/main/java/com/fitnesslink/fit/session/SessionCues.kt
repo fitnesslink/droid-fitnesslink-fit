@@ -16,6 +16,9 @@ sealed class VoicePhrase {
     object WorkoutComplete : VoicePhrase()
     /** One-time playlist onboarding: where the interactive-mode button lives. */
     object InteractiveModeHint : VoicePhrase()
+    /** EMOM lead-in countdown starts at 5 (EMOM PRD §7.1). */
+    object Five : VoicePhrase()
+    object Four : VoicePhrase()
     object Three : VoicePhrase()
     object Two : VoicePhrase()
     object One : VoicePhrase()
@@ -35,6 +38,11 @@ sealed class VoicePhrase {
     object InteractiveModeEntered : VoicePhrase()
     /** A new set of the same exercise began: "Set 2 of 3" (FTNSSLNK-423). */
     data class SetAdvanced(val set: Int, val total: Int) : VoicePhrase()
+    /**
+     * An EMOM coach line (EMOM PRD §8) with its priority [level] (1 = highest). Arbitrated by
+     * [CoachSpeechArbiter] against coach speech in flight rather than by [priority].
+     */
+    data class Coach(val line: String, val level: Int) : VoicePhrase()
 
     /** How a phrase meets speech already in flight. */
     enum class Priority {
@@ -56,6 +64,8 @@ sealed class VoicePhrase {
             WorkoutComplete -> "Workout complete"
             InteractiveModeHint ->
                 "Tip: tap the white play button at the top right to switch to interactive mode. It guides you through each exercise with videos and timers."
+            Five -> "5"
+            Four -> "4"
             Three -> "3"
             Two -> "2"
             One -> "1"
@@ -81,6 +91,7 @@ sealed class VoicePhrase {
             }
             InteractiveModeEntered -> "You have entered Interactive Mode."
             is SetAdvanced -> if (total > 1) "Set $set of $total" else "Set $set"
+            is Coach -> line
         }
 
     /** What the synthesizer actually reads — punctuation softened so a colon doesn't rush the next word. */
@@ -93,7 +104,7 @@ sealed class VoicePhrase {
 
     val priority: Priority
         get() = when (this) {
-            Three, Two, One -> Priority.DROP_IF_BUSY
+            Five, Four, Three, Two, One -> Priority.DROP_IF_BUSY
             is UpNext, is RestFor, is PhaseTransition, InteractiveModeEntered, is SetAdvanced -> Priority.QUEUE
             else -> Priority.INTERRUPT
         }
@@ -101,7 +112,7 @@ sealed class VoicePhrase {
     /** Short phrases a queued phrase waits for. */
     val isShort: Boolean
         get() = when (this) {
-            Three, Two, One, Go, Done, Halfway, Begin, Rest, GetReady, FinalRound, is SetAdvanced -> true
+            Five, Four, Three, Two, One, Go, Done, Halfway, Begin, Rest, GetReady, FinalRound, is SetAdvanced, is Coach -> true
             else -> false
         }
 
@@ -117,6 +128,13 @@ sealed class VoicePhrase {
             2 -> Two
             1 -> One
             else -> null
+        }
+
+        /** The EMOM lead-in countdown (PRD §7.1): 5…1, null outside. */
+        fun countdownFromFive(remaining: Int): VoicePhrase? = when (remaining) {
+            5 -> Five
+            4 -> Four
+            else -> countdown(remaining)
         }
 
         /** `30 seconds` / `1 minute` / `1 minute 30 seconds`. */
@@ -149,7 +167,8 @@ sealed class SessionCueEvent {
         val structure: String? = null,
         val modeEntry: Boolean = false
     ) : SessionCueEvent()
-    data class PrepTick(val remaining: Int) : SessionCueEvent()
+    /** [spokenFrom] = the first second the voice counts (3; an EMOM block's preparation counts from 5, §7.1). */
+    data class PrepTick(val remaining: Int, val spokenFrom: Int = 3) : SessionCueEvent()
     object PrepEnded : SessionCueEvent()
     data class RestStarted(val seconds: Int, val upNext: String?, val nextPhase: String? = null) : SessionCueEvent()
     data class SetAdvanced(val set: Int, val total: Int) : SessionCueEvent()
@@ -207,7 +226,11 @@ data class SessionCuePolicy(
                 haptic(SessionHaptic.TRANSITION)
                 speak(VoicePhrase.SetAdvanced(event.set, event.total))
             }
-            is SessionCueEvent.PrepTick -> countdownOutputs(event.remaining, ::sound, ::haptic, ::speak)
+            is SessionCueEvent.PrepTick -> {
+                // Numbers above 3 are voice only; the last three keep today's beep + tick.
+                if (event.remaining in 4..event.spokenFrom) VoicePhrase.countdownFromFive(event.remaining)?.let(::speak)
+                else countdownOutputs(event.remaining, ::sound, ::haptic, ::speak)
+            }
             is SessionCueEvent.RestTick -> countdownOutputs(event.remaining, ::sound, ::haptic, ::speak)
             SessionCueEvent.PrepEnded -> {
                 sound(SessionCueOutput.Ding)
@@ -383,9 +406,10 @@ object SessionCuePhrasing {
  * adds the spoken 3-2-1 to the final ticks (voice counts INTO work, never into a rest).
  */
 object IntervalCueRouter {
-    fun outputs(event: IntervalRunner.Event, finalRound: Boolean, leadsToWork: Boolean, policy: SessionCuePolicy): List<SessionCueOutput> {
+    /** [voice] false keeps the sounds / haptics but leaves speech to another coach (EMOM, PRD §8). */
+    fun outputs(event: IntervalRunner.Event, finalRound: Boolean, leadsToWork: Boolean, policy: SessionCuePolicy, voice: Boolean = true): List<SessionCueOutput> {
         val out = mutableListOf<SessionCueOutput>()
-        fun speak(phrase: VoicePhrase) { if (policy.voiceOn) out.add(SessionCueOutput.Speak(phrase)) }
+        fun speak(phrase: VoicePhrase) { if (voice && policy.voiceOn) out.add(SessionCueOutput.Speak(phrase)) }
         fun sound(output: SessionCueOutput) { if (policy.soundsOn) out.add(output) }
         fun haptic(kind: SessionHaptic) { if (policy.hapticsEnabled) out.add(SessionCueOutput.Haptic(kind)) }
         when (event) {

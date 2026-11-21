@@ -252,7 +252,7 @@ class AIWorkoutGeneratorViewModel : ViewModel() {
                     val preset = WorkoutRowOps.preset(mode)
                     when (mode) {
                         IntervalMode.AMRAP -> "${mode.displayName} $key · ${(lead.intervalWindowSeconds ?: preset.totalSeconds) / 60} min"
-                        IntervalMode.EMOM -> "${mode.displayName} $key · ${lead.intervalWorkSeconds ?: preset.workSeconds}s work · ${lead.rounds ?: preset.rounds} min"
+                        IntervalMode.EMOM -> "${mode.displayName} $key · ${lead.rounds ?: preset.rounds} rounds · 60s interval"
                         IntervalMode.TABATA, IntervalMode.HIIT -> {
                             val sets = lead.intervalSets ?: 1
                             "${mode.displayName} $key · ${lead.intervalWorkSeconds ?: preset.workSeconds}s/${lead.intervalRestSeconds ?: preset.restSeconds}s × ${lead.rounds ?: preset.rounds}" +
@@ -375,8 +375,9 @@ class AIWorkoutGeneratorViewModel : ViewModel() {
                             lead = lead.copy(intervalWorkSeconds = work, intervalRestSeconds = rest, intervalWindowSeconds = (work + rest) * rounds)
                         }
                         IntervalMode.EMOM -> {
+                            // EMOM v2 shape (PRD §2): 60 s interval, rounds = minutes, no work-per-minute / sets.
                             rounds = maxOf(run.lead.rounds ?: ((run.lead.intervalWindowSeconds ?: preset.totalSeconds) / 60), 1)
-                            lead = lead.copy(intervalWorkSeconds = work.coerceIn(5, 55), intervalRestSeconds = null, intervalWindowSeconds = rounds * 60)
+                            lead = lead.copy(intervalWorkSeconds = 60, intervalRestSeconds = null, intervalWindowSeconds = rounds * 60)
                         }
                         IntervalMode.AMRAP -> {
                             rounds = 0
@@ -386,8 +387,8 @@ class AIWorkoutGeneratorViewModel : ViewModel() {
                     }
                     lead = lead.copy(
                         intervalMode = m,
-                        intervalSets = if (m == IntervalMode.AMRAP) 1 else maxOf(run.lead.intervalSets ?: 1, 1),
-                        intervalSetRestSeconds = maxOf(run.lead.intervalSetRestSeconds ?: IntervalMath.defaultSetRestSeconds, 0),
+                        intervalSets = if (m == IntervalMode.AMRAP || m == IntervalMode.EMOM) 1 else maxOf(run.lead.intervalSets ?: 1, 1),
+                        intervalSetRestSeconds = if (m == IntervalMode.EMOM) null else maxOf(run.lead.intervalSetRestSeconds ?: IntervalMath.defaultSetRestSeconds, 0),
                         roundRestSeconds = null, restSeconds = 0, rest = ""
                     ).withRestType(RestType.PASSIVE)
                 }

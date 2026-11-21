@@ -62,6 +62,7 @@ import com.fitnesslink.fit.model.RestType
 import com.fitnesslink.fit.model.TaskRow
 import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.session.ActiveWorkoutSession
+import com.fitnesslink.fit.session.EmomPlaylist
 import com.fitnesslink.fit.session.ExerciseState
 import com.fitnesslink.fit.session.MovementHistoryStore
 import com.fitnesslink.fit.session.SetState
@@ -86,12 +87,15 @@ fun PlaylistMovementRow(
     viewModel: PlaylistViewModel,
     isGrouped: Boolean = false,
     onPlayVideo: (WorkoutTask) -> Unit,
-    onInfo: (WorkoutTask) -> Unit
+    onInfo: (WorkoutTask) -> Unit,
+    /** EMOM member (PRD §6): target line + at most ONE logging circle, like a single-set exercise. */
+    isEmomMember: Boolean = false
 ) {
     @Suppress("UNUSED_VARIABLE") val tick = viewModel.tick
     val historyVersion by MovementHistoryStore.version.collectAsState()
     val isCompleted = viewModel.isCompleted(task.id)
-    val states = viewModel.setStates(task.id)
+    val allStates = viewModel.setStates(task.id)
+    val states = if (isEmomMember) EmomPlaylist.circleStates(allStates) else allStates
     val exerciseState = viewModel.exerciseState(task.id)
     val loggedCount = viewModel.actualSetLogs[task.id]?.size ?: 0
     val previous = remember(task.id, task.movementId, loggedCount, historyVersion) {
@@ -117,7 +121,9 @@ fun PlaylistMovementRow(
         if (task.movementId != null) Icon(Icons.Filled.Info, contentDescription = "Movement info", tint = FLPrimary, modifier = Modifier.size(20.dp).padding(top = 2.dp).clickable { onInfo(task) })
         Column(Modifier.weight(1f).clickable { viewModel.openLogSheet(task.id) }, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, textDecoration = if (isCompleted) TextDecoration.LineThrough else null)
-            if (!task.isInterval) {
+            if (isEmomMember) {
+                Text(com.fitnesslink.fit.model.EmomMath.targetText(task), fontSize = 13.sp, color = FLTheme.colors.textSecondary)
+            } else if (!task.isInterval) {
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(task.displayMetric, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                     if (task.rest.isNotEmpty()) Text("• Rest ${task.rest}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
@@ -255,6 +261,7 @@ fun PlaylistGroupContainer(row: TaskRow, viewModel: PlaylistViewModel, onPlayVid
     val roundRest = row.task?.roundRestSeconds?.takeIf { (isSuperset || isCircuit) && it > 0 }
     val lastMovementId = row.advancedTasks.lastOrNull { it.isMovement }?.id ?: row.task?.takeIf { it.isMovement }?.id
     fun display(t: WorkoutTask) = if (isInterval) t.copy(isInterval = true) else t
+    val isEmom = isInterval && com.fitnesslink.fit.model.EmomMath.plan(row.copy(isInterval = true, intervalMode = row.intervalMode ?: row.task?.intervalMode)) != null
 
     Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(badgeColor.copy(alpha = 0.07f)).border(1.dp, badgeColor.copy(alpha = 0.22f), RoundedCornerShape(10.dp))) {
         Box(Modifier.width(4.dp).fillMaxHeight().background(badgeColor))
@@ -272,16 +279,16 @@ fun PlaylistGroupContainer(row: TaskRow, viewModel: PlaylistViewModel, onPlayVid
             Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 val lead = row.task
                 if (lead != null && lead.isMovement) {
-                    PlaylistMovementRow(display(lead), viewModel, isGrouped = true, onPlayVideo, onInfo)
+                    PlaylistMovementRow(display(lead), viewModel, isGrouped = true, onPlayVideo, onInfo, isEmomMember = isEmom)
                     MemberRestChip(lead, isSuperset || isCircuit, lastMovementId)
                 }
                 row.advancedTasks.forEach { task ->
                     if (task.isMovement) {
-                        PlaylistMovementRow(display(task), viewModel, isGrouped = true, onPlayVideo, onInfo)
+                        PlaylistMovementRow(display(task), viewModel, isGrouped = true, onPlayVideo, onInfo, isEmomMember = isEmom)
                         MemberRestChip(task, isSuperset || isCircuit, lastMovementId)
                     } else if (task.isRest) PlaylistRestRow(task, badgeColor)
                 }
-                if (isInterval && lead != null && lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
+                if (isInterval && !isEmom && lead != null && lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
                     Row(Modifier.padding(vertical = 8.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         Spacer(Modifier.width(22.dp))
                         FLImageView(ref = lead.restMovementThumbnailId?.let { MediaRef.MovementThumbnail(it) }, modifier = Modifier.size(50.dp).clip(RoundedCornerShape(8.dp)))
@@ -306,9 +313,10 @@ private fun MemberRestChip(task: WorkoutTask, isGroup: Boolean, lastMovementId: 
     }
 }
 
-/** Work / Rest / Rounds / Sets / Total tiles from the same math the runner uses. */
+/** Work / Rest / Rounds / Sets / Total tiles from the same math the runner uses. EMOM: the shared header (PRD §6). */
 @Composable
 fun IntervalMetricsGrid(metrics: IntervalMetrics, accent: Color, modifier: Modifier = Modifier) {
+    if (metrics.emom != null) { com.fitnesslink.fit.ui.workout.EmomMetricsHeader(metrics, accent, modifier); return }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(Icons.Filled.Timer, contentDescription = null, tint = accent, modifier = Modifier.size(14.dp))

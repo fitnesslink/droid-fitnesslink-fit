@@ -295,13 +295,14 @@ private fun SessionContent(viewModel: InteractiveSessionViewModel, onInfo: () ->
                 canSkipSet = viewModel.canSkipSet,
                 canSkipExercise = viewModel.canSkipExercise,
                 skipExerciseLabel = viewModel.skipExerciseLabel,
-                showSkipBlock = runner != null,
+                showSkipBlock = runner != null && !viewModel.isEmomRunning,
                 onPrevious = { viewModel.getPrevious() },
                 onTogglePause = { viewModel.toggleVideoState() },
                 onSkipSet = { viewModel.skipCurrentSet() },
                 onSkipExercise = { viewModel.skipCurrentExercise() },
-                onSkipBlock = { viewModel.exitIntervalGroup() },
-                onNext = { viewModel.getNext() }
+                onSkipBlock = { viewModel.leaveIntervalBlock() },
+                onNext = { viewModel.getNext() },
+                skipBlockInMenu = viewModel.isEmomRunning
             )
             if (runner == null) {
                 SessionDockView(
@@ -322,7 +323,7 @@ private fun VideoLayer(viewModel: InteractiveSessionViewModel) {
     val task = viewModel.workoutTask
     if (runner != null) {
         val lead = runner.leadTask
-        val recovery = runner.phase == IntervalPhase.REST && lead?.restType == RestType.ACTIVE_RECOVERY
+        val recovery = runner.phase == IntervalPhase.REST && runner.emomPlan == null && lead?.restType == RestType.ACTIVE_RECOVERY
         val recoveryVideo = lead?.effectiveRestMovementVideoId
         val exercise = runner.currentExercise
         when {

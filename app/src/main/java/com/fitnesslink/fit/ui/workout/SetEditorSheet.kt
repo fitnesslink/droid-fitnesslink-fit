@@ -111,7 +111,7 @@ private fun restLabel(seconds: Int): String = when {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SetEditorView(task: WorkoutTask, viewModel: WorkoutEditorViewModel, isGrouped: Boolean = false) {
+fun SetEditorView(task: WorkoutTask, viewModel: WorkoutEditorViewModel, isGrouped: Boolean = false, emomIntervalSeconds: Int? = null) {
     val taskId = task.id
     val durationPresets = listOf(30, 60, 120, 300, 600)
     val restPresets = listOf(15, 30, 45, 60, 120, 180, 300)
@@ -122,6 +122,10 @@ fun SetEditorView(task: WorkoutTask, viewModel: WorkoutEditorViewModel, isGroupe
     var customRest by remember(taskId) { mutableStateOf(if (task.restSeconds > 0) "${task.restSeconds}" else "") }
     val weightLbs = task.weightKg?.toDouble()
 
+    if (emomIntervalSeconds != null) {
+        EmomMemberEditor(task, viewModel, emomIntervalSeconds)
+        return
+    }
     Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 4.dp)) {
         if (task.isInterval) {
             if (IntervalMath.usesRepTargets(task.intervalMode)) {
@@ -240,6 +244,61 @@ fun SetEditorView(task: WorkoutTask, viewModel: WorkoutEditorViewModel, isGroupe
 
         HorizontalDivider()
         InstructionsField(value = task.instructions ?: "", onValueChange = { viewModel.updateInstructions(taskId, it) })
+    }
+}
+
+/**
+ * Expanded EMOM member (PRD §3.3): Reps / Time selector, the target control (reps stepper, or
+ * duration chips + custom) and Exercise Notes. No sets, no per-round weights.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun EmomMemberEditor(task: WorkoutTask, viewModel: WorkoutEditorViewModel, intervalSeconds: Int) {
+    val taskId = task.id
+    val weightLbs = task.weightKg?.toDouble()
+    val presets = listOf(10, 15, 20, 30, 40, 45, 60, 90, 120).filter { it <= intervalSeconds }.ifEmpty { listOf(intervalSeconds) }
+    var showCustom by remember(taskId) { mutableStateOf(false) }
+    var customSeconds by remember(taskId) { mutableStateOf("") }
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 4.dp)) {
+        Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.background)) {
+            ModePill("Reps", !task.usesDuration, Modifier.weight(1f)) { viewModel.setEmomMemberUsesDuration(taskId, false, intervalSeconds); showCustom = false }
+            ModePill("Time", task.usesDuration, Modifier.weight(1f)) { viewModel.setEmomMemberUsesDuration(taskId, true, intervalSeconds) }
+        }
+        if (!task.usesDuration) {
+            StepperWithLabel("Reps") {
+                EditorStepper(task.reps, { viewModel.updateTaskSets(taskId, maxOf(task.sets, 1), it, weightLbs) }, min = 1, max = 100)
+            }
+        } else {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Time", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    presets.forEach { secs ->
+                        EditorChip(restLabel(secs), task.durationSeconds == secs && !showCustom, onClick = {
+                            showCustom = false
+                            viewModel.updateTaskDuration(taskId, maxOf(task.sets, 1), secs, weightLbs)
+                        })
+                    }
+                    EditorChip("Custom", showCustom, onClick = {
+                        showCustom = !showCustom
+                        if (showCustom) customSeconds = "${task.durationSeconds ?: intervalSeconds}"
+                    })
+                }
+                if (showCustom) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        SmallNumberField(customSeconds, "30", 64) { raw ->
+                            customSeconds = raw.filter(Char::isDigit).take(4)
+                            customSeconds.toIntOrNull()?.takeIf { it > 0 }?.let { viewModel.updateTaskDuration(taskId, maxOf(task.sets, 1), it, weightLbs) }
+                        }
+                        Text("seconds", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
+                    }
+                }
+                com.fitnesslink.fit.model.EmomMath.targetTooLongMessage(task, intervalSeconds)?.let {
+                    Text(it, fontSize = 12.sp, color = FLTheme.colors.danger)
+                }
+            }
+        }
+        HorizontalDivider()
+        InstructionsField(value = task.instructions ?: "", onValueChange = { viewModel.updateInstructions(taskId, it) }, label = "Exercise Notes")
     }
 }
 

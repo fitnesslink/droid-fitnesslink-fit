@@ -11,6 +11,7 @@ import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.media.MediaUploadCoordinator
 import com.fitnesslink.fit.media.UploadState
 import com.fitnesslink.fit.model.ContentTagSelection
+import com.fitnesslink.fit.model.EmomMath
 import com.fitnesslink.fit.model.ExerciseGroupType
 import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.MovementLibraryItem
@@ -265,6 +266,12 @@ class WorkoutEditorViewModel : ViewModel() {
      * draining pending phases first. Save & Close joins the job.
      */
     fun save(): Job {
+        // EMOM (§3.5): a time target longer than its interval can't be saved — say why in the save-error surface.
+        emomSaveBlockingMessage?.let { message ->
+            saveErrorMessage = message
+            saveErrorIsFatal = true
+            return Job().also { it.complete() }
+        }
         if (workout.name.isBlank()) workout = workout.copy(name = "My Workout")
         val wasNew = isNewWorkout
         DatabaseManager.insertWorkout(workout)
@@ -429,7 +436,7 @@ class WorkoutEditorViewModel : ViewModel() {
             com.fitnesslink.fit.model.api.WorkoutPhaseTemplateTask(
                 id = t.id, workoutTaskTypeId = t.workoutTaskTypeId, order = t.order, groupId = t.groupId, movementId = t.movementId,
                 advancedMovementId = t.advancedMovementId, reps = t.reps, sets = t.sets, restSeconds = t.restSeconds, rounds = t.rounds,
-                intervalSeconds = t.intervalSeconds, instructions = t.instructions, weightKg = t.weightKg, incline = t.incline,
+                intervalSeconds = t.intervalSeconds, instructions = t.instructions, coachNotes = t.coachNotes, weightKg = t.weightKg, incline = t.incline,
                 paceSeconds = t.paceSeconds, speed = t.speed, caloriesBurned = t.caloriesBurned, heartRate = t.heartRate,
                 roundRestSeconds = t.roundRestSeconds, intervalMode = t.intervalMode, intervalWorkSeconds = t.intervalWorkSeconds,
                 intervalRestSeconds = t.intervalRestSeconds, intervalWindowSeconds = t.intervalWindowSeconds, intervalSets = t.intervalSets,
@@ -848,6 +855,31 @@ class WorkoutEditorViewModel : ViewModel() {
         it.copy(task = it.task?.copy(intervalSetRestSeconds = seconds?.let { s -> maxOf(0, s) }, roundRestSeconds = null))
     }
     fun updateIntervalWindow(taskId: String, seconds: Int) = forRow(taskId) { WorkoutRowOps.withIntervalWindow(it, seconds) }
+
+    // MARK: - EMOM (PRD v2.0 §3)
+
+    /** Edit EMOM "Done": write interval + cycles (rounds / window derived) and the block's coach notes. */
+    fun applyEmomEdit(taskId: String, intervalSeconds: Int, cycles: Int, coachNotes: String?) = forRow(taskId) { row ->
+        val timed = EmomMath.applyTiming(row, intervalSeconds, cycles)
+        timed.copy(task = timed.task?.copy(coachNotes = coachNotes?.takeIf { it.isNotBlank() }))
+    }
+
+    /**
+     * EMOM member Reps / Time selector: switching to Time seeds a target that fits the interval
+     * (the existing seed is 60 s, which may be longer than a short interval).
+     */
+    fun setEmomMemberUsesDuration(taskId: String, usesDuration: Boolean, intervalSeconds: Int) {
+        forTask(taskId) { task ->
+            val switched = WorkoutRowOps.withUsesDuration(task, usesDuration)
+            if (!usesDuration) return@forTask switched
+            val seed = minOf(task.durationSeconds?.takeIf { it > 0 } ?: intervalSeconds, intervalSeconds)
+            WorkoutRowOps.updatedDuration(switched, maxOf(switched.sets, 1), seed, switched.weightKg?.toDouble())
+        }
+        isDirty = true
+    }
+
+    /** The EMOM time-target problem that blocks Save (§3.5), or null. */
+    val emomSaveBlockingMessage: String? get() = EmomMath.saveBlockingMessage(workout.phases)
 
     // MARK: - Multi-select
 

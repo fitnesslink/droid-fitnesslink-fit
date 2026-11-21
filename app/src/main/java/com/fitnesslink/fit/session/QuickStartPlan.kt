@@ -119,7 +119,8 @@ object QuickStartPlan {
                     intervalMode = lead.intervalMode, intervalWorkSeconds = lead.intervalWorkSeconds,
                     intervalRestSeconds = lead.intervalRestSeconds, intervalWindowSeconds = lead.intervalWindowSeconds,
                     intervalSets = lead.intervalSets, intervalSetRestSeconds = lead.intervalSetRestSeconds,
-                    restTypeId = lead.restTypeId, isSuperset = lead.isSuperset, isCircuit = lead.isCircuit, isInterval = lead.isInterval
+                    restTypeId = lead.restTypeId, isSuperset = lead.isSuperset, isCircuit = lead.isCircuit, isInterval = lead.isInterval,
+                    coachNotes = lead.coachNotes
                 )
                 rows.add(row.copy(task = newLead, advancedTasks = members))
             } else if (lead.isMovement) {

@@ -142,6 +142,8 @@ fun WorkoutEditorScreen(
 
     fun performSave(closeAfter: Boolean) {
         if (viewModel.isSaving) return
+        // EMOM (PRD §3.5): a time target longer than its interval blocks the save — and the close.
+        if (viewModel.emomSaveBlockingMessage != null) { viewModel.save(); return }
         val wasNew = viewModel.isNewWorkout
         val job = viewModel.save()
         if (!closeAfter) return

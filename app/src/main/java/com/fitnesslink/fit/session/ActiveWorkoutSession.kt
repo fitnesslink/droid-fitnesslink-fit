@@ -522,6 +522,18 @@ object ActiveWorkoutSession {
 
     fun completeSet(taskId: String, iteration: Int, durationSeconds: Int? = null) { progress.complete(taskId, iteration, durationSeconds); persistProgress() }
     fun skipSet(taskId: String, iteration: Int) { progress.skipSet(taskId, iteration); persistProgress() }
+
+    /** EMOM block exit (PRD §7.2): every round's outcome written onto its member's iteration in one persist. */
+    fun recordEmomOutcomes(writes: List<EmomProgressWrite>) {
+        if (writes.isEmpty()) return
+        for (w in writes) {
+            when (w.state) {
+                SetState.COMPLETED -> progress.complete(w.taskId, w.iteration, w.durationSeconds, w.completionMethod)
+                else -> progress.recordUnfinished(w.taskId, w.iteration, w.state)
+            }
+        }
+        persistProgress()
+    }
     fun skipRemainingSets(taskId: String, from: Int) { progress.skipRemaining(taskId, from, required(taskId)); persistProgress() }
     fun markExerciseCompleted(taskId: String) { progress.completeExercise(taskId, required(taskId)); persistProgress() }
     fun revertExercise(taskId: String) { progress.revertExercise(taskId, required(taskId)); persistProgress() }

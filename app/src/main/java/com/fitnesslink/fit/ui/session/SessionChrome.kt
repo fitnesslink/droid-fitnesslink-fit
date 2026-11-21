@@ -187,7 +187,9 @@ fun SessionTransportBar(
     onSkipSet: () -> Unit,
     onSkipExercise: () -> Unit,
     onSkipBlock: () -> Unit,
-    onNext: () -> Unit
+    onNext: () -> Unit,
+    /** EMOM: no bottom Skip Block button (§7.2); leaving the block stays reachable from the Skip menu. */
+    skipBlockInMenu: Boolean = false
 ) {
     var skipMenu by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -199,6 +201,7 @@ fun SessionTransportBar(
                 DropdownMenu(expanded = skipMenu, onDismissRequest = { skipMenu = false }) {
                     if (canSkipSet) DropdownMenuItem(text = { Text("Skip Set") }, onClick = { skipMenu = false; onSkipSet() })
                     if (canSkipExercise) DropdownMenuItem(text = { Text(skipExerciseLabel) }, onClick = { skipMenu = false; onSkipExercise() })
+                    if (skipBlockInMenu) DropdownMenuItem(text = { Text("Skip Block") }, onClick = { skipMenu = false; onSkipBlock() })
                 }
             }
             TransportButton("Next", Icons.Filled.FastForward, Modifier.weight(1f), onClick = onNext)

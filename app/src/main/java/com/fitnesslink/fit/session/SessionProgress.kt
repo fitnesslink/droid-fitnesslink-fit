@@ -2,6 +2,8 @@ package com.fitnesslink.fit.session
 
 import com.fitnesslink.fit.model.DistanceUnit
 import com.fitnesslink.fit.model.DistanceValue
+import com.fitnesslink.fit.model.EmomMath
+import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.TaskSetConfig
 import com.fitnesslink.fit.model.WorkoutTask
 import com.google.gson.Gson
@@ -65,7 +67,9 @@ class SessionProgress private constructor(
          * targets and Quick Start carry-forward values leave it false/null, so they never trigger the
          * workout-end unconfirmed-set alert.
          */
-        val userModified: Boolean? = null
+        val userModified: Boolean? = null,
+        /** How a completed interval round was completed: "manual" (Round Done) / "auto" (timed work ran out). Null otherwise. */
+        val completionMethod: String? = null
     ) {
         /** Nothing worth keeping: no outcome, no log, no draft. */
         val isBlank: Boolean get() = state == SetState.UPCOMING && !metricsLogged && draft == null
@@ -157,10 +161,22 @@ class SessionProgress private constructor(
     // MARK: - Transitions (PRD §7.4 / §9)
 
     /** Next: the set was done. Keeps an existing logged flag (Save Set then Next stays logged). */
-    fun complete(taskId: String, iteration: Int, durationSeconds: Int? = null) {
+    fun complete(taskId: String, iteration: Int, durationSeconds: Int? = null, completionMethod: String? = null) {
         var e = entry(taskId, iteration).copy(state = SetState.COMPLETED)
         if (durationSeconds != null) e = e.copy(durationSeconds = durationSeconds)
+        if (completionMethod != null) e = e.copy(completionMethod = completionMethod)
         map[key(taskId, iteration)] = e
+    }
+
+    /**
+     * An interval round that ended without completion (EMOM unconfirmed → [SetState.INCOMPLETE],
+     * skipped / never reached → [SetState.SKIPPED]). A set already completed keeps its outcome, so
+     * re-entering a finished block never undoes it.
+     */
+    fun recordUnfinished(taskId: String, iteration: Int, state: SetState) {
+        val e = entry(taskId, iteration)
+        if (e.state == SetState.COMPLETED) return
+        map[key(taskId, iteration)] = e.copy(state = state)
     }
 
     /** Save Set: completed + logged. A distance is recorded when given; null leaves an earlier one alone, 0 clears it. */
@@ -423,16 +439,22 @@ class SessionProgress private constructor(
          */
         fun requiredIterations(tasks: List<WorkoutTask>): Map<String, Int> {
             val groupRounds = mutableMapOf<String, Int>()
+            // EMOM (PRD §2.2): a member's iterations are the rounds it occurs in (= cycles), not the lead's total rounds.
+            val emom = mutableMapOf<String, Int>()
+            val seenGroups = mutableSetOf<String>()
             for (task in tasks) {
                 if (task.groupId.isNotEmpty() && groupRounds[task.groupId] == null) {
                     groupRounds[task.groupId] = maxOf(task.rounds ?: task.totalRounds, 1)
+                }
+                if (task.groupId.isNotEmpty() && seenGroups.add(task.groupId) && task.isInterval && task.intervalMode == IntervalMode.EMOM) {
+                    emom.putAll(EmomMath.requiredIterations(tasks.filter { it.groupId == task.groupId }))
                 }
             }
             val out = LinkedHashMap<String, Int>()
             for (task in tasks) {
                 if (!task.isMovement) continue
                 out[task.id] = if (task.groupId.isEmpty()) maxOf(task.sets, 1)
-                else groupRounds[task.groupId] ?: maxOf(task.rounds ?: task.totalRounds, 1)
+                else emom[task.id] ?: groupRounds[task.groupId] ?: maxOf(task.rounds ?: task.totalRounds, 1)
             }
             return out
         }

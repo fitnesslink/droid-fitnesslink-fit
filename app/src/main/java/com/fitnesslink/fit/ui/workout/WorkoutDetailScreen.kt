@@ -495,7 +495,7 @@ fun WorkoutTasksView(
 }
 
 @Composable
-fun WorkoutMovementView(task: WorkoutTask, onClick: (() -> Unit)? = null) {
+fun WorkoutMovementView(task: WorkoutTask, onClick: (() -> Unit)? = null, emomTarget: String? = null) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -512,7 +512,9 @@ fun WorkoutMovementView(task: WorkoutTask, onClick: (() -> Unit)? = null) {
         )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = task.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
-            if (!task.isInterval && task.displayMetric.isNotEmpty()) {
+            if (emomTarget != null) {
+                Text(text = emomTarget, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+            } else if (!task.isInterval && task.displayMetric.isNotEmpty()) {
                 Text(text = task.displayMetric, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
             SetBreakdownView(task = task)
@@ -675,10 +677,13 @@ fun AdvancedMovementsView(row: TaskRow, onTaskTap: ((WorkoutTask) -> Unit)? = nu
                         if (restChip != null) Text("· $restChip", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
-                row.task?.let { lead -> WorkoutMovementView(task = display(lead), onClick = onTaskTap?.let { tap -> { tap(display(lead)) } }) }
-                row.advancedTasks.forEach { t -> WorkoutMovementView(task = display(t), onClick = onTaskTap?.let { tap -> { tap(display(t)) } }) }
+                // EMOM exercise cards show each member's target (PRD §5).
+                val isEmom = metrics?.emom != null
+                fun target(t: WorkoutTask) = if (isEmom && !t.isRest) com.fitnesslink.fit.model.EmomMath.targetText(t) else null
+                row.task?.let { lead -> WorkoutMovementView(task = display(lead), onClick = onTaskTap?.let { tap -> { tap(display(lead)) } }, emomTarget = target(lead)) }
+                row.advancedTasks.forEach { t -> WorkoutMovementView(task = display(t), onClick = onTaskTap?.let { tap -> { tap(display(t)) } }, emomTarget = target(t)) }
                 val lead = row.task
-                if (isInterval && lead != null && lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
+                if (isInterval && !isEmom && lead != null && lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
                     Row(
                         modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.surface).padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically,

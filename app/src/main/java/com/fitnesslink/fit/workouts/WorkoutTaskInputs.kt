@@ -109,6 +109,8 @@ object WorkoutTaskInputs {
         // `intervalSeconds` is the wire-level signal of duration mode.
         intervalSeconds = if (task.usesDuration) task.durationSeconds else null,
         instructions = task.instructions,
+        // EMOM lead only; optional on the wire (dropped by servers without the column).
+        coachNotes = task.coachNotes?.trim()?.ifEmpty { null },
         weightKg = task.weightKg,
         incline = task.incline?.let { BigDecimal.valueOf(it) },
         paceSeconds = task.paceSeconds,
