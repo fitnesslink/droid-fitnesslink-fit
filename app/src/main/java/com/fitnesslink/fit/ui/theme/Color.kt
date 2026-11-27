@@ -15,6 +15,8 @@ val WorkGreen = Color(0xFF22A35A)
 val WarningAmber = Color(0xFFF59E0B)
 val AlertRed = Color(0xFFEF4444)
 val NutritionOverColor = Color(0xFFF2A516)
+// Completed-set check (iOS systemGreen), Universal Workout Logging.
+val CompletedGreen = Color(0xFF34C759)
 
 // Legacy light-only neutrals (FTNSSLNK-540). They render light in Dark
 // appearance; new code uses FLTheme.colors. Mapping: ui/theme/README.md.

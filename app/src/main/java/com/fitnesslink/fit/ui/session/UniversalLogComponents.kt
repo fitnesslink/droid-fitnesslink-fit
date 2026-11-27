@@ -83,6 +83,7 @@ import com.fitnesslink.fit.session.RPEScale
 import com.fitnesslink.fit.session.UnconfirmedSetItem
 import com.fitnesslink.fit.session.UniversalSetValues
 import com.fitnesslink.fit.ui.components.FLImageView
+import com.fitnesslink.fit.ui.theme.CompletedGreen
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.OrangeTheme
@@ -96,7 +97,6 @@ import kotlin.math.roundToInt
 // §7–9, §11, §14. Port of iOS `UniversalLogComponents.swift`. Filled primary buttons use the brand
 // green ([FLPrimary]); purple is for accents only (active set, RPE, selections, Coming Soon).
 
-internal val CompletedGreen = Color(0xFF34C759)
 
 internal fun formatLogDate(ms: Long): String = SimpleDateFormat("MMM d, yyyy", Locale.getDefault()).format(Date(ms))
 
@@ -195,7 +195,7 @@ fun RPEPanel(title: String?, value: Int?, cardio: Boolean, onValueChange: (Int?)
                 Text(value?.toString() ?: "–", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(if (value == null) "Slide to rate" else level.label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.White,
+                Text(if (value == null) "Slide to rate" else level.label, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.onBrand,
                     modifier = Modifier.clip(RoundedCornerShape(50)).background(if (value == null) FLTheme.colors.textSecondary else PurpleTheme).padding(horizontal = 8.dp, vertical = 3.dp))
                 Text(if (value == null) "How hard did this feel?" else level.explanation, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 2)
             }
@@ -206,7 +206,7 @@ fun RPEPanel(title: String?, value: Int?, cardio: Boolean, onValueChange: (Int?)
             valueRange = 1f..10f, steps = 8,
             colors = SliderDefaults.colors(
                 thumbColor = PurpleTheme, activeTrackColor = PurpleTheme, inactiveTrackColor = PurpleTheme.copy(alpha = 0.18f),
-                activeTickColor = Color.White.copy(alpha = 0.6f), inactiveTickColor = PurpleTheme.copy(alpha = 0.6f)
+                activeTickColor = FLTheme.colors.onBrand.copy(alpha = 0.6f), inactiveTickColor = PurpleTheme.copy(alpha = 0.6f)
             ),
             modifier = Modifier.semantics {
                 contentDescription = "RPE"

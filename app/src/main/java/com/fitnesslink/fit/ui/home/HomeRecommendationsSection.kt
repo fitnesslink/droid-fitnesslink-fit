@@ -215,7 +215,7 @@ fun RecommendationCard(item: RecommendationItem, onNavigate: (String) -> Unit, w
                 Modifier.clip(CircleShape).background(FLPrimary).clickable(role = Role.Button) { onNavigate(detailRoute) }
                     .heightIn(min = 36.dp).padding(horizontal = 14.dp),
                 contentAlignment = Alignment.Center
-            ) { Text(if (item.isProgram) "View Program" else "View Workout", color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
+            ) { Text(if (item.isProgram) "View Program" else "View Workout", color = FLTheme.colors.onBrand, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1) }
             if (!item.isProgram) {
                 Pill(Icons.Filled.CalendarMonth, "Schedule") { showSchedule = true }
                 Pill(if (saved) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder, if (saved) "Saved" else "Save") {
@@ -288,8 +288,8 @@ private fun MatchBadge(item: RecommendationItem, modifier: Modifier) {
             .semantics(mergeDescendants = true) { contentDescription = if (item.isStrongMatch) "Strong match" else "Partial match" },
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)
     ) {
-        Icon(if (item.isStrongMatch) Icons.Filled.Check else Icons.Filled.Contrast, null, tint = Color.White, modifier = Modifier.size(10.dp))
-        Text(if (item.isStrongMatch) "Strong Match" else "Partial Match", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = Color.White)
+        Icon(if (item.isStrongMatch) Icons.Filled.Check else Icons.Filled.Contrast, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(10.dp))
+        Text(if (item.isStrongMatch) "Strong Match" else "Partial Match", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.onBrand)
     }
 }
 
@@ -327,7 +327,7 @@ private fun Chip(text: String, onClick: () -> Unit) {
     Box(
         Modifier.clip(CircleShape).background(FLPrimary).clickable(role = Role.Button, onClick = onClick).heightIn(min = 36.dp).padding(horizontal = 14.dp),
         contentAlignment = Alignment.Center
-    ) { Text(text, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
+    ) { Text(text, color = FLTheme.colors.onBrand, fontSize = 13.sp, fontWeight = FontWeight.SemiBold) }
 }
 
 /** "See All Recommendations" (route `recommendations`). */

@@ -1,0 +1,2640 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<issues format="6" by="lint 8.13.2" type="baseline" client="gradle" dependencies="false" name="AGP (8.13.2)" variant="all" version="8.13.2">
+
+    <issue
+        id="DefaultLocale"
+        message="Implicitly using the default locale is a common source of bugs: Use `String.format(Locale, ...)` instead"
+        errorLine1="                        if (showCustomDuration) { customMinutes = &quot;${durationSeconds / 60}&quot;; customSeconds = String.format(&quot;%02d&quot;, durationSeconds % 60) }"
+        errorLine2="                                                                                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/session/SetLogSheet.kt"
+            line="147"
+            column="110"/>
+    </issue>
+
+    <issue
+        id="OldTargetApi"
+        message="Not targeting the latest versions of Android; compatibility modes apply. Consider testing and updating this version. Consult the `android.os.Build.VERSION_CODES` javadoc for details."
+        errorLine1="        targetSdk = 35"
+        errorLine2="        ~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="15"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of Gradle than 8.13 is available: 8.14.6"
+        errorLine1="distributionUrl=https\://services.gradle.org/distributions/gradle-8.13-bin.zip"
+        errorLine2="                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/wrapper/gradle-wrapper.properties"
+            line="3"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="AndroidGradlePluginVersion"
+        message="A newer version of com.android.application than 8.13.2 is available: 9.4.1"
+        errorLine1="agp = &quot;8.13.2&quot;"
+        errorLine2="      ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="2"
+            column="7"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of `compileSdkVersion` than 35 is available: 36"
+        errorLine1="    compileSdk = 35"
+        errorLine2="    ~~~~~~~~~~~~~~~">
+        <location
+            file="build.gradle.kts"
+            line="10"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.core:core-ktx than 1.15.0 is available: 1.19.1"
+        errorLine1="coreKtx = &quot;1.15.0&quot;"
+        errorLine2="          ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="4"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.core:core-splashscreen than 1.0.1 is available: 1.2.0"
+        errorLine1="coreSplashscreen = &quot;1.0.1&quot;"
+        errorLine2="                   ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="5"
+            column="20"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-process than 2.8.7 is available: 2.11.0"
+        errorLine1="lifecycleRuntimeKtx = &quot;2.8.7&quot;"
+        errorLine2="                      ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="6"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-runtime-ktx than 2.8.7 is available: 2.11.0"
+        errorLine1="lifecycleRuntimeKtx = &quot;2.8.7&quot;"
+        errorLine2="                      ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="6"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.lifecycle:lifecycle-viewmodel-compose than 2.8.7 is available: 2.11.0"
+        errorLine1="lifecycleRuntimeKtx = &quot;2.8.7&quot;"
+        errorLine2="                      ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="6"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.activity:activity-compose than 1.9.3 is available: 1.13.0"
+        errorLine1="activityCompose = &quot;1.9.3&quot;"
+        errorLine2="                  ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="7"
+            column="19"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose:compose-bom than 2024.12.01 is available: 2026.09.00"
+        errorLine1="composeBom = &quot;2024.12.01&quot;"
+        errorLine2="             ~~~~~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="8"
+            column="14"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.navigation:navigation-compose than 2.8.5 is available: 2.10.2"
+        errorLine1="navigationCompose = &quot;2.8.5&quot;"
+        errorLine2="                    ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="9"
+            column="21"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.compose.material3:material3 than 1.3.1 is available: 1.4.0"
+        errorLine1="material3 = &quot;1.3.1&quot;"
+        errorLine2="            ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="10"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.firebase:firebase-bom than 33.7.0 is available: 35.1.0"
+        errorLine1="firebaseBom = &quot;33.7.0&quot;"
+        errorLine2="              ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="14"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.gms.google-services than 4.4.2 is available: 4.5.0"
+        errorLine1="googleServices = &quot;4.4.2&quot;"
+        errorLine2="                 ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="15"
+            column="18"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.work:work-runtime-ktx than 2.10.0 is available: 2.12.0"
+        errorLine1="workmanager = &quot;2.10.0&quot;"
+        errorLine2="              ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="16"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-camera2 than 1.4.1 is available: 1.6.2"
+        errorLine1="cameraX = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="18"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-core than 1.4.1 is available: 1.6.2"
+        errorLine1="cameraX = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="18"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-lifecycle than 1.4.1 is available: 1.6.2"
+        errorLine1="cameraX = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="18"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-video than 1.4.1 is available: 1.6.2"
+        errorLine1="cameraX = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="18"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.camera:camera-view than 1.4.1 is available: 1.6.2"
+        errorLine1="cameraX = &quot;1.4.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="18"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.media3:media3-exoplayer than 1.5.0 is available: 1.11.1"
+        errorLine1="media3 = &quot;1.5.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="20"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.media3:media3-exoplayer-hls than 1.5.0 is available: 1.11.1"
+        errorLine1="media3 = &quot;1.5.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="20"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.media3:media3-ui than 1.5.0 is available: 1.11.1"
+        errorLine1="media3 = &quot;1.5.0&quot;"
+        errorLine2="         ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="20"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.credentials:credentials than 1.3.0 is available: 1.6.0"
+        errorLine1="credentials = &quot;1.3.0&quot;"
+        errorLine2="              ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="21"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of androidx.credentials:credentials-play-services-auth than 1.3.0 is available: 1.6.0"
+        errorLine1="credentials = &quot;1.3.0&quot;"
+        errorLine2="              ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="21"
+            column="15"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.google.android.libraries.identity.googleid:googleid than 1.1.1 is available: 1.2.1"
+        errorLine1="googleid = &quot;1.1.1&quot;"
+        errorLine2="           ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="22"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="GradleDependency"
+        message="A newer version of com.android.billingclient:billing-ktx than 7.1.1 is available: 9.1.0"
+        errorLine1="billing = &quot;7.1.1&quot;"
+        errorLine2="          ~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="23"
+            column="11"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.android than 2.0.21 is available: 2.4.21"
+        errorLine1="kotlin = &quot;2.0.21&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of org.jetbrains.kotlin.plugin.compose than 2.0.21 is available: 2.4.21"
+        errorLine1="kotlin = &quot;2.0.21&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="3"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.retrofit2:converter-gson than 2.11.0 is available: 3.0.0"
+        errorLine1="retrofit = &quot;2.11.0&quot;"
+        errorLine2="           ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="11"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.retrofit2:retrofit than 2.11.0 is available: 3.0.0"
+        errorLine1="retrofit = &quot;2.11.0&quot;"
+        errorLine2="           ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="11"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.okhttp3:logging-interceptor than 4.12.0 is available: 5.5.1"
+        errorLine1="okhttp = &quot;4.12.0&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="12"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.squareup.okhttp3:okhttp than 4.12.0 is available: 5.5.1"
+        errorLine1="okhttp = &quot;4.12.0&quot;"
+        errorLine2="         ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="12"
+            column="10"/>
+    </issue>
+
+    <issue
+        id="NewerVersionAvailable"
+        message="A newer version of com.google.code.gson:gson than 2.11.0 is available: 2.15.0"
+        errorLine1="gson = &quot;2.11.0&quot;"
+        errorLine2="       ~~~~~~~~">
+        <location
+            file="$HOME/Repos/FitnessLink/droid-fitnesslink-fit/gradle/libs.versions.toml"
+            line="13"
+            column="8"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/AchievementBadge.kt"
+            line="41"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/AchievementBadge.kt"
+            line="68"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="fun TrajectoryBadge(status: TrajectoryStatus, filled: Boolean = false, modifier: Modifier = Modifier) {"
+        errorLine2="                                                                       ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/GoalComponents.kt"
+            line="156"
+            column="72"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="fun HabitTierPill(tier: HabitTier, filled: Boolean = false, modifier: Modifier = Modifier) {"
+        errorLine2="                                                            ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/GoalComponents.kt"
+            line="170"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="fun MilestoneRowView(milestone: Milestone, goalProgress: Double, onAchieve: (() -> Unit)? = null, modifier: Modifier = Modifier) {"
+        errorLine2="                                                                                                  ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/GoalDetailScreen.kt"
+            line="286"
+            column="99"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="fun IntervalStatTile(label: String, value: String, emphasized: Boolean = false, modifier: Modifier = Modifier) {"
+        errorLine2="                                                                                ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/workout/IntervalMetricsGrid.kt"
+            line="39"
+            column="81"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="internal fun PlanPrimaryButton(text: String, enabled: Boolean = true, color: Color = FLPrimary, modifier: Modifier = Modifier, onClick: () -> Unit) {"
+        errorLine2="                                                                                                ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/MealPlanScreen.kt"
+            line="701"
+            column="97"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="fun NutritionPrimaryButton(text: String, enabled: Boolean, loading: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {"
+        errorLine2="                                                                                     ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/NutritionOnboardingScreen.kt"
+            line="544"
+            column="86"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="fun NutritionTargetsSummaryView(targets: NutritionTargets, useMetricUnits: Boolean = false, modifier: Modifier = Modifier) {"
+        errorLine2="                                                                                            ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/NutritionOnboardingScreen.kt"
+            line="576"
+            column="93"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="fun SessionNoteCard(text: String?, label: String = &quot;NOTE&quot;, maxLines: Int = 3, isBordered: Boolean = true, modifier: Modifier = Modifier) {"
+        errorLine2="                                                                                                          ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/session/SessionChrome.kt"
+            line="308"
+            column="107"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="fun SharedBadge(sharedByName: String? = null, modifier: Modifier = Modifier) {"
+        errorLine2="                                              ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/components/SharedBadge.kt"
+            line="29"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="    modifier: Modifier = Modifier"
+        errorLine2="    ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/StreakBadge.kt"
+            line="34"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ModifierParameter"
+        message="Modifier parameter should be the first optional parameter"
+        errorLine1="fun FavoriteHeartButton(isFavorite: Boolean, onToggle: (() -> Unit)? = null, modifier: Modifier = Modifier) {"
+        errorLine2="                                                                             ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/workout/WorkoutRowView.kt"
+            line="40"
+            column="78"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="Unnecessary; `SDK_INT` is never &lt; 26"
+        errorLine1="        if (Build.VERSION.SDK_INT &lt; Build.VERSION_CODES.O) return"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/push/PushNotificationManager.kt"
+            line="88"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="ObsoleteSdkInt"
+        message="This folder configuration (`v26`) is unnecessary; `minSdkVersion` is 26. Merge all the resources in this folder into `mipmap-anydpi`.">
+        <location
+            file="src/main/res/mipmap-anydpi-v26"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
+        errorLine1="    var selectedTab by rememberSaveable { mutableStateOf(0) }"
+        errorLine2="                                          ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/navigation/AppNavigation.kt"
+            line="178"
+            column="43"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableLongStateOf` instead of `mutableStateOf`"
+        errorLine1="    var selectedDate by mutableStateOf(startOfDay(System.currentTimeMillis()))"
+        errorLine2="                        ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/CalendarViewModel.kt"
+            line="41"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableLongStateOf` instead of `mutableStateOf`"
+        errorLine1="    var currentMonth by mutableStateOf(monthStartMillis(System.currentTimeMillis()))"
+        errorLine2="                        ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/CalendarViewModel.kt"
+            line="44"
+            column="25"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableDoubleStateOf` instead of `mutableStateOf`"
+        errorLine1="    var perUnitCalories by remember { mutableStateOf(0.0) }"
+        errorLine2="                                      ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/FoodEntryDetailScreen.kt"
+            line="180"
+            column="39"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableDoubleStateOf` instead of `mutableStateOf`"
+        errorLine1="    var perUnitProtein by remember { mutableStateOf(0.0) }"
+        errorLine2="                                     ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/FoodEntryDetailScreen.kt"
+            line="181"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableDoubleStateOf` instead of `mutableStateOf`"
+        errorLine1="    var perUnitFat by remember { mutableStateOf(0.0) }"
+        errorLine2="                                 ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/FoodEntryDetailScreen.kt"
+            line="182"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableDoubleStateOf` instead of `mutableStateOf`"
+        errorLine1="    var perUnitCarbs by remember { mutableStateOf(0.0) }"
+        errorLine2="                                   ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/FoodEntryDetailScreen.kt"
+            line="183"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableLongStateOf` instead of `mutableStateOf`"
+        errorLine1="    var targetDate by mutableStateOf(defaultTargetDate())"
+        errorLine2="                      ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/GoalCreationViewModel.kt"
+            line="40"
+            column="23"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
+        errorLine1="    var currentStep by mutableStateOf(1)"
+        errorLine2="                       ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/GoalCreationViewModel.kt"
+            line="47"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
+        errorLine1="    var undoVersion by mutableStateOf(0)"
+        errorLine2="                       ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/HydrationViewModel.kt"
+            line="37"
+            column="24"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
+        errorLine1="    var resumeTick by remember { mutableStateOf(0) }"
+        errorLine2="                                 ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/programs/MyProgramHomeCard.kt"
+            line="74"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableFloatStateOf` instead of `mutableStateOf`"
+        errorLine1="        var dragX by remember(week.weekNumber) { mutableStateOf(0f) }"
+        errorLine2="                                                 ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/programs/MyProgramScreen.kt"
+            line="384"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
+        errorLine1="    var lensFacing by remember { mutableStateOf(CameraSelector.LENS_FACING_BACK) }"
+        errorLine2="                                 ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/progress/PhotoCaptureScreen.kt"
+            line="351"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
+        errorLine1="    var targetWeekNumber by mutableStateOf(1)"
+        errorLine2="                            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/ProgramEditorViewModel.kt"
+            line="53"
+            column="29"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
+        errorLine1="    var targetDayNumber by mutableStateOf(1)"
+        errorLine2="                           ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/ProgramEditorViewModel.kt"
+            line="54"
+            column="28"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableLongStateOf` instead of `mutableStateOf`"
+        errorLine1="    var startDate by remember { mutableStateOf(todayStart) }"
+        errorLine2="                                ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/programs/StartProgramScreen.kt"
+            line="134"
+            column="33"/>
+    </issue>
+
+    <issue
+        id="AutoboxingStateCreation"
+        message="Prefer `mutableIntStateOf` instead of `mutableStateOf`"
+        errorLine1="    var trackWidth by remember { mutableStateOf(1) }"
+        errorLine2="                                 ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/session/WorkoutCompletedScreen.kt"
+            line="245"
+            column="34"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_primary` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_primary&quot;>#FF23AF8D&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="3"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_primary_dark` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_primary_dark&quot;>#FF1A8A6E&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="4"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_background` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_background&quot;>#FFF0F4F5&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="5"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_orange` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_orange&quot;>#FFF69833&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="6"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_purple` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_purple&quot;>#FF8B5CF6&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="7"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_blue` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_blue&quot;>#FF3B82F6&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="8"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_text_primary` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_text_primary&quot;>#FF1A1A1A&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="9"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_text_secondary` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_text_secondary&quot;>#FF6B7280&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="10"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_medium_gray` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_medium_gray&quot;>#FF9CA3AF&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="11"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_blend_gray` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_blend_gray&quot;>#FFE5E7EB&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="12"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_progress_bg` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_progress_bg&quot;>#FFE5E7EB&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="13"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_progress_highlight` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_progress_highlight&quot;>#FF23AF8D&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="14"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_disabled_button` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_disabled_button&quot;>#FFB0B0B0&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="15"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_calendar_line` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_calendar_line&quot;>#FFD1D5DB&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="16"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_image_placeholder` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_image_placeholder&quot;>#FFE5E7EB&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="17"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_menu_color` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_menu_color&quot;>#FFF9FAFB&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="18"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.fl_info_color` appears to be unused"
+        errorLine1="    &lt;color name=&quot;fl_info_color&quot;>#FF6B7280&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="19"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.white` appears to be unused"
+        errorLine1="    &lt;color name=&quot;white&quot;>#FFFFFFFF&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="22"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.color.black` appears to be unused"
+        errorLine1="    &lt;color name=&quot;black&quot;>#FF000000&lt;/color>"
+        errorLine2="           ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/colors.xml"
+            line="23"
+            column="12"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.defaultworkout` appears to be unused">
+        <location
+            file="src/main/res/drawable-mdpi/defaultworkout.jpg"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.downarrow` appears to be unused">
+        <location
+            file="src/main/res/drawable-mdpi/downarrow.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.dumbbell` appears to be unused">
+        <location
+            file="src/main/res/drawable-mdpi/dumbbell.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.fitnesslinklogo` appears to be unused">
+        <location
+            file="src/main/res/drawable-mdpi/fitnesslinklogo.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.kettlebell` appears to be unused">
+        <location
+            file="src/main/res/drawable-mdpi/kettlebell.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.menu` appears to be unused">
+        <location
+            file="src/main/res/drawable-mdpi/menu.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.playlist` appears to be unused">
+        <location
+            file="src/main/res/drawable-mdpi/playlist.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.drawable.pluscircle` appears to be unused">
+        <location
+            file="src/main/res/drawable-mdpi/pluscircle.png"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.tab_home` appears to be unused"
+        errorLine1="    &lt;string name=&quot;tab_home&quot;>Home&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="4"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.tab_catalog` appears to be unused"
+        errorLine1="    &lt;string name=&quot;tab_catalog&quot;>Catalog&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="5"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.tab_calendar` appears to be unused"
+        errorLine1="    &lt;string name=&quot;tab_calendar&quot;>Calendar&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="6"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.tab_profile` appears to be unused"
+        errorLine1="    &lt;string name=&quot;tab_profile&quot;>Profile&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="7"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.welcome_title` appears to be unused"
+        errorLine1="    &lt;string name=&quot;welcome_title&quot;>Welcome to FitnessLink&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="8"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.welcome_subtitle` appears to be unused"
+        errorLine1="    &lt;string name=&quot;welcome_subtitle&quot;>Your personal fitness companion&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="9"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.sign_up` appears to be unused"
+        errorLine1="    &lt;string name=&quot;sign_up&quot;>Sign Up&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="10"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.login` appears to be unused"
+        errorLine1="    &lt;string name=&quot;login&quot;>Login&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="11"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.email` appears to be unused"
+        errorLine1="    &lt;string name=&quot;email&quot;>Email&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="12"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.password` appears to be unused"
+        errorLine1="    &lt;string name=&quot;password&quot;>Password&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="13"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.confirm_password` appears to be unused"
+        errorLine1="    &lt;string name=&quot;confirm_password&quot;>Confirm Password&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="14"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.full_name` appears to be unused"
+        errorLine1="    &lt;string name=&quot;full_name&quot;>Full Name&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="15"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.forgot_password` appears to be unused"
+        errorLine1="    &lt;string name=&quot;forgot_password&quot;>Forgot Password?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="16"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.or_continue_with` appears to be unused"
+        errorLine1="    &lt;string name=&quot;or_continue_with&quot;>Or continue with&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="17"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.google` appears to be unused"
+        errorLine1="    &lt;string name=&quot;google&quot;>Google&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="18"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.facebook` appears to be unused"
+        errorLine1="    &lt;string name=&quot;facebook&quot;>Facebook&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="19"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.dont_have_account` appears to be unused"
+        errorLine1="    &lt;string name=&quot;dont_have_account&quot;>Don\&apos;t have an account?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="20"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.already_have_account` appears to be unused"
+        errorLine1="    &lt;string name=&quot;already_have_account&quot;>Already have an account?&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="21"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.programs` appears to be unused"
+        errorLine1="    &lt;string name=&quot;programs&quot;>Programs&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="22"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.workouts` appears to be unused"
+        errorLine1="    &lt;string name=&quot;workouts&quot;>Workouts&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="23"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.my_workouts` appears to be unused"
+        errorLine1="    &lt;string name=&quot;my_workouts&quot;>My Workouts&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="24"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.see_all` appears to be unused"
+        errorLine1="    &lt;string name=&quot;see_all&quot;>See All&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="25"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.search` appears to be unused"
+        errorLine1="    &lt;string name=&quot;search&quot;>Search&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="26"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.today` appears to be unused"
+        errorLine1="    &lt;string name=&quot;today&quot;>Today&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="27"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.rest_day` appears to be unused"
+        errorLine1="    &lt;string name=&quot;rest_day&quot;>Rest Day&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="28"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.start_workout` appears to be unused"
+        errorLine1="    &lt;string name=&quot;start_workout&quot;>Start Workout&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="29"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.view_details` appears to be unused"
+        errorLine1="    &lt;string name=&quot;view_details&quot;>View Details&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="30"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.next` appears to be unused"
+        errorLine1="    &lt;string name=&quot;next&quot;>Next&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="31"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.back` appears to be unused"
+        errorLine1="    &lt;string name=&quot;back&quot;>Back&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="32"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.done` appears to be unused"
+        errorLine1="    &lt;string name=&quot;done&quot;>Done&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="33"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.cancel` appears to be unused"
+        errorLine1="    &lt;string name=&quot;cancel&quot;>Cancel&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="34"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.save` appears to be unused"
+        errorLine1="    &lt;string name=&quot;save&quot;>Save&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="35"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.profile` appears to be unused"
+        errorLine1="    &lt;string name=&quot;profile&quot;>Profile&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="36"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.personal_info` appears to be unused"
+        errorLine1="    &lt;string name=&quot;personal_info&quot;>Personal Info&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="37"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.preferences` appears to be unused"
+        errorLine1="    &lt;string name=&quot;preferences&quot;>Preferences&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="38"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.billing` appears to be unused"
+        errorLine1="    &lt;string name=&quot;billing&quot;>Billing&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="39"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.goals` appears to be unused"
+        errorLine1="    &lt;string name=&quot;goals&quot;>Goals&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="40"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.measurements` appears to be unused"
+        errorLine1="    &lt;string name=&quot;measurements&quot;>Measurements&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="41"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.photos` appears to be unused"
+        errorLine1="    &lt;string name=&quot;photos&quot;>Photos&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="42"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.weight` appears to be unused"
+        errorLine1="    &lt;string name=&quot;weight&quot;>Weight&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="43"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.workout_report` appears to be unused"
+        errorLine1="    &lt;string name=&quot;workout_report&quot;>Workout Report&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="44"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.analytics` appears to be unused"
+        errorLine1="    &lt;string name=&quot;analytics&quot;>Analytics&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="45"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.personalization` appears to be unused"
+        errorLine1="    &lt;string name=&quot;personalization&quot;>Personalization&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="46"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UnusedResources"
+        message="The resource `R.string.logout` appears to be unused"
+        errorLine1="    &lt;string name=&quot;logout&quot;>Logout&lt;/string>"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/res/values/strings.xml"
+            line="47"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `back.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/back.png: 8x13 dp (8x13 px), drawable-xhdpi/back.png: 6x10 dp (12x19 px), drawable-xxhdpi/back.png: 8x12 dp (23x36 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/back.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/back.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/back.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `calendaricon.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/calendaricon.png: 23x26 dp (23x26 px), drawable-xhdpi/calendaricon.png: 17x19 dp (34x38 px), drawable-xxhdpi/calendaricon.png: 23x26 dp (69x78 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/calendaricon.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/calendaricon.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/calendaricon.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `calendarselected.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/calendarselected.png: 23x26 dp (23x26 px), drawable-xhdpi/calendarselected.png: 17x19 dp (34x38 px), drawable-xxhdpi/calendarselected.png: 23x26 dp (69x78 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/calendarselected.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/calendarselected.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/calendarselected.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `circle.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/circle.png: 24x24 dp (24x24 px), drawable-xhdpi/circle.png: 18x18 dp (36x36 px), drawable-xxhdpi/circle.png: 24x24 dp (72x72 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/circle.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/circle.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/circle.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `circleselected.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/circleselected.png: 24x24 dp (24x24 px), drawable-xhdpi/circleselected.png: 24x24 dp (48x48 px), drawable-xxhdpi/circleselected.png: 30x30 dp (90x90 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/circleselected.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/circleselected.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/circleselected.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `closegreen.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/closegreen.png: 14x14 dp (14x14 px), drawable-xhdpi/closegreen.png: 11x11 dp (21x21 px), drawable-xxhdpi/closegreen.png: 14x14 dp (42x42 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/closegreen.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/closegreen.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/closegreen.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `completedstate.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/completedstate.png: 13x10 dp (13x10 px), drawable-xhdpi/completedstate.png: 10x8 dp (19x15 px), drawable-xxhdpi/completedstate.png: 13x10 dp (39x30 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/completedstate.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/completedstate.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/completedstate.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `defaultworkout.jpg` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/defaultworkout.jpg: 500x370 dp (500x370 px), drawable-xhdpi/defaultworkout.jpg: 375x278 dp (750x555 px), drawable-xxhdpi/defaultworkout.jpg: 500x370 dp (1500x1110 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/defaultworkout.jpg"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/defaultworkout.jpg"/>
+        <location
+            file="src/main/res/drawable-mdpi/defaultworkout.jpg"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `downarrow.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/downarrow.png: 10x5 dp (10x5 px), drawable-xhdpi/downarrow.png: 8x4 dp (15x8 px), drawable-xxhdpi/downarrow.png: 10x5 dp (30x15 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/downarrow.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/downarrow.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/downarrow.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `dumbbell.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/dumbbell.png: 20x20 dp (20x20 px), drawable-xhdpi/dumbbell.png: 15x15 dp (30x30 px), drawable-xxhdpi/dumbbell.png: 20x20 dp (60x60 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/dumbbell.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/dumbbell.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/dumbbell.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `exercises.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/exercises.png: 20x20 dp (20x20 px), drawable-xhdpi/exercises.png: 15x15 dp (30x30 px), drawable-xxhdpi/exercises.png: 20x20 dp (60x60 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/exercises.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/exercises.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/exercises.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `facebook.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/facebook.png: 13x27 dp (13x27 px), drawable-xhdpi/facebook.png: 15x30 dp (29x60 px), drawable-xxhdpi/facebook.png: 13x27 dp (39x81 px)">
+        <location
+            file="src/main/res/drawable-xxhdpi/facebook.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/facebook.png"/>
+        <location
+            file="src/main/res/drawable-xhdpi/facebook.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `filter.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/filter.png: 18x12 dp (18x12 px), drawable-xhdpi/filter.png: 14x9 dp (27x18 px), drawable-xxhdpi/filter.png: 18x12 dp (54x36 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/filter.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/filter.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/filter.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `fitnesslink.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/fitnesslink.png: 133x15 dp (133x15 px), drawable-xhdpi/fitnesslink.png: 101x12 dp (201x23 px), drawable-xxhdpi/fitnesslink.png: 134x15 dp (402x46 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/fitnesslink.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/fitnesslink.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/fitnesslink.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `fitnesslinklogo.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/fitnesslinklogo.png: 122x136 dp (122x136 px), drawable-xhdpi/fitnesslinklogo.png: 92x103 dp (184x205 px), drawable-xxhdpi/fitnesslinklogo.png: 123x137 dp (368x410 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/fitnesslinklogo.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/fitnesslinklogo.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/fitnesslinklogo.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `google.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/google.png: 26x27 dp (26x27 px), drawable-xhdpi/google.png: 20x20 dp (39x40 px), drawable-xxhdpi/google.png: 26x27 dp (78x80 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/google.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/google.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/google.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `greenarrow.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/greenarrow.png: 7x11 dp (7x11 px), drawable-xhdpi/greenarrow.png: 6x9 dp (11x17 px), drawable-xxhdpi/greenarrow.png: 8x12 dp (23x36 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/greenarrow.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/greenarrow.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/greenarrow.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `greenplus.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/greenplus.png: 14x14 dp (14x14 px), drawable-xhdpi/greenplus.png: 11x11 dp (21x21 px), drawable-xxhdpi/greenplus.png: 14x14 dp (42x42 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/greenplus.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/greenplus.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/greenplus.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `heart.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/heart.png: 20x19 dp (20x19 px), drawable-xhdpi/heart.png: 15x14 dp (30x28 px), drawable-xxhdpi/heart.png: 20x19 dp (60x56 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/heart.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/heart.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/heart.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `heartselected.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/heartselected.png: 20x19 dp (20x19 px), drawable-xhdpi/heartselected.png: 15x14 dp (30x28 px), drawable-xxhdpi/heartselected.png: 20x19 dp (60x56 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/heartselected.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/heartselected.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/heartselected.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `homeicon.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/homeicon.png: 22x26 dp (22x26 px), drawable-xhdpi/homeicon.png: 17x20 dp (33x39 px), drawable-xxhdpi/homeicon.png: 22x26 dp (66x78 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/homeicon.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/homeicon.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/homeicon.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `homeselected.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/homeselected.png: 22x26 dp (22x26 px), drawable-xhdpi/homeselected.png: 17x20 dp (33x39 px), drawable-xxhdpi/homeselected.png: 22x26 dp (66x78 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/homeselected.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/homeselected.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/homeselected.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `hourglass.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/hourglass.png: 16x20 dp (16x20 px), drawable-xhdpi/hourglass.png: 12x15 dp (24x30 px), drawable-xxhdpi/hourglass.png: 16x20 dp (48x60 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/hourglass.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/hourglass.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/hourglass.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `hydration.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/hydration.png: 23x29 dp (23x29 px), drawable-xhdpi/hydration.png: 17x22 dp (34x43 px), drawable-xxhdpi/hydration.png: 23x29 dp (69x87 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/hydration.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/hydration.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/hydration.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `interactive.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/interactive.png: 28x20 dp (28x20 px), drawable-xhdpi/interactive.png: 22x15 dp (43x30 px), drawable-xxhdpi/interactive.png: 29x20 dp (86x60 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/interactive.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/interactive.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/interactive.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `kettlebell.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/kettlebell.png: 23x30 dp (23x30 px), drawable-xhdpi/kettlebell.png: 17x22 dp (34x44 px), drawable-xxhdpi/kettlebell.png: 23x30 dp (69x90 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/kettlebell.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/kettlebell.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/kettlebell.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `logo.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/logo.png: 134x15 dp (134x15 px), drawable-xhdpi/logo.png: 101x12 dp (201x23 px), drawable-xxhdpi/logo.png: 134x15 dp (402x46 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/logo.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/logo.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/logo.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `menu.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/menu.png: 7x27 dp (7x27 px), drawable-xhdpi/menu.png: 6x21 dp (11x42 px), drawable-xxhdpi/menu.png: 7x28 dp (22x84 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/menu.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/menu.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/menu.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `nutrition.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/nutrition.png: 26x22 dp (26x22 px), drawable-xhdpi/nutrition.png: 20x17 dp (39x33 px), drawable-xxhdpi/nutrition.png: 26x22 dp (78x66 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/nutrition.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/nutrition.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/nutrition.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `pause.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/pause.png: 37x43 dp (37x43 px), drawable-xhdpi/pause.png: 28x33 dp (56x65 px), drawable-xxhdpi/pause.png: 38x44 dp (113x132 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/pause.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/pause.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/pause.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `play.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/play.png: 16x21 dp (16x21 px), drawable-xhdpi/play.png: 13x17 dp (25x33 px), drawable-xxhdpi/play.png: 17x22 dp (50x66 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/play.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/play.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/play.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `playlist.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/playlist.png: 33x33 dp (33x33 px), drawable-xhdpi/playlist.png: 25x25 dp (49x49 px), drawable-xxhdpi/playlist.png: 33x33 dp (99x99 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/playlist.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/playlist.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/playlist.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `pluscircle.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/pluscircle.png: 34x34 dp (34x34 px), drawable-xhdpi/pluscircle.png: 26x26 dp (51x51 px), drawable-xxhdpi/pluscircle.png: 34x34 dp (102x102 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/pluscircle.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/pluscircle.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/pluscircle.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `profileicon.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/profileicon.png: 26x26 dp (26x26 px), drawable-xhdpi/profileicon.png: 20x20 dp (39x39 px), drawable-xxhdpi/profileicon.png: 26x26 dp (78x78 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/profileicon.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/profileicon.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/profileicon.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `profileselected.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/profileselected.png: 26x26 dp (26x26 px), drawable-xhdpi/profileselected.png: 20x20 dp (39x39 px), drawable-xxhdpi/profileselected.png: 26x26 dp (78x78 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/profileselected.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/profileselected.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/profileselected.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `rightarrow.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/rightarrow.png: 7x11 dp (7x11 px), drawable-xhdpi/rightarrow.png: 6x9 dp (11x17 px), drawable-xxhdpi/rightarrow.png: 8x12 dp (23x36 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/rightarrow.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/rightarrow.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/rightarrow.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `rowmenu.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/rowmenu.png: 6x25 dp (6x25 px), drawable-xhdpi/rowmenu.png: 5x19 dp (9x38 px), drawable-xxhdpi/rowmenu.png: 6x25 dp (18x75 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/rowmenu.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/rowmenu.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/rowmenu.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `rungreen.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/rungreen.png: 22x29 dp (22x29 px), drawable-xhdpi/rungreen.png: 17x22 dp (33x44 px), drawable-xxhdpi/rungreen.png: 22x29 dp (66x87 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/rungreen.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/rungreen.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/rungreen.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `runningicon.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/runningicon.png: 19x26 dp (19x26 px), drawable-xhdpi/runningicon.png: 14x19 dp (28x38 px), drawable-xxhdpi/runningicon.png: 19x26 dp (57x78 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/runningicon.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/runningicon.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/runningicon.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `runningorange.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/runningorange.png: 22x29 dp (22x29 px), drawable-xhdpi/runningorange.png: 17x22 dp (33x44 px), drawable-xxhdpi/runningorange.png: 22x29 dp (66x87 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/runningorange.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/runningorange.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/runningorange.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `runningselected.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/runningselected.png: 19x26 dp (19x26 px), drawable-xhdpi/runningselected.png: 14x19 dp (28x38 px), drawable-xxhdpi/runningselected.png: 19x26 dp (57x78 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/runningselected.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/runningselected.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/runningselected.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `scale.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/scale.png: 29x29 dp (29x29 px), drawable-xhdpi/scale.png: 22x22 dp (43x43 px), drawable-xxhdpi/scale.png: 29x29 dp (87x87 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/scale.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/scale.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/scale.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `scheduledstate.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/scheduledstate.png: 10x10 dp (10x10 px), drawable-xhdpi/scheduledstate.png: 8x8 dp (15x15 px), drawable-xxhdpi/scheduledstate.png: 10x10 dp (30x30 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/scheduledstate.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/scheduledstate.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/scheduledstate.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `search.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/search.png: 18x18 dp (18x18 px), drawable-xhdpi/search.png: 14x14 dp (27x27 px), drawable-xxhdpi/search.png: 18x18 dp (54x54 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/search.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/search.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/search.png"/>
+    </issue>
+
+    <issue
+        id="IconDipSize"
+        message="The image `traininglevel.png` varies significantly in its density-independent (dip) size across the various density versions: drawable-mdpi/traininglevel.png: 19x20 dp (19x20 px), drawable-xhdpi/traininglevel.png: 15x16 dp (29x31 px), drawable-xxhdpi/traininglevel.png: 20x21 dp (59x63 px)">
+        <location
+            file="src/main/res/drawable-xhdpi/traininglevel.png"/>
+        <location
+            file="src/main/res/drawable-mdpi/traininglevel.png"/>
+        <location
+            file="src/main/res/drawable-xxhdpi/traininglevel.png"/>
+    </issue>
+
+    <issue
+        id="IconDensities"
+        message="Missing the following drawables in `drawable-hdpi`: back.png, calendaricon.png, calendarselected.png, circle.png, circleselected.png... (43 more)">
+        <location
+            file="src/main/res/drawable-hdpi"/>
+    </issue>
+
+    <issue
+        id="IconDensities"
+        message="Missing the following drawables in `drawable-xhdpi`: rest.png (found in drawable-mdpi)">
+        <location
+            file="src/main/res/drawable-xhdpi"/>
+    </issue>
+
+    <issue
+        id="IconDensities"
+        message="Missing the following drawables in `drawable-xxhdpi`: rest.png (found in drawable-mdpi)">
+        <location
+            file="src/main/res/drawable-xxhdpi"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs.edit().putString(KEY_ENV, env.name).apply()"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/network/ApiConfiguration.kt"
+            line="78"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs.edit()"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/network/ApiConfiguration.kt"
+            line="84"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs(context).edit().putBoolean(KEY_ENABLED, enabled).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/calendar/CalendarSyncService.kt"
+            line="74"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs(context).edit().apply { if (id == null) remove(KEY_TARGET_CALENDAR) else putLong(KEY_TARGET_CALENDAR, id) }.apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/calendar/CalendarSyncService.kt"
+            line="97"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs(context).edit().remove(EVENT_ID_PREFIX + contentId).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/calendar/CalendarSyncService.kt"
+            line="235"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs(context).edit().remove(EVENT_ID_PREFIX + contentId).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/calendar/CalendarSyncService.kt"
+            line="250"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/CatalogDao.kt"
+            line="77"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/CatalogDao.kt"
+            line="97"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs?.edit()?.putString(KEY, layout.name.lowercase())?.apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/components/ContentFilterComponents.kt"
+            line="378"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs?.edit()?.remove(KEY_CACHE)?.apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/billing/EntitlementStore.kt"
+            line="186"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs?.edit()?.putString(KEY_CACHE, gson.toJson(c))?.apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/billing/EntitlementStore.kt"
+            line="211"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/GoalsDao.kt"
+            line="104"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/GoalsDao.kt"
+            line="247"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/HomeDao.kt"
+            line="158"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs?.edit()?.putInt(KEY, goal)?.apply()"
+        errorLine2="        ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/HomeViewModel.kt"
+            line="80"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/MealPlanDao.kt"
+            line="84"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/MealPlanDao.kt"
+            line="154"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/MealPlanDao.kt"
+            line="167"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/MealPlanDao.kt"
+            line="188"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs().edit().putString(KEY_RECORDS, gson.toJson(records)).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/media/MediaUploadCoordinator.kt"
+            line="274"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    d.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/MovementDao.kt"
+            line="128"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    d.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/MovementDao.kt"
+            line="157"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs().edit().putString(KEY_JOBS, gson.toJson(jobs.values.toList())).apply()"
+        errorLine2="        ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/media/MovementVideoAttachmentCoordinator.kt"
+            line="136"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            Uri.parse(url).getQueryParameter(&quot;token&quot;)"
+        errorLine2="            ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/media/MuxUrls.kt"
+            line="66"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        p.edit()"
+        errorLine2="        ~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/notifications/NotificationPrePromptSheet.kt"
+            line="87"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))"
+        errorLine2="                                                 ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/billing/PaywallScreen.kt"
+            line="380"
+            column="50"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="        val play = Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage(&quot;com.android.vending&quot;)"
+        errorLine2="                                              ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/billing/PlayBillingManager.kt"
+            line="480"
+            column="47"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="            else context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))"
+        errorLine2="                                                                  ~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/billing/PlayBillingManager.kt"
+            line="483"
+            column="67"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `String.toUri` instead?"
+        errorLine1="                                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link.url))) }"
+        errorLine2="                                                                                                   ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/programs/ProgramContributorCard.kt"
+            line="114"
+            column="100"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs.edit().putBoolean(KEY_HAS_PROMPTED, true).apply()"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/push/PushNotificationManager.kt"
+            line="122"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="                prefs.edit().putString(KEY_REGISTERED_TOKEN, token).apply()"
+        errorLine2="                ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/push/PushNotificationManager.kt"
+            line="168"
+            column="17"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs.edit()"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/push/PushNotificationManager.kt"
+            line="189"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs.edit().remove(KEY_SERVER_TOKEN_ID).remove(KEY_REGISTERED_TOKEN).apply()"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/push/PushNotificationManager.kt"
+            line="199"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="    private fun put(key: String, value: Boolean) { prefs?.edit()?.putBoolean(key, value)?.apply(); _version.value += 1 }"
+        errorLine2="                                                   ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/session/SessionSettings.kt"
+            line="37"
+            column="52"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Bitmap.scale` instead?"
+        errorLine1="        val target = if (scale &lt; 1f) Bitmap.createScaledBitmap(image, (image.width * scale).toInt(), (image.height * scale).toInt(), true) else image"
+        errorLine2="                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/SnapMealScreen.kt"
+            line="415"
+            column="38"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs.edit().apply {"
+        errorLine2="            ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/sync/SyncManager.kt"
+            line="205"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        if (::prefs.isInitialized) prefs.edit().clear().apply()"
+        errorLine2="                                   ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/sync/SyncManager.kt"
+            line="574"
+            column="36"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="        prefs.edit().putLong(KEY_LAST_SYNC, now.time).apply()"
+        errorLine2="        ~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/sync/SyncManager.kt"
+            line="592"
+            column="9"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `Int.toDrawable` instead?"
+        errorLine1="            window.setBackgroundDrawable(ColorDrawable(background.toArgb()))"
+        errorLine2="                                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/theme/Theme.kt"
+            line="115"
+            column="42"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs?.edit()?.putString(KEY_APPEARANCE, value.name)?.apply()"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/settings/UserSettings.kt"
+            line="61"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs?.edit()?.putString(KEY_WEIGHT_UNIT, value.label)?.apply()"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/settings/UserSettings.kt"
+            line="78"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs?.edit()?.putString(KEY_DISTANCE_UNIT, value.rawValue)?.apply()"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/settings/UserSettings.kt"
+            line="87"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SharedPreferences.edit` instead?"
+        errorLine1="            prefs?.edit()?.putBoolean(KEY_HEALTH_CONNECT_CALORIES, value)?.apply()"
+        errorLine2="            ~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/settings/UserSettings.kt"
+            line="99"
+            column="13"/>
+    </issue>
+
+    <issue
+        id="UseKtx"
+        message="Use the KTX extension function `SQLiteDatabase.transaction` instead?"
+        errorLine1="    db.beginTransaction()"
+        errorLine2="    ~~~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/persistence/WorkoutDao.kt"
+            line="42"
+            column="5"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="private val mediumDate: DateFormat = SimpleDateFormat(&quot;MMM d, yyyy&quot;, Locale.getDefault())"
+        errorLine2="                                                                     ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/GoalDetailScreen.kt"
+            line="414"
+            column="70"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="private val dateFormatter = SimpleDateFormat(&quot;MMM d, yyyy&quot;, Locale.getDefault())"
+        errorLine2="                                                            ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/GoalDetailsStep.kt"
+            line="223"
+            column="61"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="private val listDateFormat = SimpleDateFormat(&quot;MMM d&quot;, Locale.getDefault())"
+        errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/GroceryListsScreen.kt"
+            line="185"
+            column="56"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="private val labelFormat = SimpleDateFormat(&quot;EEE MMM d&quot;, Locale.getDefault())"
+        errorLine2="                                                        ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/HabitDetailScreen.kt"
+            line="290"
+            column="57"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="private val mediumDate = SimpleDateFormat(&quot;MMM d, yyyy&quot;, Locale.getDefault())"
+        errorLine2="                                                         ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/goals/HabitDetailScreen.kt"
+            line="291"
+            column="58"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="        private val monthDayFormat = SimpleDateFormat(&quot;MMM d&quot;, Locale.getDefault())"
+        errorLine2="                                                               ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/HomeViewModel.kt"
+            line="458"
+            column="64"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="private val timeFormatter = SimpleDateFormat(&quot;h:mm a&quot;, Locale.getDefault())"
+        errorLine2="                                                       ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/nutrition/LogWaterScreen.kt"
+            line="246"
+            column="56"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="        private val mediumDay = SimpleDateFormat(&quot;MMM d&quot;, Locale.getDefault())"
+        errorLine2="                                                          ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/MealPlanViewModel.kt"
+            line="250"
+            column="59"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="        private val weekdayShort = SimpleDateFormat(&quot;EEE&quot;, Locale.getDefault())"
+        errorLine2="                                                           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/MealPlanViewModel.kt"
+            line="251"
+            column="60"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="        private val weekdayFull = SimpleDateFormat(&quot;EEEE&quot;, Locale.getDefault())"
+        errorLine2="                                                           ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/MealPlanViewModel.kt"
+            line="252"
+            column="60"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="        private val dayNumber = SimpleDateFormat(&quot;d&quot;, Locale.getDefault())"
+        errorLine2="                                                      ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/viewmodel/MealPlanViewModel.kt"
+            line="253"
+            column="55"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="private val dateFormat = SimpleDateFormat(&quot;MMM d&quot;, Locale.getDefault())"
+        errorLine2="                                                   ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/profile/charts/ReportCharts.kt"
+            line="45"
+            column="52"/>
+    </issue>
+
+    <issue
+        id="ConstantLocale"
+        message="Assigning `Locale.getDefault()` to a final static field is suspicious; this code will not work correctly if the user changes locale while the app is running"
+        errorLine1="private val reportDateFormat = SimpleDateFormat(&quot;MMM d, yyyy&quot;, Locale.getDefault())"
+        errorLine2="                                                               ~~~~~~~~~~~~~~~~~~~">
+        <location
+            file="src/main/java/com/fitnesslink/fit/ui/profile/charts/ReportWidgets.kt"
+            line="53"
+            column="64"/>
+    </issue>
+
+</issues>

@@ -13,16 +13,32 @@ android {
         applicationId = "fit.fitnesslink"
         minSdk = 26
         targetSdk = 36
-        versionCode = 4
-        versionName = "2.0.1"
+        // CI passes -PversionCode / -PversionName (see .github/workflows/android-release.yml);
+        // local builds fall back to the last hand-uploaded release.
+        versionCode = (findProperty("versionCode") as String?)?.toInt() ?: 4
+        versionName = (findProperty("versionName") as String?) ?: "2.0.1"
 
         vectorDrawables {
             useSupportLibrary = true
         }
     }
 
+    // Play App Signing upload key. Google holds the app signing key; this one only
+    // authenticates uploads. Without ANDROID_KEYSTORE_PATH, release builds are unsigned.
+    signingConfigs {
+        System.getenv("ANDROID_KEYSTORE_PATH")?.let { keystorePath ->
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfigs.findByName("release")?.let { signingConfig = it }
             // R8 code optimization + resource shrinking (Play vitals "DEX code
             // optimization"). Keep rules for reflective Gson models live in
             // proguard-rules.pro.
@@ -43,6 +59,11 @@ android {
     }
     buildFeatures {
         compose = true
+    }
+    lint {
+        // Existing issues as of CI setup; CI fails only on new ones. Fix and shrink with
+        // ./gradlew updateLintBaseline
+        baseline = file("lint-baseline.xml")
     }
     packaging {
         resources {

@@ -8,6 +8,8 @@ com/fitnesslink/fit/ui/catalog/ProgramEditorScreen.kt
 com/fitnesslink/fit/ui/goals/StreakBadge.kt
 com/fitnesslink/fit/ui/movements/MovementDetailScreen.kt
 com/fitnesslink/fit/ui/nutrition/BarcodeScannerScreen.kt
+com/fitnesslink/fit/ui/onboarding/OnboardingComponents.kt
+com/fitnesslink/fit/ui/onboarding/OnboardingQuestionScreens.kt
 com/fitnesslink/fit/ui/profile/PersonalInfoScreen.kt
 com/fitnesslink/fit/ui/profile/SessionDetailScreen.kt
 com/fitnesslink/fit/ui/profile/charts/ReportWidgets.kt
