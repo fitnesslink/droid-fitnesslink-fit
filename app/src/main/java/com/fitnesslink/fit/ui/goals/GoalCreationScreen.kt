@@ -627,6 +627,7 @@ private fun CalorieTarget(model: GoalSetupViewModel) {
 
 @Composable
 private fun MacroTarget(model: GoalSetupViewModel) {
+    val nutritionTargets by NutritionGoalsStore.targets.collectAsState()
     GoalCard("Which macros?") {
         MacroKey.entries.forEach { key -> GoalToggle(key.displayName, key in model.selectedMacros, { model.toggleMacro(key, it) }) }
         GoalNote("Only selected macros are tracked — you don't need to set the others.")
@@ -634,7 +635,7 @@ private fun MacroTarget(model: GoalSetupViewModel) {
     MacroKey.entries.filter { it in model.selectedMacros }.forEach { key ->
         GoalCard(key.displayName) {
             GoalNumberField("Daily target", model.macroText[key] ?: "", { model.macroText[key] = it }, "g", decimal = false)
-            if (NutritionGoalsStore.hasProfile && NutritionGoalsStore.targets.value?.isManualOverride == false) {
+            if (NutritionGoalsStore.hasProfile && nutritionTargets?.isManualOverride == false) {
                 GoalNote("Prefilled with the recommendation from your Nutrition profile.", Icons.Filled.AutoAwesome)
             }
             GoalNote(key.ruleText)

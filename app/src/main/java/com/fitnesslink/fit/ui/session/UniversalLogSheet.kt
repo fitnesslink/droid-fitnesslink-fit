@@ -149,7 +149,8 @@ fun UniversalLogSheet(
     val focusManager = LocalFocusManager.current
     val haptics = LocalHapticFeedback.current
     // Re-read the session on every mutation (not on every timer tick).
-    val sessionVersion by remember { session.state.map { it.version }.distinctUntilChanged() }.collectAsState(initial = session.state.value.version)
+    val initialVersion = remember { session.state.value.version }
+    val sessionVersion by remember { session.state.map { it.version }.distinctUntilChanged() }.collectAsState(initial = initialVersion)
     /** Bumped by structural edits (add / delete set, metric changes) so cells re-read their values. */
     var revision by remember { mutableIntStateOf(0) }
 
