@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -46,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -168,6 +170,13 @@ fun PaywallScreen(
             }
 
             Spacer(modifier = Modifier.height(28.dp))
+
+            // The free trial is the first thing to see when picking a price,
+            // not only the CTA and the small print below the plans.
+            BillingPresentation.trialBannerTitle(selected?.trialPeriod, offers.map { it.trialPeriod })?.let { title ->
+                TrialBanner(title)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
 
             // Plan cards
             when {
@@ -368,6 +377,31 @@ private fun BenefitRow(icon: androidx.compose.ui.graphics.vector.ImageVector, te
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
         Text(text, fontSize = 15.sp, color = Color.White.copy(alpha = 0.9f)) // theme-exempt: over media
+    }
+}
+
+@Composable
+private fun TrialBanner(title: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(FLPrimary.copy(alpha = 0.18f))
+            .border(1.dp, FLPrimary.copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+            .semantics(mergeDescendants = true) {}
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(Icons.Default.CardGiftcard, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color.White) // theme-exempt: over media
+            Text(
+                BillingPresentation.TRIAL_BANNER_SUBTITLE,
+                fontSize = 13.sp,
+                color = Color.White.copy(alpha = 0.75f) // theme-exempt: over media
+            )
+        }
     }
 }
 

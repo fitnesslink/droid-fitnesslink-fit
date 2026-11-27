@@ -112,4 +112,13 @@ class BillingPresentationTests {
         assertNull(BillingPresentation.savingsBadge(9_990_000L, 119_880_000L))
         assertNull(BillingPresentation.savingsBadge(null, 79_990_000L))
     }
+
+    @Test
+    fun `trial banner prefers the selected plan and hides with no trial`() {
+        assertEquals("Try it free for 1 month", BillingPresentation.trialBannerTitle("P1M", listOf("P1M", "P1W")))
+        assertEquals("Try it free for 1 week", BillingPresentation.trialBannerTitle(null, listOf(null, "P1W")))
+        assertEquals("Try it free for 2 weeks", BillingPresentation.trialBannerTitle("P2W", emptyList()))
+        assertNull(BillingPresentation.trialBannerTitle(null, listOf(null, null)))
+        assertNull(BillingPresentation.trialBannerTitle("bogus", emptyList()))
+    }
 }

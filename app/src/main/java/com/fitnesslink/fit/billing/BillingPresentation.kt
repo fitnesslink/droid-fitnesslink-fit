@@ -212,6 +212,20 @@ object BillingPresentation {
         }
     }
 
+    /**
+     * Paywall banner title above the plans: "Try it free for 1 month".
+     * Uses the selected offer's trial when it has one, else any offer's;
+     * null when no offer carries a trial for this account (iOS `bannerTrialPeriod`).
+     */
+    fun trialBannerTitle(selectedTrialIsoPeriod: String?, allTrialIsoPeriods: List<String?>): String? {
+        val period = trialPeriodText(selectedTrialIsoPeriod)
+            ?: allTrialIsoPeriods.firstNotNullOfOrNull { trialPeriodText(it) }
+            ?: return null
+        return "Try it free for $period"
+    }
+
+    const val TRIAL_BANNER_SUBTITLE = "Pick a plan below. You won't be charged until your free trial ends."
+
     /** "$9.99 / month". */
     fun priceLine(formattedPrice: String, isoPeriod: String?): String =
         if (isoPeriod == null) formattedPrice else "$formattedPrice / ${periodName(isoPeriod)}"
