@@ -178,10 +178,10 @@ fun OnboardingPrimaryButton(
             .clickable(enabled = enabled && !loading, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        if (loading) CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
+        if (loading) CircularProgressIndicator(color = FLTheme.colors.onBrand, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
         else Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(title, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-            if (icon != null) Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
+            Text(title, color = FLTheme.colors.onBrand, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+            if (icon != null) Icon(icon, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -229,7 +229,7 @@ fun SelectionIndicator(selected: Boolean, multi: Boolean = false) {
             ),
         contentAlignment = Alignment.Center
     ) {
-        if (selected) Icon(Icons.Filled.Check, null, tint = Color.White, modifier = Modifier.size(14.dp))
+        if (selected) Icon(Icons.Filled.Check, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(14.dp))
     }
 }
 
@@ -297,12 +297,12 @@ fun OnboardingPhotoTile(option: OnboardingOption, selected: Boolean, modifier: M
         val photo = option.photo
         if (photo != null) {
             Image(painterResource(photo), null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
-            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f)))))
+            Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.75f))))) // theme-exempt: over media
         } else {
             Icon(option.icon, null, tint = FLPrimary, modifier = Modifier.align(Alignment.Center).size(34.dp))
         }
         Text(option.title, fontSize = 15.sp, fontWeight = FontWeight.SemiBold,
-            color = if (photo != null) Color.White else FLTheme.colors.textPrimary,
+            color = if (photo != null) Color.White else FLTheme.colors.textPrimary, // theme-exempt: over media
             modifier = Modifier.align(Alignment.BottomStart).padding(12.dp))
         Box(Modifier.align(Alignment.TopEnd).padding(10.dp)) { SelectionIndicator(selected) }
     }

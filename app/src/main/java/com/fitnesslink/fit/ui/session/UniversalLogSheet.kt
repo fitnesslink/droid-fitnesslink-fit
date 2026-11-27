@@ -97,6 +97,7 @@ import com.fitnesslink.fit.session.SessionExerciseNote
 import com.fitnesslink.fit.session.SpeedUnit
 import com.fitnesslink.fit.session.UniversalSetValues
 import com.fitnesslink.fit.ui.components.FLImageView
+import com.fitnesslink.fit.ui.theme.CompletedGreen
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.OrangeTheme
