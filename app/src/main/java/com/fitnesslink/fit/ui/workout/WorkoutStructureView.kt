@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,9 +25,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.workouts.WorkoutPhaseSummary
 
 /**
@@ -38,7 +36,7 @@ fun WorkoutStructureView(phases: List<WorkoutPhaseSummary>, onSelect: ((WorkoutP
     if (phases.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(text = "Workout Structure", fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
-        Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(White)) {
+        Column(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.surface)) {
             phases.forEachIndexed { index, phase ->
                 Row(
                     modifier = Modifier
@@ -48,10 +46,10 @@ fun WorkoutStructureView(phases: List<WorkoutPhaseSummary>, onSelect: ((WorkoutP
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text(text = phase.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-                    Text(text = "·", fontSize = 14.sp, color = TextSecondaryColor)
+                    Text(text = phase.name, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+                    Text(text = "·", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                     Text(
-                        text = phase.summary, fontSize = 14.sp, color = TextSecondaryColor,
+                        text = phase.summary, fontSize = 14.sp, color = FLTheme.colors.textSecondary,
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f)
                     )
                     Spacer(modifier = Modifier.size(4.dp))

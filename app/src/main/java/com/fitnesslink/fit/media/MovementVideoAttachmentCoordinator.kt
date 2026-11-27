@@ -106,7 +106,10 @@ object MovementVideoAttachmentCoordinator {
         val videoId = try { UUID.fromString(mediaAssetId) } catch (_: Exception) { return }
         try {
             val movement = ApiClient.movementApi.get(movementId)
-            ApiClient.movementApi.update(movementId, movement.copy(videoId = videoId))
+            ApiClient.movementApi.update(
+                movementId,
+                com.fitnesslink.fit.network.dto.UpdateMovementRequest.from(movement.copy(videoId = videoId))
+            )
         } catch (_: Exception) {
             // Job is dropped; the video simply isn't attached. An edit-movement
             // flow can re-attach later.

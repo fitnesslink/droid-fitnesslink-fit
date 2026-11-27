@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.goals
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,10 +31,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.AchievementType
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.viewmodel.AchievementsViewModel
 import java.text.DateFormat
 import java.util.Date
@@ -58,7 +56,7 @@ fun AchievementsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -70,7 +68,7 @@ fun AchievementsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item(span = { GridItemSpan(maxLineSpan) }) {
-                Text("Achievements", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text("Achievements", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             }
 
             if (earned.isEmpty() && lockedDefinitions.isEmpty() && lockedTypes.isEmpty()) {
@@ -78,7 +76,7 @@ fun AchievementsScreen(
             }
 
             if (earned.isNotEmpty()) {
-                item(span = { GridItemSpan(maxLineSpan) }) { SectionHeader("Earned", TextPrimaryColor) }
+                item(span = { GridItemSpan(maxLineSpan) }) { SectionHeader("Earned", FLTheme.colors.textPrimary) }
                 items(earned, key = { it.id }) { achievement ->
                     val type = achievement.achievementType
                     AchievementBadge(
@@ -100,7 +98,7 @@ fun AchievementsScreen(
             if (lockedDefinitions.isNotEmpty() || lockedTypes.isNotEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     Spacer(modifier = Modifier.height(8.dp))
-                    SectionHeader("Locked", TextSecondaryColor)
+                    SectionHeader("Locked", FLTheme.colors.textSecondary)
                 }
                 items(lockedDefinitions, key = { "def-${it.id}" }) { def ->
                     val type = AchievementType.fromWire(def.achievementType)
@@ -145,8 +143,8 @@ private fun EmptyState() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("No achievements yet", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-        Text("Complete habits and goals to earn badges.", fontSize = 13.sp, color = TextSecondaryColor)
+        Text("No achievements yet", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+        Text("Complete habits and goals to earn badges.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -157,11 +155,11 @@ private fun AchievementDetailDialog(selection: AchievementSelection, onDismiss: 
         title = { Text(selection.title) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (selection.description.isNotBlank()) Text(selection.description, fontSize = 14.sp, color = TextSecondaryColor)
+                if (selection.description.isNotBlank()) Text(selection.description, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 if (selection.isEarned && selection.earnedAt != null) {
                     Text("Earned ${dateFormatter.format(selection.earnedAt)}", fontSize = 12.sp, color = FLPrimary, fontWeight = FontWeight.SemiBold)
                 } else {
-                    Text("Locked — keep going to earn this badge.", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("Locked — keep going to earn this badge.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             }
         },

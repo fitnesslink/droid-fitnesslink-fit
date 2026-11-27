@@ -207,12 +207,24 @@ object ApiClient {
     val bodyTrackingApi: BodyTrackingApi by lazy { core() }
     val calendarApi: CalendarApi by lazy { core() }
     val personalizationApi: PersonalizationApi by lazy { core() }
+    val onboardingApi: OnboardingApi by lazy { core() }
     val classificationApi: ClassificationApi by lazy { core() }
     val contributorApi: ContributorApi by lazy { core() }
     val reportApi: ReportApi by lazy { core() }
     val contentApi: ContentApi by lazy { core() }
     val syncApi: SyncApi by lazy { core() }
     val mediaApi: MediaApi by lazy { core() }
+
+    /** On the host root, not under a module (backend `DevicePairingController`). */
+    val tvPairingApi: TvPairingApi by lazy {
+        Retrofit.Builder()
+            .baseUrl(ApiConfiguration.hostRoot())
+            .client(okHttpClient)
+            .addCallAdapterFactory(ApiErrorCallAdapterFactory())
+            .addConverterFactory(GsonConverterFactory.create(gson))
+            .build()
+            .create(TvPairingApi::class.java)
+    }
 
     // Nutrition API services
     val nutritionApi: NutritionApi by lazy { nutrition() }

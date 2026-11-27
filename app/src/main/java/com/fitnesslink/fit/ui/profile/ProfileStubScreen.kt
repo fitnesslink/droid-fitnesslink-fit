@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,8 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 
 @Composable
 fun ProfileStubScreen(
@@ -25,7 +24,7 @@ fun ProfileStubScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -43,7 +42,7 @@ fun ProfileStubScreen(
             Text(
                 text = "Coming Soon",
                 fontSize = 16.sp,
-                color = TextSecondaryColor
+                color = FLTheme.colors.textSecondary
             )
         }
     }

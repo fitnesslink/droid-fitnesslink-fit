@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,13 +44,8 @@ import com.fitnesslink.fit.model.ProgramWeekPlan
 import com.fitnesslink.fit.programs.UserProgramStore
 import com.fitnesslink.fit.ui.components.BackCircleButton
 import com.fitnesslink.fit.ui.components.PrimaryButtonView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -76,14 +72,14 @@ fun ProgramProgressScreen(enrollmentId: String?, onBack: () -> Unit) {
         loaded = true
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             BackCircleButton(onClick = onBack)
             Spacer(modifier = Modifier.weight(1f))
-            Text("Program Progress", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Program Progress", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.size(36.dp))
         }
@@ -91,7 +87,7 @@ fun ProgramProgressScreen(enrollmentId: String?, onBack: () -> Unit) {
         val current = snapshot
         if (current == null) {
             Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                if (loaded) Text("No program in progress.", fontSize = 14.sp, color = TextSecondaryColor)
+                if (loaded) Text("No program in progress.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
             }
             return
         }
@@ -110,7 +106,7 @@ fun ProgramProgressScreen(enrollmentId: String?, onBack: () -> Unit) {
             )
 
             Column(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).padding(14.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface).padding(14.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 ProgramProgressRow(
@@ -130,7 +126,7 @@ fun ProgramProgressScreen(enrollmentId: String?, onBack: () -> Unit) {
                 )
             }
 
-            Text("Weekly Breakdown", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text("Weekly Breakdown", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 current.weeks.forEach { week ->
@@ -156,7 +152,7 @@ private fun WeekBreakdownRow(week: ProgramWeekPlan, isCurrent: Boolean) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .border(1.dp, if (isCurrent) FLPrimary else Color.Transparent, RoundedCornerShape(12.dp))
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -172,14 +168,14 @@ private fun WeekBreakdownRow(week: ProgramWeekPlan, isCurrent: Boolean) {
             tint = when {
                 week.isComplete -> FLPrimary
                 isCurrent -> PurpleTheme
-                else -> MediumGray
+                else -> FLTheme.colors.textTertiary
             },
             modifier = Modifier.size(22.dp)
         )
         Column(modifier = Modifier.width(104.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("Week ${week.weekNumber}", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text(week.rangeLabel, fontSize = 12.sp, color = TextSecondaryColor)
-            week.phase?.let { Text("$it Phase", fontSize = 12.sp, color = TextSecondaryColor) }
+            Text("Week ${week.weekNumber}", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text(week.rangeLabel, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+            week.phase?.let { Text("$it Phase", fontSize = 12.sp, color = FLTheme.colors.textSecondary) }
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             ProgramProgressBar(
@@ -188,10 +184,10 @@ private fun WeekBreakdownRow(week: ProgramWeekPlan, isCurrent: Boolean) {
                 tint = if (isCurrent) PurpleTheme else FLPrimary,
                 height = 6.dp
             )
-            Text("${week.completed} / ${week.total} workouts", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("${week.completed} / ${week.total} workouts", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
         Column(horizontalAlignment = Alignment.End, modifier = Modifier.widthIn(min = 52.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("${week.percent}%", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, textAlign = TextAlign.End)
+            Text("${week.percent}%", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.End)
             if (week.isComplete || isCurrent) {
                 Text(
                     if (week.isComplete) "Complete" else "Current",

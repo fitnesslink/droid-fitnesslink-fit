@@ -4,6 +4,16 @@ import android.util.Log
 import com.fitnesslink.fit.auth.AuthManager
 import com.fitnesslink.fit.model.Achievement
 import com.fitnesslink.fit.model.Goal
+import com.fitnesslink.fit.model.GoalEntry
+import com.fitnesslink.fit.model.GoalStatus
+import com.fitnesslink.fit.model.GoalTargetChange
+import com.fitnesslink.fit.network.dto.CreateGoalEntryRequest
+import com.fitnesslink.fit.persistence.deleteGoalEntryRow
+import com.fitnesslink.fit.persistence.goalEntriesFor
+import com.fitnesslink.fit.persistence.insertGoalEntry
+import com.fitnesslink.fit.persistence.replaceGoalEntries
+import com.fitnesslink.fit.persistence.setGoalPinnedLocal
+import com.fitnesslink.fit.persistence.upsertGoalFull
 import com.fitnesslink.fit.model.Habit
 import com.fitnesslink.fit.model.HabitLog
 import com.fitnesslink.fit.model.Milestone
@@ -90,7 +100,10 @@ object GoalStore {
         if (registered) return
         registered = true
         runCatching { DatabaseManager.ensureGoalsSchema() }
+        // GOAL_ENTRIES drains right after GOALS in SyncManager.drainOrder (iOS
+        // drainGoals → drainGoalEntries), so an entry never precedes its goal.
         SyncManager.registerDrain(SyncDomain.GOALS) { drainGoals() }
+        SyncManager.registerDrain(SyncDomain.GOAL_ENTRIES) { drainGoalEntries() }
         SyncManager.registerDrain(SyncDomain.HABITS) { drainHabits() }
         SyncManager.registerDrain(SyncDomain.HABIT_LOGS) { drainHabitLogs() }
     }
@@ -138,6 +151,7 @@ object GoalStore {
         ensureRegistered()
         if (!NetworkMonitor.isConnected.value) return
         runCatching { SyncManager.drain(SyncDomain.GOALS) }
+        runCatching { SyncManager.drain(SyncDomain.GOAL_ENTRIES) }
         runCatching { SyncManager.drain(SyncDomain.HABITS) }
         runCatching { SyncManager.drain(SyncDomain.HABIT_LOGS) }
 
@@ -150,13 +164,21 @@ object GoalStore {
                 val pending = DatabaseManager.pendingEntityIds(SyncDomain.GOALS.wireName)
                 val remoteIds = remoteGoals.mapTo(HashSet()) { it.id.lowercase(Locale.US) }
                 remoteGoals.forEach { goal ->
-                    if (goal.id.lowercase(Locale.US) !in pending) runCatching { DatabaseManager.insertGoal(goal.normalized()) }
+                    if (goal.id.lowercase(Locale.US) !in pending) runCatching { DatabaseManager.upsertGoalFull(goal.normalized()) }
                 }
                 DatabaseManager.goalsCached()
                     .filter { it.id.lowercase(Locale.US) !in remoteIds && it.id.lowercase(Locale.US) !in pending }
-                    .forEach { stale -> runCatching { DatabaseManager.deleteGoalCascade(stale.id) } }
+                    .forEach { stale ->
+                        runCatching { DatabaseManager.deleteGoalCascade(stale.id) }
+                        GoalReminderScheduler.cancel(stale.id)
+                    }
+                goals().forEach { GoalReminderScheduler.sync(it) }
             }
             goalsAuthoritative = true
+        }
+
+        runCatching { ApiClient.goalApi.entries() }.onSuccess { remote ->
+            withContext(Dispatchers.IO) { runCatching { DatabaseManager.replaceGoalEntries(remote) } }
         }
 
         runCatching { ApiClient.goalApi.getMyHabits() }.onSuccess { remote ->
@@ -179,7 +201,7 @@ object GoalStore {
         val pendingGoals = DatabaseManager.pendingEntityIds(SyncDomain.GOALS.wireName)
         if (goalId.lowercase(Locale.US) !in pendingGoals) {
             runCatching { ApiClient.goalApi.get(goalId) }.onSuccess { goal ->
-                withContext(Dispatchers.IO) { runCatching { DatabaseManager.insertGoal(goal.normalized()) } }
+                withContext(Dispatchers.IO) { runCatching { DatabaseManager.upsertGoalFull(goal.normalized()) } }
             }
         }
         val habits = runCatching { ApiClient.goalApi.getHabitsForGoal(goalId) }.getOrNull()
@@ -239,7 +261,7 @@ object GoalStore {
      * `CreateGoalRequest` has no `currentValue`, so a non-zero starting value
      * is sent as a follow-up `PUT /goals/{id}/progress` (same queue row).
      */
-    suspend fun create(goal: Goal, habits: List<Habit>) {
+    suspend fun create(goal: Goal, habits: List<Habit> = emptyList()) {
         ensureRegistered()
         val now = System.currentTimeMillis()
         val uid = userId
@@ -262,10 +284,12 @@ object GoalStore {
             )
         }
         withContext(Dispatchers.IO) {
-            DatabaseManager.insertGoal(stored)
+            DatabaseManager.upsertGoalFull(stored)
+            if (stored.isPinned) DatabaseManager.setGoalPinnedLocal(stored.id, true)
             storedHabits.forEach { DatabaseManager.upsertHabitFull(it) }
         }
         notifyChanged()
+        GoalReminderScheduler.sync(stored)
         commit(SyncDomain.GOALS, ACTION_CREATE, stored.id, gson.toJson(stored)) { sendGoalCreate(stored) }
         storedHabits.forEach { habit ->
             commit(SyncDomain.HABITS, ACTION_CREATE, habit.id, gson.toJson(habit)) { ApiClient.goalApi.createHabit(habit) }
@@ -282,13 +306,74 @@ object GoalStore {
 
     // MARK: - Update
 
-    /** Archive / pause / edit: local row first, then queued `PUT /goals/{id}` (iOS `GoalListViewModel.archiveGoal`). */
-    suspend fun update(goal: Goal) {
+    /**
+     * Saves an edited goal: local row first, then queued `PUT /goals/{id}`.
+     * A target change against [previous] is recorded in the config's target
+     * history so earlier configurations stay distinguishable (iOS `GoalStore.update`).
+     */
+    suspend fun update(goal: Goal, previous: Goal? = null) {
         ensureRegistered()
-        val stored = goal.copy(id = goal.id.lowercase(Locale.US), updatedAt = System.currentTimeMillis())
-        withContext(Dispatchers.IO) { DatabaseManager.insertGoal(stored) }
+        var stored = goal.copy(id = goal.id.lowercase(Locale.US), updatedAt = System.currentTimeMillis())
+        val old = previous?.targetValue
+        if (old != null && old != stored.targetValue) {
+            val settings = stored.settings
+            val change = GoalTargetChange(old, com.fitnesslink.fit.model.FitnessContent.formatIsoDate(System.currentTimeMillis()))
+            stored = stored.withSettings(settings.copy(targetHistory = (settings.targetHistory ?: emptyList()) + change))
+        }
+        withContext(Dispatchers.IO) { DatabaseManager.upsertGoalFull(stored) }
         notifyChanged()
-        commit(SyncDomain.GOALS, ACTION_UPDATE, stored.id, gson.toJson(stored)) { ApiClient.goalApi.update(stored.id, stored) }
+        GoalReminderScheduler.sync(stored)
+        val payload = stored
+        commit(SyncDomain.GOALS, ACTION_UPDATE, payload.id, gson.toJson(payload)) { ApiClient.goalApi.update(payload.id, payload) }
+    }
+
+    /** Pause / resume / complete / archive. */
+    suspend fun setStatus(goal: Goal, status: GoalStatus) {
+        val updated = goal.copy(status = status, completedDate = if (status == GoalStatus.Completed) System.currentTimeMillis() else goal.completedDate)
+        update(updated)
+    }
+
+    /** Pinning replaces the current pin; unpinning never deletes (PRD 8.3). The server unpins the others on PUT. */
+    suspend fun setPinned(goal: Goal, pinned: Boolean) {
+        ensureRegistered()
+        withContext(Dispatchers.IO) { DatabaseManager.setGoalPinnedLocal(goal.id, pinned) }
+        val updated = (goal(goal.id) ?: goal).copy(id = goal.id.lowercase(Locale.US), isPinned = pinned, updatedAt = System.currentTimeMillis())
+        withContext(Dispatchers.IO) { DatabaseManager.upsertGoalFull(updated) }
+        notifyChanged()
+        commit(SyncDomain.GOALS, ACTION_UPDATE, updated.id, gson.toJson(updated)) { ApiClient.goalApi.update(updated.id, updated) }
+    }
+
+    /** The goal on Home's My Goals (PRD §8). */
+    fun pinnedGoal(): Goal? = goals().firstOrNull { it.isPinned && it.status != GoalStatus.Archived }
+
+    // MARK: - Entries (Goals PRD check-ins)
+
+    fun goalEntries(goalId: String): List<GoalEntry> = runCatching { DatabaseManager.goalEntriesFor(goalId) }.getOrDefault(emptyList())
+
+    suspend fun addEntry(entry: GoalEntry) {
+        ensureRegistered()
+        val stored = entry.copy(id = entry.id.lowercase(Locale.US), goalId = entry.goalId.lowercase(Locale.US))
+        withContext(Dispatchers.IO) { DatabaseManager.insertGoalEntry(stored) }
+        notifyChanged()
+        commit(SyncDomain.GOAL_ENTRIES, ACTION_CREATE, stored.id, gson.toJson(stored)) {
+            ApiClient.goalApi.createEntry(stored.goalId, CreateGoalEntryRequest.from(stored))
+        }
+    }
+
+    /** Corrects a mistaken check-in; progress recomputes from what remains. */
+    suspend fun deleteEntry(entry: GoalEntry) {
+        ensureRegistered()
+        val id = entry.id.lowercase(Locale.US)
+        withContext(Dispatchers.IO) { DatabaseManager.deleteGoalEntryRow(id) }
+        notifyChanged()
+        // A create that never left the device needs no DELETE.
+        val pendingCreate = runCatching { DatabaseManager.pendingSyncEntries(SyncDomain.GOAL_ENTRIES.wireName) }.getOrDefault(emptyList())
+            .firstOrNull { it.action == ACTION_CREATE && it.entityId.equals(id, ignoreCase = true) }
+        if (pendingCreate != null) {
+            DatabaseManager.markSyncEntrySynced(pendingCreate.id)
+            return
+        }
+        commit(SyncDomain.GOAL_ENTRIES, ACTION_DELETE, id, gson.toJson(entry.copy(id = id))) { ApiClient.goalApi.deleteEntry(id) }
     }
 
     /** Local-first `PUT /goals/{id}/progress` (also keeps the cached ring current). */
@@ -316,6 +401,7 @@ object GoalStore {
             commit(SyncDomain.HABITS, ACTION_DELETE, habit.id, gson.toJson(habit)) { ApiClient.goalApi.deleteHabit(habit.id) }
         }
         DatabaseManager.cancelPendingEntries(SyncDomain.GOALS.wireName, id)
+        GoalReminderScheduler.cancel(id)
         commit(SyncDomain.GOALS, ACTION_DELETE, id, goal?.let { gson.toJson(it) } ?: "") { ApiClient.goalApi.delete(id) }
     }
 
@@ -440,6 +526,26 @@ object GoalStore {
                 ACTION_UPDATE -> { val g = goal ?: throw ApiError.NotFound; ApiClient.goalApi.update(g.id, g) }
                 ACTION_DELETE -> ApiClient.goalApi.delete(entry.entityId)
                 else -> Log.w(TAG, "unknown goals queue action '${entry.action}' — dropping")
+            }
+        }
+    }
+
+    /**
+     * iOS `drainGoalEntries`: `POST /goals/{id}/entries` / `DELETE
+     * /goals/entries/{id}`. Runs after the goals drain so the parent goal
+     * exists server-side; both calls are idempotent (client-minted ids, soft
+     * delete → 404 on repeat, which the queue walk treats as final).
+     */
+    private suspend fun drainGoalEntries() {
+        SyncManager.drainQueue(SyncDomain.GOAL_ENTRIES) { entry ->
+            val goalEntry = SyncManager.decodePayload<GoalEntry>(entry.payload)
+            when (entry.action) {
+                ACTION_CREATE -> {
+                    val e = goalEntry ?: throw ApiError.NotFound
+                    ApiClient.goalApi.createEntry(e.goalId, CreateGoalEntryRequest.from(e))
+                }
+                ACTION_DELETE -> ApiClient.goalApi.deleteEntry(entry.entityId)
+                else -> Log.w(TAG, "unknown goal-entries queue action '${entry.action}' — dropping")
             }
         }
     }

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.goals
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,9 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.AchievementType
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 
 @Composable
 fun AchievementBadge(
@@ -76,7 +74,7 @@ fun AchievementBadge(
             modifier = Modifier
                 .size(64.dp)
                 .background(
-                    color = if (isEarned) FLPrimary.copy(alpha = 0.12f) else MediumGray.copy(alpha = 0.20f),
+                    color = if (isEarned) FLPrimary.copy(alpha = 0.12f) else FLTheme.colors.textTertiary.copy(alpha = 0.20f),
                     shape = CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -84,7 +82,7 @@ fun AchievementBadge(
             Icon(
                 imageVector = icon,
                 contentDescription = title,
-                tint = if (isEarned) FLPrimary else MediumGray,
+                tint = if (isEarned) FLPrimary else FLTheme.colors.textTertiary,
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -92,7 +90,7 @@ fun AchievementBadge(
             text = title,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
-            color = if (isEarned) TextPrimaryColor else TextSecondaryColor,
+            color = if (isEarned) FLTheme.colors.textPrimary else FLTheme.colors.textSecondary,
             textAlign = TextAlign.Center,
             maxLines = 2
         )

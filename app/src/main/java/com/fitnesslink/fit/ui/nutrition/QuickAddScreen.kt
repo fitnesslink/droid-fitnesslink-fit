@@ -69,13 +69,9 @@ import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.DisabledButton
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -269,16 +265,16 @@ fun QuickAddScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(if (capturing) "Enter Manually" else "Add to ${mealType.displayName}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text(if (capturing) "Enter Manually" else "Add to ${mealType.displayName}", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 if (logDate != null) Text("Logging for ${formatMediumDay(logDate)}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
-                if (capturing) Text("Adding to the meal you're building", fontSize = 13.sp, color = TextSecondaryColor)
+                if (capturing) Text("Adding to the meal you're building", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             }
 
             // Quick Log (FTNSSLNK-213): copy a previous day's whole meal in one tap.
@@ -288,7 +284,7 @@ fun QuickAddScreen(
             }
 
             // Form
-            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp))) {
+            Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
                 FormRow("Food Name", form.name, ::onNameChange, form, ManualFoodForm.Field.NAME)
                 SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
                 FormRow("Calories", form.calories, { form = form.copy(calories = it) }, form, ManualFoodForm.Field.CALORIES, KeyboardType.Decimal)
@@ -330,8 +326,8 @@ fun QuickAddScreen(
             FoodLogCard {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Save to My Foods", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                        Text("Reusable later — it'll rank at the top of Food Search", fontSize = 12.sp, color = TextSecondaryColor)
+                        Text("Save to My Foods", fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                        Text("Reusable later — it'll rank at the top of Food Search", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                     Switch(
                         checked = form.saveAsCustomFood, onCheckedChange = { form = form.copy(saveAsCustomFood = it) },
@@ -341,10 +337,10 @@ fun QuickAddScreen(
                 if (!barcode.isNullOrEmpty()) {
                     Spacer(Modifier.height(8.dp)); SeparatorView(); Spacer(Modifier.height(8.dp))
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Icon(Icons.Default.QrCodeScanner, null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
+                        Icon(Icons.Default.QrCodeScanner, null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(14.dp))
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text("Barcode $barcode", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                            Text("Scanning this code again will find this food on this device", fontSize = 11.sp, color = TextSecondaryColor)
+                            Text("Barcode $barcode", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                            Text("Scanning this code again will find this food on this device", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                         }
                     }
                 }
@@ -391,7 +387,7 @@ private fun AIFillCard(form: ManualFoodForm, isFilling: Boolean, error: String?,
     FoodLogCard {
         val fill = form.fill
         if (fill != null) {
-            val color = if (fill.isAiEstimate) OrangeTheme else TextSecondaryColor
+            val color = if (fill.isAiEstimate) OrangeTheme else FLTheme.colors.textSecondary
             Row(
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
                 modifier = Modifier.background(color.copy(alpha = 0.12f), RoundedCornerShape(8.dp)).padding(horizontal = 10.dp, vertical = 6.dp)
@@ -399,13 +395,13 @@ private fun AIFillCard(form: ManualFoodForm, isFilling: Boolean, error: String?,
                 Icon(if (fill.isAiEstimate) Icons.Default.AutoAwesome else Icons.Default.History, null, tint = color, modifier = Modifier.size(14.dp))
                 Text(fill.badgeText, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = color)
             }
-            if (fill.isAiEstimate) { Spacer(Modifier.height(8.dp)); Text("AI estimates can be off — check the numbers before saving.", fontSize = 12.sp, color = TextSecondaryColor) }
-            if (fill.lockedFields.isNotEmpty()) { Spacer(Modifier.height(8.dp)); Text("Kept what you typed: ${ManualFoodForm.lockedFieldNames(fill.lockedFields)}", fontSize = 12.sp, color = TextSecondaryColor) }
+            if (fill.isAiEstimate) { Spacer(Modifier.height(8.dp)); Text("AI estimates can be off — check the numbers before saving.", fontSize = 12.sp, color = FLTheme.colors.textSecondary) }
+            if (fill.lockedFields.isNotEmpty()) { Spacer(Modifier.height(8.dp)); Text("Kept what you typed: ${ManualFoodForm.lockedFieldNames(fill.lockedFields)}", fontSize = 12.sp, color = FLTheme.colors.textSecondary) }
             Spacer(Modifier.height(10.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (isFilling) {
                     CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(14.dp), strokeWidth = 2.dp)
-                    Text("Re-estimating…", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text("Re-estimating…", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.clickable(onClick = onReestimate)) {
                         Icon(Icons.Default.Refresh, null, tint = FLPrimary, modifier = Modifier.size(14.dp))
@@ -415,21 +411,21 @@ private fun AIFillCard(form: ManualFoodForm, isFilling: Boolean, error: String?,
             }
         } else {
             Row(
-                modifier = Modifier.fillMaxWidth().background(if (isFilling) DisabledButton else FLPrimary, RoundedCornerShape(10.dp))
+                modifier = Modifier.fillMaxWidth().background(if (isFilling) FLTheme.colors.disabled else FLPrimary, RoundedCornerShape(10.dp))
                     .then(if (isFilling) Modifier else Modifier.clickable(onClick = onFill)).padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
             ) {
-                if (isFilling) CircularProgressIndicator(color = White, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                else Icon(Icons.Default.AutoAwesome, null, tint = White, modifier = Modifier.size(16.dp))
+                if (isFilling) CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                else Icon(Icons.Default.AutoAwesome, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.width(8.dp))
-                Text(if (isFilling) "Filling in…" else "Fill with AI", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = White)
+                Text(if (isFilling) "Filling in…" else "Fill with AI", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
             }
             Spacer(Modifier.height(8.dp))
             val typed = form.typedNumericFields
             Text(
                 if (typed.isEmpty()) "Type a name and any numbers you know — AI fills the rest."
                 else "Your ${ManualFoodForm.lockedFieldNames(typed).lowercase(Locale.US)} stay as typed; AI fills the rest to match.",
-                fontSize = 12.sp, color = TextSecondaryColor
+                fontSize = 12.sp, color = FLTheme.colors.textSecondary
             )
         }
         if (error != null) {
@@ -449,23 +445,23 @@ private fun QuickLogCard(source: QuickLogMealSource, targetDate: Date, busy: Boo
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(Icons.Default.Undo, null, tint = FLPrimary, modifier = Modifier.size(18.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text(quickLogCopyLabel(source, targetDate), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-                Text("${source.entryCount} item${if (source.entryCount == 1) "" else "s"} · ${source.calories.roundToInt()} cal", fontSize = 12.sp, color = TextSecondaryColor)
+                Text(quickLogCopyLabel(source, targetDate), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+                Text("${source.entryCount} item${if (source.entryCount == 1) "" else "s"} · ${source.calories.roundToInt()} cal", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
             if (busy) CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
             else Text(
-                "Copy", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = White,
+                "Copy", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand,
                 modifier = Modifier.background(FLPrimary, RoundedCornerShape(10.dp)).clickable(onClick = onCopy).padding(horizontal = 16.dp, vertical = 8.dp)
             )
         }
         Spacer(Modifier.height(10.dp))
         source.entries.take(4).forEach { entry ->
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text(entry.name, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 1, modifier = Modifier.weight(1f))
-                Text("${entry.calories.roundToInt()} cal", fontSize = 12.sp, color = TextSecondaryColor)
+                Text(entry.name, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1, modifier = Modifier.weight(1f))
+                Text("${entry.calories.roundToInt()} cal", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
-        if (source.entries.size > 4) Text("+ ${source.entries.size - 4} more", fontSize = 11.sp, color = TextSecondaryColor)
+        if (source.entries.size > 4) Text("+ ${source.entries.size - 4} more", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         error?.let { Spacer(Modifier.height(8.dp)); FoodLogErrorText(it) }
     }
 }
@@ -482,10 +478,10 @@ fun quickLogCopyLabel(source: QuickLogMealSource, target: Date): String {
 @Composable
 fun FormField(label: String, value: String, onValueChange: (String) -> Unit, keyboardType: KeyboardType = KeyboardType.Text) {
     Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, fontSize = 12.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         BasicTextField(
             value = value, onValueChange = onValueChange, singleLine = true,
-            textStyle = TextStyle(fontSize = 16.sp, color = TextPrimaryColor),
+            textStyle = TextStyle(fontSize = 16.sp, color = FLTheme.colors.textPrimary),
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType), modifier = Modifier.fillMaxWidth()
         )
     }

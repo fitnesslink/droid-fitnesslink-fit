@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.catalog
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -49,10 +50,6 @@ import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.components.SharedBadge
 import com.fitnesslink.fit.ui.components.rememberContentLayout
 import com.fitnesslink.fit.ui.navigation.MovementRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.MyContentViewModel
 
 /**
@@ -96,7 +93,7 @@ fun MyContentScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             HeaderBackView(onBack = onBack)
@@ -121,7 +118,7 @@ fun MyContentScreen(
             text = "My Content",
             fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
-            color = TextPrimaryColor,
+            color = FLTheme.colors.textPrimary,
             modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
         )
 
@@ -184,7 +181,7 @@ private fun MyContentRow(item: CatalogItem, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
     ) {
         Box {
@@ -197,7 +194,7 @@ private fun MyContentRow(item: CatalogItem, onClick: () -> Unit) {
                 text = item.kindLabel,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = White,
+                color = FLTheme.colors.onBrand,
                 modifier = Modifier
                     .padding(10.dp)
                     .background(catalogKindBadgeColor(item.kind), RoundedCornerShape(6.dp))
@@ -205,11 +202,11 @@ private fun MyContentRow(item: CatalogItem, onClick: () -> Unit) {
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.padding(12.dp)) {
-            Text(text = item.title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = item.title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (item.caption.isNotEmpty()) {
-                Text(text = item.caption, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = item.caption, fontSize = 13.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            item.formattedCreatedAt?.let { Text(text = "Created $it", fontSize = 12.sp, color = TextSecondaryColor, maxLines = 1) }
+            item.formattedCreatedAt?.let { Text(text = "Created $it", fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1) }
             if (item.isSharedWithMe) SharedBadge()
         }
     }
@@ -224,7 +221,7 @@ private fun MyContentRowCompact(item: CatalogItem, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(12.dp)
     ) {
@@ -239,16 +236,16 @@ private fun MyContentRowCompact(item: CatalogItem, onClick: () -> Unit) {
                 text = item.kindLabel,
                 fontSize = 10.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = White,
+                color = FLTheme.colors.onBrand,
                 modifier = Modifier
                     .background(catalogKindBadgeColor(item.kind), RoundedCornerShape(4.dp))
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             )
-            Text(text = item.title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(text = item.title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             if (item.caption.isNotEmpty()) {
-                Text(text = item.caption, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(text = item.caption, fontSize = 13.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
-            item.formattedCreatedAt?.let { Text(text = "Created $it", fontSize = 12.sp, color = TextSecondaryColor, maxLines = 1) }
+            item.formattedCreatedAt?.let { Text(text = "Created $it", fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1) }
             if (item.isSharedWithMe) SharedBadge()
         }
     }

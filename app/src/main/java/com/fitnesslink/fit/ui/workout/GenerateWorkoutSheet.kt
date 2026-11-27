@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -50,11 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.model.Workout
 import com.fitnesslink.fit.network.NetworkMonitor
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.AIWorkoutGeneratorViewModel
 import com.fitnesslink.fit.viewmodel.WorkoutEditorViewModel
 import kotlinx.coroutines.delay
@@ -108,9 +105,9 @@ fun GenerateWorkoutSheet(seedPrompt: String? = null, onApprove: (Workout) -> Uni
                 onApprove = { workout -> onApprove(workout) }
             )
         } else {
-            Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
-                Row(modifier = Modifier.fillMaxWidth().background(White).padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(onClick = onDismiss, enabled = !aiVM.isGenerating) { Text("Cancel", color = TextSecondaryColor) }
+            Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
+                Row(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface).padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    TextButton(onClick = onDismiss, enabled = !aiVM.isGenerating) { Text("Cancel", color = FLTheme.colors.textSecondary) }
                     Spacer(modifier = Modifier.weight(1f))
                     Text("Generate with AI", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                     Spacer(modifier = Modifier.weight(1f))
@@ -122,8 +119,8 @@ fun GenerateWorkoutSheet(seedPrompt: String? = null, onApprove: (Workout) -> Uni
                 ) {
                     if (!isOnline) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Filled.WifiOff, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
-                            Text("You need an active internet connection to generate a workout.", fontSize = 13.sp, color = TextSecondaryColor)
+                            Icon(Icons.Filled.WifiOff, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
+                            Text("You need an active internet connection to generate a workout.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                         }
                     }
                     FormSection("Describe your workout") {
@@ -153,12 +150,12 @@ fun GenerateWorkoutSheet(seedPrompt: String? = null, onApprove: (Workout) -> Uni
                             modifier = Modifier.fillMaxWidth().clickable(enabled = !aiVM.isGenerating) { showEquipmentPicker = true }.padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text("Select equipment", fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                            Text(if (selectedEquipmentIds.isEmpty()) "Any" else "${selectedEquipmentIds.size} selected", fontSize = 14.sp, color = TextSecondaryColor)
-                            Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = TextSecondaryColor)
+                            Text("Select equipment", fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text(if (selectedEquipmentIds.isEmpty()) "Any" else "${selectedEquipmentIds.size} selected", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+                            Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textSecondary)
                         }
                     }
-                    aiVM.errorMessage?.let { Text(it, fontSize = 13.sp, color = Color.Red) }
+                    aiVM.errorMessage?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.danger) }
 
                     if (aiVM.isGenerating) {
                         GenerationProgressView(startedAt = generationStartedAt)
@@ -179,9 +176,9 @@ fun GenerateWorkoutSheet(seedPrompt: String? = null, onApprove: (Workout) -> Uni
                                 .padding(vertical = 14.dp),
                             horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = White, modifier = Modifier.size(18.dp))
+                            Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Generate Workout", color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                            Text("Generate Workout", color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
                         }
                     }
                     Spacer(modifier = Modifier.height(24.dp))
@@ -194,10 +191,10 @@ fun GenerateWorkoutSheet(seedPrompt: String? = null, onApprove: (Workout) -> Uni
 @Composable
 private fun FormSection(title: String, content: @Composable () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(title.uppercase(Locale.US), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondaryColor)
+        Text(title.uppercase(Locale.US), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textSecondary)
         content()
     }
 }
@@ -227,13 +224,13 @@ private fun GenerationProgressView(startedAt: Long) {
     val progress = minOf(0.92, 1 - exp(-elapsed / 7.0)).toFloat()
 
     Column(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(20.dp))
             Text("${stages[current].text}…", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-            Text("${elapsed}s", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+            Text("${elapsed}s", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
         }
         LinearProgressIndicator(progress = { progress }, color = FLPrimary, modifier = Modifier.fillMaxWidth())
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -242,13 +239,13 @@ private fun GenerationProgressView(startedAt: Long) {
                     Icon(
                         if (index < current) Icons.Filled.CheckCircle else Icons.Filled.RadioButtonUnchecked,
                         contentDescription = null,
-                        tint = when { index < current -> FLPrimary; index == current -> TextPrimaryColor; else -> TextSecondaryColor.copy(alpha = 0.5f) },
+                        tint = when { index < current -> FLPrimary; index == current -> FLTheme.colors.textPrimary; else -> FLTheme.colors.textSecondary.copy(alpha = 0.5f) },
                         modifier = Modifier.size(14.dp)
                     )
-                    Text(stage.text, fontSize = 13.sp, color = if (index <= current) TextPrimaryColor else TextSecondaryColor)
+                    Text(stage.text, fontSize = 13.sp, color = if (index <= current) FLTheme.colors.textPrimary else FLTheme.colors.textSecondary)
                 }
             }
         }
-        Text("Usually 5–15 seconds. Longer, detailed prompts take a little more.", fontSize = 12.sp, color = TextSecondaryColor)
+        Text("Usually 5–15 seconds. Longer, detailed prompts take a little more.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
     }
 }

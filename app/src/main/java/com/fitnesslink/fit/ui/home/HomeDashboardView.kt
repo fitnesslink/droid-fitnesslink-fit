@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,8 +36,6 @@ import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /** Where each dashboard tile deep-links (iOS `HomeDashboardView.route(for:)`, FTNSSLNK-365). */
 fun dashboardRoute(dashboard: HomeDashboard): String = when (dashboard.id) {
@@ -110,15 +109,15 @@ fun DashboardCard(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(16.dp)
     ) {
         Image(painter = painterResource(iconRes), contentDescription = null, modifier = Modifier.size(30.dp))
-        Text(text = dashboard.name, fontSize = 12.sp, color = TextSecondaryColor)
+        Text(text = dashboard.name, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(text = dashboard.progress, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = progressColor)
-            Text(text = dashboard.unit, fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.padding(bottom = 4.dp))
+            Text(text = dashboard.unit, fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(bottom = 4.dp))
         }
         val cta = dashboard.goalCTA
         when {
@@ -140,15 +139,15 @@ fun DashboardCard(
                 horizontalArrangement = Arrangement.spacedBy(3.dp),
                 modifier = Modifier.clickable(onClick = onGoalTap)
             ) {
-                Text(text = "Goal: ${dashboard.goals}", fontSize = 11.sp, color = TextSecondaryColor)
+                Text(text = "Goal: ${dashboard.goals}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                 Icon(
                     imageVector = Icons.Filled.Edit,
                     contentDescription = "Edit goal",
-                    tint = TextSecondaryColor,
+                    tint = FLTheme.colors.textSecondary,
                     modifier = Modifier.size(10.dp)
                 )
             }
-            dashboard.goals.isNotEmpty() -> Text(text = "Goal: ${dashboard.goals}", fontSize = 11.sp, color = TextSecondaryColor)
+            dashboard.goals.isNotEmpty() -> Text(text = "Goal: ${dashboard.goals}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }

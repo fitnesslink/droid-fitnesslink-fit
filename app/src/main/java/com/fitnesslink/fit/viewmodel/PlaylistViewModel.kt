@@ -25,6 +25,7 @@ import com.fitnesslink.fit.session.SessionMode
 import com.fitnesslink.fit.session.SessionRecorder
 import com.fitnesslink.fit.session.SessionWorkoutRefresh
 import com.fitnesslink.fit.session.SetState
+import com.fitnesslink.fit.session.UnconfirmedSetItem
 import com.fitnesslink.fit.session.WorkoutSummaryStats
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -43,6 +44,8 @@ class PlaylistViewModel : ViewModel() {
         private set
     var showFinishConfirmation by mutableStateOf(false)
         private set
+    /** Workout-end "You Have Unconfirmed Sets" sheet (Universal Logging §11.3). */
+    var showUnconfirmedSets by mutableStateOf(false)
     var logTargetTaskId by mutableStateOf<String?>(null)
         private set
     var logTargetSetNumber by mutableStateOf<Int?>(null)
@@ -173,6 +176,13 @@ class PlaylistViewModel : ViewModel() {
         reload(id)
     }
 
+    /** Sets × duration for a time-based exercise (FTNSSLNK-512). */
+    fun updateDuration(taskId: String, sets: Int, durationSeconds: Int, weightLbs: Int?, scope: SessionWorkoutEditor.Scope? = null) {
+        val id = targetWorkoutId.ifEmpty { return }
+        SessionWorkoutEditor.updateDuration(taskId, sets, durationSeconds, weightLbs, id, scope ?: editScope)
+        reload(id)
+    }
+
     fun updateSets(taskId: String, sets: Int, reps: Int, scope: SessionWorkoutEditor.Scope? = null) {
         val id = targetWorkoutId.ifEmpty { return }
         val weight = workout.allTasks.firstOrNull { it.id == taskId }?.weightKg
@@ -215,7 +225,21 @@ class PlaylistViewModel : ViewModel() {
 
     // MARK: - Finish
 
-    fun requestFinish() { if (canFinishWithoutConfirmation) complete() else showFinishConfirmation = true }
+    /** Incomplete sets holding entered values (Universal Logging §11.3). */
+    val unconfirmedSetItems: List<UnconfirmedSetItem> get() = session.unconfirmedSetItems(movementTasks)
+
+    /** Finish Workout: unconfirmed sets first (§11.3), then the open-exercises confirmation (FTNSSLNK-403). */
+    fun requestFinish() {
+        if (unconfirmedSetItems.isNotEmpty()) { showUnconfirmedSets = true; return }
+        if (canFinishWithoutConfirmation) complete() else showFinishConfirmation = true
+    }
+
+    /** "Finish Without Completing": finish now; entered values stay as incomplete sets and count toward nothing. */
+    fun finishWithoutCompleting() { showUnconfirmedSets = false; finishAnyway() }
+
+    /** "Review Sets": open the logging screen on the first affected set. */
+    fun reviewUnconfirmedSet(item: UnconfirmedSetItem) { showUnconfirmedSets = false; openLogSheet(item.task.id, item.setNumber) }
+
     fun finishAnyway() { showFinishConfirmation = false; complete() }
     fun continueWorkout() { showFinishConfirmation = false }
 

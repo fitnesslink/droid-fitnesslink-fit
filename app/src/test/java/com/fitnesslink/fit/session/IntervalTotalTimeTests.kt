@@ -152,9 +152,10 @@ class IntervalTotalTimeTests {
         assertHelperMatchesRunner(group)
     }
 
-    @Test fun testEmomMultiSet() {
+    @Test fun testEmomLegacyMultiSetIsFlattened() {
+        // EMOM PRD §2.1: legacy sets multiply the rounds; no between-sets rest.
         val group = makeGroup(IntervalMode.EMOM, work = 40, window = 180, sets = 2, setRest = 30)
-        assertEquals(390, blockSeconds(group))
+        assertEquals(360, blockSeconds(group))
         assertHelperMatchesRunner(group)
     }
 

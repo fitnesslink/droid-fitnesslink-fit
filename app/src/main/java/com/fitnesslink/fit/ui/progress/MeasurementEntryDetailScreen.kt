@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.progress
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,10 +33,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.MeasurementsViewModel
 
 /**
@@ -59,7 +56,7 @@ fun MeasurementEntryDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             HeaderBackView(onBack = onBack)
@@ -70,11 +67,11 @@ fun MeasurementEntryDetailScreen(
                         .padding(end = 16.dp)
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(White)
+                        .background(FLTheme.colors.surface)
                         .clickable { confirmDelete = true },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete entry", tint = Color(0xFFE53935), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Delete, contentDescription = "Delete entry", tint = FLTheme.colors.danger, modifier = Modifier.size(18.dp))
                 }
             }
         }
@@ -82,7 +79,7 @@ fun MeasurementEntryDetailScreen(
         if (entry == null) {
             Text(
                 if (viewModel.entries.isEmpty()) "Loading…" else "This entry is no longer available.",
-                fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.padding(20.dp)
+                fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(20.dp)
             )
             return
         }
@@ -95,19 +92,19 @@ fun MeasurementEntryDetailScreen(
                 .padding(bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            Text(longDate.format(entry.date), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(top = 10.dp))
+            Text(longDate.format(entry.date), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(top = 10.dp))
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(White, RoundedCornerShape(12.dp))
+                    .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
                     .padding(16.dp)
             ) {
                 MeasurementBreakdownView(entry = entry, previous = previous, unit = viewModel.preferredUnit)
                 if (previous == null) {
                     Text(
                         "First entry — changes appear once you log again.",
-                        fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.padding(top = 12.dp)
+                        fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(top = 12.dp)
                     )
                 }
             }
@@ -116,12 +113,12 @@ fun MeasurementEntryDetailScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(White, RoundedCornerShape(12.dp))
+                        .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Text("Notes", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-                    Text(entry.notes, fontSize = 14.sp, color = TextSecondaryColor)
+                    Text("Notes", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+                    Text(entry.notes, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 }
             }
         }

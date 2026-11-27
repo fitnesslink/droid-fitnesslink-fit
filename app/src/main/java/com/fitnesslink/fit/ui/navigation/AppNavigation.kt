@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,12 +25,14 @@ import com.fitnesslink.fit.ui.auth.GetStartedScreen
 import com.fitnesslink.fit.ui.auth.SplashScreen
 import kotlinx.coroutines.delay
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.fitnesslink.fit.R
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.fitnesslink.fit.ui.auth.LoginScreen
@@ -51,7 +54,10 @@ import com.fitnesslink.fit.ui.nutrition.QuickAddScreen
 import com.fitnesslink.fit.ui.nutrition.RecentFoodsScreen
 import com.fitnesslink.fit.ui.nutrition.WeeklyProgressScreen
 import com.fitnesslink.fit.ui.personalization.PersonalizationScreen
+import com.fitnesslink.fit.ui.profile.LocalLogoutAction
 import com.fitnesslink.fit.ui.profile.ProfileScreen
+import com.fitnesslink.fit.ui.progress.ProgressHomeScreen
+import androidx.compose.runtime.CompositionLocalProvider
 import com.fitnesslink.fit.ui.profile.ProfileStubScreen
 import com.fitnesslink.fit.ui.session.InteractiveSessionScreen
 import com.fitnesslink.fit.ui.session.PlaylistScreen
@@ -64,8 +70,7 @@ import com.fitnesslink.fit.ui.goals.GoalDetailScreen
 import com.fitnesslink.fit.ui.goals.GoalsListScreen
 import com.fitnesslink.fit.ui.goals.HabitDetailScreen
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 data class BottomNavItem(
     val route: String,
@@ -104,14 +109,14 @@ fun AppNavigation() {
                 // reactively — the user profile itself, so a restored
                 // session honours a server-side requirePersonalization flip.
                 showPersonalization || currentUser?.requirePersonalization == true -> {
-                    PersonalizationScreen(
+                    // Onboarding PRD v1.1: the personalized onboarding
+                    // (fitness profile → nutrition targets → catalog matching)
+                    // replaces the legacy questionnaire and lands on Home, where
+                    // "Recommended for You" takes over from Get Started.
+                    com.fitnesslink.fit.ui.onboarding.OnboardingFlowScreen(
                         onComplete = {
                             showPersonalization = false
-                            // Flip the in-memory flag NOW so this branch
-                            // releases immediately; the async server POST in
-                            // the flow's view model re-confirms it later.
                             AuthManager.markPersonalizationComplete()
-                            showGetStarted = true
                         }
                     )
                 }
@@ -176,16 +181,28 @@ fun AuthNavigation(onLogin: (Boolean) -> Unit) {
 fun MainTabNavigation(onLogout: () -> Unit = {}) {
     val navController = rememberNavController()
     var selectedTab by rememberSaveable { mutableStateOf(0) }
+    // Workout sessions run full screen, as on iOS (`.toolbar(.hidden, for: .tabBar)`).
+    val currentRoute = navController.currentBackStackEntryAsState().value?.destination?.route
+    val hideTabBar = currentRoute in fullScreenRoutes
     val context = LocalContext.current
 
-    // Tab order matches iOS: Home, Catalog, Calendar, Nutrition, Profile.
+    // Tab order matches iOS: Home, Catalog, Calendar, Nutrition, Progress.
+    // Navigation PRD §4.1: Progress replaced Profile; Profile moved behind
+    // the header avatar (HeaderView → Profile menu sheet).
     val bottomNavItems = listOf(
         BottomNavItem(AppRouter.HOME_TAB, "Home", R.drawable.homeselected, R.drawable.homeicon),
         BottomNavItem(AppRouter.CATALOG_TAB, "Catalog", R.drawable.runningselected, R.drawable.runningicon),
         BottomNavItem(AppRouter.CALENDAR_TAB, "Calendar", R.drawable.calendarselected, R.drawable.calendaricon),
         BottomNavItem(AppRouter.NUTRITION_TAB, "Nutrition", R.drawable.nutrition, R.drawable.nutrition),
-        BottomNavItem(AppRouter.PROFILE_TAB, "Profile", R.drawable.profileselected, R.drawable.profileicon)
+        BottomNavItem(AppRouter.PROGRESS_TAB, "Progress", R.drawable.progressselected, R.drawable.progressicon)
     )
+
+    // Keep the highlight in step when code (not a tab tap) lands on a tab
+    // root, e.g. discarding a session returns to Home.
+    LaunchedEffect(currentRoute) {
+        val index = bottomNavItems.indexOfFirst { it.route == currentRoute }
+        if (index >= 0) selectedTab = index
+    }
 
     fun selectTab(route: String) {
         val index = bottomNavItems.indexOfFirst { it.route == route }
@@ -238,9 +255,12 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
     // (≤3 offers, ≥3 days apart, only while the OS permission is undetermined).
     NotificationPrePromptHost()
 
+    // The Profile menu is a sheet off every tab's header; it signs out
+    // through the same callback the old Profile tab used (iOS `\.logout`).
+    CompositionLocalProvider(LocalLogoutAction provides onLogout) {
     Scaffold(
         bottomBar = {
-            NavigationBar(containerColor = White) {
+            if (!hideTabBar) NavigationBar(containerColor = FLTheme.colors.surface) {
                 bottomNavItems.forEachIndexed { index, item ->
                     NavigationBarItem(
                         icon = {
@@ -249,6 +269,11 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                                     if (selectedTab == index) item.selectedIcon else item.unselectedIcon
                                 ),
                                 contentDescription = item.title,
+                                // Unselected icons are grey PNGs: light keeps the PNG's own grey,
+                                // dark tints them so they read on the dark bar. Selected stays teal.
+                                colorFilter = if (selectedTab != index && FLTheme.colors.isDark) {
+                                    ColorFilter.tint(FLTheme.colors.textSecondary)
+                                } else null,
                                 modifier = Modifier.size(24.dp)
                             )
                         },
@@ -258,9 +283,9 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = FLPrimary,
                             selectedTextColor = FLPrimary,
-                            unselectedIconColor = TextSecondaryColor,
-                            unselectedTextColor = TextSecondaryColor,
-                            indicatorColor = White
+                            unselectedIconColor = FLTheme.colors.textSecondary,
+                            unselectedTextColor = FLTheme.colors.textSecondary,
+                            indicatorColor = FLTheme.colors.surface
                         )
                     )
                 }
@@ -270,7 +295,9 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
         NavHost(
             navController = navController,
             startDestination = AppRouter.HOME_TAB,
-            modifier = Modifier.padding(innerPadding)
+            // Consume what the Scaffold already padded, so a screen's own
+            // statusBarsPadding() doesn't add the status bar a second time.
+            modifier = Modifier.padding(innerPadding).consumeWindowInsets(innerPadding)
         ) {
             composable(AppRouter.HOME_TAB) {
                 HomeScreen(
@@ -310,10 +337,17 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                     onNavigate = { navController.navigate(it) }
                 )
             }
+            composable(AppRouter.PROGRESS_TAB) {
+                ProgressHomeScreen(
+                    onNavigate = { route -> navController.navigate(route) },
+                    onNavigateToNotifications = { navController.navigate("notifications") }
+                )
+            }
             composable(AppRouter.PROFILE_TAB) {
                 ProfileScreen(
                     onNavigate = { route -> navController.navigate(route) },
-                    onLogout = onLogout
+                    onLogout = onLogout,
+                    onClose = { navController.popBackStack() }
                 )
             }
 
@@ -520,9 +554,17 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
                 )
             }
             composable("personalizationProfile") {
-                PersonalizationScreen(
-                    onComplete = { navController.popBackStack() },
-                    onBack = { navController.popBackStack() }
+                // Onboarding PRD v1.1: edits the nine fitness questions that
+                // drive recommendations (replaces the legacy questionnaire).
+                com.fitnesslink.fit.ui.onboarding.OnboardingFlowScreen(
+                    mode = com.fitnesslink.fit.onboarding.OnboardingMode.EDIT_TRAINING,
+                    onComplete = { navController.popBackStack() }
+                )
+            }
+            composable("recommendations") {
+                com.fitnesslink.fit.ui.home.RecommendationsListScreen(
+                    onBack = { navController.popBackStack() },
+                    onNavigate = { route -> navController.navigate(route) }
                 )
             }
             composable("nutritionReport") {
@@ -654,6 +696,17 @@ fun MainTabNavigation(onLogout: () -> Unit = {}) {
             }
             // Feature modules register their own routes here (ui/navigation/*Routes.kt).
             featureRoutes(navController)
+            // Progress tab sub-screens + Connected Apps (FTNSSLNK-553).
+            progressTabRoutes(navController)
         }
     }
+    }
 }
+
+/** Routes that hide the tab bar: the Playlist and Interactive players and Quick Start. */
+private val fullScreenRoutes = setOf(
+    "playlistSession/{workoutId}",
+    "interactiveSession/{workoutId}",
+    QuickStartRoutes.QUICK_START,
+    QuickStartRoutes.CANVAS
+)

@@ -46,12 +46,9 @@ import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.FoodSearchViewModel
 import com.fitnesslink.fit.viewmodel.asTemplateEntry
 import kotlinx.coroutines.launch
@@ -93,14 +90,14 @@ fun FoodSearchScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Search Foods", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text("Search Foods", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             SearchView(text = viewModel.query, onTextChange = viewModel::onQueryChange, placeholder = "e.g. chicken breast, oats, banana")
             Text(
                 if (flow.stagesIntoMeal) "Adding to the meal you're building" else "Adding to ${mealType.displayName}${backfillSuffix(logDate)}",
-                fontSize = 12.sp, color = TextSecondaryColor
+                fontSize = 12.sp, color = FLTheme.colors.textSecondary
             )
         }
         Spacer(Modifier.height(12.dp))
@@ -111,17 +108,17 @@ fun FoodSearchScreen(
             viewModel.errorMessage != null -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 40.dp)) {
                     Icon(Icons.Default.Warning, null, tint = OrangeTheme, modifier = Modifier.size(24.dp))
-                    Text(viewModel.errorMessage ?: "", fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center)
+                    Text(viewModel.errorMessage ?: "", fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center)
                 }
             }
             viewModel.results.isEmpty() && viewModel.hasSearched -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp), modifier = Modifier.padding(horizontal = 20.dp)) {
-                    Text("No results for “$query”", fontSize = 14.sp, color = TextSecondaryColor)
+                    Text("No results for “$query”", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                     // FTNSSLNK-200: the empty state offers manual entry seeded with the term that found nothing.
                     Row(
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
                         modifier = Modifier
-                            .background(White, RoundedCornerShape(10.dp))
+                            .background(FLTheme.colors.surface, RoundedCornerShape(10.dp))
                             .clickable { onNavigate(FoodLoggingRoutes.quickAdd(mealType, date, prefillName = query, barcode = barcode, mode = mode)) }
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
@@ -136,13 +133,13 @@ fun FoodSearchScreen(
                             .clickable { onNavigate(FoodLoggingRoutes.quickAdd(mealType, date, prefillName = query, barcode = barcode, autoFillWithAI = true, mode = mode)) }
                             .padding(horizontal = 16.dp, vertical = 12.dp)
                     ) {
-                        Icon(Icons.Default.AutoAwesome, null, tint = White, modifier = Modifier.size(16.dp))
-                        Text("Can't find it? Estimate macros with AI", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = White)
+                        Icon(Icons.Default.AutoAwesome, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
+                        Text("Can't find it? Estimate macros with AI", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
                     }
                 }
             }
             viewModel.results.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text("Type to search the food database", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("Type to search the food database", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
             }
             else -> LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp).padding(bottom = 20.dp),
@@ -156,7 +153,7 @@ fun FoodSearchScreen(
                         index == viewModel.results.lastIndex -> RoundedCornerShape(bottomStart = 12.dp, bottomEnd = 12.dp)
                         else -> RoundedCornerShape(0.dp)
                     }
-                    Column(modifier = Modifier.fillMaxWidth().clip(shape).background(White)) {
+                    Column(modifier = Modifier.fillMaxWidth().clip(shape).background(FLTheme.colors.surface)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             SearchResultRow(result, isTemplate, modifier = Modifier.weight(1f).clickable { open(result) })
                             // FTNSSLNK-215: star catalog rows in place (template rows have a FoodEntry id — nothing to favorite).
@@ -186,17 +183,17 @@ private fun SearchResultRow(result: FoodSearchResult, isTemplate: Boolean, modif
     Row(modifier = modifier.padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.Top) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(result.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor, modifier = Modifier.weight(1f, fill = false))
+                Text(result.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f, fill = false))
                 if (isTemplate) FoodLogBadge("My Food")
             }
-            if (!result.brand.isNullOrEmpty()) Text(result.brand, fontSize = 12.sp, color = TextSecondaryColor)
-            Text("P:${result.protein.toInt()}  F:${result.fat.toInt()}  C:${result.carbs.toInt()}", fontSize = 11.sp, color = TextSecondaryColor)
+            if (!result.brand.isNullOrEmpty()) Text(result.brand, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+            Text("P:${result.protein.toInt()}  F:${result.fat.toInt()}  C:${result.carbs.toInt()}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
         Spacer(Modifier.width(8.dp))
         Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text("${result.calories.roundToInt()} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("${result.calories.roundToInt()} cal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             result.servingSizeGrams?.let { grams ->
-                Text("per ${grams.toInt()} ${result.servingUnit ?: "g"}", fontSize = 11.sp, color = TextSecondaryColor)
+                Text("per ${grams.toInt()} ${result.servingUnit ?: "g"}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
             }
         }
     }

@@ -335,7 +335,13 @@ data class CreateNutritionProfileRequest(
     val timeline: String,
     val timelineCustomDate: String? = null,
     val dietaryPreferences: List<String>? = null,
-    val allergies: List<String>? = null
+    val allergies: List<String>? = null,
+    /** Onboarding PRD v1.1: BuildMuscle (GainWeight / NoWeightGoal) or Recomp (MaintainWeight / ReduceFat / TargetWeight). */
+    val goalSubtype: String? = null,
+    /** Chosen pace, kg/week (positive). When set the server derives calories from it instead of `timeline`. */
+    val weeklyRateKg: Double? = null,
+    /** False = the user skipped a target weight (goalWeightKg mirrors current). */
+    val hasGoalWeight: Boolean? = null
 )
 
 /**
@@ -356,7 +362,13 @@ data class UpdateNutritionProfileRequest(
     val timeline: String? = null,
     val timelineCustomDate: String? = null,
     val dietaryPreferences: List<String>? = null,
-    val allergies: List<String>? = null
+    val allergies: List<String>? = null,
+    /** Onboarding PRD v1.1: BuildMuscle (GainWeight / NoWeightGoal) or Recomp (MaintainWeight / ReduceFat / TargetWeight). */
+    val goalSubtype: String? = null,
+    /** Chosen pace, kg/week (positive). When set the server derives calories from it instead of `timeline`. */
+    val weeklyRateKg: Double? = null,
+    /** False = the user skipped a target weight (goalWeightKg mirrors current). */
+    val hasGoalWeight: Boolean? = null
 )
 
 /** `POST /profile/targets/override` — provenance becomes "Manual". */

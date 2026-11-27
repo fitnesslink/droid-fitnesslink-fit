@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -72,16 +73,10 @@ import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.movements.MoreFiltersSelection
 import com.fitnesslink.fit.ui.movements.MoreFiltersSheet
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.ExerciseBrowserViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -89,7 +84,7 @@ import kotlinx.coroutines.launch
 /**
  * How the browser hands picks back (CONTRACTS.md, Movements block).
  * [Multi] is the editor's "Add Exercise" flow — the sheet stays open and
- * stacks an "N added" badge. [Single] is a chained picker ("Replace Exercise",
+ * stacks an "N added" badge. [Single] is a chained picker ("Swap Exercise",
  * "Recovery Exercise"): the title is overridden, Create New is hidden, and the
  * first pick is final (the presenter dismisses from `onSelect`).
  */
@@ -130,7 +125,21 @@ fun ExerciseBrowserSheet(
     /** Caps the selection (a superset takes exactly two). */
     maxSelection: Int? = null,
     /** PRD §17: "Suggested for <phase>" listed above the library, each row directly selectable. */
-    suggestionPhaseName: String? = null
+    suggestionPhaseName: String? = null,
+    /**
+     * FTNSSLNK-513: immediate-add mode only. Tapping a row that's already been
+     * added (green check) calls this to take that add back out, so selection
+     * toggles instead of stacking duplicates. When null, a re-tap on an added
+     * row is ignored (no duplicate add).
+     */
+    onDeselect: ((MovementLibraryItem) -> Unit)? = null,
+    /**
+     * FTNSSLNK-516: swap mode. The tapped replacement gets the green check and
+     * an "Exercise swapped." toast, then [onSelect] fires after a short beat
+     * (the presenter swaps + closes). Null infers it from the title, so every
+     * "Swap Exercise" picker opts in without passing the flag.
+     */
+    swapMode: Boolean? = null
 ) {
     val viewModel: ExerciseBrowserViewModel = viewModel()
     val scope = rememberCoroutineScope()
@@ -138,9 +147,13 @@ fun ExerciseBrowserSheet(
     var selected by remember { mutableStateOf<List<MovementLibraryItem>>(emptyList()) }
     var suggestions by remember { mutableStateOf<List<MovementLibraryItem>>(emptyList()) }
     var previewMovement by remember { mutableStateOf<MovementLibraryItem?>(null) }
-    var lastAddedName by remember { mutableStateOf("") }
     var showAddedToast by remember { mutableStateOf(false) }
     var showMoreFilters by remember { mutableStateOf(false) }
+    /** Toast copy: "<name> added" / "<name> removed" / "Exercise swapped." */
+    var toastText by remember { mutableStateOf("") }
+    /** Swap mode: the replacement tapped while the confirmation beat runs (locks further taps). */
+    var swappingMovementId by remember { mutableStateOf<String?>(null) }
+    val isSwapMode = swapMode ?: ((mode as? BrowserMode.Single)?.title == "Swap Exercise")
 
     // Collecting keeps the chip strip reactive to the taxonomy landing.
     val anatomy by ClassificationStore.anatomy.collectAsState()
@@ -167,20 +180,62 @@ fun ExerciseBrowserSheet(
         selected = next + movement
     }
 
+    fun showToast(text: String) {
+        toastText = text
+        showAddedToast = true
+        scope.launch {
+            delay(2000)
+            // Unless a newer toast replaced it.
+            if (toastText == text) showAddedToast = false
+        }
+    }
+
     fun addMovement(movement: MovementLibraryItem) {
         if (multiSelect) { toggleSelection(movement); return }
+        if (isSwapMode) {
+            // FTNSSLNK-516: confirm the pick in place (green check + toast),
+            // hold a beat, then hand it to the presenter, which swaps and
+            // closes the browser. Further taps are ignored meanwhile.
+            if (swappingMovementId != null) return
+            swappingMovementId = movement.id
+            showToast("Exercise swapped.")
+            viewModel.recordRecent(movement.id)
+            scope.launch { delay(800); onSelect(movement) }
+            return
+        }
+        if (addedIds.contains(movement.id)) {
+            // FTNSSLNK-513: tapping a green-checked row unselects it — the
+            // presenter undoes the immediate add. Without an undo hook we just
+            // refuse the duplicate.
+            val undo = onDeselect ?: return
+            undo(movement)
+            addedIds = addedIds - movement.id
+            showToast("${movement.name} removed")
+            return
+        }
         onSelect(movement)
         viewModel.recordRecent(movement.id)
         addedIds = addedIds + movement.id
-        lastAddedName = movement.name
-        showAddedToast = true
-        scope.launch { delay(2000); showAddedToast = false }
+        showToast("${movement.name} added")
+    }
+
+    /** Green check state for a row. */
+    fun isRowAdded(movement: MovementLibraryItem): Boolean = when {
+        multiSelect -> selected.any { it.id == movement.id }
+        isSwapMode -> swappingMovementId == movement.id
+        else -> addedIds.contains(movement.id)
     }
 
     previewMovement?.let { mv ->
         MovementPreviewSheet(
             movement = mv,
-            onAdd = { previewMovement = null; addMovement(mv) },
+            onAdd = {
+                previewMovement = null
+                // The preview's action only ever adds / selects — it must not
+                // act as the row's unselect toggle (FTNSSLNK-513).
+                val alreadyPicked = if (multiSelect) selected.any { it.id == mv.id } else addedIds.contains(mv.id)
+                if (isSwapMode || !alreadyPicked) addMovement(mv)
+            },
             onDismiss = { previewMovement = null },
             addLabel = if (mode is BrowserMode.Single) "Select" else "Add to Workout"
         )
@@ -215,7 +270,7 @@ fun ExerciseBrowserSheet(
                 .fillMaxSize()
                 .padding(top = 48.dp)
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .background(White)
+                .background(FLTheme.colors.surface)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 // Title bar
@@ -223,17 +278,17 @@ fun ExerciseBrowserSheet(
                     modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 4.dp, top = 8.dp, bottom = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                    Text(title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                     if (pendingGroupType != null && onDone != null && !multiSelect) {
                         TextButton(onClick = onDone, enabled = pendingCount >= minimumGroupCount) {
-                            Text("Done", fontWeight = FontWeight.SemiBold, color = if (pendingCount >= minimumGroupCount) FLPrimary else MediumGray)
+                            Text("Done", fontWeight = FontWeight.SemiBold, color = if (pendingCount >= minimumGroupCount) FLPrimary else FLTheme.colors.textTertiary)
                         }
                     }
-                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Close", tint = TextPrimaryColor) }
+                    IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Close", tint = FLTheme.colors.textPrimary) }
                 }
 
                 // Search
-                Box(modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(BackgroundColor)) {
+                Box(modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.background)) {
                     SearchView(
                         text = viewModel.searchText,
                         onTextChange = { viewModel.setSearchText(it) },
@@ -266,9 +321,9 @@ fun ExerciseBrowserSheet(
                             .padding(10.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(Icons.Default.Info, contentDescription = null, tint = White, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Info, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text("Building ${groupType.label} — $message", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = White)
+                        Text("Building ${groupType.label} — $message", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.onBrand)
                     }
                 }
 
@@ -310,12 +365,12 @@ fun ExerciseBrowserSheet(
                             modifier = Modifier
                                 .weight(1f)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(if (isSelected) FLPrimary else BackgroundColor)
+                                .background(if (isSelected) FLPrimary else FLTheme.colors.background)
                                 .clickable { viewModel.selectTab(tab) }
                                 .padding(vertical = 8.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(tab.label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (isSelected) White else TextPrimaryColor)
+                            Text(tab.label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
                         }
                     }
                 }
@@ -336,9 +391,9 @@ fun ExerciseBrowserSheet(
                 if (viewModel.movements.isEmpty() && !showsSuggestions) {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.Search, contentDescription = null, tint = MediumGray, modifier = Modifier.size(32.dp))
+                            Icon(Icons.Default.Search, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(32.dp))
                             Spacer(modifier = Modifier.height(8.dp))
-                            Text(if (viewModel.isRefreshing) "Searching…" else "No exercises found", fontSize = 15.sp, color = TextSecondaryColor)
+                            Text(if (viewModel.isRefreshing) "Searching…" else "No exercises found", fontSize = 15.sp, color = FLTheme.colors.textSecondary)
                             if (viewModel.filters.hasAnyFilter) {
                                 TextButton(onClick = { viewModel.clearFilters() }) { Text("Clear filters", color = FLPrimary) }
                             }
@@ -356,16 +411,16 @@ fun ExerciseBrowserSheet(
                                 }
                             }
                             items(suggestions, key = { "s:${it.id}" }) { movement ->
-                                BrowserRow(movement, if (multiSelect) selected.any { it.id == movement.id } else addedIds.contains(movement.id), rowSubtitle(movement), multiSelect,
+                                BrowserRow(movement, isRowAdded(movement), rowSubtitle(movement), multiSelect,
                                     onTap = { addMovement(movement) }, onPreview = { previewMovement = movement }, onToggleFavorite = { viewModel.toggleFavorite(movement.id) })
-                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BackgroundColor)
+                                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = FLTheme.colors.background)
                             }
                             item(key = "library-header") {
-                                Text("Exercise Library", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                                Text("Exercise Library", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
                             }
                         }
                         items(viewModel.movements, key = { it.id }) { movement ->
-                            val isAdded = if (multiSelect) selected.any { it.id == movement.id } else addedIds.contains(movement.id)
+                            val isAdded = isRowAdded(movement)
                             BrowserRow(
                                 movement = movement,
                                 isAdded = isAdded,
@@ -375,7 +430,7 @@ fun ExerciseBrowserSheet(
                                 onPreview = { previewMovement = movement },
                                 onToggleFavorite = { viewModel.toggleFavorite(movement.id) }
                             )
-                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = BackgroundColor)
+                            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp), color = FLTheme.colors.background)
                         }
                     }
                 }
@@ -391,11 +446,11 @@ fun ExerciseBrowserSheet(
                     else -> "Add $n ${if (n == 1) "Exercise" else "Exercises"}"
                 }
                 Box(
-                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(White).padding(horizontal = 16.dp, vertical = 12.dp)
+                    modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(FLTheme.colors.surface).padding(horizontal = 16.dp, vertical = 12.dp)
                 ) {
                     Text(
-                        label, color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(if (n >= minimum) FLPrimary else MediumGray.copy(alpha = 0.5f))
+                        label, color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(if (n >= minimum) FLPrimary else FLTheme.colors.textTertiary.copy(alpha = 0.5f))
                             .clickable(enabled = n >= minimum) { onAddSelected?.invoke(selected) }.padding(vertical = 15.dp)
                     )
                 }
@@ -413,11 +468,11 @@ fun ExerciseBrowserSheet(
                         .padding(horizontal = 20.dp, vertical = 10.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = White, modifier = Modifier.size(16.dp))
+                    Icon(Icons.Default.CheckCircle, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         if (pendingGroupType == ExerciseGroupType.Interval) "$n $noun added to your interval" else "$n $noun added",
-                        fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = White
+                        fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand
                     )
                 }
             }
@@ -437,8 +492,8 @@ fun ExerciseBrowserSheet(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null, tint = White, modifier = Modifier.size(12.dp))
-                    Text("$lastAddedName added", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = White)
+                    Icon(Icons.Default.Check, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(12.dp))
+                    Text(toastText, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.onBrand)
                 }
             }
         }
@@ -471,7 +526,7 @@ private fun BrowserRow(
         if (selectable) {
             Icon(
                 if (isAdded) Icons.Default.CheckCircle else Icons.Outlined.Circle, contentDescription = if (isAdded) "Selected" else "Not selected",
-                tint = if (isAdded) FLPrimary else MediumGray, modifier = Modifier.size(22.dp)
+                tint = if (isAdded) FLPrimary else FLTheme.colors.textTertiary, modifier = Modifier.size(22.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
         } else if (isAdded) {
@@ -479,13 +534,13 @@ private fun BrowserRow(
             Spacer(modifier = Modifier.width(8.dp))
         }
         val thumb = MovementStore.thumbnailRef(movement)
-        Box(modifier = Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).background(ImagePlaceholder)) {
+        Box(modifier = Modifier.size(44.dp).clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.imagePlaceholder)) {
             if (thumb != null) FLImageView(ref = thumb, modifier = Modifier.fillMaxSize())
         }
         Spacer(modifier = Modifier.width(10.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(movement.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = if (isAdded) FLPrimary else TextPrimaryColor)
-            if (subtitle.isNotEmpty()) Text(subtitle, fontSize = 11.sp, color = TextSecondaryColor)
+            Text(movement.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = if (isAdded) FLPrimary else FLTheme.colors.textPrimary)
+            if (subtitle.isNotEmpty()) Text(subtitle, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
         IconButton(onClick = onPreview, modifier = Modifier.size(36.dp)) {
             Icon(Icons.Outlined.Info, contentDescription = "Preview", tint = FLPrimary, modifier = Modifier.size(18.dp))
@@ -494,7 +549,7 @@ private fun BrowserRow(
             Icon(
                 if (movement.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
                 contentDescription = if (movement.isFavorite) "Unfavorite" else "Favorite",
-                tint = if (movement.isFavorite) Color.Red else MediumGray,
+                tint = if (movement.isFavorite) FLTheme.colors.danger else FLTheme.colors.textTertiary,
                 modifier = Modifier.size(16.dp)
             )
         }
@@ -506,33 +561,15 @@ private fun TaxonomyChip(label: String, isSelected: Boolean, onClick: () -> Unit
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(14.dp))
-            .background(if (isSelected) FLPrimary else BackgroundColor)
+            .background(if (isSelected) FLPrimary else FLTheme.colors.background)
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp)
     ) {
-        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (isSelected) White else TextPrimaryColor)
+        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
     }
 }
 
-/** The "More filters" chip with its drawer-only count badge (shared by browser + catalog). */
+/** The "More filters" chip — now the shared [com.fitnesslink.fit.ui.components.MoreFiltersButton]. */
 @Composable
-internal fun MoreFiltersChip(count: Int, onClick: () -> Unit) {
-    val active = count > 0
-    Row(
-        modifier = Modifier
-            .clip(RoundedCornerShape(14.dp))
-            .background(if (active) FLPrimary.copy(alpha = 0.15f) else BackgroundColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        Icon(Icons.Default.Tune, contentDescription = null, tint = if (active) FLPrimary else TextPrimaryColor, modifier = Modifier.size(12.dp))
-        Text("More filters", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (active) FLPrimary else TextPrimaryColor)
-        if (active) {
-            Box(modifier = Modifier.clip(CircleShape).background(FLPrimary).padding(horizontal = 6.dp, vertical = 1.dp)) {
-                Text("$count", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = White)
-            }
-        }
-    }
-}
+internal fun MoreFiltersChip(count: Int, onClick: () -> Unit) =
+    com.fitnesslink.fit.ui.components.MoreFiltersButton(activeCount = count, onClick = onClick)

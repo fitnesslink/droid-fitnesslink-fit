@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.fitnesslink.fit.ui.theme.MediumGray
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 @Composable
 fun SeparatorView(modifier: Modifier = Modifier) {
@@ -15,6 +15,6 @@ fun SeparatorView(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .height(1.dp)
-            .background(MediumGray)
+            .background(FLTheme.colors.textTertiary)
     )
 }

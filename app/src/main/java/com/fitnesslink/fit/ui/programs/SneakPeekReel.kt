@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,8 +38,6 @@ import androidx.compose.ui.window.DialogProperties
 import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.session.MuxVideoPlayer
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.MovementPreview
 
 /**
@@ -49,7 +48,7 @@ import com.fitnesslink.fit.viewmodel.MovementPreview
 @Composable
 fun SneakPeekStrip(previews: List<MovementPreview>, onOpen: (MovementPreview) -> Unit, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Sneak Peek", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+        Text("Sneak Peek", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp), contentPadding = PaddingValues(end = 20.dp)) {
             itemsIndexed(previews, key = { _, p -> p.id }) { _, preview ->
                 Box(
@@ -57,7 +56,7 @@ fun SneakPeekStrip(previews: List<MovementPreview>, onOpen: (MovementPreview) ->
                         .width(110.dp)
                         .height(195.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(Color.Black)
+                        .background(Color.Black) // theme-exempt: over media
                         .clickable { onOpen(preview) },
                     contentAlignment = Alignment.Center
                 ) {
@@ -65,7 +64,7 @@ fun SneakPeekStrip(previews: List<MovementPreview>, onOpen: (MovementPreview) ->
                     Icon(
                         Icons.Default.PlayCircle,
                         contentDescription = "Play preview",
-                        tint = White.copy(alpha = 0.95f),
+                        tint = Color.White.copy(alpha = 0.95f), // theme-exempt: over media
                         modifier = Modifier.size(36.dp)
                     )
                 }
@@ -85,7 +84,7 @@ fun SneakPeekReel(previews: List<MovementPreview>, startId: String, onDismiss: (
     val pagerState = rememberPagerState(initialPage = start) { previews.size }
 
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) { // theme-exempt: over media
             HorizontalPager(state = pagerState, modifier = Modifier.fillMaxSize()) { page ->
                 val preview = previews[page]
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -115,7 +114,7 @@ fun SneakPeekReel(previews: List<MovementPreview>, startId: String, onDismiss: (
                         modifier = Modifier
                             .size(7.dp)
                             .clip(CircleShape)
-                            .background(if (index == pagerState.currentPage) White else White.copy(alpha = 0.4f))
+                            .background(if (index == pagerState.currentPage) Color.White else Color.White.copy(alpha = 0.4f)) // theme-exempt: over media
                     )
                 }
             }
@@ -126,11 +125,11 @@ fun SneakPeekReel(previews: List<MovementPreview>, startId: String, onDismiss: (
                     .padding(top = 50.dp, end = 16.dp)
                     .size(36.dp)
                     .clip(CircleShape)
-                    .background(White.copy(alpha = 0.9f))
+                    .background(Color.White.copy(alpha = 0.9f)) // theme-exempt: over media
                     .clickable(onClick = onDismiss),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.Black, modifier = Modifier.size(18.dp))
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.Black, modifier = Modifier.size(18.dp)) // theme-exempt: over media
             }
         }
     }

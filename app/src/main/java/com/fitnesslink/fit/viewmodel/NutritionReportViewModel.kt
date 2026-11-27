@@ -10,7 +10,14 @@ import java.util.Calendar
 import java.util.Date
 
 class NutritionReportViewModel : ViewModel() {
-    var selectedTimeRange by mutableStateOf(ReportTimeRange.THIRTY_DAYS)
+    // Opens on the period picked on Progress / the last report (PRD §8.4).
+    private var selectedRangeState by mutableStateOf(ReportTimeRange.current)
+    var selectedTimeRange: ReportTimeRange
+        get() = selectedRangeState
+        set(value) {
+            selectedRangeState = value
+            ReportTimeRange.current = value
+        }
     var selectedTab by mutableStateOf(NutritionReportTab.OVERVIEW)
     var reportData by mutableStateOf(NutritionReportData())
     var dailyRows by mutableStateOf<List<DailyNutritionRow>>(emptyList())
@@ -66,10 +73,7 @@ class NutritionReportViewModel : ViewModel() {
     }
 
     private fun sinceMillis(range: ReportTimeRange): Long {
-        val days = range.days ?: return 0L
-        val cal = Calendar.getInstance()
-        cal.add(Calendar.DAY_OF_YEAR, -days)
-        return cal.timeInMillis
+        return range.sinceMillis()
     }
 
     private fun computeReportData(since: Long) {

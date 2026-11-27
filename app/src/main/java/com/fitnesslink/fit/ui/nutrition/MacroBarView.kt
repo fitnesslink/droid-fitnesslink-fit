@@ -31,13 +31,11 @@ import com.fitnesslink.fit.model.MacroProgress
 import com.fitnesslink.fit.model.api.Micronutrient
 import com.fitnesslink.fit.network.dto.MicroSummaryLine
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ProgressBG
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import java.util.Locale
+import com.fitnesslink.fit.ui.theme.NutritionOverColor
 
-/** Amber over-target accent (iOS `ProgressHighlight`): a signal, never an error. */
-val NutritionOverColor = Color(0xFFF2A516)
+/** Amber over-target accent (iOS `ProgressHighlight`): a signal, never an error. Same in light and dark (accent, theme-exempt). */
 
 /**
  * One macro's goal / consumed / remaining line with a progress bar (iOS
@@ -49,13 +47,13 @@ fun MacroBarView(name: String, line: MacroProgress, color: Color, modifier: Modi
     val fraction by animateFloatAsState(line.fraction.toFloat(), tween(400), label = "macroBar")
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+            Text(name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
             val goal = line.goal
             if (goal != null) {
-                Text("${Math.round(line.consumed)}/${Math.round(goal)}g", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("${Math.round(line.consumed)}/${Math.round(goal)}g", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             } else {
-                Text("${Math.round(line.consumed)}g", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("${Math.round(line.consumed)}g", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
             if (line.isOver) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -64,7 +62,7 @@ fun MacroBarView(name: String, line: MacroProgress, color: Color, modifier: Modi
                 }
             } else {
                 line.remaining?.let { remaining ->
-                    Text("${Math.round(remaining)}g left", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                    Text("${Math.round(remaining)}g left", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                 }
             }
         }
@@ -96,13 +94,13 @@ fun MicroBarView(micro: Micronutrient, line: MicroSummaryLine?, modifier: Modifi
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(micro.displayName, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+            Text(micro.displayName, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
             if (consumed != null) {
                 if (target != null) {
-                    Text("${formatMicro(consumed)}/${formatMicro(target)} $unit", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("${formatMicro(consumed)}/${formatMicro(target)} $unit", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 } else {
-                    Text("${formatMicro(consumed)} $unit", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("${formatMicro(consumed)} $unit", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
                 if (isOver && remaining != null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
@@ -110,10 +108,10 @@ fun MicroBarView(micro: Micronutrient, line: MicroSummaryLine?, modifier: Modifi
                         Text("${formatMicro(-remaining)} $unit over", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = NutritionOverColor)
                     }
                 } else if (remaining != null) {
-                    Text("${formatMicro(remaining)} $unit left", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                    Text("${formatMicro(remaining)} $unit left", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                 }
             } else {
-                Text("—", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                Text("—", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
             }
         }
         ProgressTrack(fraction = animated, color = FLPrimary, isOver = isOver, height = 6.dp)
@@ -127,7 +125,7 @@ private fun ProgressTrack(fraction: Float, color: Color, isOver: Boolean, height
             .fillMaxWidth()
             .height(height)
             .clip(RoundedCornerShape(4.dp))
-            .background(ProgressBG)
+            .background(FLTheme.colors.progressTrack)
             .then(if (isOver) Modifier.border(2.dp, NutritionOverColor, RoundedCornerShape(4.dp)) else Modifier)
     ) {
         if (fraction > 0f) {

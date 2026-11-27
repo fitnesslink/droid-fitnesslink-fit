@@ -49,10 +49,8 @@ import com.fitnesslink.fit.network.dto.UpdateNutritionProfileRequest
 import com.fitnesslink.fit.nutrition.NutritionGoalsStore
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 import com.fitnesslink.fit.viewmodel.NutritionOnboardingViewModel
 import com.fitnesslink.fit.viewmodel.NutritionProfileValidation
 import kotlinx.coroutines.CancellationException
@@ -181,24 +179,24 @@ fun NutritionProfileEditScreen(onBack: () -> Unit) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(top = 10.dp, bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Edit Profile", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text("Edit Profile", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             Text(
                 "Changing any field recalculates your targets. Days already logged keep the targets that were in effect then.",
-                fontSize = 13.sp, color = TextSecondaryColor
+                fontSize = 13.sp, color = FLTheme.colors.textSecondary
             )
 
             if (profile == null) {
-                Text("No nutrition profile yet — complete onboarding from the Goals screen first.", fontSize = 13.sp, color = TextSecondaryColor)
+                Text("No nutrition profile yet — complete onboarding from the Goals screen first.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             }
 
             // Stats
-            Text("Stats", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Stats", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             NutritionFieldCard { NutritionDateRow("Date of Birth", dateOfBirth, maxDate = Date()) { dateOfBirth = it } }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 NutritionSex.entries.forEach { option ->
@@ -218,7 +216,7 @@ fun NutritionProfileEditScreen(onBack: () -> Unit) {
             )
 
             // Plan
-            Text("Plan", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Plan", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             NutritionFieldCard {
                 PickerRow("Primary Goal", NutritionPrimaryGoal.entries, primaryGoal, { it.displayName }) { primaryGoal = it }
                 SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
@@ -234,11 +232,11 @@ fun NutritionProfileEditScreen(onBack: () -> Unit) {
             }
 
             // Dietary
-            Text("Dietary Preferences", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Dietary Preferences", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             NutritionChipGrid(NutritionOnboardingViewModel.dietaryPreferenceOptions, dietaryPreferences) { option ->
                 dietaryPreferences = if (option in dietaryPreferences) dietaryPreferences - option else dietaryPreferences + option
             }
-            Text("Allergies", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Allergies", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             NutritionChipGrid(NutritionOnboardingViewModel.allergyOptions, allergies) { option ->
                 allergies = if (option in allergies) allergies - option else allergies + option
             }
@@ -262,7 +260,7 @@ private fun <T> PickerRow(label: String, options: List<T>, selected: T, labelOf:
         modifier = Modifier.fillMaxWidth().clickable { expanded = true }.padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(label, fontSize = 14.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.weight(1f))
         Text(labelOf(selected), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
         Icon(Icons.Default.ExpandMore, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))

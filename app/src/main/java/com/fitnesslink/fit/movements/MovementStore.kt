@@ -293,6 +293,63 @@ object MovementStore {
         withContext(Dispatchers.IO) { deleteLocal(movementId) }
     }
 
+    // MARK: - Owner edit / delete (FTNSSLNK-501)
+
+    /**
+     * PUT the owner's edits (iOS `MovementService.update`), then refresh the
+     * local list row + detail cache and notify open lists. Throws on failure
+     * (403 not owner, 409 conflict, offline) so the form stays open.
+     */
+    suspend fun update(movement: Movement) {
+        val id = movement.id.toString().lowercase(Locale.US)
+        ApiClient.movementApi.update(id, com.fitnesslink.fit.network.dto.UpdateMovementRequest.from(movement))
+        withContext(Dispatchers.IO) {
+            cacheListRow(movement)
+            runCatching { DatabaseManager.deleteMovementDetail(id) }
+        }
+        notifyChanged()
+    }
+
+    /**
+     * Owner delete: server first (soft delete, owner-checked); only on success
+     * — or a 404, meaning it's already gone — is the local row dropped and the
+     * lists told. Other failures throw for the caller to surface.
+     */
+    suspend fun deleteOwned(movementId: String) {
+        try {
+            ApiClient.movementApi.delete(movementId)
+        } catch (e: HttpException) {
+            if (e.code() != 404) throw e
+        }
+        withContext(Dispatchers.IO) { deleteLocal(movementId) }
+    }
+
+    /**
+     * User-facing copy for a failed owner edit / delete (iOS
+     * `MovementService.userMessage`). 403 = not the owner, 409 = refused for a
+     * conflict (still referenced); the server's `{ "error": … }` text is used
+     * when it reads like a sentence.
+     */
+    fun userMessage(error: Throwable, action: String): String {
+        if (error is java.io.IOException) return "You're offline. Connect to the internet and try again."
+        val http = error as? HttpException ?: return "Something went wrong. Please try again."
+        val detail = runCatching { serverErrorText(http.response()?.errorBody()?.string()) }.getOrNull()
+        return when (http.code()) {
+            403 -> "You can only $action movements you created."
+            404 -> "This movement no longer exists."
+            409 -> detail ?: "This movement can't be ${if (action == "delete") "deleted" else "changed"} right now because it's in use."
+            else -> detail ?: "Something went wrong. Please try again."
+        }
+    }
+
+    /** `error` out of `{ "error": "…" }`; null when empty, not JSON, or a bare code like "forbidden". */
+    internal fun serverErrorText(body: String?): String? {
+        if (body.isNullOrBlank()) return null
+        val obj = runCatching { com.google.gson.JsonParser.parseString(body).asJsonObject }.getOrNull() ?: return null
+        val text = obj.get("error")?.takeIf { it.isJsonPrimitive }?.asString?.trim() ?: return null
+        return text.takeIf { it.contains(" ") }
+    }
+
     private fun deleteLocal(movementId: String) {
         runCatching { DatabaseManager.deleteMovement(movementId) }
         runCatching { DatabaseManager.deleteMovementDetail(movementId) }

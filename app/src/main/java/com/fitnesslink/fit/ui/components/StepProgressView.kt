@@ -11,7 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.fitnesslink.fit.model.ProgressTracker
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 @Composable
 fun StepProgressView(
@@ -27,7 +27,7 @@ fun StepProgressView(
                 modifier = Modifier
                     .weight(1f)
                     .height(5.dp)
-                    .background(if (page.selected) FLPrimary else MediumGray)
+                    .background(if (page.selected) FLPrimary else FLTheme.colors.textTertiary)
             )
         }
     }

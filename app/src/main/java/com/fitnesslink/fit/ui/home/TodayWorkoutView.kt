@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -38,12 +39,7 @@ import com.fitnesslink.fit.calendar.tapRoute
 import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.model.FitnessContent
 import com.fitnesslink.fit.ui.components.FLImageView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.text.DateFormat
 import java.util.Date
 
@@ -92,7 +88,7 @@ private fun TodayWorkoutCard(entry: FitnessContent, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -109,7 +105,7 @@ private fun TodayWorkoutCard(entry: FitnessContent, onClick: () -> Unit) {
                 text = entry.title.ifBlank { "Workout" },
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = TextPrimaryColor,
+                color = FLTheme.colors.textPrimary,
                 textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
@@ -118,16 +114,16 @@ private fun TodayWorkoutCard(entry: FitnessContent, onClick: () -> Unit) {
                 Icon(
                     imageVector = if (isCompleted) Icons.Filled.CheckCircle else Icons.Filled.PlayCircle,
                     contentDescription = null,
-                    tint = if (isCompleted) FLPrimary else TextSecondaryColor,
+                    tint = if (isCompleted) FLPrimary else FLTheme.colors.textSecondary,
                     modifier = Modifier.size(14.dp)
                 )
-                Text(text = scheduleLabel(entry, isCompleted), fontSize = 12.sp, color = TextSecondaryColor)
+                Text(text = scheduleLabel(entry, isCompleted), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
-            tint = MediumGray,
+            tint = FLTheme.colors.textTertiary,
             modifier = Modifier.size(18.dp)
         )
     }
@@ -151,7 +147,7 @@ fun RestView(tomorrowWorkout: FitnessContent? = null, onNavigate: (String) -> Un
         modifier = Modifier
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .padding(12.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.Top) {
@@ -161,11 +157,11 @@ fun RestView(tomorrowWorkout: FitnessContent? = null, onNavigate: (String) -> Un
                 modifier = Modifier.size(60.dp)
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = Modifier.weight(1f)) {
-                Text(text = "Rest Day", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text(text = "Rest Day", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Text(
                     text = "Rest days are essential for recovery and muscle growth. Use this time to stretch, hydrate, and prepare for your next workout.",
                     fontSize = 12.sp,
-                    color = TextSecondaryColor
+                    color = FLTheme.colors.textSecondary
                 )
             }
         }
@@ -176,7 +172,7 @@ fun RestView(tomorrowWorkout: FitnessContent? = null, onNavigate: (String) -> Un
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(10.dp))
-                    .background(BackgroundColor)
+                    .background(FLTheme.colors.background)
                     .clickable { onNavigate("workoutDetail/${tomorrowWorkout.workoutId}") }
                     .padding(horizontal = 12.dp, vertical = 8.dp)
             ) {
@@ -187,12 +183,12 @@ fun RestView(tomorrowWorkout: FitnessContent? = null, onNavigate: (String) -> Un
                     modifier = Modifier.size(16.dp)
                 )
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(text = "Up next tomorrow", fontSize = 11.sp, color = TextSecondaryColor)
+                    Text(text = "Up next tomorrow", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     Text(
                         text = tomorrowWorkout.title.ifBlank { "Workout" },
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextPrimaryColor,
+                        color = FLTheme.colors.textPrimary,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -200,7 +196,7 @@ fun RestView(tomorrowWorkout: FitnessContent? = null, onNavigate: (String) -> Un
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                     contentDescription = null,
-                    tint = MediumGray,
+                    tint = FLTheme.colors.textTertiary,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -226,15 +222,15 @@ fun NoWorkoutPlannedView(onNavigate: (String) -> Unit = {}) {
         modifier = Modifier
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .padding(12.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(text = "No workout planned yet", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text(text = "No workout planned yet", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Text(
                 text = "Pick how you want to train — it only takes a minute to get something on the calendar.",
                 fontSize = 12.sp,
-                color = TextSecondaryColor
+                color = FLTheme.colors.textSecondary
             )
         }
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -253,16 +249,16 @@ private fun EmptyDayActionRow(icon: ImageVector, title: String, onClick: () -> U
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 10.dp)
     ) {
         Icon(imageVector = icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.width(22.dp).height(16.dp))
-        Text(text = title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+        Text(text = title, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
         Icon(
             imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
-            tint = MediumGray,
+            tint = FLTheme.colors.textTertiary,
             modifier = Modifier.size(16.dp)
         )
     }

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -51,15 +52,10 @@ import com.fitnesslink.fit.ui.profile.charts.ReportEmptyDetail
 import com.fitnesslink.fit.ui.profile.charts.ReportLineChart
 import com.fitnesslink.fit.ui.profile.charts.ReportTimeRangePicker
 import com.fitnesslink.fit.ui.profile.charts.reportThemeColor
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.BlendGray
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.NutritionReportViewModel
 import java.text.SimpleDateFormat
 import java.util.Locale
@@ -86,7 +82,7 @@ fun NutritionMetricDetailScreen(
     val color = reportThemeColor(metric.colorName)
     val dateFormat = remember { SimpleDateFormat("MMM d, yyyy", Locale.getDefault()) }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 10.dp, bottom = 30.dp),
@@ -95,8 +91,8 @@ fun NutritionMetricDetailScreen(
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Icon(metric.icon(), contentDescription = null, tint = color, modifier = Modifier.size(26.dp))
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(metric.title, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                    Text(viewModel.subtitle(metric), fontSize = 14.sp, color = TextSecondaryColor)
+                    Text(metric.title, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                    Text(viewModel.subtitle(metric), fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 }
                 Text(viewModel.displayValue(metric), fontSize = 32.sp, fontWeight = FontWeight.Bold, color = color)
             }
@@ -120,11 +116,11 @@ fun NutritionMetricDetailScreen(
 private fun MetricChart(metric: NutritionMetric, viewModel: NutritionReportViewModel, color: Color, modifier: Modifier = Modifier) {
     val points = viewModel.chartPoints(metric)
     if (points.size < 2) return
-    Column(modifier = modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(modifier = modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (metric) {
             NutritionMetric.AVG_CALORIES, NutritionMetric.CALORIE_SURPLUS, NutritionMetric.GOAL_ADHERENCE -> {
                 CalorieBarsWithGoal(rows = viewModel.dailyRows, goal = viewModel.goal.calorieGoal, highlightAdherence = metric == NutritionMetric.GOAL_ADHERENCE)
-                Text("Dashed line = daily goal (${viewModel.goal.calorieGoal} cal); amber bars sit outside the ±10% window.", fontSize = 11.sp, color = TextSecondaryColor)
+                Text("Dashed line = daily goal (${viewModel.goal.calorieGoal} cal); amber bars sit outside the ±10% window.", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
             }
             NutritionMetric.MACRO_BALANCE -> {
                 StackedMacroBars(rows = viewModel.dailyRows)
@@ -144,6 +140,8 @@ private fun CalorieBarsWithGoal(rows: List<DailyNutritionRow>, goal: Int, highli
     val sorted = rows.sortedBy { it.date }
     val yMax = maxOf(sorted.maxOf { it.calories }.toDouble(), goal.toDouble()) * 1.1
     val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
+    val axisColor = FLTheme.colors.divider
+    val goalLineColor = FLTheme.colors.danger.copy(alpha = 0.5f)
     Canvas(modifier = Modifier.fillMaxWidth().height(180.dp)) {
         val left = 0f; val top = 6.dp.toPx(); val right = size.width; val bottom = size.height - 16.dp.toPx()
         val plotH = bottom - top
@@ -160,13 +158,13 @@ private fun CalorieBarsWithGoal(rows: List<DailyNutritionRow>, goal: Int, highli
         }
         if (goal > 0) {
             val y = bottom - (goal / yMax).coerceIn(0.0, 1.0).toFloat() * plotH
-            drawLine(Color(0xFFE53935).copy(alpha = 0.5f), Offset(left, y), Offset(right, y), strokeWidth = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())))
+            drawLine(goalLineColor, Offset(left, y), Offset(right, y), strokeWidth = 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())))
         }
-        drawLine(BlendGray, Offset(left, bottom), Offset(right, bottom), strokeWidth = 1f)
+        drawLine(axisColor, Offset(left, bottom), Offset(right, bottom), strokeWidth = 1f)
     }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(dateFormat.format(sorted.first().date), fontSize = 10.sp, color = TextSecondaryColor)
-        Text(dateFormat.format(sorted.last().date), fontSize = 10.sp, color = TextSecondaryColor)
+        Text(dateFormat.format(sorted.first().date), fontSize = 10.sp, color = FLTheme.colors.textSecondary)
+        Text(dateFormat.format(sorted.last().date), fontSize = 10.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -177,6 +175,7 @@ private fun StackedMacroBars(rows: List<DailyNutritionRow>) {
     val totals = sorted.map { it.protein * 4 + it.carbs * 4 + it.fat * 9 }
     val yMax = (totals.maxOrNull() ?: 1.0).takeIf { it > 0 } ?: 1.0
     val dateFormat = SimpleDateFormat("MMM d", Locale.getDefault())
+    val axisColor = FLTheme.colors.divider
     Canvas(modifier = Modifier.fillMaxWidth().height(180.dp)) {
         val top = 6.dp.toPx(); val bottom = size.height - 16.dp.toPx(); val plotH = bottom - top
         val slot = size.width / sorted.size
@@ -190,11 +189,11 @@ private fun StackedMacroBars(rows: List<DailyNutritionRow>) {
                 y -= h
             }
         }
-        drawLine(BlendGray, Offset(0f, bottom), Offset(size.width, bottom), strokeWidth = 1f)
+        drawLine(axisColor, Offset(0f, bottom), Offset(size.width, bottom), strokeWidth = 1f)
     }
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(dateFormat.format(sorted.first().date), fontSize = 10.sp, color = TextSecondaryColor)
-        Text(dateFormat.format(sorted.last().date), fontSize = 10.sp, color = TextSecondaryColor)
+        Text(dateFormat.format(sorted.first().date), fontSize = 10.sp, color = FLTheme.colors.textSecondary)
+        Text(dateFormat.format(sorted.last().date), fontSize = 10.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -202,17 +201,17 @@ private fun StackedMacroBars(rows: List<DailyNutritionRow>) {
 private fun LegendDot(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         androidx.compose.foundation.layout.Box(modifier = Modifier.size(8.dp).background(color, androidx.compose.foundation.shape.CircleShape))
-        Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
 @Composable
 private fun DayRow(row: DailyNutritionRow, dateFormat: SimpleDateFormat) {
-    Row(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(10.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(10.dp)).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(dateFormat.format(row.date), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+            Text(dateFormat.format(row.date), fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("${row.calories} cal", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("${row.calories} cal", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 Text("P:${row.protein.toInt()}g", fontSize = 11.sp, color = BlueTheme)
                 Text("C:${row.carbs.toInt()}g", fontSize = 11.sp, color = FLPrimary)
                 Text("F:${row.fat.toInt()}g", fontSize = 11.sp, color = PurpleTheme)

@@ -56,7 +56,7 @@ object DatabaseManager {
 
     // MARK: - Schema
 
-    private const val DB_VERSION = 12
+    private const val DB_VERSION = 13
 
     private class DatabaseHelper(context: Context) :
         SQLiteOpenHelper(context, "fitnesslink.db", null, DB_VERSION) {
@@ -76,6 +76,7 @@ object DatabaseManager {
             if (old < 10) migrateToV10(db)
             if (old < 11) migrateToV11(db)
             if (old < 12) migrateToV12(db)
+            if (old < 13) migrateToV13(db)
         }
     }
 
@@ -91,6 +92,7 @@ object DatabaseManager {
         migrateToV10(db)
         migrateToV11(db)
         migrateToV12(db)
+        migrateToV13(db)
     }
 
     private fun createAllTables(db: SQLiteDatabase) {
@@ -355,6 +357,17 @@ object DatabaseManager {
             sessionId TEXT NOT NULL, taskId TEXT NOT NULL, movementId TEXT,
             taskName TEXT NOT NULL DEFAULT '', rpe INTEGER, trainingLog TEXT,
             updatedAt INTEGER NOT NULL, PRIMARY KEY (sessionId, taskId))""")
+    }
+
+    /**
+     * Universal Workout Logging (PRD §5.2, §7.2; iOS V49): a completed set's Set RPE, speed (mph)
+     * and incline (%) ride on its history row so they survive an app kill and show in Exercise
+     * History. Local only until the sessions API carries them.
+     */
+    private fun migrateToV13(db: SQLiteDatabase) {
+        addColumn(db, "workout_session_history", "setRpe INTEGER")
+        addColumn(db, "workout_session_history", "speedMph REAL")
+        addColumn(db, "workout_session_history", "incline REAL")
     }
 
     private fun migrateToV11(db: SQLiteDatabase) {
@@ -910,7 +923,8 @@ object DatabaseManager {
         workoutId: String, programId: String?, userId: String,
         logDate: Long, reps: Int?, setNumber: Int?,
         intervalSeconds: Int?, weightLifted: Double?, taskName: String,
-        movementId: String? = null, distance: Double? = null, distanceUnit: String? = null
+        movementId: String? = null, distance: Double? = null, distanceUnit: String? = null,
+        setRpe: Int? = null, speedMph: Double? = null, incline: Double? = null
     ) {
         db().insertWithOnConflict("workout_session_history", null, ContentValues().apply {
             put("id", id); put("workoutSessionId", lc(workoutSessionId))
@@ -925,6 +939,10 @@ object DatabaseManager {
             val unit = DistanceUnit.fromWire(distanceUnit)
             if (distance != null && distance > 0 && unit != null) { put("distance", distance); put("distanceUnit", unit.rawValue) }
             else { putNull("distance"); putNull("distanceUnit") }
+            // Universal Logging extras (V13).
+            if (setRpe != null && setRpe in 1..10) put("setRpe", setRpe) else putNull("setRpe")
+            if (speedMph != null && speedMph > 0) put("speedMph", speedMph) else putNull("speedMph")
+            if (incline != null && incline > 0) put("incline", incline) else putNull("incline")
         }, SQLiteDatabase.CONFLICT_REPLACE)
     }
 
@@ -933,6 +951,7 @@ object DatabaseManager {
         sessionId: String, taskId: String, workoutId: String, userId: String, setNumber: Int,
         reps: Int, weightLbs: Double?, taskName: String, durationSeconds: Int? = null,
         movementId: String? = null, distance: Double? = null, distanceUnit: String? = null,
+        setRpe: Int? = null, speedMph: Double? = null, incline: Double? = null,
         logDate: Long = System.currentTimeMillis()
     ) {
         insertSessionHistory(
@@ -940,7 +959,7 @@ object DatabaseManager {
             workoutTaskId = taskId, workoutId = workoutId, programId = null, userId = userId,
             logDate = logDate, reps = reps, setNumber = setNumber, intervalSeconds = durationSeconds,
             weightLifted = weightLbs, taskName = taskName, movementId = movementId,
-            distance = distance, distanceUnit = distanceUnit
+            distance = distance, distanceUnit = distanceUnit, setRpe = setRpe, speedMph = speedMph, incline = incline
         )
     }
 
@@ -954,14 +973,15 @@ object DatabaseManager {
     fun loadSessionLogs(sessionId: String): SessionLogs {
         val logs = mutableMapOf<String, MutableMap<Int, TaskSetConfig>>()
         db().rawQuery(
-            "SELECT workoutTaskId, setNumber, reps, weightLifted, intervalSeconds, distance, distanceUnit FROM workout_session_history WHERE LOWER(workoutSessionId)=?",
+            "SELECT workoutTaskId, setNumber, reps, weightLifted, intervalSeconds, distance, distanceUnit, setRpe, speedMph, incline FROM workout_session_history WHERE LOWER(workoutSessionId)=?",
             arrayOf(lc(sessionId))
         ).use { c ->
             while (c.moveToNext()) {
                 val setNumber = c.intOrNull(1) ?: continue
                 logs.getOrPut(c.str(0)) { mutableMapOf() }[setNumber] = TaskSetConfig(
                     setNumber = setNumber, reps = c.intOrNull(2) ?: 0, weightKg = c.doubleOrNull(3),
-                    durationSeconds = c.intOrNull(4), distance = c.doubleOrNull(5), distanceUnit = c.strOrNull(6)
+                    durationSeconds = c.intOrNull(4), distance = c.doubleOrNull(5), distanceUnit = c.strOrNull(6),
+                    rpe = c.intOrNull(7), speedMph = c.doubleOrNull(8), incline = c.doubleOrNull(9)
                 )
             }
         }
@@ -2236,7 +2256,7 @@ object DatabaseManager {
             "movement_anatomy", "movement_equipment", "anatomy", "equipment",
             "user_preferences", "user_personalizations", "program_schedules",
             "recent_movements", "notifications",
-            "goals", "habits", "habit_logs", "streaks", "milestones",
+            "goals", "goal_definitions", "goal_entries", "habits", "habit_logs", "streaks", "milestones",
             "achievements", "weight_entries", "measurement_entries",
             "progress_photo_entries", "notification_preferences", "sync_queue",
             "water_entries", "hydration_goals", "user_programs", "workout_phases")

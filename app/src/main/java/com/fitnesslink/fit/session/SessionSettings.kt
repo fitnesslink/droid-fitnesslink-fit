@@ -19,6 +19,7 @@ object SessionSettings {
     private const val KEY_VIDEO_AUDIO = "session_video_audio_enabled"
     private const val KEY_HINT = "playlist_interactive_hint_announced"
     private const val KEY_COACH_VOICE = "coach_voice_identifier"
+    private const val KEY_DUCK_MUSIC = "interval_duck_music_enabled"
 
     private var prefs: SharedPreferences? = null
     /** Application context captured by [attach]; used for best-effort device-calendar mirroring. */
@@ -54,6 +55,16 @@ object SessionSettings {
     var sessionVideoAudioEnabled: Boolean
         get() = bool(KEY_VIDEO_AUDIO, true)
         set(value) = put(KEY_VIDEO_AUDIO, value)
+
+    /**
+     * When on, music + podcasts dip only while a coach phrase is being spoken and come back to full
+     * level right after (transient may-duck audio focus — see `AudioCueService`). When off, cues mix
+     * at full volume alongside other audio. Never held for a whole session (FTNSSLNK-498). No UI on
+     * either platform yet; iOS `SettingsStore.intervalDuckMusicEnabled`, default true.
+     */
+    var intervalDuckMusicEnabled: Boolean
+        get() = bool(KEY_DUCK_MUSIC, true)
+        set(value) = put(KEY_DUCK_MUSIC, value)
 
     /** Set once the playlist has spoken the "interactive mode is up here" tip. */
     var didAnnounceInteractiveModeHint: Boolean

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.catalog
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,11 +56,7 @@ import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.components.SharedBadge
 import com.fitnesslink.fit.ui.components.rememberContentLayout
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.FavoriteHeartButton
 import com.fitnesslink.fit.viewmodel.ProgramsViewModel
 
@@ -103,7 +100,7 @@ fun ProgramsScreen(
         ClassificationStore.primaryAnatomy.filter { present.contains(it.id.lowercase()) }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 10.dp),
@@ -120,7 +117,7 @@ fun ProgramsScreen(
             ContentLayoutToggle(layout = layout, onChange = { layout = it })
             Spacer(modifier = Modifier.width(4.dp))
             FloatingActionButton(onClick = onNavigateToProgramEditor, containerColor = FLPrimary, modifier = Modifier.size(42.dp)) {
-                Text("+", color = White, fontSize = 20.sp)
+                Text("+", color = FLTheme.colors.onBrand, fontSize = 20.sp)
             }
         }
 
@@ -189,7 +186,7 @@ fun ProgramsScreen(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     if (filtered) "Clear the filters to see everything." else "Programs appear here once the catalog loads.",
-                    fontSize = 13.sp, color = TextSecondaryColor
+                    fontSize = 13.sp, color = FLTheme.colors.textSecondary
                 )
             }
         } else {
@@ -219,15 +216,15 @@ private fun <T> FilterChipRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 4.dp)
     ) {
-        Text(text = label, fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.padding(end = 8.dp))
+        Text(text = label, fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(end = 8.dp))
         LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), contentPadding = PaddingValues(end = 16.dp)) {
             items(options) { option ->
                 val isSelected = option == selected
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) FLPrimary else White)
-                        .border(1.dp, if (isSelected) FLPrimary else TextSecondaryColor.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
+                        .background(if (isSelected) FLPrimary else FLTheme.colors.surface)
+                        .border(1.dp, if (isSelected) FLPrimary else FLTheme.colors.textSecondary.copy(alpha = 0.3f), RoundedCornerShape(16.dp))
                         .clickable { onSelect(option) }
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
@@ -235,7 +232,7 @@ private fun <T> FilterChipRow(
                         text = displayName(option),
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (isSelected) White else TextSecondaryColor
+                        color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textSecondary
                     )
                 }
             }
@@ -257,7 +254,7 @@ fun ProgramItemView(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
     ) {
         FLImageView(
@@ -267,9 +264,9 @@ fun ProgramItemView(
         )
         Row(modifier = Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
-                Text(text = program.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text(text = program.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 val meta = programMeta(program)
-                if (meta.isNotEmpty()) Text(text = meta, fontSize = 13.sp, color = TextSecondaryColor)
+                if (meta.isNotEmpty()) Text(text = meta, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 if (program.isSharedWithMe) {
                     Spacer(modifier = Modifier.height(4.dp))
                     SharedBadge()
@@ -291,7 +288,7 @@ fun ProgramRowView(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -299,9 +296,9 @@ fun ProgramRowView(
     ) {
         FLImageView(ref = program.thumbRef(), modifier = Modifier.size(64.dp).clip(RoundedCornerShape(10.dp)))
         Column(modifier = Modifier.weight(1f)) {
-            Text(program.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(program.name, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
             val meta = programMeta(program)
-            if (meta.isNotEmpty()) Text(meta, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 1)
+            if (meta.isNotEmpty()) Text(meta, fontSize = 13.sp, color = FLTheme.colors.textSecondary, maxLines = 1)
             if (program.isSharedWithMe) {
                 Spacer(modifier = Modifier.height(4.dp))
                 SharedBadge()

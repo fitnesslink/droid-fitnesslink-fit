@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.quickstart
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -62,12 +63,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.TrainingFocus
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.navigation.AppRouter
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.QuickStartViewModel
 import kotlinx.coroutines.launch
 
@@ -129,12 +125,12 @@ fun QuickStartFocusScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Box(modifier = Modifier.fillMaxWidth()) {
             HeaderBackView(onBack = onBack)
             Text(
                 if (isPickerMode) "Training Focus" else "Quick Start", fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
-                color = TextPrimaryColor, modifier = Modifier.align(Alignment.Center)
+                color = FLTheme.colors.textPrimary, modifier = Modifier.align(Alignment.Center)
             )
         }
         Column(
@@ -142,8 +138,8 @@ fun QuickStartFocusScreen(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(top = 12.dp)) {
-                Text("What are you training today?", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, textAlign = TextAlign.Center)
-                Text("This helps us name your workout and suggest relevant exercises.", fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center)
+                Text("What are you training today?", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.Center)
+                Text("This helps us name your workout and suggest relevant exercises.", fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center)
             }
             TrainingFocus.presets.chunked(3).forEach { rowItems ->
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.fillMaxWidth()) {
@@ -160,38 +156,38 @@ fun QuickStartFocusScreen(
                     Icon(focusIcon(custom.symbol), contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))
                     Column(Modifier.weight(1f)) {
                         Text(custom.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
-                        Text("Custom focus", fontSize = 12.sp, color = TextSecondaryColor)
+                        Text("Custom focus", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                     Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = FLPrimary)
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                HorizontalDivider(Modifier.weight(1f), color = MediumGray.copy(alpha = 0.4f))
-                Text("OR", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-                HorizontalDivider(Modifier.weight(1f), color = MediumGray.copy(alpha = 0.4f))
+                HorizontalDivider(Modifier.weight(1f), color = FLTheme.colors.textTertiary.copy(alpha = 0.4f))
+                Text("OR", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
+                HorizontalDivider(Modifier.weight(1f), color = FLTheme.colors.textTertiary.copy(alpha = 0.4f))
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).clickable {
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).clickable {
                     customDraft = selected?.takeIf { !it.isPreset }?.name ?: ""
                     showCustomPrompt = true
                 }.padding(14.dp)
             ) {
                 Icon(Icons.Filled.AddCircleOutline, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(20.dp))
-                Text("Create Custom", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
+                Text("Create Custom", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
             }
         }
         // A real inset, not an overlay, so short content never slides under the button.
-        Box(Modifier.fillMaxWidth().background(BackgroundColor).padding(horizontal = 20.dp, vertical = 8.dp)) {
+        Box(Modifier.fillMaxWidth().background(FLTheme.colors.background).padding(horizontal = 20.dp, vertical = 8.dp)) {
             val enabled = selected != null && !isStarting
             Box(
                 modifier = Modifier.fillMaxWidth().height(50.dp).clip(RoundedCornerShape(14.dp))
-                    .background(if (enabled) FLPrimary else MediumGray.copy(alpha = 0.5f)).clickable(enabled = enabled) { next() },
+                    .background(if (enabled) FLPrimary else FLTheme.colors.textTertiary.copy(alpha = 0.5f)).clickable(enabled = enabled) { next() },
                 contentAlignment = Alignment.Center
             ) {
-                if (isStarting) CircularProgressIndicator(color = White, modifier = Modifier.size(22.dp))
-                else Text(if (isPickerMode) "Use This Focus" else "Next", color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+                if (isStarting) CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(22.dp))
+                else Text(if (isPickerMode) "Use This Focus" else "Next", color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }
@@ -202,12 +198,12 @@ fun QuickStartFocusScreen(
             title = { Text("Custom Training Focus") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Examples: Athletic Performance, Coach Session, Glute Day, Full Body + Conditioning.", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text("Examples: Athletic Performance, Coach Session, Glute Day, Full Body + Conditioning.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                     OutlinedTextField(value = customDraft, onValueChange = { customDraft = it }, singleLine = true, placeholder = { Text("e.g. Coach Session") }, modifier = Modifier.fillMaxWidth())
                 }
             },
             confirmButton = { TextButton(onClick = { TrainingFocus.custom(customDraft)?.let { selected = it }; showCustomPrompt = false }) { Text("Use", color = FLPrimary, fontWeight = FontWeight.SemiBold) } },
-            dismissButton = { TextButton(onClick = { showCustomPrompt = false }) { Text("Cancel", color = TextSecondaryColor) } }
+            dismissButton = { TextButton(onClick = { showCustomPrompt = false }) { Text("Cancel", color = FLTheme.colors.textSecondary) } }
         )
     }
 }
@@ -216,10 +212,10 @@ fun QuickStartFocusScreen(
 private fun FocusTile(focus: TrainingFocus, isSelected: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier.clip(RoundedCornerShape(12.dp)).background(if (isSelected) FLPrimary.copy(alpha = 0.12f) else White)
+        modifier = modifier.clip(RoundedCornerShape(12.dp)).background(if (isSelected) FLPrimary.copy(alpha = 0.12f) else FLTheme.colors.surface)
             .border(1.5.dp, if (isSelected) FLPrimary else Color.Transparent, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(vertical = 16.dp, horizontal = 4.dp)
     ) {
-        Icon(focusIcon(focus.symbol), contentDescription = null, tint = if (isSelected) FLPrimary else TextPrimaryColor, modifier = Modifier.size(24.dp))
-        Text(focus.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (isSelected) FLPrimary else TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Icon(focusIcon(focus.symbol), contentDescription = null, tint = if (isSelected) FLPrimary else FLTheme.colors.textPrimary, modifier = Modifier.size(24.dp))
+        Text(focus.name, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = if (isSelected) FLPrimary else FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }

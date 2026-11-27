@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -33,9 +34,6 @@ import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.R
 import com.fitnesslink.fit.model.DateStripStatus
 import com.fitnesslink.fit.model.HomeDateItem
-import com.fitnesslink.fit.ui.theme.HighlightState
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.flow.first
 
 private val CELL_WIDTH = 44.dp
@@ -76,7 +74,7 @@ fun DateScrollView(
         horizontalArrangement = Arrangement.spacedBy(CELL_SPACING),
         modifier = Modifier
             .fillMaxWidth()
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(vertical = STRIP_PADDING)
     ) {
         items(items, key = { it.dayNumber }) { item ->
@@ -94,13 +92,13 @@ fun DateCellView(item: HomeDateItem, onClick: () -> Unit = {}) {
         modifier = Modifier
             .width(CELL_WIDTH)
             .height(78.dp)
-            .background(if (item.selected) HighlightState else Color.Transparent, RoundedCornerShape(8.dp))
+            .background(if (item.selected) FLTheme.colors.highlight else Color.Transparent, RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .semantics(mergeDescendants = true) { contentDescription = label }
             .padding(vertical = 8.dp)
     ) {
         Text(text = item.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text(text = item.weekDay, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(text = item.weekDay, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.height(3.dp))
         StatusDot(status = item.status)
     }

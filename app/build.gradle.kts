@@ -7,16 +7,16 @@ plugins {
 
 android {
     namespace = "com.fitnesslink.fit"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.fitnesslink.fit"
+        applicationId = "fit.fitnesslink"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         // CI passes -PversionCode / -PversionName (see .github/workflows/android-release.yml);
-        // local builds keep 1 / "1.0".
-        versionCode = (findProperty("versionCode") as String?)?.toInt() ?: 1
-        versionName = (findProperty("versionName") as String?) ?: "1.0"
+        // local builds fall back to the last hand-uploaded release.
+        versionCode = (findProperty("versionCode") as String?)?.toInt() ?: 4
+        versionName = (findProperty("versionName") as String?) ?: "2.0.1"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -39,7 +39,11 @@ android {
     buildTypes {
         release {
             signingConfigs.findByName("release")?.let { signingConfig = it }
-            isMinifyEnabled = false
+            // R8 code optimization + resource shrinking (Play vitals "DEX code
+            // optimization"). Keep rules for reflective Gson models live in
+            // proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -112,6 +116,9 @@ dependencies {
 
     // Billing
     implementation(libs.billing.ktx)
+
+    // Health Connect (read-only; iOS Apple Health counterpart)
+    implementation(libs.health.connect)
 
     // Firebase
     implementation(platform(libs.firebase.bom))

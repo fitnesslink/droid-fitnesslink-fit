@@ -8,7 +8,10 @@ device switches while Appearance = System. No restart is needed.
 - Light values are the old Android constants, so light mode is unchanged.
 - Dark values come from the iOS named colours (`iOS-fitnesslink-fit/FitnessLink/Assets.xcassets/Colors`, dark variants).
 - Brand and accents (`FLPrimary`, `FLPrimaryDark`, `OrangeTheme`, `PurpleTheme`, `BlueTheme`,
-  `ProgressHighlight`) are the same in both modes. Use them directly.
+  `ProgressHighlight`) and the status accents (`SuccessGreen`, `WorkGreen`, `WarningAmber`,
+  `AlertRed`, `NutritionOverColor`) are the same in both modes. Use them directly.
+- The Interactive player, the workout-completed summary and photo/video overlays are dark in
+  both modes, as on iOS. Those files stay on the allowlist with `// theme-exempt` comments.
 
 ## Migrating a screen
 

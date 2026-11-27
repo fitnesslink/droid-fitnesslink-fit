@@ -5,6 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
@@ -21,8 +24,8 @@ import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
 import com.fitnesslink.fit.auth.AuthManager
 import com.fitnesslink.fit.network.ApiClient
-import com.fitnesslink.fit.network.ApiError
 import com.fitnesslink.fit.network.dto.BillingTerm
+import com.fitnesslink.fit.network.dto.CheckoutContext
 import com.fitnesslink.fit.network.dto.Entitlement
 import com.fitnesslink.fit.network.dto.RestorePurchaseRequest
 import com.fitnesslink.fit.network.dto.VerifyGooglePurchaseRequest
@@ -36,53 +39,28 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeoutOrNull
 
-/** Billing failures the paywall / Subscription screen can explain (iOS `BillingError`). */
-sealed class BillingException(message: String) : Exception(message) {
-    /** Server 409: the Play subscription is linked to a different FitnessLink account. */
-    data object AlreadyLinkedToAnotherAccount : BillingException(
-        "This subscription is already linked to another FitnessLink account. Sign in with that account, or contact support."
-    ) { private fun readResolve(): Any = AlreadyLinkedToAnotherAccount }
-
-    /**
-     * The purchase went through on Play but the backend has no Google verify
-     * route yet (verify 404 → restore 400). The purchase is left
-     * unacknowledged so the next launch retries; access unlocks once the
-     * server can confirm it.
-     */
-    data object VerificationUnavailable : BillingException(
-        "Your purchase went through, but FitnessLink couldn't confirm it yet. We'll keep trying — your access unlocks as soon as it's confirmed."
-    ) { private fun readResolve(): Any = VerificationUnavailable }
-
-    data object NoActiveSubscription : BillingException("No active subscription was found for this Google account.") {
-        private fun readResolve(): Any = NoActiveSubscription
-    }
-
-    data class StoreError(val responseCode: Int, val debug: String?) : BillingException(
-        "Google Play isn't available right now${if (debug.isNullOrBlank()) "" else " ($debug)"}. Please try again."
-    )
-}
-
 /**
- * FTNSSLNK-282 port for Google Play (iOS `StoreKitManager`). Everything that
- * touches the Play Billing Library lives here.
+ * FTNSSLNK-282 / 524 port for Google Play (iOS `StoreKitManager`). Everything
+ * that touches the Play Billing Library lives here; the pure rules (offer
+ * selection, response-code copy, server outcome mapping) are in
+ * [PlayBillingRules].
  *
- * The contract with the backend, in order, and it matters:
- *   1. `GET billing/customers/me/checkout-context` (ensures the Customer row)
- *   2. `launchBillingFlow` with the user id as `obfuscatedAccountId`
- *   3. `POST billing/subscriptions/google/verify {purchaseToken, productId}`
- *      — does NOT exist on the backend yet: a 404 falls back to
- *      `POST subscriptions/restore {source: Google, purchaseToken}`, which the
- *      backend currently answers 400 ("not yet supported"). Both are treated
- *      as "verification pending".
- *   4. **only then** `acknowledgePurchase`.
+ * The contract with the backend, in order:
+ *   1. `GET billing/customers/me/checkout-context` — ensures the Customer
+ *      row, says whether this FitnessLink account may still take a free
+ *      trial (`trialEligible`), and hands back `googleObfuscatedAccountId`.
+ *   2. `launchBillingFlow` with exactly that `obfuscatedAccountId`.
+ *   3. `POST billing/subscriptions/google/verify {purchaseToken, productId, packageName}`.
+ *      The server links and acknowledges the purchase itself.
+ *   4. Client `acknowledgePurchase` only as a fallback, only after a 200
+ *      that isn't `pending` — never after 403 / 409 / 422 / 503.
  *
- * Acknowledging before the server has recorded the purchase would hand the
- * user a receipt we have no record of, so an unverified purchase is left
- * unacknowledged and retried by [drainPendingPurchases] on every launch.
- * Note Play auto-refunds purchases that stay unacknowledged for 3 days —
- * the backend Google verify route is therefore launch-blocking.
+ * Anything stranded between 2 and 3 (crash, dead network, 503) stays
+ * unacknowledged and is retried by [drainPendingPurchases] at launch and on
+ * every foreground. Play auto-refunds after 3 days unacknowledged.
  */
 object PlayBillingManager : PurchasesUpdatedListener {
     private const val TAG = "PlayBilling"
@@ -94,6 +72,9 @@ object PlayBillingManager : PurchasesUpdatedListener {
     /** How long the Play purchase sheet may keep the paywall locked before the UI is released. */
     const val PURCHASE_SHEET_TIMEOUT_MS = 120_000L
 
+    /** Foreground drains closer together than this are skipped. */
+    private const val MIN_DRAIN_INTERVAL_MS = 30_000L
+
     /** One purchasable plan on the paywall (monthly or annual) with the Play offer we'd buy. */
     data class PlanOffer(
         val term: BillingTerm,
@@ -101,11 +82,12 @@ object PlayBillingManager : PurchasesUpdatedListener {
         val title: String,
         val productDetails: ProductDetails,
         val offerToken: String,
+        /** Localized recurring price straight from Play's `pricingPhases`. */
         val formattedPrice: String,
         val priceMicros: Long,
         /** ISO-8601 recurring period, e.g. "P1M". */
         val billingPeriod: String,
-        /** ISO-8601 free-trial period when this offer starts with a free phase, else null. Play only returns offers the user is eligible for. */
+        /** ISO-8601 free-trial period when this is the trial offer, else null. */
         val trialPeriod: String?
     ) {
         val hasTrial: Boolean get() = trialPeriod != null
@@ -115,11 +97,15 @@ object PlayBillingManager : PurchasesUpdatedListener {
     private var appContext: Context? = null
     private var client: BillingClient? = null
     private var connection: CompletableDeferred<BillingClient>? = null
+    private var lifecycleHooked = false
 
     private var productIds: Map<BillingTerm, String> = mapOf(
         BillingTerm.MONTHLY to MONTHLY_FALLBACK_PRODUCT_ID,
         BillingTerm.ANNUAL to ANNUAL_FALLBACK_PRODUCT_ID
     )
+    private var trialOfferIds: Map<BillingTerm, String> = emptyMap()
+    private var productDetailsCache: Map<BillingTerm, ProductDetails> = emptyMap()
+    @Volatile private var checkoutContext: CheckoutContext? = null
 
     private sealed class PurchaseOutcome {
         data class Purchased(val purchases: List<Purchase>) : PurchaseOutcome()
@@ -129,8 +115,12 @@ object PlayBillingManager : PurchasesUpdatedListener {
     }
 
     private var pendingPurchase: CompletableDeferred<PurchaseOutcome>? = null
-    /** One backend verify per purchase token at a time (the flow result and the pending drain can both see a purchase). */
+    /** One backend verify per purchase token at a time (the flow result and the drain can both see a purchase). */
     private val inFlightVerifies = mutableMapOf<String, Deferred<Entitlement>>()
+    private val drainMutex = Mutex()
+    @Volatile private var lastDrainAtMs = 0L
+    /** Tokens the server refused terminally (403 / 409 / 422) this process — the drain stops re-sending them. */
+    private val terminalTokens = mutableSetOf<String>()
 
     private val _offers = MutableStateFlow<List<PlanOffer>>(emptyList())
     val offers: StateFlow<List<PlanOffer>> = _offers.asStateFlow()
@@ -143,15 +133,36 @@ object PlayBillingManager : PurchasesUpdatedListener {
     /** Set when the watchdog released the paywall because Play never answered. */
     private val _purchaseStalled = MutableStateFlow(false)
     val purchaseStalled: StateFlow<Boolean> = _purchaseStalled.asStateFlow()
-    /** Purchase tokens the server refused as owned by another account (409). */
+    /** Purchase tokens the server refused as linked to another account (409). Left unacknowledged. */
     private val _collidedPurchaseTokens = MutableStateFlow<Set<String>>(emptySet())
     val collidedPurchaseTokens: StateFlow<Set<String>> = _collidedPurchaseTokens.asStateFlow()
-    /** Purchases Play completed that the backend cannot verify yet (missing Google route). */
-    private val _verificationPendingTokens = MutableStateFlow<Set<String>>(emptySet())
-    val verificationPendingTokens: StateFlow<Set<String>> = _verificationPendingTokens.asStateFlow()
+    /** Purchases Play holds as PENDING (slow payment method) — "Payment pending". */
+    private val _pendingPaymentTokens = MutableStateFlow<Set<String>>(emptySet())
+    val pendingPaymentTokens: StateFlow<Set<String>> = _pendingPaymentTokens.asStateFlow()
+    /** Completed Play purchases the server couldn't confirm yet (503 / network) — the drain retries them. */
+    private val _unconfirmedPurchaseTokens = MutableStateFlow<Set<String>>(emptySet())
+    val unconfirmedPurchaseTokens: StateFlow<Set<String>> = _unconfirmedPurchaseTokens.asStateFlow()
 
+    /**
+     * Idempotent; `FitnessLinkApp.onCreate` calls it (main thread). Hooks the
+     * process lifecycle so pending purchases drain on app start and on every
+     * foreground (530).
+     */
     fun attach(context: Context) {
         if (appContext == null) appContext = context.applicationContext
+        if (lifecycleHooked) return
+        lifecycleHooked = true
+        try {
+            ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+                override fun onStart(owner: LifecycleOwner) {
+                    if (AuthManager.isAuthenticated.value) scope.launch { drainPendingPurchases() }
+                }
+            })
+        } catch (e: Exception) {
+            // Off the main thread — the gate's explicit drain still covers login.
+            lifecycleHooked = false
+            Log.w(TAG, "lifecycle hook skipped: ${e.message}")
+        }
     }
 
     fun offer(term: BillingTerm): PlanOffer? = _offers.value.firstOrNull { it.term == term }
@@ -179,15 +190,31 @@ object PlayBillingManager : PurchasesUpdatedListener {
             }
 
             override fun onBillingServiceDisconnected() {
+                // Release anyone still waiting on setup; the next call reconnects.
+                if (deferred.isActive) {
+                    deferred.completeExceptionally(BillingException.StoreError(BillingClient.BillingResponseCode.SERVICE_DISCONNECTED, null))
+                }
                 connection = null
             }
         })
         return deferred.await()
     }
 
+    /** Runs a Play call, reconnecting once if the service dropped underneath it. */
+    private suspend fun <T> withPlay(block: suspend (BillingClient) -> T): T = try {
+        block(ensureConnected())
+    } catch (e: BillingException.StoreError) {
+        if (e.responseCode != BillingClient.BillingResponseCode.SERVICE_DISCONNECTED) throw e
+        connection = null
+        block(ensureConnected())
+    }
+
     // MARK: - Products
 
-    /** Plans from the backend (for product ids), then Play product details. Monthly first. */
+    /**
+     * Plans (product + trial offer ids) and checkout-context (trial
+     * eligibility) from the backend, then Play product details. Monthly first.
+     */
     suspend fun loadProducts() {
         if (_isLoadingProducts.value) return
         _isLoadingProducts.value = true
@@ -198,32 +225,43 @@ object PlayBillingManager : PurchasesUpdatedListener {
                     plans.firstNotNullOfOrNull { it.googleProductId(term) }?.let { term to it }
                 }.toMap()
                 if (mapped.isNotEmpty()) productIds = productIds + mapped
+                trialOfferIds = BillingTerm.entries.mapNotNull { term ->
+                    plans.firstNotNullOfOrNull { it.googleTrialOfferId(term) }?.let { term to it }
+                }.toMap()
             } catch (e: Exception) {
                 Log.w(TAG, "plans unavailable, using pinned product ids: ${e.message}")
             }
+            try {
+                checkoutContext = ApiClient.billingApi.getCheckoutContext()
+            } catch (e: Exception) {
+                // Re-fetched before the purchase sheet; until then Play's eligibility decides the CTA.
+                Log.w(TAG, "checkout-context unavailable: ${e.message}")
+            }
 
-            val billing = ensureConnected()
-            val params = QueryProductDetailsParams.newBuilder()
-                .setProductList(
-                    productIds.values.distinct().map {
-                        QueryProductDetailsParams.Product.newBuilder()
-                            .setProductId(it)
-                            .setProductType(BillingClient.ProductType.SUBS)
-                            .build()
-                    }
+            val result = withPlay { billing ->
+                billing.queryProductDetails(
+                    QueryProductDetailsParams.newBuilder()
+                        .setProductList(
+                            productIds.values.distinct().map {
+                                QueryProductDetailsParams.Product.newBuilder()
+                                    .setProductId(it)
+                                    .setProductType(BillingClient.ProductType.SUBS)
+                                    .build()
+                            }
+                        )
+                        .build()
                 )
-                .build()
-            val result = billing.queryProductDetails(params)
+            }
             if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
                 throw BillingException.StoreError(result.billingResult.responseCode, result.billingResult.debugMessage)
             }
             val details = result.productDetailsList.orEmpty()
-            val loaded = BillingTerm.entries.mapNotNull { term ->
+            productDetailsCache = BillingTerm.entries.mapNotNull { term ->
                 val id = productIds[term] ?: return@mapNotNull null
-                details.firstOrNull { it.productId == id }?.let { offerFor(term, it) }
-            }
-            _offers.value = loaded
-            _loadError.value = if (loaded.isEmpty()) "Subscriptions aren't available right now. Please try again." else null
+                details.firstOrNull { it.productId == id }?.let { term to it }
+            }.toMap()
+            rebuildOffers()
+            _loadError.value = if (_offers.value.isEmpty()) "Subscriptions aren't available right now. Please try again." else null
         } catch (e: Exception) {
             _loadError.value = e.message ?: "Subscriptions aren't available right now. Please try again."
         } finally {
@@ -231,34 +269,37 @@ object PlayBillingManager : PurchasesUpdatedListener {
         }
     }
 
-    /**
-     * Pick the offer to buy: the one with a free-trial phase if Play returned
-     * one (Play filters out offers the account isn't eligible for), else the
-     * base plan, else the first.
-     */
-    private fun offerFor(term: BillingTerm, details: ProductDetails): PlanOffer? {
-        val offers = details.subscriptionOfferDetails ?: return null
-        val chosen = offers.firstOrNull { o -> o.pricingPhases.pricingPhaseList.any { it.priceAmountMicros == 0L } }
-            ?: offers.firstOrNull { it.offerId == null }
-            ?: offers.firstOrNull()
-            ?: return null
-        val phases = chosen.pricingPhases.pricingPhaseList
-        val paid = phases.firstOrNull { it.priceAmountMicros > 0 } ?: return null
-        val free = phases.firstOrNull { it.priceAmountMicros == 0L }
-        val title = when (term) {
-            BillingTerm.MONTHLY -> "Monthly"
-            BillingTerm.ANNUAL -> "Annual"
+    private fun rebuildOffers() {
+        val trialEligible = checkoutContext?.trialEligible
+        _offers.value = BillingTerm.entries.mapNotNull { term ->
+            productDetailsCache[term]?.let { offerFor(term, it, trialOfferIds[term], trialEligible) }
         }
+    }
+
+    private fun offerFor(term: BillingTerm, details: ProductDetails, trialOfferId: String?, trialEligible: Boolean?): PlanOffer? {
+        val candidates = details.subscriptionOfferDetails.orEmpty().map { o ->
+            PlayBillingRules.OfferCandidate(
+                offerId = o.offerId,
+                offerToken = o.offerToken,
+                phases = o.pricingPhases.pricingPhaseList.map {
+                    PlayBillingRules.PricingPhase(it.priceAmountMicros, it.formattedPrice, it.billingPeriod)
+                }
+            )
+        }
+        val choice = PlayBillingRules.selectOffer(candidates, trialOfferId, trialEligible) ?: return null
         return PlanOffer(
             term = term,
             productId = details.productId,
-            title = title,
+            title = when (term) {
+                BillingTerm.MONTHLY -> "Monthly"
+                BillingTerm.ANNUAL -> "Annual"
+            },
             productDetails = details,
-            offerToken = chosen.offerToken,
-            formattedPrice = paid.formattedPrice,
-            priceMicros = paid.priceAmountMicros,
-            billingPeriod = paid.billingPeriod,
-            trialPeriod = free?.billingPeriod
+            offerToken = choice.candidate.offerToken,
+            formattedPrice = choice.formattedPrice,
+            priceMicros = choice.priceMicros,
+            billingPeriod = choice.billingPeriod,
+            trialPeriod = choice.trialPeriod
         )
     }
 
@@ -267,17 +308,35 @@ object PlayBillingManager : PurchasesUpdatedListener {
     /**
      * Buys [offer] and returns the entitlement the server computed afterwards.
      * Null when the user cancelled, the purchase is pending (slow payment
-     * method), or the Play sheet never answered (watchdog) — none is an error.
+     * method — see [pendingPaymentTokens]), or the Play sheet never answered
+     * (watchdog) — none is an error. Throws [BillingException] with copy.
+     *
+     * 535: an account the server already entitles never reaches the Play
+     * sheet — the fresh entitlement is adopted and returned instead.
      */
     suspend fun purchase(activity: Activity, offer: PlanOffer): Entitlement? {
         if (_purchaseInFlight.value) return null
         _purchaseInFlight.value = true
         _purchaseStalled.value = false
         try {
-            // Before the sheet on purpose: ensures the backend Customer row exists.
-            try { ApiClient.billingApi.getCheckoutContext() } catch (e: ApiError.Offline) { throw e }
-            val accountId = AuthManager.currentUser.value?.id?.toString()
-            val billing = ensureConnected()
+            val current = try { ApiClient.billingApi.getEntitlement() } catch (e: Exception) { throw BillingException.ServerUnreachable }
+            if (current.isEntitled) {
+                EntitlementStore.apply(current)
+                return current
+            }
+
+            // Before the sheet on purpose: ensures the Customer row, refreshes trial eligibility, gives the account id.
+            val context = try { ApiClient.billingApi.getCheckoutContext() } catch (e: Exception) { throw BillingException.ServerUnreachable }
+            val eligibilityChanged = context.trialEligible != checkoutContext?.trialEligible
+            checkoutContext = context
+            if (eligibilityChanged) rebuildOffers()
+            // Never sell a trial the server just revoked; rebuilt offers now show the plain price.
+            if (offer.hasTrial && offer(offer.term)?.hasTrial == false) throw BillingException.TrialNoLongerAvailable
+            val toBuy = offer
+
+            val accountId = context.googleObfuscatedAccountId?.takeIf { it.isNotBlank() }
+                // Older server without the field: it doesn't check the id either.
+                ?: AuthManager.currentUser.value?.id?.toString()
 
             val deferred = CompletableDeferred<PurchaseOutcome>()
             pendingPurchase = deferred
@@ -285,18 +344,19 @@ object PlayBillingManager : PurchasesUpdatedListener {
                 .setProductDetailsParamsList(
                     listOf(
                         BillingFlowParams.ProductDetailsParams.newBuilder()
-                            .setProductDetails(offer.productDetails)
-                            .setOfferToken(offer.offerToken)
+                            .setProductDetails(toBuy.productDetails)
+                            .setOfferToken(toBuy.offerToken)
                             .build()
                     )
                 )
                 .apply { if (accountId != null) setObfuscatedAccountId(accountId) }
                 .build()
-            val launch = billing.launchBillingFlow(activity, params)
-            if (launch.responseCode != BillingClient.BillingResponseCode.OK) {
-                pendingPurchase = null
-                if (launch.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) return restorePurchases()
-                throw BillingException.StoreError(launch.responseCode, launch.debugMessage)
+            val launch = withPlay { it.launchBillingFlow(activity, params) }
+            when (launch.responseCode) {
+                BillingClient.BillingResponseCode.OK -> Unit
+                BillingClient.BillingResponseCode.USER_CANCELED -> return null
+                BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> return restoreForAlreadyOwned()
+                else -> throw BillingException.StoreError(launch.responseCode, launch.debugMessage)
             }
 
             val outcome = withTimeoutOrNull(PURCHASE_SHEET_TIMEOUT_MS) { deferred.await() }
@@ -308,14 +368,17 @@ object PlayBillingManager : PurchasesUpdatedListener {
             }
             return when (outcome) {
                 PurchaseOutcome.Cancelled -> null
-                PurchaseOutcome.AlreadyOwned -> restorePurchases()
+                PurchaseOutcome.AlreadyOwned -> restoreForAlreadyOwned()
                 is PurchaseOutcome.Failed -> throw BillingException.StoreError(outcome.result.responseCode, outcome.result.debugMessage)
                 is PurchaseOutcome.Purchased -> {
-                    val purchase = outcome.purchases.firstOrNull { offer.productId in it.products } ?: outcome.purchases.firstOrNull()
+                    val purchase = outcome.purchases.firstOrNull { toBuy.productId in it.products } ?: outcome.purchases.firstOrNull()
                     when {
                         purchase == null -> null
-                        purchase.purchaseState == Purchase.PurchaseState.PENDING -> null
-                        else -> verifyAndAcknowledge(purchase)
+                        purchase.purchaseState == Purchase.PurchaseState.PENDING -> {
+                            _pendingPaymentTokens.value = _pendingPaymentTokens.value + purchase.purchaseToken
+                            null
+                        }
+                        else -> verifyAndAcknowledge(purchase, duringRestore = false)
                     }
                 }
             }
@@ -323,6 +386,14 @@ object PlayBillingManager : PurchasesUpdatedListener {
             pendingPurchase = null
             _purchaseInFlight.value = false
         }
+    }
+
+    /** `ITEM_ALREADY_OWNED` → link what this Google account owns instead of erroring (531). */
+    private suspend fun restoreForAlreadyOwned(): Entitlement? = when (val r = restorePurchases()) {
+        is RestoreResult.Restored -> r.entitlement
+        is RestoreResult.AlreadyPremium -> r.entitlement
+        RestoreResult.PaymentPending -> null
+        RestoreResult.NothingToRestore -> throw BillingException.NoActiveSubscription
     }
 
     /** Dismisses the stalled notice once the user acts again. */
@@ -336,9 +407,13 @@ object PlayBillingManager : PurchasesUpdatedListener {
                 if (waiting != null && waiting.isActive) {
                     waiting.complete(PurchaseOutcome.Purchased(list))
                 } else {
-                    // Renewal / delayed approval / stalled sheet finally answering.
-                    list.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }.forEach { p ->
-                        scope.launch { handle(p) }
+                    // Renewal / pending payment approved / stalled sheet finally answering.
+                    list.forEach { p ->
+                        when (p.purchaseState) {
+                            Purchase.PurchaseState.PURCHASED -> scope.launch { handle(p) }
+                            Purchase.PurchaseState.PENDING -> _pendingPaymentTokens.value = _pendingPaymentTokens.value + p.purchaseToken
+                            else -> Unit
+                        }
                     }
                 }
             }
@@ -351,37 +426,66 @@ object PlayBillingManager : PurchasesUpdatedListener {
     /** A purchase arriving outside a flow we're awaiting. Transient failures leave it for the next drain. */
     private suspend fun handle(purchase: Purchase) {
         try {
-            verifyAndAcknowledge(purchase)
-        } catch (_: BillingException.AlreadyLinkedToAnotherAccount) {
-            _collidedPurchaseTokens.value = _collidedPurchaseTokens.value + purchase.purchaseToken
-        } catch (_: BillingException.VerificationUnavailable) {
-            // recorded in verificationPendingTokens by verifyAndAcknowledge
+            verifyAndAcknowledge(purchase, duringRestore = false)
         } catch (e: Exception) {
-            Log.w(TAG, "deferred verify failed (will retry next launch): ${e.message}")
+            Log.w(TAG, "deferred verify failed (will retry on next foreground): ${e.message}")
         }
     }
 
     /**
-     * Server verify → acknowledge → adopt entitlement. Throws
-     * [BillingException.AlreadyLinkedToAnotherAccount] on 409,
-     * [BillingException.VerificationUnavailable] while the backend lacks the
-     * Google route, and rethrows transient errors (offline, 5xx).
+     * Server verify (or restore) → fallback acknowledge → adopt entitlement.
+     * Records the per-token notice state and rethrows the mapped
+     * [BillingException]. Never acknowledges after a failure or a `pending`.
      */
-    private suspend fun verifyAndAcknowledge(purchase: Purchase): Entitlement {
+    private suspend fun verifyAndAcknowledge(purchase: Purchase, duringRestore: Boolean): Entitlement {
         val token = purchase.purchaseToken
         inFlightVerifies[token]?.let { return it.await() }
         val task = scope.async {
-            val entitlement = verifyOnServer(purchase)
-            if (!purchase.isAcknowledged) {
-                val billing = ensureConnected()
-                val ack = billing.acknowledgePurchase(
-                    AcknowledgePurchaseParams.newBuilder().setPurchaseToken(token).build()
-                )
-                if (ack.responseCode != BillingClient.BillingResponseCode.OK) {
-                    Log.w(TAG, "acknowledge failed (${ack.responseCode}); Play will re-deliver")
+            val entitlement = try {
+                val productId = purchase.products.firstOrNull().orEmpty()
+                if (duringRestore) {
+                    ApiClient.billingApi.restore(RestorePurchaseRequest.google(token))
+                } else {
+                    ApiClient.billingApi.verifyGoogle(VerifyGooglePurchaseRequest(token, productId, appContext?.packageName))
+                }
+            } catch (e: Exception) {
+                val failure = PlayBillingRules.failureFor(e, duringRestore)
+                when {
+                    failure === BillingException.AlreadyLinkedToAnotherAccount ->
+                        _collidedPurchaseTokens.value = _collidedPurchaseTokens.value + token
+                    failure is BillingException.VerificationDelayed ->
+                        _unconfirmedPurchaseTokens.value = _unconfirmedPurchaseTokens.value + token
+                }
+                if (PlayBillingRules.isTerminal(failure)) {
+                    synchronized(terminalTokens) { terminalTokens += token }
+                    _unconfirmedPurchaseTokens.value = _unconfirmedPurchaseTokens.value - token
+                }
+                throw failure
+            }
+
+            _unconfirmedPurchaseTokens.value = _unconfirmedPurchaseTokens.value - token
+            _collidedPurchaseTokens.value = _collidedPurchaseTokens.value - token
+            val outcome = PlayBillingRules.outcomeOf(entitlement)
+            if (outcome == PlayBillingRules.VerifyOutcome.PENDING) {
+                _pendingPaymentTokens.value = _pendingPaymentTokens.value + token
+            } else {
+                _pendingPaymentTokens.value = _pendingPaymentTokens.value - token
+            }
+            // The server acknowledges after linking; this is the no-op-if-acked fallback.
+            if (purchase.purchaseState == Purchase.PurchaseState.PURCHASED &&
+                PlayBillingRules.shouldAcknowledge(outcome, purchase.isAcknowledged)
+            ) {
+                try {
+                    val ack = withPlay {
+                        it.acknowledgePurchase(AcknowledgePurchaseParams.newBuilder().setPurchaseToken(token).build())
+                    }
+                    if (ack.responseCode != BillingClient.BillingResponseCode.OK) {
+                        Log.w(TAG, "fallback acknowledge returned ${ack.responseCode} (server likely acked already)")
+                    }
+                } catch (e: Exception) {
+                    Log.w(TAG, "fallback acknowledge failed: ${e.message}")
                 }
             }
-            _verificationPendingTokens.value = _verificationPendingTokens.value - token
             EntitlementStore.apply(entitlement)
             entitlement
         }
@@ -393,65 +497,62 @@ object PlayBillingManager : PurchasesUpdatedListener {
         }
     }
 
-    private suspend fun verifyOnServer(purchase: Purchase): Entitlement {
-        val token = purchase.purchaseToken
-        val productId = purchase.products.firstOrNull().orEmpty()
-        val packageName = appContext?.packageName
-        try {
-            return ApiClient.billingApi.verifyGoogle(VerifyGooglePurchaseRequest(token, productId, packageName))
-        } catch (e: ApiError.NotFound) {
-            // No Google verify route on this backend yet — fall back to restore.
-            Log.w(TAG, "google/verify is 404 on this backend; falling back to subscriptions/restore")
-        } catch (e: ApiError.ServerError) {
-            if (e.isConflict) throw BillingException.AlreadyLinkedToAnotherAccount
-            throw e
-        }
-        try {
-            return ApiClient.billingApi.restore(RestorePurchaseRequest.google(token))
-        } catch (e: ApiError.ServerError) {
-            if (e.isConflict) throw BillingException.AlreadyLinkedToAnotherAccount
-            if (e.isBadRequest) {
-                // "Restore is not yet supported for source 'Google'." — backend gap.
-                _verificationPendingTokens.value = _verificationPendingTokens.value + token
-                throw BillingException.VerificationUnavailable
-            }
-            throw e
-        } catch (e: ApiError.NotFound) {
-            _verificationPendingTokens.value = _verificationPendingTokens.value + token
-            throw BillingException.VerificationUnavailable
-        }
-    }
-
     // MARK: - Restore / drain / re-verify
 
-    /** Re-links whatever this Google account owns onto the signed-in FitnessLink account. */
-    suspend fun restorePurchases(): Entitlement {
-        val purchases = ownedSubscriptions()
-        var latest: Entitlement? = null
-        var collision: BillingException? = null
-        var pending: BillingException? = null
-        for (purchase in purchases) {
-            if (purchase.purchaseState != Purchase.PurchaseState.PURCHASED) continue
+    /**
+     * 531. If the server already entitles this account through a non-Play
+     * source, say so and skip Play. Otherwise restore every active Play
+     * subscription this Google account owns and adopt the entitlement.
+     * Throws [BillingException] (409 linked, 503 retry, Play errors).
+     */
+    suspend fun restorePurchases(): RestoreResult {
+        val server = try { ApiClient.billingApi.getEntitlement() } catch (e: Exception) {
+            throw PlayBillingRules.failureFor(e, duringRestore = true)
+        }
+        PlayBillingRules.alreadyPremiumSource(server)?.let { source ->
+            EntitlementStore.apply(server)
+            return RestoreResult.AlreadyPremium(server, source)
+        }
+
+        val owned = ownedSubscriptions()
+        val purchased = owned.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }
+        val pending = owned.filter { it.purchaseState == Purchase.PurchaseState.PENDING }
+        if (pending.isNotEmpty()) _pendingPaymentTokens.value = _pendingPaymentTokens.value + pending.map { it.purchaseToken }
+
+        val attempts = purchased.map { purchase ->
             try {
-                latest = verifyAndAcknowledge(purchase)
-            } catch (e: BillingException.AlreadyLinkedToAnotherAccount) {
-                collision = e
-            } catch (e: BillingException.VerificationUnavailable) {
-                pending = e
+                Result.success(verifyAndAcknowledge(purchase, duringRestore = true))
+            } catch (e: Exception) {
+                Result.failure(PlayBillingRules.failureFor(e, duringRestore = true))
             }
         }
-        latest?.let { return it }
-        collision?.let { throw it }
-        pending?.let { throw it }
-        // Nothing to restore is not a failure — report the server's current view.
-        return ApiClient.billingApi.getEntitlement().also { EntitlementStore.apply(it) }
+        val result = PlayBillingRules.summarizeRestore(attempts, playHasPendingOnly = pending.isNotEmpty())
+        if (result is RestoreResult.Restored) EntitlementStore.apply(result.entitlement)
+        return result
     }
 
-    /** Purchases stranded between purchase and verify (crash, dead network, kill). Runs at launch. */
-    suspend fun drainPendingPurchases() {
-        val purchases = try { ownedSubscriptions() } catch (e: Exception) { Log.w(TAG, "drain skipped: ${e.message}"); return }
-        purchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED && !it.isAcknowledged }
-            .forEach { handle(it) }
+    /**
+     * 530: purchases stranded between purchase and verify (crash, dead
+     * network, 503). Runs at app start and every foreground (process
+     * lifecycle) and when the gate appears; concurrent calls coalesce and
+     * calls within 30 s of the last are skipped unless [force]. A 409 leaves
+     * the purchase unacknowledged and raises the collision notice.
+     */
+    suspend fun drainPendingPurchases(force: Boolean = false) {
+        if (!force && System.currentTimeMillis() - lastDrainAtMs < MIN_DRAIN_INTERVAL_MS) return
+        if (!drainMutex.tryLock()) return
+        try {
+            lastDrainAtMs = System.currentTimeMillis()
+            val owned = try { ownedSubscriptions() } catch (e: Exception) { Log.w(TAG, "drain skipped: ${e.message}"); return }
+            // Play's current view replaces ours: a pending payment it no longer reports was declined or completed.
+            _pendingPaymentTokens.value = owned.filter { it.purchaseState == Purchase.PurchaseState.PENDING }
+                .map { it.purchaseToken }.toSet()
+            val skip = synchronized(terminalTokens) { terminalTokens.toSet() }
+            owned.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED && !it.isAcknowledged && it.purchaseToken !in skip }
+                .forEach { handle(it) }
+        } finally {
+            drainMutex.unlock()
+        }
     }
 
     /** Re-offer every owned subscription to the server — run when the cached entitlement is about to lapse. */
@@ -460,11 +561,17 @@ object PlayBillingManager : PurchasesUpdatedListener {
         purchases.filter { it.purchaseState == Purchase.PurchaseState.PURCHASED }.forEach { handle(it) }
     }
 
+    /** The Play product id this Google account currently subscribes to, for the Manage deep link. */
+    suspend fun ownedProductId(): String? = try {
+        ownedSubscriptions().firstOrNull { it.purchaseState == Purchase.PurchaseState.PURCHASED }?.products?.firstOrNull()
+    } catch (e: Exception) {
+        null
+    }
+
     private suspend fun ownedSubscriptions(): List<Purchase> {
-        val billing = ensureConnected()
-        val result = billing.queryPurchasesAsync(
-            QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build()
-        )
+        val result = withPlay {
+            it.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build())
+        }
         if (result.billingResult.responseCode != BillingClient.BillingResponseCode.OK) {
             throw BillingException.StoreError(result.billingResult.responseCode, result.billingResult.debugMessage)
         }
@@ -474,7 +581,7 @@ object PlayBillingManager : PurchasesUpdatedListener {
 
     // MARK: - Manage
 
-    /** Play's subscription centre, scoped to our subscription when we know which one. */
+    /** Play's subscription centre, scoped to our subscription when we know which one (generic URL otherwise). */
     fun openManageSubscriptions(context: Context, productId: String? = null) {
         val url = AppLinks.playSubscriptions(productId, context.packageName)
         val play = Intent(Intent.ACTION_VIEW, Uri.parse(url)).setPackage("com.android.vending")
@@ -490,9 +597,13 @@ object PlayBillingManager : PurchasesUpdatedListener {
     fun reset() {
         pendingPurchase?.complete(PurchaseOutcome.Cancelled)
         pendingPurchase = null
+        checkoutContext = null
+        lastDrainAtMs = 0L
+        synchronized(terminalTokens) { terminalTokens.clear() }
         _purchaseInFlight.value = false
         _purchaseStalled.value = false
         _collidedPurchaseTokens.value = emptySet()
-        _verificationPendingTokens.value = emptySet()
+        _pendingPaymentTokens.value = emptySet()
+        _unconfirmedPurchaseTokens.value = emptySet()
     }
 }

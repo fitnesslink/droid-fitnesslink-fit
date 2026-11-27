@@ -42,10 +42,8 @@ import com.fitnesslink.fit.push.PushNotificationManager
 import com.fitnesslink.fit.push.rememberPushPermissionRequester
 import com.fitnesslink.fit.ui.components.ActionButtonView
 import com.fitnesslink.fit.ui.navigation.AppRouter
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import kotlinx.coroutines.delay
 
 /**
@@ -103,7 +101,7 @@ fun NotificationPrePromptSheet(onTurnOn: () -> Unit, onDismiss: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     LaunchedEffect(Unit) { NotificationPrePromptStore.recordOffered(context) }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.background) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -115,11 +113,11 @@ fun NotificationPrePromptSheet(onTurnOn: () -> Unit, onDismiss: () -> Unit) {
                 Icon(Icons.Default.NotificationsActive, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(36.dp))
             }
             Spacer(modifier = Modifier.height(18.dp))
-            Text("Get a nudge when it counts", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, textAlign = TextAlign.Center)
+            Text("Get a nudge when it counts", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.Center)
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 "Turn on notifications and FitnessLink will keep you on track without you having to remember.",
-                fontSize = 15.sp, color = TextSecondaryColor, textAlign = TextAlign.Center
+                fontSize = 15.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(24.dp))
             Column(verticalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.fillMaxWidth()) {
@@ -134,7 +132,7 @@ fun NotificationPrePromptSheet(onTurnOn: () -> Unit, onDismiss: () -> Unit) {
                 "Not now",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Medium,
-                color = TextSecondaryColor,
+                color = FLTheme.colors.textSecondary,
                 modifier = Modifier.fillMaxWidth().clickable(onClick = onDismiss).padding(vertical = 12.dp),
                 textAlign = TextAlign.Center
             )
@@ -147,8 +145,8 @@ private fun Benefit(icon: ImageVector, title: String, detail: String) {
     Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
         Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(28.dp))
         Column {
-            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text(detail, fontSize = 14.sp, color = TextSecondaryColor)
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text(detail, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }

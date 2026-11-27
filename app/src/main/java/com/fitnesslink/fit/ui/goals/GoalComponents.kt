@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.goals
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -53,9 +54,6 @@ import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 // Goals-domain building blocks shared by the list cards, the detail header,
 // habit rows and the habit detail page. Mirrors the iOS enum extensions
@@ -185,12 +183,12 @@ fun GoalStatCard(label: String, value: String, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(10.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(10.dp))
             .padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        Text(value, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-        Text(label, fontSize = 12.sp, color = TextSecondaryColor)
+        Text(value, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+        Text(label, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
     }
 }

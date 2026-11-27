@@ -63,15 +63,11 @@ import com.fitnesslink.fit.nutrition.MealBuilderStore
 import com.fitnesslink.fit.nutrition.deepCopied
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import kotlinx.coroutines.launch
 import java.util.Locale
 import kotlin.math.roundToInt
@@ -194,13 +190,13 @@ fun MealTemplatesPickerScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Meal Templates", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text("Meal Templates", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             Text(
                 if (flow.stagesIntoMeal) "Adding to the meal you're building" else "Logging to ${mealType.displayName}${backfillSuffix(logDate)}",
-                fontSize = 12.sp, color = TextSecondaryColor
+                fontSize = 12.sp, color = FLTheme.colors.textSecondary
             )
         }
         when {
@@ -218,7 +214,7 @@ fun MealTemplatesPickerScreen(
             ) {
                 errorMessage?.let { message ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(12.dp),
+                        modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(12.dp),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Icon(Icons.Default.Warning, null, tint = OrangeTheme, modifier = Modifier.size(16.dp))
@@ -245,8 +241,8 @@ fun MealTemplatesPickerScreen(
             onDismissRequest = { renaming = null },
             title = { Text("Rename Template") },
             text = {
-                Box(modifier = Modifier.fillMaxWidth().background(BackgroundColor, RoundedCornerShape(8.dp)).padding(12.dp)) {
-                    BasicTextField(value = renameText, onValueChange = { renameText = it }, singleLine = true, textStyle = TextStyle(fontSize = 16.sp, color = TextPrimaryColor))
+                Box(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.background, RoundedCornerShape(8.dp)).padding(12.dp)) {
+                    BasicTextField(value = renameText, onValueChange = { renameText = it }, singleLine = true, textStyle = TextStyle(fontSize = 16.sp, color = FLTheme.colors.textPrimary))
                 }
             },
             confirmButton = { TextButton(onClick = { val name = renameText; renaming = null; scope.launch { rename(template, name) } }) { Text("Save") } },
@@ -280,20 +276,20 @@ private fun TemplateCard(
     onDelete: () -> Unit
 ) {
     var menuOpen by remember { mutableStateOf(false) }
-    Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+    Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
         Row(modifier = Modifier.padding(horizontal = 16.dp).padding(top = 14.dp), verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(template.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text(template.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (template.isSystem) FoodLogBadge("System", color = BlueTheme)
                     MealType.fromWire(template.mealType)?.let { FoodLogBadge(it.displayName, color = PurpleTheme) }
-                    Text("${template.foods.size} item${if (template.foods.size == 1) "" else "s"}", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("${template.foods.size} item${if (template.foods.size == 1) "" else "s"}", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             }
             Text("${template.totalCalories.roundToInt()} cal", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
             if (!template.isSystem) {
                 Box {
-                    Icon(Icons.Default.MoreVert, "Manage", tint = TextSecondaryColor, modifier = Modifier.padding(start = 4.dp).size(20.dp).clickable { menuOpen = true })
+                    Icon(Icons.Default.MoreVert, "Manage", tint = FLTheme.colors.textSecondary, modifier = Modifier.padding(start = 4.dp).size(20.dp).clickable { menuOpen = true })
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         DropdownMenuItem(text = { Text("Rename") }, onClick = { menuOpen = false; onRename() })
                         DropdownMenuItem(text = { Text("Edit Items") }, onClick = { menuOpen = false; onEdit() })
@@ -305,10 +301,10 @@ private fun TemplateCard(
         Column(modifier = Modifier.padding(horizontal = 16.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             template.foods.sortedBy { it.sortOrder }.forEach { food ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(food.name, fontSize = 13.sp, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                    Text(portionLabel(food), fontSize = 11.sp, color = TextSecondaryColor)
+                    Text(food.name, fontSize = 13.sp, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    Text(portionLabel(food), fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     Spacer(Modifier.weight(1f))
-                    Text("${(food.calories * food.servings).roundToInt()} cal", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("${(food.calories * food.servings).roundToInt()} cal", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             }
         }
@@ -316,16 +312,16 @@ private fun TemplateCard(
             FoodLogMacroSummary(protein = template.totalProtein, carbs = template.totalCarbs, fat = template.totalFat)
         }
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp).background(if (busy) MediumGray else FLPrimary, RoundedCornerShape(10.dp))
+            modifier = Modifier.fillMaxWidth().padding(16.dp).background(if (busy) FLTheme.colors.textTertiary else FLPrimary, RoundedCornerShape(10.dp))
                 .then(if (busy) Modifier else Modifier.clickable(onClick = onApply)).padding(vertical = 10.dp),
             horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
         ) {
             if (busy) {
-                CircularProgressIndicator(color = White, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
             } else {
-                Icon(Icons.Default.AddCircle, null, tint = White, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.AddCircle, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
                 Spacer(Modifier.size(6.dp))
-                Text(actionLabel, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = White)
+                Text(actionLabel, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
             }
         }
     }
@@ -386,22 +382,22 @@ private fun MealTemplateEditSheet(template: MealTemplate, onSaved: () -> Unit, o
         }
     }
 
-    ModalBottomSheet(onDismissRequest = { if (!isSaving) onDismiss() }, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = { if (!isSaving) onDismiss() }, containerColor = FLTheme.colors.background) {
         Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Cancel", fontSize = 15.sp, color = if (isSaving) MediumGray else FLPrimary, modifier = Modifier.clickable(enabled = !isSaving, onClick = onDismiss))
+                Text("Cancel", fontSize = 15.sp, color = if (isSaving) FLTheme.colors.textTertiary else FLPrimary, modifier = Modifier.clickable(enabled = !isSaving, onClick = onDismiss))
                 Spacer(Modifier.weight(1f))
-                Text("Edit Template", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Edit Template", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Spacer(Modifier.weight(1f))
                 if (isSaving) CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                else Text("Save", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (canSave) FLPrimary else MediumGray, modifier = Modifier.clickable(enabled = canSave) { save() })
+                else Text("Save", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (canSave) FLPrimary else FLTheme.colors.textTertiary, modifier = Modifier.clickable(enabled = canSave) { save() })
             }
             FoodLogCard {
-                Text("Name", fontSize = 12.sp, color = TextSecondaryColor)
-                BasicTextField(value = name, onValueChange = { name = it }, singleLine = true, textStyle = TextStyle(fontSize = 16.sp, color = TextPrimaryColor), modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
+                Text("Name", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+                BasicTextField(value = name, onValueChange = { name = it }, singleLine = true, textStyle = TextStyle(fontSize = 16.sp, color = FLTheme.colors.textPrimary), modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
             }
             FoodLogCard {
-                Text("Meal Type", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("Meal Type", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AIChipLabel("Any", isSelected = mealTypeSelection == null, modifier = Modifier.clickable { mealTypeSelection = null })
@@ -411,7 +407,7 @@ private fun MealTemplateEditSheet(template: MealTemplate, onSaved: () -> Unit, o
                 }
             }
             FoodLogCard(padding = 0) {
-                Text("Foods", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.padding(16.dp))
+                Text("Foods", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(16.dp))
                 foods.forEach { food ->
                     SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
                     StagedFoodRow(
@@ -422,7 +418,7 @@ private fun MealTemplateEditSheet(template: MealTemplate, onSaved: () -> Unit, o
                 }
                 Text(
                     if (foods.isEmpty()) "A template needs at least one food." else "Tap the trash to remove a food. To add foods, save a new template from the meal builder.",
-                    fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.padding(16.dp)
+                    fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(16.dp)
                 )
             }
             errorMessage?.let { FoodLogErrorText(it, modifier = Modifier.padding(horizontal = 20.dp)) }
@@ -486,20 +482,20 @@ fun SaveMealTemplateSheet(
         }
     }
 
-    ModalBottomSheet(onDismissRequest = { if (!isSaving) onDismiss() }, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = { if (!isSaving) onDismiss() }, containerColor = FLTheme.colors.background) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text("Save as Template", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp))
-            Text("${items.size} item${if (items.size == 1) "" else "s"} · ${items.sumOf { it.calories * it.servings }.roundToInt()} cal", fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+            Text("Save as Template", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp))
+            Text("${items.size} item${if (items.size == 1) "" else "s"} · ${items.sumOf { it.calories * it.servings }.roundToInt()} cal", fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 20.dp))
             FoodLogCard {
-                Text("Template name", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("Template name", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 BasicTextField(
                     value = name, onValueChange = { name = it }, singleLine = true,
-                    textStyle = TextStyle(fontSize = 16.sp, color = TextPrimaryColor), modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                    decorationBox = { inner -> if (name.isEmpty()) Text("e.g. Weekday breakfast", fontSize = 16.sp, color = MediumGray); inner() }
+                    textStyle = TextStyle(fontSize = 16.sp, color = FLTheme.colors.textPrimary), modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    decorationBox = { inner -> if (name.isEmpty()) Text("e.g. Weekday breakfast", fontSize = 16.sp, color = FLTheme.colors.textTertiary); inner() }
                 )
             }
             FoodLogCard {
-                Text("Meal Type", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("Meal Type", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AIChipLabel("Any", isSelected = mealTypeSelection == null, modifier = Modifier.clickable { mealTypeSelection = null })

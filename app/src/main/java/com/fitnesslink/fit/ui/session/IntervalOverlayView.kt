@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitnesslink.fit.model.EmomMath
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.IntervalPhase
@@ -39,14 +40,17 @@ import com.fitnesslink.fit.model.RestType
 import com.fitnesslink.fit.session.IntervalRunner
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.White
 import java.util.Locale
+
+// theme-exempt: always-dark player. The interval strip sits on the Interactive video, dark in
+// both modes as on iOS, so its white-on-dark palette is fixed.
 
 /**
  * Interval (HIIT / Tabata / EMOM / AMRAP) status strip (port of iOS `IntervalOverlayView`):
  * mode chip + phase badge, "HIIT BLOCK · 13:40 remaining" with a progress bar, phase body beside
  * the big phase countdown with the SET / ROUND counter, plus the AMRAP round button + partial
- * reps stepper and the EMOM "Round Done". [tick] is read only to recompose with the ticker.
+ * reps stepper; EMOM blocks render their own row 3 ([EmomBody], PRD §7.3) with Round Done.
+ * [tick] is read only to recompose with the ticker.
  */
 @Composable
 fun IntervalOverlayView(runner: IntervalRunner, tick: Int, onChanged: () -> Unit) {
@@ -58,33 +62,95 @@ fun IntervalOverlayView(runner: IntervalRunner, tick: Int, onChanged: () -> Unit
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(mode.displayName.uppercase(Locale.US), color = White, fontSize = 12.sp, fontWeight = FontWeight.Black,
-                modifier = Modifier.clip(CircleShape).background(White.copy(alpha = 0.18f)).padding(horizontal = 10.dp, vertical = 4.dp))
+            Text(mode.displayName.uppercase(Locale.US), color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black,
+                modifier = Modifier.clip(CircleShape).background(Color.White.copy(alpha = 0.18f)).padding(horizontal = 10.dp, vertical = 4.dp))
             val badge = Modifier.clip(CircleShape).let { m -> if (phaseStyle.outlined) m.border(1.5.dp, phaseStyle.color, CircleShape) else m.background(phaseStyle.color) }
-            Text(phaseStyle.text, color = if (phaseStyle.outlined) phaseStyle.color else White, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
+            Text(phaseStyle.text, color = if (phaseStyle.outlined) phaseStyle.color else Color.White, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
                 modifier = badge.padding(horizontal = 12.dp, vertical = 4.dp))
         }
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("${mode.displayName.uppercase(Locale.US)} BLOCK", color = White.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
-                Text("·", color = White.copy(alpha = 0.5f))
-                Text("${IntervalMath.formatTime(runner.blockRemainingSeconds)} remaining", color = White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text("${mode.displayName.uppercase(Locale.US)} BLOCK", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
+                Text("·", color = Color.White.copy(alpha = 0.5f))
+                Text("${IntervalMath.formatTime(runner.blockRemainingSeconds)} remaining", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
             }
             val total = maxOf(1, runner.blockTotalSeconds)
             val done = (total - runner.blockRemainingSeconds).coerceIn(0, total)
-            Box(Modifier.fillMaxWidth().height(4.dp).clip(CircleShape).background(White.copy(alpha = 0.18f))) {
+            Box(Modifier.fillMaxWidth().height(4.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.18f))) {
                 Box(Modifier.fillMaxWidth(done.toFloat() / total).fillMaxHeight().clip(CircleShape).background(OrangeTheme))
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) { PhaseBody(runner) }
-            Column(horizontalAlignment = Alignment.End) {
-                val s = maxOf(0, runner.secondsRemaining)
-                Text(String.format(Locale.US, "%d:%02d", s / 60, s % 60), color = White, fontSize = 56.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, maxLines = 1)
-                RoundIndicator(runner)
+        if (runner.emomPlan != null) {
+            EmomBody(runner, onChanged)
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) { PhaseBody(runner) }
+                Column(horizontalAlignment = Alignment.End) {
+                    BigCountdown(runner)
+                    RoundIndicator(runner)
+                }
+            }
+            Controls(runner, onChanged)
+        }
+    }
+}
+
+@Composable
+private fun BigCountdown(runner: IntervalRunner) {
+    val s = maxOf(0, runner.secondsRemaining)
+    Text(String.format(Locale.US, "%d:%02d", s / 60, s % 60), color = Color.White, fontSize = 56.sp, fontWeight = FontWeight.Black, fontFamily = FontFamily.Monospace, maxLines = 1)
+}
+
+/**
+ * EMOM row 3 (PRD §7.3). WORK: exercise + target beside the countdown and "ROUND 2 / 20", then
+ * the centered Round Done (rep-based rounds). REST: big "REST" beside the countdown, "CYCLE 1 / 10"
+ * (n ≥ 2) and "ROUND 2 / 20" — the Up Next card below comes from the session screen.
+ */
+@Composable
+private fun EmomBody(runner: IntervalRunner, onChanged: () -> Unit) {
+    val emom = runner.emomPlan ?: return
+    val round = maxOf(1, runner.currentRound)
+    val roundText = "ROUND $round / ${emom.totalRounds}"
+    val counterStyle = Modifier
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            when (runner.phase) {
+                IntervalPhase.REST, IntervalPhase.BETWEEN_SETS_REST -> Text("REST", color = Color.White, fontSize = 34.sp, fontWeight = FontWeight.Black)
+                else -> {
+                    val exercise = runner.currentExercise
+                    if (runner.phase == IntervalPhase.PREPARE) Text("FIRST UP", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
+                    if (exercise != null) {
+                        Text(exercise.name.uppercase(Locale.US), color = Color.White, fontSize = 19.sp, fontWeight = FontWeight.Black, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        EmomMath.displayTarget(exercise)?.let { Text(it, color = OrangeTheme, fontSize = 15.sp, fontWeight = FontWeight.Black, maxLines = 1) }
+                    }
+                    val notes = runner.leadTask?.coachNotes?.trim()
+                    if (runner.phase == IntervalPhase.PREPARE && !notes.isNullOrEmpty()) Text(notes, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 3)
+                }
             }
         }
-        Controls(runner, onChanged)
+        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            BigCountdown(runner)
+            if ((runner.phase == IntervalPhase.REST) && emom.exerciseCount > 1) {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text("CYCLE", color = OrangeTheme, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+                    Text("${emom.cycle(round)} / ${emom.cycles}", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+            Text(roundText, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, modifier = counterStyle)
+        }
+    }
+    if (runner.canConfirmEmomRound) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Row(
+                modifier = Modifier.fillMaxWidth().height(52.dp).clip(RoundedCornerShape(16.dp)).background(Color.White)
+                    .clickable { runner.markEmomRoundDone(); onChanged() },
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color.Black, modifier = Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
+                Text("Round Done", color = Color.Black, fontSize = 18.sp, fontWeight = FontWeight.Black)
+            }
+        }
     }
 }
 
@@ -93,7 +159,7 @@ private data class PhaseStyle(val text: String, val color: Color, val outlined: 
 private fun phaseStyle(runner: IntervalRunner): PhaseStyle = when (runner.phase) {
     IntervalPhase.PREPARE -> PhaseStyle("GET READY", BlueTheme, false)
     IntervalPhase.WORK -> PhaseStyle("WORK", OrangeTheme, false)
-    IntervalPhase.REST -> if (runner.leadTask?.restType == RestType.ACTIVE_RECOVERY) PhaseStyle("ACTIVE RECOVERY", OrangeTheme, true) else PhaseStyle("REST", Color.Gray, false)
+    IntervalPhase.REST -> if (runner.emomPlan == null && runner.leadTask?.restType == RestType.ACTIVE_RECOVERY) PhaseStyle("ACTIVE RECOVERY", OrangeTheme, true) else PhaseStyle("REST", Color.Gray, false)
     IntervalPhase.BETWEEN_SETS_REST -> PhaseStyle("REST BETWEEN SETS", BlueTheme, false)
     IntervalPhase.DONE -> PhaseStyle("DONE", Color.Gray, false)
 }
@@ -108,7 +174,7 @@ private fun RoundIndicator(runner: IntervalRunner) {
             else "ROUND ${maxOf(1, runner.currentRound)} OF ${runner.roundsTotal}"
         else -> null
     } ?: return
-    Text(text, color = White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+    Text(text, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
 }
 
 @Composable
@@ -117,20 +183,19 @@ private fun PhaseBody(runner: IntervalRunner) {
     when (runner.phase) {
         IntervalPhase.REST -> {
             val name = lead?.restMovementName
-            if (lead?.restType == RestType.ACTIVE_RECOVERY && !name.isNullOrEmpty()) Text(name.uppercase(Locale.US), color = White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2)
-            else Text("REST", color = White, fontSize = 22.sp, fontWeight = FontWeight.Black)
+            if (lead?.restType == RestType.ACTIVE_RECOVERY && !name.isNullOrEmpty()) Text(name.uppercase(Locale.US), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2)
+            else Text("REST", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black)
         }
         IntervalPhase.BETWEEN_SETS_REST -> {
-            Text("SET ${maxOf(1, runner.currentSet)} COMPLETE", color = White, fontSize = 15.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
-            Text("Rest, then start set ${runner.currentSet + 1} of ${runner.setsTotal}", color = White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 2)
+            Text("SET ${maxOf(1, runner.currentSet)} COMPLETE", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Black, letterSpacing = 1.sp)
+            Text("Rest, then start set ${runner.currentSet + 1} of ${runner.setsTotal}", color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 2)
         }
         else -> {
             val exercise = runner.currentExercise ?: return
-            if (runner.phase == IntervalPhase.PREPARE) Text("FIRST UP", color = White.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
-            Text(exercise.name.uppercase(Locale.US), color = White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            if (runner.phase == IntervalPhase.PREPARE) Text("FIRST UP", color = Color.White.copy(alpha = 0.7f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp)
+            Text(exercise.name.uppercase(Locale.US), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.Bold, maxLines = 2, overflow = TextOverflow.Ellipsis)
             val cue = lead?.instructions?.trim()
-            if (runner.phase == IntervalPhase.PREPARE && !cue.isNullOrEmpty()) Text(cue, color = White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 3)
-            if (runner.intervalMode == IntervalMode.EMOM && exercise.reps > 0) Text("${exercise.reps} reps", color = White.copy(alpha = 0.85f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            if (runner.phase == IntervalPhase.PREPARE && !cue.isNullOrEmpty()) Text(cue, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.Medium, maxLines = 3)
         }
     }
 }
@@ -140,28 +205,20 @@ private fun Controls(runner: IntervalRunner, onChanged: () -> Unit) {
     if (runner.intervalMode == IntervalMode.AMRAP && runner.phase == IntervalPhase.WORK) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 2.dp)) {
             Row(
-                modifier = Modifier.clip(CircleShape).background(White).clickable { runner.markAmrapRound(); onChanged() }.padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.clip(CircleShape).background(Color.White).clickable { runner.markAmrapRound(); onChanged() }.padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Icon(Icons.Filled.AddCircle, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
                 Text("Round ${runner.roundsCompleted + 1}", color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(Icons.Filled.RemoveCircle, contentDescription = "Fewer partial reps", tint = White.copy(alpha = 0.85f),
+                Icon(Icons.Filled.RemoveCircle, contentDescription = "Fewer partial reps", tint = Color.White.copy(alpha = 0.85f),
                     modifier = Modifier.size(22.dp).clickable { runner.amrapPartialReps = maxOf(0, runner.amrapPartialReps - 1); onChanged() })
-                Text("Partial: ${runner.amrapPartialReps}", color = White.copy(alpha = 0.85f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
-                Icon(Icons.Filled.AddCircle, contentDescription = "More partial reps", tint = White.copy(alpha = 0.85f),
+                Text("Partial: ${runner.amrapPartialReps}", color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Icon(Icons.Filled.AddCircle, contentDescription = "More partial reps", tint = Color.White.copy(alpha = 0.85f),
                     modifier = Modifier.size(22.dp).clickable { runner.amrapPartialReps += 1; onChanged() })
             }
             Spacer(Modifier.width(1.dp))
-        }
-    } else if (runner.intervalMode == IntervalMode.EMOM && runner.phase == IntervalPhase.WORK && runner.secondsRemaining > 3) {
-        Row(
-            modifier = Modifier.padding(top = 2.dp).clip(CircleShape).background(White).clickable { runner.markEmomRoundDone(); onChanged() }.padding(horizontal = 16.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color.Black, modifier = Modifier.size(16.dp))
-            Text("Round Done", color = Color.Black, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
     }
 }

@@ -25,7 +25,7 @@ object DatabaseSeeder {
         if (DatabaseManager.user() != null) return
 
         DatabaseManager.insertFullUser(
-            "user1", "Fitness", "User", "user@fitnesslink.com",
+            "user1", "Fitness", "User", "support@fitnesslink.fit",
             "+1 (555) 123-4567", "fitnessuser", "United States"
         )
 

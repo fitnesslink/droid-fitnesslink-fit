@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.catalog
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.net.Uri
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -64,12 +65,7 @@ import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.programs.WeekSectionView
 import com.fitnesslink.fit.ui.programs.WorkoutPickerSheet
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.ContentTagKind
 import com.fitnesslink.fit.ui.workout.ContentTagsEditorSection
 import com.fitnesslink.fit.ui.workout.WorkoutEditorScreen
@@ -141,7 +137,7 @@ fun ProgramEditorScreen(
             onDismissRequest = { showDiscardAlert = false },
             title = { Text("Discard Changes?") },
             text = { Text("You have unsaved changes that will be lost.") },
-            confirmButton = { TextButton(onClick = { showDiscardAlert = false; onBack() }) { Text("Discard", color = Color.Red) } },
+            confirmButton = { TextButton(onClick = { showDiscardAlert = false; onBack() }) { Text("Discard", color = FLTheme.colors.danger) } },
             dismissButton = { TextButton(onClick = { showDiscardAlert = false }) { Text("Keep Editing") } }
         )
     }
@@ -154,15 +150,15 @@ fun ProgramEditorScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         // Header
         Row(
-            modifier = Modifier.fillMaxWidth().background(White).padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface).padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { close() }) { Icon(Icons.Default.Close, contentDescription = "Close", tint = TextPrimaryColor) }
+            IconButton(onClick = { close() }) { Icon(Icons.Default.Close, contentDescription = "Close", tint = FLTheme.colors.textPrimary) }
             Spacer(modifier = Modifier.weight(1f))
-            Text(if (viewModel.isNewProgram) "New Program" else "Edit Program", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text(if (viewModel.isNewProgram) "New Program" else "Edit Program", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
             // Save is always enabled (iOS) — a program with no schedule is still a valid draft.
             TextButton(
@@ -226,7 +222,7 @@ private fun ProgramHeaderSection(viewModel: ProgramEditorViewModel, onPickImage:
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -236,7 +232,7 @@ private fun ProgramHeaderSection(viewModel: ProgramEditorViewModel, onPickImage:
                 .fillMaxWidth()
                 .height(160.dp)
                 .clip(RoundedCornerShape(12.dp))
-                .background(BackgroundColor)
+                .background(FLTheme.colors.background)
                 .clickable(onClick = onPickImage),
             contentAlignment = Alignment.Center
         ) {
@@ -246,14 +242,14 @@ private fun ProgramHeaderSection(viewModel: ProgramEditorViewModel, onPickImage:
                 localUri != null -> AsyncImage(model = localUri, contentDescription = "Program image", contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
                 remoteId != null -> FLImageView(ref = MediaRef.ProgramThumbnail(remoteId), modifier = Modifier.fillMaxSize())
                 else -> Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = MediumGray, modifier = Modifier.size(28.dp))
-                    Text("Add Program Image", fontSize = 13.sp, color = MediumGray)
+                    Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(28.dp))
+                    Text("Add Program Image", fontSize = 13.sp, color = FLTheme.colors.textTertiary)
                 }
             }
             if (localUri != null || remoteId != null) {
                 Box(modifier = Modifier.align(Alignment.TopEnd).padding(8.dp)) {
-                    if (viewModel.isUploadingImage) CircularProgressIndicator(color = White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))
-                    else Icon(Icons.Default.Edit, contentDescription = "Change image", tint = White, modifier = Modifier.size(24.dp))
+                    if (viewModel.isUploadingImage) CircularProgressIndicator(color = Color.White, strokeWidth = 2.dp, modifier = Modifier.size(22.dp))  // theme-exempt: over media
+                    else Icon(Icons.Default.Edit, contentDescription = "Change image", tint = Color.White, modifier = Modifier.size(24.dp))  // theme-exempt: over media
                 }
             }
         }
@@ -275,7 +271,7 @@ private fun ProgramHeaderSection(viewModel: ProgramEditorViewModel, onPickImage:
                 ProgramEditorViewModel.timePresets.forEach { minutes ->
                     Chip(label = "$minutes", selected = program.time == "$minutes min") { viewModel.setTime(minutes) }
                 }
-                Text("min", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("min", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
 
@@ -325,7 +321,7 @@ private fun ProgramHeaderSection(viewModel: ProgramEditorViewModel, onPickImage:
             value = program.description,
             onValueChange = viewModel::setDescription,
             placeholder = { Text("Description (optional)") },
-            textStyle = TextStyle(fontSize = 14.sp, color = TextSecondaryColor),
+            textStyle = TextStyle(fontSize = 14.sp, color = FLTheme.colors.textSecondary),
             colors = OutlinedTextFieldDefaults.colors(unfocusedBorderColor = Color.Transparent, focusedBorderColor = Color.Transparent),
             minLines = 2,
             maxLines = 4,
@@ -337,9 +333,9 @@ private fun ProgramHeaderSection(viewModel: ProgramEditorViewModel, onPickImage:
 @Composable
 private fun FieldLabel(icon: ImageVector, text: String, hint: String? = null) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Icon(icon, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
-        Text(text, fontSize = 13.sp, color = TextSecondaryColor)
-        if (hint != null) Text(hint, fontSize = 12.sp, color = TextSecondaryColor)
+        Icon(icon, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(14.dp))
+        Text(text, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
+        if (hint != null) Text(hint, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -348,11 +344,11 @@ private fun Chip(label: String, selected: Boolean, onClick: () -> Unit) {
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(if (selected) FLPrimary else BackgroundColor)
+            .background(if (selected) FLPrimary else FLTheme.colors.background)
             .clickable(onClick = onClick)
             .padding(horizontal = 12.dp, vertical = 7.dp)
     ) {
-        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected) White else TextPrimaryColor)
+        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
     }
 }
 
@@ -364,6 +360,6 @@ private fun SummaryChip(icon: ImageVector, label: String) {
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
         Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(14.dp))
-        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+        Text(label, fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
     }
 }

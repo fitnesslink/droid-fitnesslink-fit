@@ -22,8 +22,14 @@ object AppRouter {
     const val CATALOG_TAB = "catalog"
     const val CALENDAR_TAB = "calendar"
     const val NUTRITION_TAB = "nutrition"
+    /** Navigation PRD §4.1: Progress replaces Profile in the fifth slot. */
+    const val PROGRESS_TAB = "progress"
+    /**
+     * The Profile menu. No longer a tab — the header avatar opens it as a
+     * sheet; the route stays registered as a pushed screen for deep links.
+     */
     const val PROFILE_TAB = "profile"
-    val TAB_ROUTES = listOf(HOME_TAB, CATALOG_TAB, CALENDAR_TAB, NUTRITION_TAB, PROFILE_TAB)
+    val TAB_ROUTES = listOf(HOME_TAB, CATALOG_TAB, CALENDAR_TAB, NUTRITION_TAB, PROGRESS_TAB)
 
     /** Routes that select a tab rather than push a screen. */
     fun isTabSwitch(route: String): Boolean = route in TAB_ROUTES

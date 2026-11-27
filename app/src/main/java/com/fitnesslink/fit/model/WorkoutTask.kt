@@ -123,6 +123,11 @@ data class WorkoutTask(
     val speed: Double? = null,
     val rounds: Int? = null,
     val instructions: String? = null,
+    /**
+     * EMOM block coach notes (EMOM PRD §2) — interval LEAD only, wire `coachNotes`. Optional
+     * everywhere: the backend column may not exist yet, in which case the server drops it.
+     */
+    val coachNotes: String? = null,
     val contributorId: String? = null,
 
     // MARK: - Metric mode

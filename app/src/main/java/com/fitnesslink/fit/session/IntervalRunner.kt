@@ -1,5 +1,7 @@
 package com.fitnesslink.fit.session
 
+import com.fitnesslink.fit.model.EmomMath
+import com.fitnesslink.fit.model.EmomPlan
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.IntervalPhase
@@ -20,6 +22,11 @@ import com.fitnesslink.fit.model.WorkoutTask
  * the sub-second remainder so a resume doesn't round away time.
  *
  * Unlike iOS the runner owns no timer: the session view model's 250 ms ticker calls [reconcile].
+ *
+ * EMOM (PRD v2.0 §7.2) runs one member per interval: WORK lasts the whole interval for a
+ * rep-based member (Round Done flips to REST with the same end instant) or `min(target, interval)`
+ * for a timed one (then REST for the remainder). Every round's outcome is recorded in
+ * [emomOutcomes]; Previous / Next restart / advance whole intervals ([back], [emomNext]).
  */
 class IntervalRunner(
     group: TaskRow,
@@ -57,15 +64,20 @@ class IntervalRunner(
         val phaseDuration: Int,
         val roundsCompleted: Int,
         val amrapPartialReps: Int,
-        val prepareSeconds: Int
+        val prepareSeconds: Int,
+        /** EMOM round outcomes; null for other modes (and snapshots written before EMOM v2). */
+        val emomOutcomes: List<EmomRoundRecord>? = null
     )
 
     // MARK: - Inputs
 
     val plan: IntervalPlan
+    /** EMOM blocks only: the resolved interval / rounds / exercise count. */
+    val emomPlan: EmomPlan?
     /** `groupId` of the block this runner drives — the key a snapshot is matched against on restore. */
     val groupId: String
     private val exercises: List<WorkoutTask>
+    private val emomRecords = LinkedHashMap<Int, EmomRoundRecord>()
     val prepareSeconds: Int = maxOf(0, prepareSeconds)
 
     // MARK: - Outputs
@@ -106,11 +118,18 @@ class IntervalRunner(
     init {
         val lead = group.task
         groupId = lead?.groupId ?: ""
+        val mode = group.intervalMode ?: lead?.intervalMode
         if (lead == null) {
             plan = IntervalPlan(IntervalMode.HIIT, 0, 0, 0, 1, 0, 0)
+            emomPlan = null
             exercises = emptyList()
+        } else if (mode == IntervalMode.EMOM) {
+            exercises = EmomMath.members(lead, group.advancedTasks).ifEmpty { listOf(lead) }
+            emomPlan = EmomMath.plan(lead, exercises.size, group.totalRounds)
+            plan = emomPlan.intervalPlan
         } else {
-            plan = IntervalMath.plan(lead, rowTotalRounds = group.totalRounds, mode = group.intervalMode ?: lead.intervalMode)
+            plan = IntervalMath.plan(lead, rowTotalRounds = group.totalRounds, mode = mode)
+            emomPlan = null
             exercises = listOf(lead) + group.advancedTasks
         }
     }
@@ -125,6 +144,7 @@ class IntervalRunner(
         phaseDuration = maxOf(0, restoring.phaseDuration)
         roundsCompleted = restoring.roundsCompleted
         amrapPartialReps = restoring.amrapPartialReps
+        restoring.emomOutcomes?.forEach { emomRecords[it.round] = it }
         val paused = restoring.pausedRemainingMs
         if (paused != null) {
             isPaused = true
@@ -152,7 +172,8 @@ class IntervalRunner(
         phaseDuration = phaseDuration,
         roundsCompleted = roundsCompleted,
         amrapPartialReps = amrapPartialReps,
-        prepareSeconds = prepareSeconds
+        prepareSeconds = prepareSeconds,
+        emomOutcomes = if (emomPlan != null) emomRecords.values.toList() else null
     )
 
     // MARK: - Derived state
@@ -166,6 +187,9 @@ class IntervalRunner(
         }
 
     val currentExercise: WorkoutTask? get() = exercises.getOrNull(currentExerciseIndex)
+
+    /** The members the runner rotates through, in round order. */
+    val memberTasks: List<WorkoutTask> get() = exercises
 
     /** First task in the group — carries the cycle-rest config (passive / active recovery). */
     val leadTask: WorkoutTask? get() = exercises.firstOrNull()
@@ -186,7 +210,36 @@ class IntervalRunner(
 
     /** Seconds left in the block from the current position. */
     val blockRemainingSeconds: Int
-        get() = IntervalMath.remaining(plan, set = currentSet, round = currentRound, phase = phase, phaseRemaining = secondsRemaining)
+        get() {
+            val emom = emomPlan ?: return IntervalMath.remaining(plan, set = currentSet, round = currentRound, phase = phase, phaseRemaining = secondsRemaining)
+            // EMOM: rounds advance on interval boundaries whatever happens inside them (§7.2).
+            val round = minOf(maxOf(1, currentRound), emom.totalRounds)
+            val after = (emom.totalRounds - round) * emom.intervalSeconds
+            return when (phase) {
+                IntervalPhase.PREPARE -> emom.totalSeconds
+                IntervalPhase.DONE -> 0
+                IntervalPhase.WORK -> maxOf(0, secondsRemaining) + maxOf(0, emom.intervalSeconds - phaseDuration) + after
+                IntervalPhase.REST, IntervalPhase.BETWEEN_SETS_REST -> maxOf(0, secondsRemaining) + after
+            }
+        }
+
+    // MARK: - EMOM
+
+    /** Recorded EMOM round outcomes, by 1-based round. */
+    val emomOutcomes: Map<Int, EmomRoundRecord> get() = emomRecords
+
+    fun emomOutcome(round: Int): EmomRoundRecord? = emomRecords[round]
+
+    /** True when the EMOM member on screen is time-based (no Round Done; WORK auto-completes). */
+    val isEmomTimeBasedRound: Boolean
+        get() = emomPlan != null && currentExercise?.let { EmomMath.isTimeBased(it) } == true
+
+    /** Round Done is offered while a rep-based EMOM round is in WORK with more than 1 s left (§7.2). */
+    val canConfirmEmomRound: Boolean
+        get() = emomPlan != null && phase == IntervalPhase.WORK && !isEmomTimeBasedRound && secondsRemaining > 1
+
+    /** "CYCLE 1 / 10" counter value for the current round; null outside EMOM. */
+    val emomCycle: Int? get() = emomPlan?.cycle(maxOf(1, currentRound))
 
     /** True once the last round of the last set has begun. AMRAP: the last set's window. */
     val isFinalRound: Boolean
@@ -207,9 +260,8 @@ class IntervalRunner(
                 IntervalMode.TABATA, IntervalMode.HIIT ->
                     if (currentRound < plan.roundsPerSet) plan.restSeconds == 0 else nextSetStartsImmediately
                 IntervalMode.EMOM -> when {
-                    plan.restSeconds > 0 -> false
-                    currentRound < plan.roundsPerSet -> true
-                    else -> nextSetStartsImmediately
+                    isEmomTimeBasedRound && phaseDuration < plan.workSeconds -> false
+                    else -> currentRound < plan.roundsPerSet
                 }
                 IntervalMode.AMRAP -> nextSetStartsImmediately
             }
@@ -279,7 +331,10 @@ class IntervalRunner(
         reconcile(clock())
     }
 
-    /** Jump to the end of the current phase — the normal advance path then decides what follows. */
+    /**
+     * Jump to the end of the current phase — the normal advance path then decides what follows.
+     * EMOM's Next / Skip controls use [emomNext] instead (a full next interval, never the block end).
+     */
     fun skip() {
         if (phase == IntervalPhase.DONE) return
         val now = clock()
@@ -301,6 +356,7 @@ class IntervalRunner(
      */
     fun jumpToNextWork(): Boolean {
         if (phase == IntervalPhase.DONE) return false
+        if (emomPlan != null) return emomNext()
         val slot = nextSlot ?: return false
         val now = clock()
         when (phase) {
@@ -352,6 +408,17 @@ class IntervalRunner(
         val now = clock()
         val remainingMs: Long = if (isPaused) pausedRemainingMs else maxOf(0L, (phaseEndMs ?: now) - now)
         val elapsed = phaseDuration.toDouble() - remainingMs / 1000.0
+
+        val emom = emomPlan
+        if (emom != null) {
+            // EMOM (§7.2): more than 3 s into the round restarts it; otherwise the previous round's
+            // full interval; round 1's first seconds leave the block. "Into the round" counts from the
+            // interval start in REST too (matches iOS).
+            val roundElapsed = if (phase == IntervalPhase.WORK) elapsed else emom.intervalSeconds - remainingMs / 1000.0
+            if (roundElapsed > 3) { restartEmomRound(currentRound, now); return true }
+            if (currentRound > 1) { restartEmomRound(currentRound - 1, now); return true }
+            return false
+        }
         val lastRound = if (plan.mode == IntervalMode.AMRAP) 0 else plan.roundsPerSet
 
         if (elapsed > 3) {
@@ -388,16 +455,48 @@ class IntervalRunner(
         emit(Event.RoundComplete)
     }
 
-    /** EMOM-only: convert the rest of the current minute into rest; the minute boundary is kept. */
+    /**
+     * EMOM Round Done (rep-based rounds only, §7.2): records `.confirmed` with the elapsed work and
+     * flips to REST with the SAME end instant — the interval boundary never moves.
+     */
     fun markEmomRoundDone() {
-        if (plan.mode != IntervalMode.EMOM || phase != IntervalPhase.WORK) return
-        val extraMs = plan.restSeconds * 1000L
+        if (!canConfirmEmomRound) return
+        val now = clock()
+        val remainingMs: Long = if (isPaused) pausedRemainingMs else maxOf(0L, (phaseEndMs ?: now) - now)
+        val elapsedSeconds = ((phaseDuration * 1000L - remainingMs + 500) / 1000).toInt().coerceIn(0, phaseDuration)
+        emomRecords[currentRound] = EmomRoundRecord(currentRound, EmomRoundOutcome.CONFIRMED, elapsedSeconds)
         phase = IntervalPhase.REST
-        val end = phaseEndMs
-        if (end != null) phaseEndMs = end + extraMs else pausedRemainingMs += extraMs
-        secondsRemaining += plan.restSeconds
         phaseDuration = secondsRemaining
         emit(Event.TransitionToRest)
+    }
+
+    /**
+     * EMOM Next / Skip / Up Next (§7.2): the next round at its full interval; the current round,
+     * unless confirmed / auto-completed, is recorded `.skipped`. Returns false on the last round
+     * (the caller leaves the block). Never completes the block itself.
+     */
+    fun emomNext(): Boolean {
+        val emom = emomPlan ?: return false
+        if (phase == IntervalPhase.DONE) return false
+        val now = clock()
+        if (phase == IntervalPhase.PREPARE) {
+            currentRound = 1
+            enterWork(now)
+            return true
+        }
+        val round = maxOf(1, currentRound)
+        if (emomRecords[round]?.outcome?.isCompleted != true) emomRecords[round] = EmomRoundRecord(round, EmomRoundOutcome.SKIPPED)
+        if (round >= emom.totalRounds) return false
+        currentRound = round + 1
+        enterWork(now)
+        return true
+    }
+
+    /** Restart [round]'s full interval (WORK); its recorded outcome is cleared. */
+    private fun restartEmomRound(round: Int, anchor: Long) {
+        currentRound = round
+        emomRecords.remove(round)
+        enterWork(anchor)
     }
 
     // MARK: - Clock
@@ -468,7 +567,14 @@ class IntervalRunner(
                     } else finishSetOrAdvance(anchor)
                 }
                 IntervalMode.EMOM -> {
-                    if (plan.restSeconds > 0) enterRest(anchor)
+                    // WORK ran out: a timed member auto-completes, a rep-based one is unconfirmed.
+                    val timed = isEmomTimeBasedRound
+                    if (emomRecords[currentRound] == null) {
+                        emomRecords[currentRound] = if (timed) EmomRoundRecord(currentRound, EmomRoundOutcome.AUTO_COMPLETED, phaseDuration)
+                        else EmomRoundRecord(currentRound, EmomRoundOutcome.UNCONFIRMED)
+                    }
+                    val rest = plan.workSeconds - phaseDuration
+                    if (timed && rest > 0) enterRest(anchor, rest)
                     else if (currentRound < plan.roundsPerSet) { currentRound += 1; enterWork(anchor) }
                     else finishSetOrAdvance(anchor)
                 }
@@ -501,14 +607,19 @@ class IntervalRunner(
     }
 
     private fun enterWork(anchor: Long) {
-        val seconds = if (plan.mode == IntervalMode.AMRAP) plan.windowSeconds else plan.workSeconds
+        val emom = emomPlan
+        val seconds = when {
+            plan.mode == IntervalMode.AMRAP -> plan.windowSeconds
+            emom != null -> currentExercise?.let { EmomMath.workSeconds(it, emom.intervalSeconds) } ?: emom.intervalSeconds
+            else -> plan.workSeconds
+        }
         setPhase(IntervalPhase.WORK, seconds, anchor)
         emit(Event.TransitionToWork)
         if (isFinalRound && plan.roundsPerSet * plan.sets > 1) emit(Event.FinalRound)
     }
 
-    private fun enterRest(anchor: Long) {
-        setPhase(IntervalPhase.REST, plan.restSeconds, anchor)
+    private fun enterRest(anchor: Long, seconds: Int = plan.restSeconds) {
+        setPhase(IntervalPhase.REST, seconds, anchor)
         emit(Event.TransitionToRest)
     }
 

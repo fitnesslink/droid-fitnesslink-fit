@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.movements
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Cancel
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -34,11 +36,7 @@ import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.movements.classificationNameMatches
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.components.TagOption
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.util.Locale
 
 /** A titled bucket of taxonomy items (iOS `ClassificationGroup`). */
@@ -66,6 +64,12 @@ data class ClassificationGroup(
  * the create-exercise form (iOS `ClassificationPickerView`). Search supports
  * `*` / `?` wildcards; groups left with no matches are dropped. Selection is
  * hoisted: [selectedIds] is read, [onToggle] mutates it, [onDone] closes.
+ *
+ * FTNSSLNK-517: explicit Cancel (restores the selection the picker opened
+ * with) and "Done (n)" replace the bare back arrow, and a "Selected (n)"
+ * section at the top lists the current picks (tap to deselect, Clear for all)
+ * so a pick made from a search result stays visible once the search clears.
+ * Cancel / Clear are expressed as [onToggle] calls, so callers need no new API.
  */
 @Composable
 fun ClassificationPickerView(
@@ -77,6 +81,8 @@ fun ClassificationPickerView(
     modifier: Modifier = Modifier
 ) {
     var searchText by remember { mutableStateOf("") }
+    /** Selection when the picker opened — what Cancel restores. */
+    val initialSelection = remember { selectedIds }
     val lowerSelected = remember(selectedIds) { selectedIds.mapTo(HashSet()) { it.lowercase(Locale.US) } }
     val filteredGroups = remember(groups, searchText) {
         val q = searchText.trim()
@@ -87,16 +93,34 @@ fun ClassificationPickerView(
         }
     }
 
-    Column(modifier = modifier.fillMaxSize().background(BackgroundColor)) {
+    // Current picks resolved to items, in taxonomy order (ids match case-insensitively).
+    val selectedItems = remember(groups, lowerSelected) {
+        val seen = HashSet<String>()
+        groups.flatMap { it.items }.filter { val key = it.id.lowercase(Locale.US); key in lowerSelected && seen.add(key) }
+    }
+    fun deselect(id: String) {
+        selectedIds.filter { it.equals(id, ignoreCase = true) }.forEach(onToggle)
+    }
+    fun cancel() {
+        val initialLower = initialSelection.mapTo(HashSet()) { it.lowercase(Locale.US) }
+        selectedIds.filter { it.lowercase(Locale.US) !in initialLower }.forEach(onToggle)
+        initialSelection.filter { it.lowercase(Locale.US) !in lowerSelected }.forEach(onToggle)
+        onDone()
+    }
+
+    Column(modifier = modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = onDone) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = TextPrimaryColor)
+            TextButton(onClick = { cancel() }) { Text("Cancel", color = FLTheme.colors.textSecondary) }
+            Text(
+                title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center, modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = onDone) {
+                Text(if (selectedItems.isEmpty()) "Done" else "Done (${selectedItems.size})", fontWeight = FontWeight.SemiBold, color = FLPrimary)
             }
-            Text(title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-            TextButton(onClick = onDone) { Text("Done", fontWeight = FontWeight.SemiBold, color = FLPrimary) }
         }
         SearchView(
             text = searchText,
@@ -108,16 +132,46 @@ fun ClassificationPickerView(
         if (filteredGroups.isEmpty()) {
             Text(
                 "No matches for “$searchText”",
-                fontSize = 14.sp, color = TextSecondaryColor,
+                fontSize = 14.sp, color = FLTheme.colors.textSecondary,
                 modifier = Modifier.padding(20.dp)
             )
         }
         LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 24.dp)) {
+            if (selectedItems.isNotEmpty()) {
+                item(key = "selected-header") {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, top = 12.dp, bottom = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Selected (${selectedItems.size})", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
+                        TextButton(onClick = { selectedIds.toList().forEach(onToggle) }) {
+                            Text("Clear", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
+                        }
+                    }
+                }
+                items(selectedItems, key = { "selected:${it.id}" }) { item ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(FLTheme.colors.surface)
+                            .clickable { deselect(item.id) }
+                            .padding(horizontal = 20.dp, vertical = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(item.name, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                        Icon(Icons.Default.Cancel, contentDescription = "Remove ${item.name}", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
+                    }
+                    HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = FLTheme.colors.background)
+                }
+            }
             filteredGroups.forEach { group ->
                 item(key = "header:${group.id}") {
                     Text(
-                        group.title.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() },
-                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor,
+                        // "upper_body" → "Upper Body" (iOS capitalizes every word).
+                        group.title.replace("_", " ").split(" ").joinToString(" ") { w ->
+                            w.lowercase(Locale.US).replaceFirstChar { it.titlecase(Locale.US) }
+                        },
+                        fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary,
                         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 16.dp, bottom = 6.dp)
                     )
                 }
@@ -126,19 +180,19 @@ fun ClassificationPickerView(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .background(White)
-                            .clickable { onToggle(item.id) }
+                            .background(FLTheme.colors.surface)
+                            .clickable { if (checked) deselect(item.id) else onToggle(item.id) }
                             .padding(horizontal = 20.dp, vertical = 14.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(item.name, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                        Text(item.name, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                         if (checked) {
                             Icon(Icons.Default.Check, contentDescription = "Selected", tint = FLPrimary, modifier = Modifier.size(18.dp))
                         } else {
                             Spacer(modifier = Modifier.size(18.dp))
                         }
                     }
-                    HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = BackgroundColor)
+                    HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = FLTheme.colors.background)
                 }
             }
         }
@@ -160,15 +214,15 @@ fun TagOptionChecklist(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(White)
+                    .background(FLTheme.colors.surface)
                     .clickable { onToggle(option.id) }
                     .padding(horizontal = 20.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(option.name, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                Text(option.name, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                 if (checked) Icon(Icons.Default.Check, contentDescription = "Selected", tint = FLPrimary, modifier = Modifier.size(18.dp))
             }
-            if (index < options.lastIndex) HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = BackgroundColor)
+            if (index < options.lastIndex) HorizontalDivider(modifier = Modifier.padding(start = 20.dp), color = FLTheme.colors.background)
         }
     }
 }

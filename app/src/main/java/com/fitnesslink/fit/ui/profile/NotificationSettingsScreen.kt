@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.background
@@ -35,12 +36,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.CoachingTone
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.NotificationSettingsViewModel
 
 /**
@@ -60,7 +56,7 @@ fun NotificationSettingsScreen(onBack: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
         Column(
@@ -74,7 +70,7 @@ fun NotificationSettingsScreen(onBack: () -> Unit) {
                 text = "Goal Reminders",
                 fontSize = 22.sp,
                 fontWeight = FontWeight.Bold,
-                color = TextPrimaryColor,
+                color = FLTheme.colors.textPrimary,
                 modifier = Modifier.padding(top = 8.dp)
             )
 
@@ -165,13 +161,13 @@ private fun Section(title: String, content: @Composable () -> Unit) {
             text = title,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
-            color = TextSecondaryColor
+            color = FLTheme.colors.textSecondary
         )
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(White)
+                .background(FLTheme.colors.surface)
         ) {
             content()
         }
@@ -193,9 +189,9 @@ private fun ToggleRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+            Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
             if (sub != null) {
-                Text(sub, fontSize = 11.sp, color = TextSecondaryColor)
+                Text(sub, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
             }
         }
         Switch(
@@ -203,7 +199,7 @@ private fun ToggleRow(
             onCheckedChange = { onToggle() },
             colors = SwitchDefaults.colors(
                 checkedTrackColor = FLPrimary,
-                checkedThumbColor = White
+                checkedThumbColor = FLTheme.colors.onBrand
             )
         )
     }
@@ -220,9 +216,9 @@ private fun LinkRow(label: String, sub: String, onClick: () -> Unit) {
     ) {
         Column(modifier = Modifier.weight(1f)) {
             Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
-            Text(sub, fontSize = 11.sp, color = TextSecondaryColor)
+            Text(sub, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
-        Text(text = "›", fontSize = 18.sp, color = MediumGray)
+        Text(text = "›", fontSize = 18.sp, color = FLTheme.colors.textTertiary)
     }
 }
 
@@ -237,17 +233,17 @@ private fun CoachingToneRow(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("Coaching tone", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+        Text("Coaching tone", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
         LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             items(CoachingTone.entries.toList()) { tone ->
                 val isSelected = tone == selected
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) FLPrimary else White)
+                        .background(if (isSelected) FLPrimary else FLTheme.colors.surface)
                         .border(
                             1.dp,
-                            if (isSelected) FLPrimary else TextSecondaryColor.copy(alpha = 0.3f),
+                            if (isSelected) FLPrimary else FLTheme.colors.textSecondary.copy(alpha = 0.3f),
                             RoundedCornerShape(16.dp)
                         )
                         .clickable { onSelect(tone) }
@@ -257,7 +253,7 @@ private fun CoachingToneRow(
                         text = tone.displayName,
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (isSelected) White else TextSecondaryColor
+                        color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textSecondary
                     )
                 }
             }
@@ -273,11 +269,11 @@ private fun MaxDailyRow(selected: Int, onSelect: (Int) -> Unit) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("Max per day", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+        Text("Max per day", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
         Text(
             text = "Cap how many push notifications we send each day.",
             fontSize = 11.sp,
-            color = TextSecondaryColor
+            color = FLTheme.colors.textSecondary
         )
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf(3, 5, 8, 12).forEach { n ->
@@ -285,10 +281,10 @@ private fun MaxDailyRow(selected: Int, onSelect: (Int) -> Unit) {
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) FLPrimary else White)
+                        .background(if (isSelected) FLPrimary else FLTheme.colors.surface)
                         .border(
                             1.dp,
-                            if (isSelected) FLPrimary else TextSecondaryColor.copy(alpha = 0.3f),
+                            if (isSelected) FLPrimary else FLTheme.colors.textSecondary.copy(alpha = 0.3f),
                             RoundedCornerShape(16.dp)
                         )
                         .clickable { onSelect(n) }
@@ -298,7 +294,7 @@ private fun MaxDailyRow(selected: Int, onSelect: (Int) -> Unit) {
                         text = "$n",
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (isSelected) White else TextSecondaryColor
+                        color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textSecondary
                     )
                 }
             }
@@ -313,7 +309,7 @@ private fun Divider() {
             .fillMaxWidth()
             .height(1.dp)
             .padding(horizontal = 16.dp)
-            .background(TextSecondaryColor.copy(alpha = 0.1f))
+            .background(FLTheme.colors.textSecondary.copy(alpha = 0.1f))
     )
 }
 

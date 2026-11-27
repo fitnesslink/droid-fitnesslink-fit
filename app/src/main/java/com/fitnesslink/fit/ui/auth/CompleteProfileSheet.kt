@@ -25,8 +25,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.auth.AuthManager
 import com.fitnesslink.fit.ui.components.ActionButtonView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.CompleteProfileViewModel
 
 /**
@@ -58,7 +57,7 @@ fun CompleteProfileSheet(
     ModalBottomSheet(
         onDismissRequest = { if (!model.isSubmitting) onAbandon() },
         sheetState = sheetState,
-        containerColor = BackgroundColor
+        containerColor = FLTheme.colors.background
     ) {
         Column(
             modifier = Modifier
@@ -69,7 +68,7 @@ fun CompleteProfileSheet(
         ) {
             Text("Finish Your Profile", fontSize = 20.sp, fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(6.dp))
-            Text("Just a couple of details and you're in.", fontSize = 14.sp, color = TextSecondaryColor)
+            Text("Just a couple of details and you're in.", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
 
             Spacer(modifier = Modifier.height(20.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -39,9 +40,6 @@ import com.fitnesslink.fit.model.ProgramDates
 import com.fitnesslink.fit.programs.UserProgramStore
 import com.fitnesslink.fit.ui.components.PrimaryButtonView
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -98,25 +96,25 @@ fun MoveWorkoutSheet(entry: FitnessContent, onMoved: () -> Unit, onDismiss: () -
         )
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.surfaceElevated) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onDismiss) { Text("Cancel", color = FLPrimary) }
                 Spacer(modifier = Modifier.weight(1f))
-                Text("Move Workout", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Move Workout", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Spacer(modifier = Modifier.weight(1f))
                 Spacer(modifier = Modifier.width(64.dp))
             }
             Text(
                 "Choose a new day for $title. The rest of your program stays where it is.",
-                fontSize = 14.sp, color = TextSecondaryColor
+                fontSize = 14.sp, color = FLTheme.colors.textSecondary
             )
             DatePicker(
                 state = pickerState,
                 title = null,
                 headline = null,
                 showModeToggle = false,
-                colors = DatePickerDefaults.colors(containerColor = White, selectedDayContainerColor = FLPrimary, todayDateBorderColor = FLPrimary, todayContentColor = FLPrimary)
+                colors = DatePickerDefaults.colors(containerColor = FLTheme.colors.surfaceElevated, selectedDayContainerColor = FLPrimary, todayDateBorderColor = FLPrimary, todayContentColor = FLPrimary)
             )
             Box(
                 modifier = Modifier

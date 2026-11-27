@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.calendar
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -47,10 +48,6 @@ import com.fitnesslink.fit.calendar.CalendarDurationChips
 import com.fitnesslink.fit.model.FitnessContent
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.text.DateFormat
 import java.util.Date
 
@@ -99,7 +96,7 @@ fun DateContentView(
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .then(
                 if (isSelecting) Modifier.clickable(onClick = onToggleSelect)
                 else Modifier.combinedClickable(onClick = { if (hasWorkout) onOpen() }, onLongClick = { showMenu = true })
@@ -111,7 +108,7 @@ fun DateContentView(
             Icon(
                 if (isSelected) Icons.Default.CheckCircle else Icons.Outlined.Circle,
                 contentDescription = if (isSelected) "Selected" else "Not selected",
-                tint = if (isSelected) FLPrimary else MediumGray,
+                tint = if (isSelected) FLPrimary else FLTheme.colors.textTertiary,
                 modifier = Modifier.size(22.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
@@ -125,10 +122,10 @@ fun DateContentView(
         Spacer(modifier = Modifier.width(12.dp))
 
         Column(modifier = Modifier.weight(1f)) {
-            Text(content.title.ifBlank { "Workout" }, fontSize = 15.sp, color = TextPrimaryColor)
+            Text(content.title.ifBlank { "Workout" }, fontSize = 15.sp, color = FLTheme.colors.textPrimary)
             if (timeLabel != null) {
                 Spacer(modifier = Modifier.height(3.dp))
-                Text(timeLabel, fontSize = 12.sp, color = TextSecondaryColor)
+                Text(timeLabel, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
             if (isProgramWorkout) {
                 Spacer(modifier = Modifier.height(3.dp))
@@ -143,7 +140,7 @@ fun DateContentView(
         if (!isSelecting) {
             Box {
                 Icon(
-                    Icons.Default.MoreHoriz, contentDescription = "More", tint = TextSecondaryColor,
+                    Icons.Default.MoreHoriz, contentDescription = "More", tint = FLTheme.colors.textSecondary,
                     modifier = Modifier.size(32.dp).clickable { showMenu = true }.padding(4.dp)
                 )
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
@@ -153,8 +150,8 @@ fun DateContentView(
                         onClick = { showMenu = false; onMove() }
                     )
                     DropdownMenuItem(
-                        text = { Text("Remove from Calendar", color = Color.Red) },
-                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Color.Red) },
+                        text = { Text("Remove from Calendar", color = FLTheme.colors.danger) },
+                        leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = FLTheme.colors.danger) },
                         onClick = { showMenu = false; showDeleteConfirm = true }
                     )
                 }
@@ -180,7 +177,7 @@ private fun DeleteConfirmDialog(
         is CalendarDeleteScope.Single -> AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text("Remove this workout from your calendar?") },
-            confirmButton = { TextButton(onClick = onDeleteOne) { Text("Remove from Calendar", color = Color.Red) } },
+            confirmButton = { TextButton(onClick = onDeleteOne) { Text("Remove from Calendar", color = FLTheme.colors.danger) } },
             dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
         )
         is CalendarDeleteScope.ProgramChoice -> {
@@ -193,11 +190,11 @@ private fun DeleteConfirmDialog(
                         Text("“${content.title}” is part of “$programName”.", fontSize = 14.sp)
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            "Remove just this workout", color = Color.Red, fontSize = 16.sp,
+                            "Remove just this workout", color = FLTheme.colors.danger, fontSize = 16.sp,
                             modifier = Modifier.fillMaxWidth().clickable(onClick = onDeleteOne).padding(vertical = 10.dp)
                         )
                         Text(
-                            "Remove whole program ($n workout${if (n == 1) "" else "s"})", color = Color.Red, fontSize = 16.sp,
+                            "Remove whole program ($n workout${if (n == 1) "" else "s"})", color = FLTheme.colors.danger, fontSize = 16.sp,
                             modifier = Modifier.fillMaxWidth().clickable(onClick = onDeleteProgram).padding(vertical = 10.dp)
                         )
                     }

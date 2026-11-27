@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -51,8 +52,8 @@ import com.fitnesslink.fit.auth.AuthConfig
 import com.fitnesslink.fit.auth.AuthManager
 import com.fitnesslink.fit.ui.components.ActionButtonView
 import com.fitnesslink.fit.ui.components.SocialSignInButton
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.LoginViewModel
 import com.fitnesslink.fit.viewmodel.SignUpViewModel
 
@@ -95,7 +96,7 @@ fun LoginScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black)))
+                .background(Brush.verticalGradient(colors = listOf(Color.Black.copy(alpha = 0.3f), Color.Black))) // theme-exempt: over media
         )
         Column(modifier = Modifier.fillMaxSize()) {
             Image(
@@ -118,8 +119,13 @@ fun LoginScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-                        .background(BackgroundColor)
+                        .background(FLTheme.colors.background)
                         .padding(top = 20.dp)
+                        // Edge-to-edge: the sheet background runs under the
+                        // nav bar, but content (Google button) must clear it.
+                        // navigationBarsPadding consumes those insets first so
+                        // imePadding only adds the keyboard's extra height.
+                        .navigationBarsPadding()
                         .imePadding()
                 ) {
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -147,7 +153,7 @@ fun LoginScreen(
                                 }
                             )
                         } else {
-                            SignUpContent(model = signUpModel)
+                            SignUpContent(model = signUpModel, socialModel = viewModel)
                         }
                     }
                 }
@@ -233,7 +239,7 @@ private fun LoginContent(
                 Text(
                     text = viewModel.errorMessage ?: "Invalid email or password",
                     fontSize = 11.sp,
-                    color = Color.Red,
+                    color = FLTheme.colors.danger,
                     modifier = Modifier.weight(1f)
                 )
             } else {
@@ -264,42 +270,7 @@ private fun LoginContent(
         Spacer(modifier = Modifier.height(20.dp))
         LoginSeparator()
         Spacer(modifier = Modifier.height(10.dp))
-
-        // Social sign-in: a social account is "sign in" only (AuthConfig
-        // .allowsSocialAccountCreation); the first-time shell-user case is
-        // handled by CompleteProfileSheet. Facebook stays hidden until the
-        // provider is enabled in Firebase.
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            SocialSignInButton(
-                icon = "google",
-                onClick = {
-                    if (viewModel.socialProvider == null) {
-                        focusManager.clearFocus()
-                        viewModel.loginWithGoogle(context)
-                    }
-                }
-            )
-            if (AuthConfig.isFacebookSignInEnabled) {
-                Spacer(modifier = Modifier.width(10.dp))
-                SocialSignInButton(
-                    icon = "facebook",
-                    onClick = {
-                        if (viewModel.socialProvider == null) {
-                            focusManager.clearFocus()
-                            viewModel.loginWithFacebook(context)
-                        }
-                    }
-                )
-            }
-        }
-
-        viewModel.socialErrorMessage?.let {
-            Spacer(modifier = Modifier.height(10.dp))
-            AuthErrorText(it, centered = true)
-        }
+        SocialButtons(viewModel)
 
         Spacer(modifier = Modifier.height(30.dp))
     }
@@ -308,7 +279,7 @@ private fun LoginContent(
 // MARK: - Sign Up tab (FTNSSLNK-285)
 
 @Composable
-private fun SignUpContent(model: SignUpViewModel) {
+private fun SignUpContent(model: SignUpViewModel, socialModel: LoginViewModel) {
     val focusManager = LocalFocusManager.current
 
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -380,11 +351,59 @@ private fun SignUpContent(model: SignUpViewModel) {
                 model.submit()
             }
         )
-        // No social row here: accounts are created with email/password only.
-        // Social sign-in lives on the Login tab, and AuthManager refuses to
-        // create an account from a first-time social sign-in.
+
+        // Social sign-in creates the account too (allowsSocialAccountCreation);
+        // a first-time Google user finishes on CompleteProfileSheet.
+        Spacer(modifier = Modifier.height(20.dp))
+        LoginSeparator()
+        Spacer(modifier = Modifier.height(10.dp))
+        SocialButtons(socialModel)
 
         Spacer(modifier = Modifier.height(30.dp))
+    }
+}
+
+// Social sign-in (Google; Facebook hidden until the provider is enabled in
+// Firebase). Since 2026-10-27 a first-time social sign-in creates the account
+// (AuthConfig.allowsSocialAccountCreation) and finishes on CompleteProfileSheet,
+// so the row appears on both tabs, matching iOS `LoginFormView.socialButtons`.
+// Sign in with Apple is iOS-only.
+@Composable
+private fun SocialButtons(viewModel: LoginViewModel) {
+    val focusManager = LocalFocusManager.current
+    val context = LocalContext.current
+    Column(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                SocialSignInButton(
+                    icon = "google",
+                    onClick = {
+                        if (viewModel.socialProvider == null) {
+                            focusManager.clearFocus()
+                            viewModel.loginWithGoogle(context)
+                        }
+                    }
+                )
+                if (AuthConfig.isFacebookSignInEnabled) {
+                    Spacer(modifier = Modifier.width(10.dp))
+                    SocialSignInButton(
+                        icon = "facebook",
+                        onClick = {
+                            if (viewModel.socialProvider == null) {
+                                focusManager.clearFocus()
+                                viewModel.loginWithFacebook(context)
+                            }
+                        }
+                    )
+                }
+            }
+
+            viewModel.socialErrorMessage?.let {
+                Spacer(modifier = Modifier.height(10.dp))
+                AuthErrorText(it, centered = true)
+            }
     }
 }
 
@@ -402,7 +421,7 @@ private fun LoginSeparator() {
             fontSize = 14.sp,
             color = FLPrimary,
             modifier = Modifier
-                .background(BackgroundColor)
+                .background(FLTheme.colors.background)
                 .padding(horizontal = 10.dp)
         )
     }

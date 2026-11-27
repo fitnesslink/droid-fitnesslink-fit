@@ -109,6 +109,8 @@ object WorkoutTaskInputs {
         // `intervalSeconds` is the wire-level signal of duration mode.
         intervalSeconds = if (task.usesDuration) task.durationSeconds else null,
         instructions = task.instructions,
+        // EMOM lead only; optional on the wire (dropped by servers without the column).
+        coachNotes = task.coachNotes?.trim()?.ifEmpty { null },
         weightKg = task.weightKg,
         incline = task.incline?.let { BigDecimal.valueOf(it) },
         paceSeconds = task.paceSeconds,
@@ -131,7 +133,9 @@ object WorkoutTaskInputs {
         setConfigs = if (task.sameAcrossSets) null else task.setConfigs.map {
             WorkoutTaskSetConfigInput(
                 setNumber = it.setNumber,
-                reps = it.reps,
+                // FTNSSLNK-511: time-based sets carry Time + Weight only — no
+                // rep target goes on the wire (mirrors the task-level `reps`).
+                reps = if (task.usesDuration) null else it.reps,
                 weightKg = it.weightKg?.toInt(),
                 durationSeconds = it.durationSeconds,
                 isDropSet = it.isDropSet,

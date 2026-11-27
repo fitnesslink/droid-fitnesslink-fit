@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.workouts
 
+import com.fitnesslink.fit.model.EmomMath
 import com.fitnesslink.fit.model.ExerciseGroupType
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.IntervalMode
@@ -232,12 +233,51 @@ object WorkoutRowOps {
         val same = !task.sameAcrossSets
         return if (same) {
             val first = task.setConfigs.firstOrNull()
-            task.copy(sameAcrossSets = true, setConfigs = task.setConfigs.map {
+            val collapsed = task.copy(sameAcrossSets = true, setConfigs = task.setConfigs.map {
                 it.copy(reps = first?.reps ?: task.reps, weightKg = first?.weightKg, isDropSet = false)
             })
+            if (!task.usesDuration) return collapsed
+            // FTNSSLNK-511: timed sets collapse to set 1's window too, and the
+            // task-level duration (what ships in uniform mode) follows it so
+            // the summary matches the rows.
+            val window = first?.durationSeconds?.takeIf { it > 0 } ?: task.durationSeconds ?: 60
+            collapsed.copy(
+                durationSeconds = window,
+                setConfigs = collapsed.setConfigs.map { it.copy(durationSeconds = window, reps = 0) },
+                metric = formatMetric(true, maxOf(task.sets, 1), task.reps, window, task.weightKg?.toDouble())
+            )
         } else {
-            seedConfigs(task.copy(sameAcrossSets = false), maxOf(task.sets, 1))
+            val seeded = seedConfigs(task.copy(sameAcrossSets = false), maxOf(task.sets, 1))
+            if (!task.usesDuration) return seeded
+            // FTNSSLNK-511: a timed task's per-set row always has a window to
+            // edit (configs from the server / rep mode without one start at
+            // the task-level duration) and no rep target.
+            seeded.copy(setConfigs = seeded.setConfigs.map {
+                it.copy(
+                    durationSeconds = it.durationSeconds?.takeIf { d -> d > 0 } ?: task.durationSeconds ?: 60,
+                    reps = 0
+                )
+            })
         }
+    }
+
+    /**
+     * Per-set time input parser (FTNSSLNK-511): "m:ss" ("1:30") or a bare
+     * seconds count ("45" → 45, "90" → 90). Null when unparseable / empty.
+     */
+    fun parseSetDuration(raw: String): Int? {
+        val trimmed = raw.trim()
+        if (trimmed.isEmpty()) return null
+        if (trimmed.contains(":")) {
+            val parts = trimmed.split(":")
+            if (parts.size != 2) return null
+            val m = (parts[0].ifEmpty { "0" }).toIntOrNull() ?: return null
+            val s = (parts[1].ifEmpty { "0" }).toIntOrNull() ?: return null
+            if (m < 0 || s !in 0..59) return null
+            return m * 60 + s
+        }
+        val s = trimmed.toIntOrNull() ?: return null
+        return if (s >= 0) s else null
     }
 
     /** Per-round loads for a grouped member — one `setConfigs` row per round. */
@@ -343,7 +383,7 @@ object WorkoutRowOps {
                 rounds = defaultRounds, totalRounds = defaultRounds
             )
         }
-        val groupRow = TaskRow(
+        var groupRow = TaskRow(
             task = primary,
             advanced = type.label,
             rounds = "$defaultRounds rounds",
@@ -352,6 +392,8 @@ object WorkoutRowOps {
             intervalMode = preset?.mode,
             advancedTasks = secondary
         )
+        // EMOM creation defaults (EMOM PRD §3.1): 60 s interval, one cycle → rounds = exercises.
+        if (preset?.mode == IntervalMode.EMOM) groupRow = EmomMath.applyDefaults(groupRow)
         rebuilt.add(minOf(insertAt, rebuilt.size), groupRow)
         return rebuilt
     }
@@ -427,6 +469,7 @@ object WorkoutRowOps {
             intervalSets = old.intervalSets,
             intervalSetRestSeconds = old.intervalSetRestSeconds,
             intervalMode = new.intervalMode ?: old.intervalMode,
+            coachNotes = old.coachNotes,
             restTypeId = old.restTypeId,
             restMovementId = old.restMovementId,
             restMovementName = old.restMovementName,
@@ -441,7 +484,7 @@ object WorkoutRowOps {
         )
         val demoted = old.copy(
             roundRestSeconds = null, intervalWorkSeconds = null, intervalRestSeconds = null, intervalWindowSeconds = null,
-            intervalSets = null, intervalSetRestSeconds = null, restTypeId = null,
+            intervalSets = null, intervalSetRestSeconds = null, restTypeId = null, coachNotes = null,
             restMovementId = null, restMovementName = null, restMovementThumbnailId = null, restMovementThumbnailUrl = null,
             restMovementVideoId = null, restMovementVideoUrl = null, restMovementVideoStatus = null,
             restMovementPhoneVideoId = null, restMovementPhoneVideoUrl = null, restMovementPhoneVideoStatus = null
@@ -488,18 +531,21 @@ object WorkoutRowOps {
             val (_, promoted) = migrateGroupLeadConfig(removed, members[0])
             members[0] = promoted
         }
-        val newRow = row.copy(task = members[0], advancedTasks = members.drop(1))
+        var newRow = row.copy(task = members[0], advancedTasks = members.drop(1))
+        // EMOM (PRD §3.2): interval and cycles stay, rounds / window follow the new member count.
+        if (row.isInterval && EmomMath.plan(row) != null) newRow = EmomMath.rebalanced(row, newRow)
         val out = rows.toMutableList()
         out[ri] = newRow
         val type = if (row.isInterval) ExerciseGroupType.Interval else if (row.isSuperset) ExerciseGroupType.Superset else ExerciseGroupType.Circuit
         return if (members.size < minimumGroupCount(type)) ungroupRows(out, members[0].id) else out
     }
 
-    /** Rounds change mirrored onto the lead + siblings (and per-round configs; EMOM window). */
+    /** Rounds change mirrored onto the lead + siblings (and per-round configs; EMOM window at the block's interval). */
     fun withRounds(row: TaskRow, rounds: Int): TaskRow {
+        val emomInterval = EmomMath.plan(row)?.intervalSeconds
         var lead = row.task?.copy(rounds = rounds, totalRounds = rounds)
-        if (lead != null && !lead.sameAcrossSets) lead = seedConfigs(lead, rounds)
-        if (lead != null && row.intervalMode == IntervalMode.EMOM) lead = lead.copy(intervalWindowSeconds = rounds * 60)
+        if (lead != null && !lead.sameAcrossSets && emomInterval == null) lead = seedConfigs(lead, rounds)
+        if (lead != null && emomInterval != null) lead = lead.copy(intervalWindowSeconds = rounds * emomInterval)
         return row.copy(
             totalRounds = rounds, rounds = "$rounds rounds", task = lead,
             advancedTasks = row.advancedTasks.map {
@@ -509,8 +555,9 @@ object WorkoutRowOps {
         )
     }
 
-    /** Apply a named interval preset to the row (work / rest / rounds / window). */
+    /** Apply a named interval preset to the row (work / rest / rounds / window). EMOM gets its creation defaults (§3.1). */
     fun withIntervalMode(row: TaskRow, mode: IntervalMode): TaskRow {
+        if (mode == IntervalMode.EMOM) return EmomMath.applyDefaults(row.copy(intervalMode = mode, isInterval = true))
         val p = preset(mode)
         return row.copy(
             intervalMode = mode,
@@ -526,13 +573,14 @@ object WorkoutRowOps {
         )
     }
 
-    /** AMRAP / EMOM window; EMOM also re-derives the round count. */
+    /** AMRAP / EMOM window; EMOM also re-derives the round count at the block's interval. */
     fun withIntervalWindow(row: TaskRow, seconds: Int): TaskRow {
         val s = maxOf(60, seconds)
+        val emomInterval = EmomMath.plan(row)?.intervalSeconds
         var out = row.copy(task = row.task?.copy(intervalWindowSeconds = s))
-        if (row.intervalMode == IntervalMode.EMOM) {
-            val rounds = s / 60
-            out = out.copy(totalRounds = rounds, rounds = "$rounds rounds", task = out.task?.copy(rounds = rounds, totalRounds = rounds))
+        if (emomInterval != null) {
+            val rounds = maxOf(1, s / emomInterval)
+            out = out.copy(totalRounds = rounds, rounds = "$rounds rounds", task = out.task?.copy(rounds = rounds, totalRounds = rounds, intervalWindowSeconds = rounds * emomInterval))
         }
         return out
     }
@@ -604,6 +652,7 @@ object WorkoutRowOps {
                 usesDuration = usesDuration,
                 durationSeconds = if (usesDuration) t.intervalSeconds else null,
                 instructions = t.instructions,
+                coachNotes = t.coachNotes,
                 weightKg = t.weightKg,
                 incline = t.incline,
                 paceSeconds = t.paceSeconds,
@@ -691,6 +740,8 @@ object WorkoutRowOps {
                 intervalWindowSeconds = t.intervalWindowSeconds ?: localTask.intervalWindowSeconds,
                 intervalSetRestSeconds = t.intervalSetRestSeconds ?: localTask.intervalSetRestSeconds,
                 roundRestSeconds = t.roundRestSeconds ?: localTask.roundRestSeconds,
+                // Servers without the column drop `coachNotes`; keep the local value.
+                coachNotes = t.coachNotes ?: localTask.coachNotes,
                 restTypeId = t.restTypeId ?: localTask.restTypeId,
                 restMovementId = t.restMovementId ?: localTask.restMovementId,
                 restMovementName = t.restMovementName ?: localTask.restMovementName,

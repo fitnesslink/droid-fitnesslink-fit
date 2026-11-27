@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,25 +53,21 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.fitnesslink.fit.model.EmomMath
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.IntervalMetrics
 import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.RestType
 import com.fitnesslink.fit.model.TaskRow
 import com.fitnesslink.fit.model.WorkoutTask
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutEditorViewModel
 import com.fitnesslink.fit.workouts.WorkoutRowOps
+import com.fitnesslink.fit.ui.theme.WorkGreen
 
-private val WorkGreen = Color(0xFF22A35A)
 
 /**
  * Grouped row in the editor (iOS `GroupEditorView`): superset / circuit /
@@ -95,12 +92,12 @@ fun GroupEditorView(row: TaskRow, phaseIndex: Int, viewModel: WorkoutEditorViewM
             onDismissRequest = { memberPendingDelete = null },
             title = { Text("Delete Exercise?") },
             text = { Text("Remove ${member.name} from this $label? The rest of the block keeps its order and settings.") },
-            confirmButton = { TextButton(onClick = { viewModel.removeGroupMember(member.id, phaseIndex); memberPendingDelete = null }) { Text("Delete", color = Color.Red) } },
+            confirmButton = { TextButton(onClick = { viewModel.removeGroupMember(member.id, phaseIndex); memberPendingDelete = null }) { Text("Delete", color = FLTheme.colors.danger) } },
             dismissButton = { TextButton(onClick = { memberPendingDelete = null }) { Text("Cancel") } }
         )
     }
 
-    Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(White).height(IntrinsicSize.Min)) {
+    Row(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.surface).height(IntrinsicSize.Min)) {
         Box(modifier = Modifier.width(4.dp).fillMaxHeight().background(groupColor))
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(
@@ -110,14 +107,14 @@ fun GroupEditorView(row: TaskRow, phaseIndex: Int, viewModel: WorkoutEditorViewM
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     val header = if (row.isInterval && row.intervalMode != null) "Interval · ${row.intervalMode.displayName}" else row.advanced
                     Text(header.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = groupColor)
-                    if (!row.isInterval && row.totalRounds > 0) Text("${row.totalRounds} rounds", fontSize = 11.sp, color = TextSecondaryColor)
+                    if (!row.isInterval && row.totalRounds > 0) Text("${row.totalRounds} rounds", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                 }
                 if (row.isSuperset || row.isCircuit) {
                     EditorStepper(row.totalRounds, { viewModel.updateGroupRounds(leadId, it) }, min = 1, max = 20, valueWidth = 28)
                 }
                 Box {
                     Icon(
-                        Icons.Filled.MoreVert, contentDescription = "Group actions", tint = MediumGray,
+                        Icons.Filled.MoreVert, contentDescription = "Group actions", tint = FLTheme.colors.textTertiary,
                         modifier = Modifier.size(28.dp).clickable { showMenu = true }.padding(4.dp)
                     )
                     DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
@@ -128,7 +125,7 @@ fun GroupEditorView(row: TaskRow, phaseIndex: Int, viewModel: WorkoutEditorViewM
                         if (otherPhases.isNotEmpty()) {
                             DropdownMenuItem(text = { Text("Move to phase…") }, onClick = { showMenu = false; showMoveMenu = true })
                         }
-                        DropdownMenuItem(text = { Text("Remove", color = Color.Red) }, onClick = { showMenu = false; viewModel.removeGroup(leadId, phaseIndex) })
+                        DropdownMenuItem(text = { Text("Remove", color = FLTheme.colors.danger) }, onClick = { showMenu = false; viewModel.removeGroup(leadId, phaseIndex) })
                     }
                     DropdownMenu(expanded = showMoveMenu, onDismissRequest = { showMoveMenu = false }) {
                         otherPhases.forEach { (index, phase) ->
@@ -151,17 +148,17 @@ fun GroupEditorView(row: TaskRow, phaseIndex: Int, viewModel: WorkoutEditorViewM
                 )
             }
 
-            if (row.isInterval && lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
+            if (row.isInterval && EmomMath.plan(row) == null && lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     RolePill("RECOVERY", OrangeTheme)
                     RecoveryThumbnail(lead.restMovementThumbnailId, 32)
-                    Text(lead.restMovementName ?: "Recovery", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                    Icon(Icons.Filled.Sync, contentDescription = "Change recovery movement", tint = MediumGray,
+                    Text(lead.restMovementName ?: "Recovery", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                    Icon(Icons.Filled.Sync, contentDescription = "Change recovery movement", tint = FLTheme.colors.textTertiary,
                         modifier = Modifier.size(20.dp).clickable { viewModel.restMovementPickerTaskId = leadId })
-                    Icon(Icons.Filled.Cancel, contentDescription = "Passive rest", tint = MediumGray,
+                    Icon(Icons.Filled.Cancel, contentDescription = "Passive rest", tint = FLTheme.colors.textTertiary,
                         modifier = Modifier.size(20.dp).clickable { viewModel.updateRestType(leadId, RestType.PASSIVE) })
                 }
             }
@@ -178,7 +175,10 @@ private fun GroupMemberRow(
     val isExpanded = viewModel.expandedTaskId == task.id
     var showMenu by remember(task.id) { mutableStateOf(false) }
     val editorTask = task.copy(isInterval = task.isInterval || row.isInterval, intervalMode = task.intervalMode ?: row.intervalMode)
+    val isEmom = row.isInterval && (row.intervalMode ?: editorTask.intervalMode) == IntervalMode.EMOM
     val metric = when {
+        // EMOM member rows show the exercise target only — never the interval (PRD §3.3).
+        isEmom -> EmomMath.targetText(editorTask)
         editorTask.isInterval -> if (IntervalMath.usesRepTargets(row.intervalMode ?: editorTask.intervalMode) && editorTask.reps > 0) "${editorTask.reps} reps" else ""
         editorTask.usesDuration -> WorkoutRowOps.formatDuration(editorTask.durationSeconds ?: 0)
         editorTask.reps > 0 -> "${editorTask.reps} reps"
@@ -195,18 +195,18 @@ private fun GroupMemberRow(
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 if (row.isInterval) RolePill("WORK", WorkGreen)
-                Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                if (metric.isNotEmpty()) Text(metric, fontSize = 12.sp, color = TextSecondaryColor)
-                Icon(if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = MediumGray, modifier = Modifier.size(18.dp))
+                Text(task.name, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                if (metric.isNotEmpty()) Text(metric, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+                Icon(if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
             }
             Box {
-                Icon(Icons.Filled.MoreHoriz, contentDescription = "Member actions", tint = MediumGray, modifier = Modifier.size(24.dp).clickable { showMenu = true })
+                Icon(Icons.Filled.MoreHoriz, contentDescription = "Member actions", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(24.dp).clickable { showMenu = true })
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(text = { Text("Edit exercise") }, onClick = { showMenu = false; viewModel.expandedTaskId = task.id })
-                    DropdownMenuItem(text = { Text("Replace exercise") }, onClick = { showMenu = false; viewModel.replaceExerciseTaskId = task.id })
+                    DropdownMenuItem(text = { Text("Swap Exercise") }, onClick = { showMenu = false; viewModel.replaceExerciseTaskId = task.id })
                     if (memberIdx > 0) DropdownMenuItem(text = { Text("Move up") }, onClick = { showMenu = false; viewModel.moveGroupMember(task.id, true, phaseIndex) })
                     if (memberIdx < memberCount - 1) DropdownMenuItem(text = { Text("Move down") }, onClick = { showMenu = false; viewModel.moveGroupMember(task.id, false, phaseIndex) })
-                    DropdownMenuItem(text = { Text("Delete exercise", color = Color.Red) }, onClick = { showMenu = false; onDelete() })
+                    DropdownMenuItem(text = { Text("Delete exercise", color = FLTheme.colors.danger) }, onClick = { showMenu = false; onDelete() })
                 }
             }
         }
@@ -215,7 +215,7 @@ private fun GroupMemberRow(
         }
         if (isExpanded) {
             Box(modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 10.dp)) {
-                SetEditorView(task = editorTask, viewModel = viewModel, isGrouped = true)
+                SetEditorView(task = editorTask, viewModel = viewModel, isGrouped = true, emomIntervalSeconds = if (isEmom) EmomMath.plan(row)?.intervalSeconds else null)
             }
         }
     }
@@ -224,16 +224,19 @@ private fun GroupMemberRow(
 @Composable
 internal fun RolePill(label: String, color: Color) {
     Text(
-        text = label, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = White,
+        text = label, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold, color = FLTheme.colors.onBrand,
         modifier = Modifier.clip(CircleShape).background(color).padding(horizontal = 7.dp, vertical = 3.dp)
     )
 }
 
-/** Read-only interval summary; tapping opens [IntervalEditSheet]. */
+/** Read-only interval summary; tapping opens [IntervalEditSheet] (or [EmomEditSheet] for EMOM). */
 @Composable
 private fun IntervalSummaryCard(row: TaskRow, viewModel: WorkoutEditorViewModel, modifier: Modifier = Modifier) {
     var showEdit by remember(row.task?.id) { mutableStateOf(false) }
-    Row(
+    val emom = EmomMath.plan(row)
+    if (emom != null) {
+        EmomSummaryCard(emom, modifier) { showEdit = true }
+    } else Row(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
@@ -246,12 +249,34 @@ private fun IntervalSummaryCard(row: TaskRow, viewModel: WorkoutEditorViewModel,
         if (metrics != null) IntervalMetricsLine(metrics, modifier = Modifier.weight(1f))
         else Text("Tap to finish setup", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLPrimary, modifier = Modifier.weight(1f))
         Text("Edit", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
-        Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
+        Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
     }
     if (showEdit) {
         // Re-read the live row so edits inside the sheet reflect immediately.
         val liveRow = viewModel.workout.phases.flatMap { it.taskRows }.firstOrNull { it.task?.id == row.task?.id } ?: row
-        IntervalEditSheet(row = liveRow, viewModel = viewModel, onDismiss = { showEdit = false })
+        if (EmomMath.plan(liveRow) != null) EmomEditSheet(row = liveRow, viewModel = viewModel, onDismiss = { showEdit = false })
+        else IntervalEditSheet(row = liveRow, viewModel = viewModel, onDismiss = { showEdit = false })
+    }
+}
+
+/** EMOM builder card (PRD §3.3): "20-min EMOM · 60s Interval · 20:00", Edit ›, then Duration / Interval / Rounds / Cycles tiles. */
+@Composable
+private fun EmomSummaryCard(plan: com.fitnesslink.fit.model.EmomPlan, modifier: Modifier, onEdit: () -> Unit) {
+    Column(
+        modifier = modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLPrimary.copy(alpha = 0.06f))
+            .clickable(onClick = onEdit).padding(horizontal = 12.dp, vertical = 10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(EmomMath.summaryTitle(plan), fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, maxLines = 2, modifier = Modifier.weight(1f))
+            Text("Edit", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
+            Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            EmomMath.builderTiles(plan).forEach { tile ->
+                IntervalStatTile(label = tile.label, value = tile.value, modifier = Modifier.weight(1f))
+            }
+        }
     }
 }
 
@@ -262,14 +287,14 @@ private fun RoundRestEditorRow(row: TaskRow, viewModel: WorkoutEditorViewModel, 
     val seconds = row.task.roundRestSeconds
     var showPicker by remember(taskId) { mutableStateOf(false) }
     Row(modifier = modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Icon(Icons.Filled.Timer, contentDescription = null, tint = MediumGray, modifier = Modifier.size(14.dp))
-        Text("Rest between rounds", fontSize = 13.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+        Icon(Icons.Filled.Timer, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp))
+        Text("Rest between rounds", fontSize = 13.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
         Text(
             text = seconds?.let(WorkoutRowOps::formatRest) ?: "Add", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary,
             modifier = Modifier.clickable { showPicker = true }
         )
         if (seconds != null && seconds > 0) {
-            Icon(Icons.Filled.Cancel, contentDescription = "Clear", tint = MediumGray, modifier = Modifier.size(16.dp).clickable { viewModel.updateRoundRest(taskId, null) })
+            Icon(Icons.Filled.Cancel, contentDescription = "Clear", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp).clickable { viewModel.updateRoundRest(taskId, null) })
         }
     }
     if (showPicker) {
@@ -286,14 +311,14 @@ private fun MemberRestEditorRow(task: WorkoutTask, viewModel: WorkoutEditorViewM
     val seconds = task.restSeconds.takeIf { it > 0 }
     var showPicker by remember(task.id) { mutableStateOf(false) }
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        Icon(Icons.Filled.Timer, contentDescription = null, tint = MediumGray, modifier = Modifier.size(12.dp))
+        Icon(Icons.Filled.Timer, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(12.dp))
         Text(
             text = seconds?.let { "Rest after: ${WorkoutRowOps.formatRest(it)}" } ?: "Add rest after",
-            fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (seconds == null) TextSecondaryColor else FLPrimary,
+            fontSize = 12.sp, fontWeight = FontWeight.Medium, color = if (seconds == null) FLTheme.colors.textSecondary else FLPrimary,
             modifier = Modifier.clickable { showPicker = true }
         )
         if (seconds != null) {
-            Icon(Icons.Filled.Cancel, contentDescription = "Clear", tint = MediumGray, modifier = Modifier.size(14.dp).clickable { viewModel.updateGroupMemberRest(task.id, null) })
+            Icon(Icons.Filled.Cancel, contentDescription = "Clear", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp).clickable { viewModel.updateGroupMemberRest(task.id, null) })
         }
     }
     if (showPicker) {
@@ -309,13 +334,13 @@ private fun MemberRestEditorRow(task: WorkoutTask, viewModel: WorkoutEditorViewM
 @Composable
 fun IntervalModePickerSheet(onPick: (IntervalMode) -> Unit, onCancel: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onCancel, sheetState = sheetState, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onCancel, sheetState = sheetState, containerColor = FLTheme.colors.surfaceElevated, contentColor = FLTheme.colors.textPrimary) {
         Column(
             modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                TextButton(onClick = onCancel) { Text("Cancel", color = TextSecondaryColor) }
+                TextButton(onClick = onCancel) { Text("Cancel", color = FLTheme.colors.textSecondary) }
                 Spacer(modifier = Modifier.weight(1f))
                 Text("New Interval", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(modifier = Modifier.weight(1f))
@@ -333,16 +358,16 @@ fun IntervalModePickerSheet(onPick: (IntervalMode) -> Unit, onCancel: () -> Unit
 @Composable
 private fun ModeOptionCard(title: String, subtitle: String, icon: ImageVector, color: Color, onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(BackgroundColor).clickable(onClick = onClick).padding(14.dp),
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.background).clickable(onClick = onClick).padding(14.dp),
         verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(modifier = Modifier.size(36.dp).clip(RoundedCornerShape(8.dp)).background(color.copy(alpha = 0.12f)), contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(22.dp))
         }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text(subtitle, fontSize = 13.sp, color = TextSecondaryColor)
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text(subtitle, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
         }
-        Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray)
+        Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary)
     }
 }

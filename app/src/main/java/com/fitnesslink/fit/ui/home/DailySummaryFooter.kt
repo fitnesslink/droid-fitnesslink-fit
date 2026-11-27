@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -28,10 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.DailyProgress
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /** "X of Y done" + streak-at-risk flag + progress bar under Today's Habits (iOS `DailySummaryFooter`). */
 @Composable
@@ -46,7 +44,7 @@ fun DailySummaryFooter(progress: DailyProgress) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(14.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -54,7 +52,7 @@ fun DailySummaryFooter(progress: DailyProgress) {
                 text = "${progress.completedToday} of ${progress.totalToday} done",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                color = TextPrimaryColor
+                color = FLTheme.colors.textPrimary
             )
             Spacer(modifier = Modifier.weight(1f))
             if (progress.streakAtRisk) {
@@ -69,7 +67,7 @@ fun DailySummaryFooter(progress: DailyProgress) {
                 .fillMaxWidth()
                 .height(6.dp)
                 .clip(RoundedCornerShape(4.dp))
-                .background(MediumGray.copy(alpha = 0.25f))
+                .background(FLTheme.colors.textTertiary.copy(alpha = 0.25f))
         ) {
             Box(
                 modifier = Modifier

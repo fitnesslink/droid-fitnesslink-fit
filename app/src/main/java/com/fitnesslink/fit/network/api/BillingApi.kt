@@ -35,17 +35,18 @@ interface BillingApi {
 
     /**
      * Re-link an existing store subscription after reinstall / new device.
-     * Google: `RestorePurchaseRequest.google(purchaseToken)`. 409 =
-     * owned by another FitnessLink account.
+     * Google: `RestorePurchaseRequest.google(purchaseToken)`. Same
+     * responses as [verifyGoogle]; the ownership check is relaxed.
      */
     @POST("subscriptions/restore")
     suspend fun restore(@Body request: RestorePurchaseRequest): Entitlement
 
     /**
-     * TODO(backend): no Google verify route exists on the platform yet —
-     * only `subscriptions/apple/verify` (JWS) and `subscriptions/restore`
-     * (which accepts a Google `purchaseToken`). Path and body are provisional;
-     * confirm with the backend agent before wiring Play Billing to it.
+     * Verify + link a Play purchase. The server acknowledges it itself once
+     * linked; the client acknowledges only as a fallback after a 200. 403 =
+     * test purchase not accepted, 409 = linked to another FitnessLink
+     * account, 422 = token invalid / expired, 503 = Play verification not
+     * configured on the server (retry later). Never acknowledge after those.
      */
     @POST("subscriptions/google/verify")
     suspend fun verifyGoogle(@Body request: VerifyGooglePurchaseRequest): Entitlement

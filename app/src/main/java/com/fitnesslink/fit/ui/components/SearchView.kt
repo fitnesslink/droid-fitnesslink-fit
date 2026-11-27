@@ -30,9 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.R
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 /**
  * Pill-shaped search field (iOS `SearchView`). State is hoisted: the caller
@@ -53,7 +51,7 @@ fun SearchView(
         modifier = modifier
             .fillMaxWidth()
             .height(40.dp)
-            .background(White, RoundedCornerShape(100.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(100.dp))
             .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -68,7 +66,7 @@ fun SearchView(
             onValueChange = onTextChange,
             modifier = Modifier.weight(1f),
             singleLine = true,
-            textStyle = TextStyle(fontSize = 16.sp, color = TextPrimaryColor),
+            textStyle = TextStyle(fontSize = 16.sp, color = FLTheme.colors.textPrimary),
             cursorBrush = SolidColor(FLPrimary),
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.None,
@@ -78,7 +76,7 @@ fun SearchView(
             decorationBox = { inner ->
                 Box(contentAlignment = Alignment.CenterStart) {
                     if (text.isEmpty()) {
-                        Text(placeholder, fontSize = 16.sp, color = TextSecondaryColor, maxLines = 1)
+                        Text(placeholder, fontSize = 16.sp, color = FLTheme.colors.textSecondary, maxLines = 1)
                     }
                     inner()
                 }
@@ -89,7 +87,7 @@ fun SearchView(
                 Icon(
                     imageVector = Icons.Default.Close,
                     contentDescription = "Clear search",
-                    tint = TextSecondaryColor,
+                    tint = FLTheme.colors.textSecondary,
                     modifier = Modifier
                         .size(18.dp)
                         .clickable { onTextChange("") }

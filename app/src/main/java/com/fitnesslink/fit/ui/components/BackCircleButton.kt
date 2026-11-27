@@ -13,7 +13,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.fitnesslink.fit.R
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 @Composable
 fun BackCircleButton(
@@ -23,7 +23,7 @@ fun BackCircleButton(
     Box(
         modifier = modifier
             .size(24.dp)
-            .background(White, CircleShape)
+            .background(FLTheme.colors.surface, CircleShape)
             .clip(CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -44,7 +44,7 @@ fun CloseCircleButton(
     Box(
         modifier = modifier
             .size(34.dp)
-            .background(White, CircleShape)
+            .background(FLTheme.colors.surface, CircleShape)
             .clip(CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
@@ -65,7 +65,7 @@ fun ContextCircleButton(
     Box(
         modifier = modifier
             .size(34.dp)
-            .background(White, CircleShape)
+            .background(FLTheme.colors.surface, CircleShape)
             .clip(CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center

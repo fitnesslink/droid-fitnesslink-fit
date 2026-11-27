@@ -68,14 +68,9 @@ import com.fitnesslink.fit.nutrition.SnapMealPrefillHandoff
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.DisabledButton
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -221,18 +216,18 @@ fun SnapMealScreen(
         onNavigate(FoodLoggingRoutes.describeMeal(selectedMeal, date, prefillToken = token))
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Snap a Meal", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text("Snap a Meal", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 Text(
                     if (hasResult) "Check what we found. Fix names and portions, and add anything the camera couldn't see."
                     else "Take a photo of your plate — AI names what's on it, you confirm, then it estimates the macros.",
-                    fontSize = 13.sp, color = TextSecondaryColor
+                    fontSize = 13.sp, color = FLTheme.colors.textSecondary
                 )
             }
 
@@ -246,10 +241,10 @@ fun SnapMealScreen(
                             modifier = Modifier.fillMaxWidth().height(260.dp).clip(RoundedCornerShape(10.dp))
                         )
                     } else {
-                        Box(modifier = Modifier.fillMaxWidth().height(200.dp).background(BackgroundColor, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
+                        Box(modifier = Modifier.fillMaxWidth().height(200.dp).background(FLTheme.colors.background, RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Icon(Icons.Default.PhotoCamera, null, tint = MediumGray, modifier = Modifier.size(40.dp))
-                                Text(if (cameraAvailable) "Take a photo or pick one from your library" else "Pick a photo from your library", fontSize = 13.sp, color = TextSecondaryColor)
+                                Icon(Icons.Default.PhotoCamera, null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(40.dp))
+                                Text(if (cameraAvailable) "Take a photo or pick one from your library" else "Pick a photo from your library", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                             }
                         }
                     }
@@ -260,8 +255,8 @@ fun SnapMealScreen(
                                 modifier = Modifier.weight(1f).background(FLPrimary, RoundedCornerShape(8.dp)).clickable { cameraLauncher.launch(null) }.padding(vertical = 10.dp),
                                 horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(Icons.Default.PhotoCamera, null, tint = White, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(6.dp))
-                                Text(if (bitmap == null) "Camera" else "Retake", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = White)
+                                Icon(Icons.Default.PhotoCamera, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp)); Spacer(Modifier.width(6.dp))
+                                Text(if (bitmap == null) "Camera" else "Retake", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.onBrand)
                             }
                         }
                         Row(
@@ -274,25 +269,25 @@ fun SnapMealScreen(
                         }
                     }
                     Spacer(Modifier.height(12.dp))
-                    Box(modifier = Modifier.fillMaxWidth().background(BackgroundColor, RoundedCornerShape(10.dp)).padding(12.dp)) {
+                    Box(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.background, RoundedCornerShape(10.dp)).padding(12.dp)) {
                         BasicTextField(
                             value = hint, onValueChange = { hint = it.take(200) }, maxLines = 2,
-                            textStyle = TextStyle(fontSize = 15.sp, color = TextPrimaryColor), modifier = Modifier.fillMaxWidth(),
-                            decorationBox = { inner -> if (hint.isEmpty()) Text("Anything the photo can't show? e.g. cooked in butter", fontSize = 15.sp, color = MediumGray); inner() }
+                            textStyle = TextStyle(fontSize = 15.sp, color = FLTheme.colors.textPrimary), modifier = Modifier.fillMaxWidth(),
+                            decorationBox = { inner -> if (hint.isEmpty()) Text("Anything the photo can't show? e.g. cooked in butter", fontSize = 15.sp, color = FLTheme.colors.textTertiary); inner() }
                         )
                     }
                     Spacer(Modifier.height(12.dp))
                     Row(
-                        modifier = Modifier.fillMaxWidth().background(if (canIdentify) FLPrimary else DisabledButton, RoundedCornerShape(10.dp))
+                        modifier = Modifier.fillMaxWidth().background(if (canIdentify) FLPrimary else FLTheme.colors.disabled, RoundedCornerShape(10.dp))
                             .then(if (canIdentify) Modifier.clickable { identify() } else Modifier).padding(vertical = 12.dp),
                         horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
                     ) {
-                        if (isIdentifying || isPreparing) CircularProgressIndicator(color = White, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                        else Icon(Icons.Default.AutoAwesome, null, tint = White, modifier = Modifier.size(16.dp))
+                        if (isIdentifying || isPreparing) CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                        else Icon(Icons.Default.AutoAwesome, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
                         Spacer(Modifier.width(8.dp))
                         Text(
                             if (isPreparing) "Preparing photo…" else if (isIdentifying) "Looking at your plate…" else "Identify the foods",
-                            fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = White
+                            fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand
                         )
                     }
                     identifyError?.let { error ->
@@ -318,7 +313,7 @@ fun SnapMealScreen(
                                 Icon(Icons.Default.AutoAwesome, null, tint = OrangeTheme, modifier = Modifier.size(14.dp))
                                 Text("What we found — check before estimating", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = OrangeTheme)
                             }
-                            notes?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor) }
+                            notes?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.textSecondary) }
                         }
                     }
                     lines.forEach { line ->
@@ -340,8 +335,8 @@ fun SnapMealScreen(
                 }
 
                 FoodLogCard {
-                    Text("Anything the camera couldn't see?", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-                    Text("Cooking fat, dressing and sauces add up. Tap to add, then adjust the portion.", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("Anything the camera couldn't see?", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+                    Text("Cooking fat, dressing and sauces add up. Tap to add, then adjust the portion.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     Spacer(Modifier.height(8.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         hiddenIngredients.forEach { (name, portion) ->
@@ -358,7 +353,7 @@ fun SnapMealScreen(
                 }
 
                 FoodLogCard {
-                    Text("Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                    Text("Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                     Spacer(Modifier.height(8.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         MealType.entries.forEach { meal -> AIChipLabel(meal.displayName, isSelected = selectedMeal == meal, modifier = Modifier.clickable { selectedMeal = meal }) }
@@ -369,7 +364,7 @@ fun SnapMealScreen(
                     FoodLogPrimaryButton(text = "Estimate macros", enabled = generationId != null && validLines.isNotEmpty(), onClick = ::estimate)
                     Text(
                         "${validLines.size} item${if (validLines.size == 1) "" else "s"} → macros you can still edit before logging",
-                        fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 20.dp)
+                        fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 20.dp)
                     )
                 }
             }
@@ -383,24 +378,24 @@ private fun LineEditor(line: ConfirmLine, onChange: (ConfirmLine) -> Unit, onRem
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             BasicTextField(
                 value = line.name, onValueChange = { onChange(line.copy(name = it)) }, singleLine = true,
-                textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor),
-                decorationBox = { inner -> if (line.name.isEmpty()) Text("Food", fontSize = 15.sp, color = MediumGray); inner() }
+                textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary),
+                decorationBox = { inner -> if (line.name.isEmpty()) Text("Food", fontSize = 15.sp, color = FLTheme.colors.textTertiary); inner() }
             )
             BasicTextField(
                 value = line.portion, onValueChange = { onChange(line.copy(portion = it)) }, singleLine = true,
-                textStyle = TextStyle(fontSize = 13.sp, color = TextSecondaryColor),
-                decorationBox = { inner -> if (line.portion.isEmpty()) Text("Portion, e.g. 1 cup", fontSize = 13.sp, color = MediumGray); inner() }
+                textStyle = TextStyle(fontSize = 13.sp, color = FLTheme.colors.textSecondary),
+                decorationBox = { inner -> if (line.portion.isEmpty()) Text("Portion, e.g. 1 cup", fontSize = 13.sp, color = FLTheme.colors.textTertiary); inner() }
             )
         }
         // FR-21: low confidence is called out, not just labelled.
         val isLow = line.confidence == "low"
-        val color = if (isLow) OrangeTheme else TextSecondaryColor
+        val color = if (isLow) OrangeTheme else FLTheme.colors.textSecondary
         Text(
             when { line.confidence == "added" -> "added"; isLow -> "check this"; else -> line.confidence },
             fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = color,
             modifier = Modifier.background(color.copy(alpha = 0.12f), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)
         )
-        Icon(Icons.Default.Cancel, "Remove ${line.name}", tint = TextSecondaryColor, modifier = Modifier.size(18.dp).clickable(onClick = onRemove))
+        Icon(Icons.Default.Cancel, "Remove ${line.name}", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(18.dp).clickable(onClick = onRemove))
     }
 }
 

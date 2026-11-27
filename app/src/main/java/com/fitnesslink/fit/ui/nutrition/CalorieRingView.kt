@@ -24,9 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ProgressBG
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.FLTheme
+import com.fitnesslink.fit.ui.theme.NutritionOverColor
 
 /**
  * Circular calorie progress: consumed / goal / remaining (iOS
@@ -50,13 +49,14 @@ fun CalorieRingView(
         label = "calorieRing"
     )
 
+    val trackColor = FLTheme.colors.progressTrack
     Box(modifier = modifier.size(180.dp), contentAlignment = Alignment.Center) {
         Canvas(modifier = Modifier.size(180.dp)) {
             val stroke = 14.dp.toPx()
             val inset = stroke / 2f
             val arcSize = Size(size.width - stroke, size.height - stroke)
             drawArc(
-                color = ProgressBG, startAngle = 0f, sweepAngle = 360f, useCenter = false,
+                color = trackColor, startAngle = 0f, sweepAngle = 360f, useCenter = false,
                 topLeft = Offset(inset, inset), size = arcSize, style = Stroke(width = stroke)
             )
             if (animated > 0f) {
@@ -67,8 +67,8 @@ fun CalorieRingView(
             }
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("$consumed", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-            Text("of $goal cal", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("$consumed", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+            Text("of $goal cal", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             if (isOver) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
                     Icon(Icons.Default.ArrowUpward, contentDescription = null, tint = ringColor, modifier = Modifier.size(12.dp))

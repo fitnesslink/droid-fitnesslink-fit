@@ -34,10 +34,8 @@ import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.PrimaryButtonView
 import com.fitnesslink.fit.ui.components.SecondaryButtonView
 import com.fitnesslink.fit.ui.components.StepProgressView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.PersonalizationViewModel
 
 @Composable
@@ -52,7 +50,7 @@ fun PersonalizationScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -66,6 +64,7 @@ fun PersonalizationScreen(
                 text = page.name,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
+                color = FLTheme.colors.textPrimary,
                 modifier = Modifier.padding(horizontal = 20.dp)
             )
 
@@ -129,7 +128,7 @@ fun PersonalizationItemView(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .clickable(onClick = onTap)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -144,7 +143,8 @@ fun PersonalizationItemView(
         Spacer(modifier = Modifier.width(12.dp))
         Text(
             text = item.text,
-            fontSize = 16.sp
+            fontSize = 16.sp,
+            color = FLTheme.colors.textPrimary
         )
     }
 }

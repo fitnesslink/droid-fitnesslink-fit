@@ -53,14 +53,9 @@ import com.fitnesslink.fit.nutrition.SnapMealPrefill
 import com.fitnesslink.fit.nutrition.SnapMealPrefillHandoff
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
-import com.fitnesslink.fit.ui.theme.DisabledButton
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import kotlinx.coroutines.launch
 import java.util.UUID
 import kotlin.math.roundToInt
@@ -191,18 +186,18 @@ fun DescribeMealScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(if (fromPhoto) "Snap a Meal" else "Describe a Meal", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text(if (fromPhoto) "Snap a Meal" else "Describe a Meal", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 Text(
                     if (fromPhoto) "Macros for the foods you confirmed. Edit any number before logging."
                     else "Say what you ate in one line — AI splits it into items you can edit before logging.",
-                    fontSize = 13.sp, color = TextSecondaryColor
+                    fontSize = 13.sp, color = FLTheme.colors.textSecondary
                 )
             }
 
@@ -218,52 +213,52 @@ fun DescribeMealScreen(
                             if (error != null) {
                                 FoodLogErrorText(error, modifier = Modifier.fillMaxWidth(), centered = true)
                                 Row(
-                                    modifier = Modifier.fillMaxWidth().background(if (canParse) FLPrimary else DisabledButton, RoundedCornerShape(10.dp))
+                                    modifier = Modifier.fillMaxWidth().background(if (canParse) FLPrimary else FLTheme.colors.disabled, RoundedCornerShape(10.dp))
                                         .then(if (canParse) Modifier.clickable { parse() } else Modifier).padding(vertical = 12.dp),
                                     horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
                                 ) {
-                                    Icon(Icons.Default.Refresh, null, tint = White, modifier = Modifier.size(16.dp))
+                                    Icon(Icons.Default.Refresh, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
                                     Spacer(Modifier.width(8.dp))
-                                    Text("Try again", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = White)
+                                    Text("Try again", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
                                 }
                             } else {
                                 CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-                                Text("Estimating macros…", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                                Text("Estimating macros…", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                             }
                         }
                     }
                 }
             } else FoodLogCard {
-                Box(modifier = Modifier.fillMaxWidth().background(BackgroundColor, RoundedCornerShape(10.dp)).padding(12.dp)) {
+                Box(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.background, RoundedCornerShape(10.dp)).padding(12.dp)) {
                     BasicTextField(
                         value = description, onValueChange = { description = it }, minLines = 2, maxLines = 4,
-                        textStyle = TextStyle(fontSize = 16.sp, color = TextPrimaryColor), modifier = Modifier.fillMaxWidth(),
-                        decorationBox = { inner -> if (description.isEmpty()) Text("Chicken burrito bowl with rice, black beans, and guac", fontSize = 16.sp, color = MediumGray); inner() }
+                        textStyle = TextStyle(fontSize = 16.sp, color = FLTheme.colors.textPrimary), modifier = Modifier.fillMaxWidth(),
+                        decorationBox = { inner -> if (description.isEmpty()) Text("Chicken burrito bowl with rice, black beans, and guac", fontSize = 16.sp, color = FLTheme.colors.textTertiary); inner() }
                     )
                 }
                 Spacer(Modifier.height(12.dp))
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Text("Total calories (if you know)", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text("Total calories (if you know)", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                     Spacer(Modifier.weight(1f))
                     BoxedNumberField(value = knownTotalText, onValueChange = { knownTotalText = it }, modifier = Modifier.width(90.dp), placeholder = "optional", keyboardType = KeyboardType.Number)
                 }
                 Spacer(Modifier.height(12.dp))
                 Row(
-                    modifier = Modifier.fillMaxWidth().background(if (canParse) FLPrimary else DisabledButton, RoundedCornerShape(10.dp))
+                    modifier = Modifier.fillMaxWidth().background(if (canParse) FLPrimary else FLTheme.colors.disabled, RoundedCornerShape(10.dp))
                         .then(if (canParse) Modifier.clickable { parse() } else Modifier).padding(vertical = 12.dp),
                     horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
                 ) {
-                    if (isParsing) CircularProgressIndicator(color = White, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                    else Icon(Icons.Default.AutoAwesome, null, tint = White, modifier = Modifier.size(16.dp))
+                    if (isParsing) CircularProgressIndicator(color = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                    else Icon(Icons.Default.AutoAwesome, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text(if (isParsing) "Working it out…" else if (rows.isEmpty()) "Break it down" else "Try again", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = White)
+                    Text(if (isParsing) "Working it out…" else if (rows.isEmpty()) "Break it down" else "Try again", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
                 }
                 parseError?.let { Spacer(Modifier.height(8.dp)); FoodLogErrorText(it) }
             }
 
             if (rows.isNotEmpty()) {
                 FoodLogCard {
-                    Text("Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                    Text("Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                     Spacer(Modifier.height(8.dp))
                     MealTypeChips(selected = selectedMeal, onSelect = { selectedMeal = it })
                 }
@@ -276,7 +271,7 @@ fun DescribeMealScreen(
                         Icon(Icons.Default.AutoAwesome, null, tint = OrangeTheme, modifier = Modifier.size(14.dp))
                         Text("AI estimate — check the numbers before logging", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = OrangeTheme)
                     }
-                    notes?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)) }
+                    notes?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = 8.dp)) }
                     rows.forEach { row ->
                         SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
                         ReviewRowEditor(
@@ -287,9 +282,9 @@ fun DescribeMealScreen(
                     }
                     SeparatorView(modifier = Modifier.padding(horizontal = 16.dp))
                     Row(modifier = Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text("${rows.size} item${if (rows.size == 1) "" else "s"}", fontSize = 13.sp, color = TextSecondaryColor)
+                        Text("${rows.size} item${if (rows.size == 1) "" else "s"}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                         Spacer(Modifier.weight(1f))
-                        Text("$totalCalories cal total", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                        Text("$totalCalories cal total", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                     }
                 }
 
@@ -314,14 +309,14 @@ fun ReviewRowEditor(row: ReviewRow, onChange: (ReviewRow) -> Unit, onRemove: () 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             BasicTextField(
                 value = row.name, onValueChange = { onChange(row.copy(name = it)) }, singleLine = true,
-                textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor), modifier = Modifier.weight(1f),
-                decorationBox = { inner -> if (row.name.isEmpty()) Text("Food", fontSize = 15.sp, color = MediumGray); inner() }
+                textStyle = TextStyle(fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary), modifier = Modifier.weight(1f),
+                decorationBox = { inner -> if (row.name.isEmpty()) Text("Food", fontSize = 15.sp, color = FLTheme.colors.textTertiary); inner() }
             )
             Text(
-                row.confidence, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor,
-                modifier = Modifier.background(TextSecondaryColor.copy(alpha = 0.12f), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)
+                row.confidence, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary,
+                modifier = Modifier.background(FLTheme.colors.textSecondary.copy(alpha = 0.12f), RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 2.dp)
             )
-            Icon(Icons.Default.Cancel, "Remove ${row.name}", tint = TextSecondaryColor, modifier = Modifier.size(18.dp).clickable(onClick = onRemove))
+            Icon(Icons.Default.Cancel, "Remove ${row.name}", tint = FLTheme.colors.textSecondary, modifier = Modifier.size(18.dp).clickable(onClick = onRemove))
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             NumberFieldWithLabel("cal", row.calories, { onChange(row.copy(calories = it)) }, KeyboardType.Number, Modifier.weight(1f))
@@ -330,13 +325,13 @@ fun ReviewRowEditor(row: ReviewRow, onChange: (ReviewRow) -> Unit, onRemove: () 
             NumberFieldWithLabel("C g", row.carbs, { onChange(row.copy(carbs = it)) }, KeyboardType.Decimal, Modifier.weight(1f))
         }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("Serving", fontSize = 12.sp, color = TextSecondaryColor)
+            Text("Serving", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             BoxedNumberField(value = row.servingSize, onValueChange = { onChange(row.copy(servingSize = it)) }, modifier = Modifier.width(56.dp), placeholder = "1", fontSize = 13)
-            Box(modifier = Modifier.weight(1f).background(BackgroundColor, RoundedCornerShape(8.dp)).padding(vertical = 6.dp, horizontal = 8.dp)) {
+            Box(modifier = Modifier.weight(1f).background(FLTheme.colors.background, RoundedCornerShape(8.dp)).padding(vertical = 6.dp, horizontal = 8.dp)) {
                 BasicTextField(
                     value = row.servingUnit, onValueChange = { onChange(row.copy(servingUnit = it)) }, singleLine = true,
-                    textStyle = TextStyle(fontSize = 13.sp, color = TextPrimaryColor), modifier = Modifier.fillMaxWidth(),
-                    decorationBox = { inner -> if (row.servingUnit.isEmpty()) Text("serving", fontSize = 13.sp, color = MediumGray); inner() }
+                    textStyle = TextStyle(fontSize = 13.sp, color = FLTheme.colors.textPrimary), modifier = Modifier.fillMaxWidth(),
+                    decorationBox = { inner -> if (row.servingUnit.isEmpty()) Text("serving", fontSize = 13.sp, color = FLTheme.colors.textTertiary); inner() }
                 )
             }
         }
@@ -347,6 +342,6 @@ fun ReviewRowEditor(row: ReviewRow, onChange: (ReviewRow) -> Unit, onRemove: () 
 private fun NumberFieldWithLabel(label: String, value: String, onValueChange: (String) -> Unit, keyboardType: KeyboardType, modifier: Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
         BoxedNumberField(value = value, onValueChange = onValueChange, modifier = Modifier.fillMaxWidth(), keyboardType = keyboardType)
-        Text(label, fontSize = 10.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 10.sp, color = FLTheme.colors.textSecondary)
     }
 }

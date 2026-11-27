@@ -52,12 +52,8 @@ import com.fitnesslink.fit.model.api.ShareableContentKind
 import com.fitnesslink.fit.model.api.UserSummary
 import com.fitnesslink.fit.network.ApiClient
 import com.fitnesslink.fit.network.dto.ContentShareRequest
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.HighlightState
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.fitnesslink.fit.network.dto.ShareableContentKind as WireKind
@@ -132,7 +128,7 @@ fun ShareSheet(contentId: String, kind: ShareableContentKind, onDismiss: () -> U
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        containerColor = White
+        containerColor = FLTheme.colors.surface
     ) {
         Box(modifier = Modifier.fillMaxHeight(0.85f)) {
             Column(modifier = Modifier.fillMaxSize()) {
@@ -142,7 +138,7 @@ fun ShareSheet(contentId: String, kind: ShareableContentKind, onDismiss: () -> U
                         text = "Share ${kind.displayName}",
                         fontSize = 17.sp,
                         fontWeight = FontWeight.SemiBold,
-                        color = TextPrimaryColor,
+                        color = FLTheme.colors.textPrimary,
                         modifier = Modifier.align(Alignment.Center)
                     )
                     TextButton(onClick = onDismiss, modifier = Modifier.align(Alignment.CenterStart)) {
@@ -164,7 +160,7 @@ fun ShareSheet(contentId: String, kind: ShareableContentKind, onDismiss: () -> U
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            Text(errorMessage ?: "", fontSize = 13.sp, color = Color.Red)
+                            Text(errorMessage ?: "", fontSize = 13.sp, color = FLTheme.colors.danger)
                             TextButton(onClick = { searchAttempt++ }) { Text("Try again", color = FLPrimary) }
                         }
                     }
@@ -185,7 +181,7 @@ fun ShareSheet(contentId: String, kind: ShareableContentKind, onDismiss: () -> U
                                     enabled = sendingTo == null,
                                     onClick = { send(user) }
                                 )
-                                HorizontalDivider(color = BackgroundColor)
+                                HorizontalDivider(color = FLTheme.colors.background)
                             }
                         }
                     }
@@ -199,14 +195,14 @@ fun ShareSheet(contentId: String, kind: ShareableContentKind, onDismiss: () -> U
                         .align(Alignment.BottomCenter)
                         .padding(bottom = 24.dp)
                         .clip(RoundedCornerShape(20.dp))
-                        .background(Color.Black.copy(alpha = 0.85f))
+                        .background(FLTheme.colors.textPrimary.copy(alpha = 0.85f)) // inverted toast: dark pill in light, light pill in dark
                         .padding(horizontal = 14.dp, vertical = 10.dp)
                 ) {
                     Text(
                         text = "Sent to $name — they'll be asked to accept it",
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium,
-                        color = White
+                        color = FLTheme.colors.surface
                     )
                 }
             }
@@ -225,24 +221,24 @@ private fun ShareSearchField(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
             .padding(10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Icon(Icons.Default.Search, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(18.dp))
+        Icon(Icons.Default.Search, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(18.dp))
         BasicTextField(
             value = query,
             onValueChange = onQueryChange,
             modifier = Modifier.weight(1f),
             singleLine = true,
-            textStyle = TextStyle(fontSize = 15.sp, color = TextPrimaryColor),
+            textStyle = TextStyle(fontSize = 15.sp, color = FLTheme.colors.textPrimary),
             cursorBrush = SolidColor(FLPrimary),
             keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.None, autoCorrectEnabled = false),
             decorationBox = { inner ->
                 Box(contentAlignment = Alignment.CenterStart) {
                     if (query.isEmpty()) {
-                        Text("Search by name or username", fontSize = 15.sp, color = TextSecondaryColor, maxLines = 1)
+                        Text("Search by name or username", fontSize = 15.sp, color = FLTheme.colors.textSecondary, maxLines = 1)
                     }
                     inner()
                 }
@@ -252,7 +248,7 @@ private fun ShareSearchField(
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Clear search",
-                tint = TextSecondaryColor,
+                tint = FLTheme.colors.textSecondary,
                 modifier = Modifier.size(18.dp).clickable(onClick = onClear)
             )
         }
@@ -262,7 +258,7 @@ private fun ShareSearchField(
 @Composable
 private fun ShareEmptyState(text: String) {
     Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
-        Text(text, fontSize = 13.sp, color = TextSecondaryColor)
+        Text(text, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -278,9 +274,9 @@ private fun ShareUserRow(user: UserSummary, isSending: Boolean, enabled: Boolean
     ) {
         ShareAvatar(user)
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(user.displayName, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor, maxLines = 1)
+            Text(user.displayName, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary, maxLines = 1)
             if (user.username.isNotEmpty()) {
-                Text("@${user.username}", fontSize = 12.sp, color = TextSecondaryColor, maxLines = 1)
+                Text("@${user.username}", fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1)
             }
         }
         if (isSending) {
@@ -301,7 +297,7 @@ private fun ShareAvatar(user: UserSummary) {
         )
     } else {
         Box(
-            modifier = Modifier.size(36.dp).clip(CircleShape).background(HighlightState),
+            modifier = Modifier.size(36.dp).clip(CircleShape).background(FLTheme.colors.highlight),
             contentAlignment = Alignment.Center
         ) {
             Text(initials(user), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)

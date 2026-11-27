@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.content.Context
 import android.content.Intent
 import android.media.MediaMetadataRetriever
@@ -65,12 +66,7 @@ import com.fitnesslink.fit.movements.MovementStore
 import com.fitnesslink.fit.ui.movements.ClassificationGroup
 import com.fitnesslink.fit.ui.movements.ClassificationPickerView
 import com.fitnesslink.fit.ui.session.MuxVideoPlayer
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -93,12 +89,42 @@ fun CreateExerciseSheet(
                 .fillMaxSize()
                 .padding(top = 40.dp)
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .background(BackgroundColor)
+                .background(FLTheme.colors.background)
         ) {
             MovementCreateForm(
                 title = "New Exercise",
                 onCancel = onDismiss,
                 onCreated = onCreated
+            )
+        }
+    }
+}
+
+/**
+ * Owner edit sheet for a user-created movement (iOS `MovementEditSheet`,
+ * FTNSSLNK-501): the shared form in edit mode — prefilled, Save instead of
+ * Create, PUT on save.
+ */
+@Composable
+fun MovementEditSheet(
+    movement: com.fitnesslink.fit.model.api.Movement,
+    onUpdated: (com.fitnesslink.fit.model.api.Movement) -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 40.dp)
+                .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .background(FLTheme.colors.background)
+        ) {
+            MovementCreateForm(
+                title = "Edit Movement",
+                onCancel = onDismiss,
+                onCreated = {},
+                editing = movement,
+                onUpdated = { onUpdated(it); onDismiss() }
             )
         }
     }
@@ -116,15 +142,21 @@ fun MovementCreateForm(
     title: String,
     onCancel: () -> Unit,
     onCreated: (MovementLibraryItem) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Edit mode (FTNSSLNK-501): the owner's movement to prefill from and PUT back. Null = create. */
+    editing: com.fitnesslink.fit.model.api.Movement? = null,
+    onUpdated: (com.fitnesslink.fit.model.api.Movement) -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val isEditing = editing != null
+    /** The movement's current still image (edit mode), shown until a replacement is picked. */
+    val existingImageId = (editing?.thumbnailId ?: editing?.imageId)?.toString()
 
-    var name by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var selectedAnatomyIds by remember { mutableStateOf<Set<String>>(emptySet()) }
-    var selectedEquipmentIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var name by remember { mutableStateOf(editing?.name ?: "") }
+    var description by remember { mutableStateOf(editing?.description ?: "") }
+    var selectedAnatomyIds by remember { mutableStateOf(editing?.anatomyIds?.map { it.toString() }?.toSet() ?: emptySet()) }
+    var selectedEquipmentIds by remember { mutableStateOf(editing?.equipmentIds?.map { it.toString() }?.toSet() ?: emptySet()) }
     var isSaving by remember { mutableStateOf(false) }
     var saveError by remember { mutableStateOf<String?>(null) }
     var picker by remember { mutableStateOf<FormPicker?>(null) }
@@ -177,6 +209,54 @@ fun MovementCreateForm(
         }
     }
 
+    /**
+     * PUT the owner's edits. Fields the form doesn't show (summary, status,
+     * videos) ride along unchanged from the fetched movement. A newly picked
+     * image uploads first; a new form video is stitched on by the attachment
+     * coordinator once Mux reports Ready. Errors keep the form open.
+     */
+    fun save() {
+        val base = editing ?: return
+        if (name.isBlank() || isSaving) return
+        isSaving = true
+        saveError = null
+        scope.launch {
+            try {
+                var updated = base
+                thumbUri?.let { uri ->
+                    thumbError = null
+                    try {
+                        val imageId = java.util.UUID.fromString(MovementStore.uploadStillImage(context, uri))
+                        updated = updated.copy(imageId = imageId, thumbnailId = imageId)
+                    } catch (e: Exception) {
+                        thumbError = "Couldn't upload the image — try again, or remove it to keep the current one."
+                        return@launch
+                    }
+                }
+                updated = updated.copy(
+                    name = name.trim(),
+                    description = description.ifEmpty { null },
+                    anatomyIds = selectedAnatomyIds.mapNotNull { runCatching { java.util.UUID.fromString(it) }.getOrNull() },
+                    equipmentIds = selectedEquipmentIds.mapNotNull { runCatching { java.util.UUID.fromString(it) }.getOrNull() }
+                )
+                try {
+                    MovementStore.update(updated)
+                } catch (e: Exception) {
+                    saveError = MovementStore.userMessage(e, "edit")
+                    return@launch
+                }
+                formVideo.uploadId?.let { uploadId ->
+                    runCatching {
+                        com.fitnesslink.fit.media.MovementVideoAttachmentCoordinator.attach(updated.id.toString().lowercase(Locale.US), uploadId)
+                    }
+                }
+                onUpdated(updated)
+            } finally {
+                isSaving = false
+            }
+        }
+    }
+
     when (picker) {
         FormPicker.ANATOMY -> {
             ClassificationPickerView(
@@ -203,21 +283,21 @@ fun MovementCreateForm(
         null -> Unit
     }
 
-    Column(modifier = modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            TextButton(onClick = onCancel, enabled = !isSaving) { Text("Cancel", color = TextPrimaryColor) }
+            TextButton(onClick = onCancel, enabled = !isSaving) { Text("Cancel", color = FLTheme.colors.textPrimary) }
             Text(
-                title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
+                title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary,
                 modifier = Modifier.weight(1f), textAlign = androidx.compose.ui.text.style.TextAlign.Center
             )
-            TextButton(onClick = { create() }, enabled = name.isNotBlank() && !isSaving) {
+            TextButton(onClick = { if (isEditing) save() else create() }, enabled = name.isNotBlank() && !isSaving) {
                 if (isSaving) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = FLPrimary)
                 } else {
-                    Text("Create", fontWeight = FontWeight.SemiBold, color = if (name.isNotBlank()) FLPrimary else MediumGray)
+                    Text(if (isEditing) "Save" else "Create", fontWeight = FontWeight.SemiBold, color = if (name.isNotBlank()) FLPrimary else FLTheme.colors.textTertiary)
                 }
             }
         }
@@ -252,13 +332,26 @@ fun MovementCreateForm(
                                 .clickable { thumbPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
                         )
                         Icon(
-                            Icons.Default.Edit, contentDescription = "Change image", tint = White,
+                            Icons.Default.Edit, contentDescription = "Change image", tint = Color.White, // theme-exempt: over media
                             modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(22.dp)
                         )
                     }
                     TextButton(onClick = { thumbUri = null; thumbError = null }) {
-                        Text("Remove Image", fontSize = 13.sp, color = Color.Red)
+                        Text("Remove Image", fontSize = 13.sp, color = FLTheme.colors.danger)
                     }
+                } else if (existingImageId != null) {
+                    // Edit mode: the movement's current image, tap to swap.
+                    Box(
+                        modifier = Modifier.fillMaxWidth().height(140.dp).clip(RoundedCornerShape(10.dp))
+                            .clickable { thumbPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+                    ) {
+                        com.fitnesslink.fit.ui.components.FLImageView(ref = MediaRef.MovementThumbnail(existingImageId), modifier = Modifier.fillMaxSize())
+                        Icon(
+                            Icons.Default.Edit, contentDescription = "Change image", tint = Color.White, // theme-exempt: over media
+                            modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).size(22.dp)
+                        )
+                    }
+                    Text("Tap the image to replace it.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 } else {
                     Row(
                         modifier = Modifier
@@ -271,9 +364,9 @@ fun MovementCreateForm(
                         Spacer(modifier = Modifier.width(10.dp))
                         Text("Add a still image", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
                     }
-                    Text("Optional. Shown in the editor and exercise browser.", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("Optional. Shown in the editor and exercise browser.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
-                thumbError?.let { Text(it, fontSize = 12.sp, color = Color.Red) }
+                thumbError?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.danger) }
             }
 
             FormSectionHeader("Anatomy")
@@ -288,8 +381,14 @@ fun MovementCreateForm(
 
             FormSectionHeader("Form Video")
             FormCard { FormVideoSlot(model = formVideo) }
+            if (isEditing && (editing?.videoId != null || editing?.phoneVideoId != null)) {
+                Text(
+                    "This movement already has a form video. Add a new one to replace it.",
+                    fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 20.dp)
+                )
+            }
 
-            saveError?.let { Text(it, fontSize = 12.sp, color = Color.Red, modifier = Modifier.padding(horizontal = 20.dp)) }
+            saveError?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.danger, modifier = Modifier.padding(horizontal = 20.dp)) }
         }
     }
 }
@@ -299,13 +398,13 @@ private enum class FormPicker { ANATOMY, EQUIPMENT }
 @Composable
 private fun fieldColors() = OutlinedTextFieldDefaults.colors(
     focusedBorderColor = FLPrimary, cursorColor = FLPrimary, focusedLabelColor = FLPrimary,
-    unfocusedContainerColor = White, focusedContainerColor = White
+    unfocusedContainerColor = FLTheme.colors.surface, focusedContainerColor = FLTheme.colors.surface
 )
 
 @Composable
 private fun FormSectionHeader(title: String) {
     Text(
-        title.uppercase(Locale.US), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor,
+        title.uppercase(Locale.US), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary,
         modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 12.dp)
     )
 }
@@ -317,7 +416,7 @@ private fun FormCard(padding: androidx.compose.ui.unit.Dp = 14.dp, content: @Com
             .padding(horizontal = 16.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(padding)
     ) { content() }
 }
@@ -328,9 +427,9 @@ private fun NavigationRow(title: String, value: String, onClick: () -> Unit) {
         modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 14.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(title, fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-        Text(value, fontSize = 14.sp, color = TextSecondaryColor)
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray)
+        Text(title, fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+        Text(value, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary)
     }
 }
 
@@ -470,7 +569,7 @@ fun FormVideoSlot(model: FormVideoUploadModel) {
             })
             model.isPreparing -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp, color = FLPrimary)
-                Text("Preparing video…", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("Preparing video…", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
             }
             else -> {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -493,10 +592,10 @@ fun FormVideoSlot(model: FormVideoUploadModel) {
                         galleryPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.VideoOnly))
                     }
                 }
-                Text("Optional. Record or choose a short clip demonstrating the movement.", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("Optional. Record or choose a short clip demonstrating the movement.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
         }
-        model.validationError?.let { Text(it, fontSize = 12.sp, color = Color.Red) }
+        model.validationError?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.danger) }
     }
 }
 
@@ -511,9 +610,9 @@ private fun CaptureButton(label: String, icon: androidx.compose.ui.graphics.vect
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(icon, contentDescription = null, tint = if (filled) White else FLPrimary, modifier = Modifier.size(16.dp))
+        Icon(icon, contentDescription = null, tint = if (filled) FLTheme.colors.onBrand else FLPrimary, modifier = Modifier.size(16.dp))
         Spacer(modifier = Modifier.width(6.dp))
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (filled) White else FLPrimary)
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (filled) FLTheme.colors.onBrand else FLPrimary)
     }
 }
 
@@ -521,16 +620,16 @@ private fun CaptureButton(label: String, icon: androidx.compose.ui.graphics.vect
 private fun FormVideoStatus(state: UploadState, onRemove: () -> Unit, onRetry: () -> Unit) {
     when (state) {
         UploadState.Queued -> StatusRow(text = "Waiting to upload…", trailing = "Cancel", onTrailing = onRemove) {
-            LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = FLPrimary, trackColor = BackgroundColor)
+            LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), color = FLPrimary, trackColor = FLTheme.colors.background)
         }
         is UploadState.Uploading -> StatusRow(text = "Uploading ${(state.fraction * 100).toInt()}%", trailing = "Cancel", onTrailing = onRemove) {
-            LinearProgressIndicator(progress = { state.fraction }, modifier = Modifier.fillMaxWidth(), color = FLPrimary, trackColor = BackgroundColor)
+            LinearProgressIndicator(progress = { state.fraction }, modifier = Modifier.fillMaxWidth(), color = FLPrimary, trackColor = FLTheme.colors.background)
         }
         is UploadState.Processing -> Row(verticalAlignment = Alignment.CenterVertically) {
             CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = FLPrimary)
             Spacer(modifier = Modifier.width(10.dp))
-            Text("Processing video…", fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.weight(1f))
-            TextButton(onClick = onRemove) { Text("Remove", fontSize = 13.sp, color = Color.Red) }
+            Text("Processing video…", fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
+            TextButton(onClick = onRemove) { Text("Remove", fontSize = 13.sp, color = FLTheme.colors.danger) }
         }
         is UploadState.Ready -> Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             if (state.mediaId.isNotEmpty()) {
@@ -544,18 +643,18 @@ private fun FormVideoStatus(state: UploadState, onRemove: () -> Unit, onRetry: (
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Video ready", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLPrimary, modifier = Modifier.weight(1f))
-                TextButton(onClick = onRemove) { Text("Remove", fontSize = 13.sp, color = Color.Red) }
+                TextButton(onClick = onRemove) { Text("Remove", fontSize = 13.sp, color = FLTheme.colors.danger) }
             }
         }
         is UploadState.Failed -> Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.Close, contentDescription = null, tint = Color.Red, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Close, contentDescription = null, tint = FLTheme.colors.danger, modifier = Modifier.size(16.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Upload failed", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = Color.Red, modifier = Modifier.weight(1f))
+                Text("Upload failed", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.danger, modifier = Modifier.weight(1f))
                 TextButton(onClick = onRetry) { Text("Try again", fontSize = 13.sp, color = FLPrimary) }
-                TextButton(onClick = onRemove) { Text("Remove", fontSize = 13.sp, color = Color.Red) }
+                TextButton(onClick = onRemove) { Text("Remove", fontSize = 13.sp, color = FLTheme.colors.danger) }
             }
-            Text(state.message, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(state.message, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -564,8 +663,8 @@ private fun FormVideoStatus(state: UploadState, onRemove: () -> Unit, onRetry: (
 private fun StatusRow(text: String, trailing: String, onTrailing: () -> Unit, progress: @Composable () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(text, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-            TextButton(onClick = onTrailing) { Text(trailing, fontSize = 13.sp, color = Color.Red) }
+            Text(text, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+            TextButton(onClick = onTrailing) { Text(trailing, fontSize = 13.sp, color = FLTheme.colors.danger) }
         }
         progress()
     }

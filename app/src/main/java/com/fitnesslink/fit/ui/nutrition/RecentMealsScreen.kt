@@ -46,13 +46,9 @@ import com.fitnesslink.fit.network.dto.RecentMealTypeGroup
 import com.fitnesslink.fit.nutrition.NavPayloadHandoff
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.navigation.FoodLoggingRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.launch
 import java.util.Locale
 import java.util.TimeZone
@@ -96,15 +92,15 @@ fun RecentMealsScreen(
     val ordered = groups.filter { it.meals.isNotEmpty() }
         .sortedByDescending { MealType.fromWire(it.mealType) == mealType }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Recent Meals", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                Text("Adding to ${mealType.displayName}${backfillSuffix(logDate)}", fontSize = 12.sp, color = TextSecondaryColor)
+                Text("Recent Meals", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                Text("Adding to ${mealType.displayName}${backfillSuffix(logDate)}", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
 
             when {
@@ -116,7 +112,7 @@ fun RecentMealsScreen(
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(Icons.Default.Warning, null, tint = OrangeTheme, modifier = Modifier.size(24.dp))
-                    Text(errorMessage ?: "", fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center)
+                    Text(errorMessage ?: "", fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center)
                     Text("Retry", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary, modifier = Modifier.clickable { scope.launch { load() } })
                 }
                 ordered.isEmpty() -> FoodLogEmptyState(
@@ -145,26 +141,26 @@ fun RecentMealsScreen(
 @Composable
 private fun RecentMealCard(meal: RecentMeal, onClick: () -> Unit) {
     Column(
-        modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(16.dp),
+        modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).clickable(onClick = onClick).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         Row(verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(MealPlanDay.date(meal.date)?.let { formatMediumDay(it) } ?: meal.date, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-                Text("${meal.entryCount} item${if (meal.entryCount == 1) "" else "s"}", fontSize = 12.sp, color = TextSecondaryColor)
+                Text(MealPlanDay.date(meal.date)?.let { formatMediumDay(it) } ?: meal.date, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+                Text("${meal.entryCount} item${if (meal.entryCount == 1) "" else "s"}", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text("${meal.calories.roundToInt()} cal", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
-                Icon(Icons.Default.KeyboardArrowRight, null, tint = MediumGray, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.KeyboardArrowRight, null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
             }
         }
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             meal.items.forEach { item ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(item.name, fontSize = 13.sp, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                    portionLabel(item)?.let { Text(it, fontSize = 11.sp, color = TextSecondaryColor) }
+                    Text(item.name, fontSize = 13.sp, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    portionLabel(item)?.let { Text(it, fontSize = 11.sp, color = FLTheme.colors.textSecondary) }
                     Spacer(Modifier.weight(1f))
-                    Text("${item.calories.roundToInt()} cal", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("${item.calories.roundToInt()} cal", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             }
         }

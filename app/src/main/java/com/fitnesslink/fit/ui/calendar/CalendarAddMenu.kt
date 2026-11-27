@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.calendar
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -25,6 +26,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,7 +41,6 @@ import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * The four things the calendar's add menu can do (iOS `CalendarAddAction`).
@@ -57,11 +58,12 @@ sealed class CalendarAddMenuAnchor {
 
 /** iOS `CalendarAddMenuPalette`. Option text is brand FLPrimary (product decision, 2026-09-11). */
 object CalendarAddMenuPalette {
-    val secondaryText = Color(0xFF8A8A8E)
-    val dashedBorder = Color(0xFF9ED9CB)
-    val menuBackground = Color(0xFFFAFAFA)
-    val separator = Color(0x333C3C43)
-    val groupSeparator = Color(0x1F3C3C43)
+    val secondaryText: Color @Composable @ReadOnlyComposable get() = FLTheme.colors.textTertiary
+    /** Teal at 45% over the background (matches the old 9ED9CB in light). */
+    val dashedBorder: Color @Composable @ReadOnlyComposable get() = FLPrimary.copy(alpha = 0.45f)
+    val menuBackground: Color @Composable @ReadOnlyComposable get() = FLTheme.colors.surfaceElevated
+    val separator: Color @Composable @ReadOnlyComposable get() = FLTheme.colors.border
+    val groupSeparator: Color @Composable @ReadOnlyComposable get() = FLTheme.colors.background
 }
 
 /**
@@ -171,12 +173,12 @@ fun CalendarDayAddBadge(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .size(20.dp)
-            .background(White, CircleShape)
+            .background(FLTheme.colors.surface, CircleShape)
             .padding(2.dp)
             .background(FLPrimary, CircleShape)
             .border(0.dp, Color.Transparent, CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        Icon(Icons.Default.Add, contentDescription = "Add", tint = White, modifier = Modifier.size(10.dp))
+        Icon(Icons.Default.Add, contentDescription = "Add", tint = FLTheme.colors.onBrand, modifier = Modifier.size(10.dp))
     }
 }

@@ -31,11 +31,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.MealType
 import com.fitnesslink.fit.network.NetworkMonitor
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.MealPlanIdeasViewModel
 import com.fitnesslink.fit.viewmodel.MealPlanViewModel
 import kotlinx.coroutines.launch
@@ -63,7 +60,7 @@ fun MealPlanIdeasScreen(
         viewModel.seedFromProfile()
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         PlanTopBar(title = "Meal Plan Ideas", onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp),
@@ -71,8 +68,8 @@ fun MealPlanIdeasScreen(
         ) {
             if (!isConnected) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Filled.WifiOff, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(16.dp))
-                    Text("You need an active internet connection to generate meal plan ideas.", fontSize = 13.sp, color = TextSecondaryColor)
+                    Icon(Icons.Filled.WifiOff, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(16.dp))
+                    Text("You need an active internet connection to generate meal plan ideas.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
             }
 
@@ -136,7 +133,7 @@ fun MealPlanIdeasScreen(
                 }
             }
 
-            viewModel.errorMessage?.let { Text(it, fontSize = 13.sp, color = Color.Red) }
+            viewModel.errorMessage?.let { Text(it, fontSize = 13.sp, color = FLTheme.colors.danger) }
 
             GenerateButton(
                 isGenerating = viewModel.isGenerating,
@@ -167,9 +164,9 @@ internal fun PlanChipLabel(text: String, isSelected: Boolean, onClick: () -> Uni
         text,
         fontSize = 12.sp,
         fontWeight = FontWeight.Medium,
-        color = if (isSelected) White else TextPrimaryColor,
+        color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary,
         modifier = Modifier
-            .background(if (isSelected) FLPrimary else BackgroundColor, RoundedCornerShape(8.dp))
+            .background(if (isSelected) FLPrimary else FLTheme.colors.background, RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 10.dp, vertical = 6.dp)
     )

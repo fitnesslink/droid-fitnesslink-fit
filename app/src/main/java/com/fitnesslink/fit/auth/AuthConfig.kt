@@ -22,11 +22,12 @@ object AuthConfig {
     const val isFacebookSignInEnabled = false
 
     /**
-     * Product decision (2026-09-09): social sign-in is for existing accounts
-     * only; new accounts go through the email/password signup form. When
-     * false, a social sign-in that would create a brand-new Firebase user is
-     * rolled back before any platform call is made. Matches iOS
+     * Reversed 2026-10-27 (was false since 2026-09-09): Google sign-in may now
+     * create accounts, matching the web app and iOS. A first-time social user
+     * lands on `CompleteProfileSheet`, which POSTs /users to adopt the
+     * auto-provisioned shell row and fill in the name. When false, a brand-new
+     * Firebase user is rolled back before any platform call. Matches iOS
      * `AuthManager.allowsSocialAccountCreation`.
      */
-    const val allowsSocialAccountCreation = false
+    const val allowsSocialAccountCreation = true
 }

@@ -76,7 +76,7 @@ val LightFLColors = FLColors(
     disabled = DisabledButton,
     onBrand = White,
     scrim = Black.copy(alpha = 0.5f),
-    danger = Color(0xFFFF0000),
+    danger = Color(0xFFE53935),
     isDark = false,
 )
 

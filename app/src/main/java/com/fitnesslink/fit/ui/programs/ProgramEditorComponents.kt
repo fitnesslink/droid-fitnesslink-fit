@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -61,12 +62,7 @@ import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.ProgramDaySlot
 import com.fitnesslink.fit.model.ProgramWeek
 import com.fitnesslink.fit.model.WorkoutList
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.ProgramEditorViewModel
 
 // Port of iOS `WeekSectionView`, `DaySlotView` and `WorkoutPickerSheet`.
@@ -84,21 +80,21 @@ fun WeekSectionView(week: ProgramWeek, viewModel: ProgramEditorViewModel) {
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(12.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text("Week ${week.weekNumber}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text("Week ${week.weekNumber}", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             if (workoutCount > 0) {
                 Spacer(modifier = Modifier.width(8.dp))
                 Box(modifier = Modifier.clip(RoundedCornerShape(8.dp)).background(FLPrimary).padding(horizontal = 6.dp, vertical = 2.dp)) {
-                    Text("$workoutCount", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = White)
+                    Text("$workoutCount", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.onBrand)
                 }
             }
             Spacer(modifier = Modifier.weight(1f))
             Box {
                 IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "Week options", tint = TextSecondaryColor)
+                    Icon(Icons.Default.MoreVert, contentDescription = "Week options", tint = FLTheme.colors.textSecondary)
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
                     DropdownMenuItem(
@@ -146,7 +142,7 @@ fun DaySlotView(slot: ProgramDaySlot, viewModel: ProgramEditorViewModel) {
     }
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(slot.dayLabel, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+        Text(slot.dayLabel, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.height(4.dp))
 
         val workout = slot.workout
@@ -169,10 +165,10 @@ fun DaySlotView(slot: ProgramDaySlot, viewModel: ProgramEditorViewModel) {
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center,
                         maxLines = 2,
-                        color = TextPrimaryColor
+                        color = FLTheme.colors.textPrimary
                     )
                     if (!workout?.time.isNullOrEmpty()) {
-                        Text(workout!!.time, fontSize = 8.sp, color = TextSecondaryColor)
+                        Text(workout!!.time, fontSize = 8.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
                 DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
@@ -199,14 +195,14 @@ fun DaySlotView(slot: ProgramDaySlot, viewModel: ProgramEditorViewModel) {
                     .fillMaxWidth()
                     .heightIn(min = 52.dp)
                     .clip(RoundedCornerShape(8.dp))
-                    .background(BackgroundColor)
+                    .background(FLTheme.colors.background)
                     .clickable { viewModel.openWorkoutPicker(slot.weekNumber, slot.dayNumber) }
                     .padding(4.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(Icons.Default.Add, contentDescription = "Add workout", tint = MediumGray, modifier = Modifier.size(14.dp))
-                    Text("Rest", fontSize = 9.sp, color = MediumGray)
+                    Icon(Icons.Default.Add, contentDescription = "Add workout", tint = FLTheme.colors.textTertiary, modifier = Modifier.size(14.dp))
+                    Text("Rest", fontSize = 9.sp, color = FLTheme.colors.textTertiary)
                 }
             }
         }
@@ -221,17 +217,17 @@ fun DaySlotView(slot: ProgramDaySlot, viewModel: ProgramEditorViewModel) {
 @Composable
 fun MoveSlotSheet(weeks: List<ProgramWeek>, from: ProgramDaySlot, onPick: (toWeek: Int, toDay: Int) -> Unit, onDismiss: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.surfaceElevated) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text("Move Workout", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Move Workout", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Text(
                 "Choose where ${from.workout?.name ?: "this workout"} should go. If that day already has a workout, the two swap places.",
-                fontSize = 13.sp, color = TextSecondaryColor
+                fontSize = 13.sp, color = FLTheme.colors.textSecondary
             )
             Column(modifier = Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 weeks.forEach { week ->
                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Week ${week.weekNumber}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+                        Text("Week ${week.weekNumber}", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                             week.days.forEach { day ->
                                 val isSource = day.weekNumber == from.weekNumber && day.dayNumber == from.dayNumber
@@ -240,12 +236,12 @@ fun MoveSlotSheet(weeks: List<ProgramWeek>, from: ProgramDaySlot, onPick: (toWee
                                     modifier = Modifier
                                         .weight(1f)
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(if (isSource) FLPrimary.copy(alpha = 0.25f) else if (occupied) FLPrimary.copy(alpha = 0.08f) else BackgroundColor)
+                                        .background(if (isSource) FLPrimary.copy(alpha = 0.25f) else if (occupied) FLPrimary.copy(alpha = 0.08f) else FLTheme.colors.background)
                                         .clickable(enabled = !isSource) { onPick(day.weekNumber, day.dayNumber) }
                                         .padding(vertical = 8.dp),
                                     horizontalAlignment = Alignment.CenterHorizontally
                                 ) {
-                                    Text(day.dayLabel, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                                    Text(day.dayLabel, fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                                     Text(if (occupied) "•" else " ", fontSize = 12.sp, color = FLPrimary)
                                 }
                             }
@@ -266,12 +262,12 @@ fun MoveSlotSheet(weeks: List<ProgramWeek>, from: ProgramDaySlot, onPick: (toWee
 @Composable
 fun WorkoutPickerSheet(viewModel: ProgramEditorViewModel, onCreateNew: () -> Unit, onDismiss: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.surfaceElevated) {
         Column(modifier = Modifier.fillMaxHeight(0.85f)) {
             Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                 TextButton(onClick = onDismiss) { Text("Cancel", color = FLPrimary) }
                 Spacer(modifier = Modifier.weight(1f))
-                Text("Add Workout", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Add Workout", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Spacer(modifier = Modifier.weight(1f))
                 Spacer(modifier = Modifier.width(72.dp))
             }
@@ -281,13 +277,13 @@ fun WorkoutPickerSheet(viewModel: ProgramEditorViewModel, onCreateNew: () -> Uni
                 value = viewModel.workoutSearchText,
                 onValueChange = { viewModel.workoutSearchText = it },
                 placeholder = { Text("Search workouts...") },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = MediumGray) },
+                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = FLTheme.colors.textTertiary) },
                 shape = RoundedCornerShape(10.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color.Transparent,
                     focusedBorderColor = Color.Transparent,
-                    unfocusedContainerColor = BackgroundColor,
-                    focusedContainerColor = BackgroundColor
+                    unfocusedContainerColor = FLTheme.colors.background,
+                    focusedContainerColor = FLTheme.colors.background
                 ),
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)
@@ -324,13 +320,13 @@ fun WorkoutPickerSheet(viewModel: ProgramEditorViewModel, onCreateNew: () -> Uni
             if (filtered.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.FitnessCenter, contentDescription = null, tint = MediumGray, modifier = Modifier.size(32.dp))
+                        Icon(Icons.Default.FitnessCenter, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(32.dp))
                         Spacer(modifier = Modifier.height(12.dp))
-                        Text("No workouts found", fontSize = 15.sp, color = TextSecondaryColor)
+                        Text("No workouts found", fontSize = 15.sp, color = FLTheme.colors.textSecondary)
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             "Create workouts first, then assign them to your program.",
-                            fontSize = 13.sp, color = TextSecondaryColor, textAlign = TextAlign.Center,
+                            fontSize = 13.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center,
                             modifier = Modifier.padding(horizontal = 32.dp)
                         )
                     }
@@ -356,8 +352,8 @@ private fun WorkoutPickerItem(workout: WorkoutList, onClick: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Column(modifier = Modifier.weight(1f)) {
-            Text(workout.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
-            if (workout.time.isNotEmpty()) Text(workout.time, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(workout.name, fontSize = 15.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
+            if (workout.time.isNotEmpty()) Text(workout.time, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
         Icon(Icons.Default.AddCircleOutline, contentDescription = "Add", tint = FLPrimary, modifier = Modifier.size(22.dp))
     }

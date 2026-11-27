@@ -24,7 +24,7 @@ import coil.request.ImageRequest
 import com.fitnesslink.fit.media.MediaCacheStore
 import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.media.MediaURLProvider
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 /**
  * Renders an image referenced by a stable MediaRef. Prefers a local
@@ -89,7 +89,7 @@ fun FLImageView(
     }
 
     Box(
-        modifier = modifier.background(ImagePlaceholder),
+        modifier = modifier.background(FLTheme.colors.imagePlaceholder),
         contentAlignment = Alignment.Center
     ) {
         when {

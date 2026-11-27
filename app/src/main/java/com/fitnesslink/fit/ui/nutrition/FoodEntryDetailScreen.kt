@@ -60,11 +60,9 @@ import com.fitnesslink.fit.nutrition.NutritionFavoritesStore
 import com.fitnesslink.fit.nutrition.nutrientBasis
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -132,7 +130,7 @@ fun FoodDetailScreen(
     logDate: Date?,
     onBack: () -> Unit
 ) {
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         FoodDetailContent(mode = mode, flow = flow, mealType = mealType, logDate = logDate, onDone = onBack)
     }
@@ -411,7 +409,7 @@ fun FoodDetailContent(
 
     if (entryMissing) {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text(if (isEditing) "Entry not found" else "Food not found", fontSize = 16.sp, color = TextSecondaryColor)
+            Text(if (isEditing) "Entry not found" else "Food not found", fontSize = 16.sp, color = FLTheme.colors.textSecondary)
         }
         return
     }
@@ -423,11 +421,11 @@ fun FoodDetailContent(
         // Header
         Row(modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp), verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(if (loading && name.isEmpty()) "Loading…" else name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text(if (loading && name.isEmpty()) "Loading…" else name, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 val existing = existingEntry
                 when {
                     isEditing && existing != null -> {
-                        Text("Logged ${loggedLabel(existing.loggedAt)}", fontSize = 14.sp, color = TextSecondaryColor)
+                        Text("Logged ${loggedLabel(existing.loggedAt)}", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                         existing.aiBadgeText?.let { badge ->
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
@@ -439,8 +437,8 @@ fun FoodDetailContent(
                             }
                         }
                     }
-                    isCapturing -> Text("Adding to the meal you're building", fontSize = 13.sp, color = TextSecondaryColor)
-                    else -> Text("Nothing is logged until you save${backfillSuffix(logDate, " · logging to ")}", fontSize = 13.sp, color = TextSecondaryColor)
+                    isCapturing -> Text("Adding to the meal you're building", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
+                    else -> Text("Nothing is logged until you save${backfillSuffix(logDate, " · logging to ")}", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
             }
             // FTNSSLNK-215: star/unstar this catalog food (manual / AI / template foods have no foodId).
@@ -458,7 +456,7 @@ fun FoodDetailContent(
         // In builder capture mode the meal type is fixed by the slot being built.
         if (!isCapturing) {
             FoodLogCard {
-                Text("Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                Text("Meal", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                 Spacer(Modifier.height(8.dp))
                 MealTypeChips(selected = selectedMeal, onSelect = { selectedMeal = it })
             }
@@ -466,10 +464,10 @@ fun FoodDetailContent(
 
         // Serving card
         FoodLogCard {
-            Text("Serving", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Serving", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Unit", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("Unit", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 Spacer(Modifier.weight(1f))
                 if (unitOptions.size > 1) {
                     Box {
@@ -478,7 +476,7 @@ fun FoodDetailContent(
                             horizontalArrangement = Arrangement.spacedBy(6.dp),
                             modifier = Modifier.clickable { unitMenuOpen = true }
                         ) {
-                            Text(selectedUnit, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                            Text(selectedUnit, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                             Icon(Icons.Default.UnfoldMore, null, tint = FLPrimary, modifier = Modifier.size(16.dp))
                         }
                         DropdownMenu(expanded = unitMenuOpen, onDismissRequest = { unitMenuOpen = false }) {
@@ -491,14 +489,14 @@ fun FoodDetailContent(
                         }
                     }
                 } else {
-                    Text(selectedUnit, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                    Text(selectedUnit, fontSize = 16.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                 }
             }
             Spacer(Modifier.height(12.dp))
             SeparatorView()
             Spacer(Modifier.height(12.dp))
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Quantity", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("Quantity", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 Spacer(Modifier.weight(1f))
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Icon(Icons.Default.RemoveCircle, "Decrease", tint = FLPrimary, modifier = Modifier.size(24.dp).clickable { step(-1.0) })
@@ -516,9 +514,9 @@ fun FoodDetailContent(
         // Nutrition preview card
         FoodLogCard {
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text("Nutrition", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Nutrition", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Spacer(Modifier.weight(1f))
-                preview.grams?.let { Text("≈ ${FoodPortionMath.formatQuantity((it * 10).roundToInt() / 10.0)} g", fontSize = 13.sp, color = TextSecondaryColor) }
+                preview.grams?.let { Text("≈ ${FoodPortionMath.formatQuantity((it * 10).roundToInt() / 10.0)} g", fontSize = 13.sp, color = FLTheme.colors.textSecondary) }
             }
             Spacer(Modifier.height(12.dp))
             NutritionRow("Calories", "${preview.calories.roundToInt()} cal")
@@ -532,22 +530,22 @@ fun FoodDetailContent(
             // FTNSSLNK-216: micronutrients for the current (unit, quantity). A micro the catalog
             // doesn't provide reads "Not available" — NEVER 0.
             Spacer(Modifier.height(12.dp)); SeparatorView(); Spacer(Modifier.height(12.dp))
-            Text("Micronutrients", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+            Text("Micronutrients", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
             Micro.entries.forEachIndexed { index, micro ->
                 Spacer(Modifier.height(10.dp))
                 Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(micro.displayName, fontSize = 14.sp, color = TextSecondaryColor)
+                    Text(micro.displayName, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                     Spacer(Modifier.weight(1f))
                     val amount = microAmount(micro)
-                    if (amount != null) Text("${formatGrams(amount)} ${micro.unit}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-                    else Text("Not available", fontSize = 13.sp, color = TextSecondaryColor)
+                    if (amount != null) Text("${formatGrams(amount)} ${micro.unit}", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+                    else Text("Not available", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 }
                 if (index < Micro.entries.lastIndex) { Spacer(Modifier.height(10.dp)); SeparatorView() }
             }
 
             if (preview.usedDensityFallback) {
                 Spacer(Modifier.height(12.dp))
-                Text("Volume estimated at water density (1 g/mL)", fontSize = 11.sp, color = TextSecondaryColor)
+                Text("Volume estimated at water density (1 g/mL)", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
             }
         }
 
@@ -557,7 +555,7 @@ fun FoodDetailContent(
             else -> "Save to ${selectedMeal.displayName}"
         }
         FoodLogPrimaryButton(text = saveTitle, enabled = canSave, loading = saving, onClick = ::save)
-        if (isEditing) FoodLogSecondaryButton(text = "Delete Entry", color = Color.Red, onClick = ::deleteEntry)
+        if (isEditing) FoodLogSecondaryButton(text = "Delete Entry", color = FLTheme.colors.danger, onClick = ::deleteEntry)
     }
 }
 
@@ -570,7 +568,7 @@ private fun formatGrams(value: Double): String = FoodPortionMath.formatQuantity(
 @Composable
 fun NutritionRow(label: String, value: String) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(label, fontSize = 14.sp, color = TextSecondaryColor)
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
     }
 }

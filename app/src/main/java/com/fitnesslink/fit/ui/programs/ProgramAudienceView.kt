@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,8 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 
 /**
  * "Who This Program Is For": the paragraph plus optional "Best for"
@@ -29,10 +28,10 @@ import com.fitnesslink.fit.ui.theme.TextSecondaryColor
 fun ProgramAudienceView(whoIsFor: String, bestFor: List<String>, modifier: Modifier = Modifier) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (whoIsFor.isNotEmpty()) {
-            Text(whoIsFor, fontSize = 14.sp, color = TextSecondaryColor)
+            Text(whoIsFor, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         }
         if (bestFor.isNotEmpty()) {
-            Text("Best for", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Best for", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             bestFor.forEach { item ->
                 Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Icon(
@@ -41,7 +40,7 @@ fun ProgramAudienceView(whoIsFor: String, bestFor: List<String>, modifier: Modif
                         tint = FLPrimary,
                         modifier = Modifier.padding(top = 3.dp).size(13.dp)
                     )
-                    Text(item, fontSize = 14.sp, color = TextSecondaryColor)
+                    Text(item, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                 }
             }
         }

@@ -43,13 +43,10 @@ import com.fitnesslink.fit.nutrition.PreviousMealSource
 import com.fitnesslink.fit.nutrition.PreviousMealsAssembler
 import com.fitnesslink.fit.nutrition.deepCopied
 import com.fitnesslink.fit.persistence.DatabaseManager
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -86,9 +83,9 @@ fun PreviousMealsPickerSheet(
         loaded = true
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.background) {
         Column(modifier = Modifier.fillMaxWidth().fillMaxHeight(0.9f)) {
-            Text("Previous Meals", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+            Text("Previous Meals", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp))
             if (loaded && meals.isEmpty()) {
                 FoodLogEmptyState(
                     icon = Icons.Default.History, title = "No previous meals yet",
@@ -118,15 +115,15 @@ fun PreviousMealsPickerSheet(
 
 @Composable
 private fun PreviousMealCard(meal: PreviousMeal, onAdd: () -> Unit) {
-    Column(modifier = Modifier.fillMaxWidth().background(White, RoundedCornerShape(12.dp))) {
+    Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp))) {
         Row(modifier = Modifier.padding(horizontal = 16.dp).padding(top = 14.dp), verticalAlignment = Alignment.Top) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(meal.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text(meal.name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FoodLogBadge(meal.source.label, color = if (meal.source == PreviousMealSource.PLANNED) PurpleTheme else BlueTheme)
-                    Text(SimpleDateFormat("MMM d", Locale.US).format(meal.date), fontSize = 12.sp, color = TextSecondaryColor)
-                    Text("·", color = TextSecondaryColor)
-                    Text("${meal.itemCount} item${if (meal.itemCount == 1) "" else "s"}", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text(SimpleDateFormat("MMM d", Locale.US).format(meal.date), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
+                    Text("·", color = FLTheme.colors.textSecondary)
+                    Text("${meal.itemCount} item${if (meal.itemCount == 1) "" else "s"}", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             }
             Text("${meal.totalCalories} cal", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = FLPrimary)
@@ -134,10 +131,10 @@ private fun PreviousMealCard(meal: PreviousMeal, onAdd: () -> Unit) {
         Column(modifier = Modifier.padding(horizontal = 16.dp).padding(top = 10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             meal.foods.forEach { food ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(food.name, fontSize = 13.sp, color = TextPrimaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                    Text(food.portionLabel, fontSize = 11.sp, color = TextSecondaryColor)
+                    Text(food.name, fontSize = 13.sp, color = FLTheme.colors.textPrimary, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                    Text(food.portionLabel, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     Spacer(Modifier.weight(1f))
-                    Text("${food.totalCalories.roundToInt()} cal", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("${food.totalCalories.roundToInt()} cal", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             }
         }
@@ -148,9 +145,9 @@ private fun PreviousMealCard(meal: PreviousMeal, onAdd: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(16.dp).background(FLPrimary, RoundedCornerShape(10.dp)).clickable(onClick = onAdd).padding(vertical = 10.dp),
             horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Default.AddCircle, null, tint = White, modifier = Modifier.size(16.dp))
+            Icon(Icons.Default.AddCircle, null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(16.dp))
             Spacer(Modifier.size(6.dp))
-            Text("Add to Meal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = White)
+            Text("Add to Meal", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
         }
     }
 }

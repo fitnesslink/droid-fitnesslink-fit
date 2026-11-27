@@ -33,7 +33,8 @@ fun EntitlementGate(content: @Composable () -> Unit) {
         PlayBillingManager.attach(context)
         launch { EntitlementStore.refresh(force = true) }
         launch {
-            PlayBillingManager.drainPendingPurchases()
+            // Login / account switch: drain now even if the foreground hook just ran for the previous state.
+            PlayBillingManager.drainPendingPurchases(force = true)
             if (EntitlementStore.isNearExpiry) PlayBillingManager.reverifyCurrentPurchases()
         }
     }

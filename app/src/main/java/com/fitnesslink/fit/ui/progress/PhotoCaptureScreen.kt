@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.progress
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -66,12 +67,7 @@ import com.fitnesslink.fit.model.PhotoAngle
 import com.fitnesslink.fit.model.ProgressPhotoEntry
 import com.fitnesslink.fit.progress.BodyTrackingStore
 import com.fitnesslink.fit.progress.CaptureSegment
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.PhotoCaptureViewModel
 import java.io.File
 import java.util.UUID
@@ -103,7 +99,7 @@ fun PhotoCaptureScreen(
 
     val angle = viewModel.currentAngle
 
-    Box(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Box(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Top bar: Cancel
             Row(
@@ -113,7 +109,7 @@ fun PhotoCaptureScreen(
                 horizontalArrangement = Arrangement.End
             ) {
                 Text(
-                    "Cancel", fontSize = 14.sp, color = TextSecondaryColor,
+                    "Cancel", fontSize = 14.sp, color = FLTheme.colors.textSecondary,
                     modifier = Modifier
                         .clickable(onClick = onClose)
                         .padding(8.dp)
@@ -160,10 +156,10 @@ fun PhotoCaptureScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Icon(Icons.Default.Person, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(40.dp))
-                    Text("${angle.displayName} Photo", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                    Text("${angle.displayName} Photo", fontSize = 24.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     Text(
                         "Take or upload a ${angle.displayName.lowercase()} angle photo",
-                        fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center
+                        fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center
                     )
                 }
 
@@ -177,7 +173,7 @@ fun PhotoCaptureScreen(
                                 .fillMaxWidth()
                                 .height(320.dp)
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(Color.Black.copy(alpha = 0.05f))
+                                .background(FLTheme.colors.textPrimary.copy(alpha = 0.05f))
                         ) {
                             AsyncImage(
                                 model = current,
@@ -190,14 +186,14 @@ fun PhotoCaptureScreen(
                                     .align(Alignment.TopEnd)
                                     .padding(8.dp)
                                     .clip(RoundedCornerShape(8.dp))
-                                    .background(Color.Black.copy(alpha = 0.6f))
+                                    .background(Color.Black.copy(alpha = 0.6f)) // theme-exempt: over media
                                     .clickable { viewModel.retakeCurrentAngle() }
                                     .padding(horizontal = 10.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
-                                Icon(Icons.Default.Refresh, contentDescription = null, tint = White, modifier = Modifier.size(14.dp))
-                                Text("Retake", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = White)
+                                Icon(Icons.Default.Refresh, contentDescription = null, tint = Color.White, modifier = Modifier.size(14.dp)) // theme-exempt: over media
+                                Text("Retake", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = Color.White) // theme-exempt: over media
                             }
                         }
                     }
@@ -219,7 +215,7 @@ fun PhotoCaptureScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                                Icon(Icons.Default.CameraAlt, contentDescription = null, tint = MediumGray, modifier = Modifier.size(40.dp))
+                                Icon(Icons.Default.CameraAlt, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(40.dp))
                                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                                     PillButton(label = "Camera", icon = Icons.Default.CameraAlt, filled = true) { showCamera = true }
                                     PillButton(label = "Library", icon = Icons.Default.PhotoLibrary, filled = false) {
@@ -233,7 +229,7 @@ fun PhotoCaptureScreen(
 
                 // Notes for this angle
                 Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Notes (optional)", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                    Text("Notes (optional)", fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                     OutlinedTextField(
                         value = viewModel.currentNotes,
                         onValueChange = { viewModel.setCurrentNotes(it) },
@@ -255,7 +251,7 @@ fun PhotoCaptureScreen(
                                 .padding(vertical = 14.dp),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text(viewModel.state.advanceLabel, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+                            Text(viewModel.state.advanceLabel, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
                         }
                     }
                     if (viewModel.state.canFinishEarly) {
@@ -274,7 +270,7 @@ fun PhotoCaptureScreen(
                     }
                     Text(
                         "Skip ${angle.displayName}",
-                        fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor,
+                        fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -289,18 +285,18 @@ fun PhotoCaptureScreen(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.4f)),
+                    .background(FLTheme.colors.scrim),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
                     modifier = Modifier
-                        .background(White, RoundedCornerShape(12.dp))
+                        .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
                         .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     CircularProgressIndicator(color = FLPrimary)
-                    Text("Uploading…", fontSize = 14.sp, color = TextPrimaryColor)
+                    Text("Uploading…", fontSize = 14.sp, color = FLTheme.colors.textPrimary)
                 }
             }
         }
@@ -327,8 +323,8 @@ private fun PillButton(label: String, icon: androidx.compose.ui.graphics.vector.
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(icon, contentDescription = null, tint = if (filled) White else FLPrimary, modifier = Modifier.size(16.dp))
-        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (filled) White else FLPrimary)
+        Icon(icon, contentDescription = null, tint = if (filled) FLTheme.colors.onBrand else FLPrimary, modifier = Modifier.size(16.dp))
+        Text(label, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = if (filled) FLTheme.colors.onBrand else FLPrimary)
     }
 }
 
@@ -360,7 +356,7 @@ private fun CameraCapturePane(
             .fillMaxWidth()
             .height(380.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(Color.Black)
+            .background(Color.Black) // theme-exempt: over media
     ) {
         if (hasPermission) {
             AndroidView(
@@ -406,7 +402,7 @@ private fun CameraCapturePane(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Text("Camera permission is required to take a photo. Use Library instead, or grant access.", fontSize = 14.sp, color = White, textAlign = TextAlign.Center)
+                Text("Camera permission is required to take a photo. Use Library instead, or grant access.", fontSize = 14.sp, color = Color.White, textAlign = TextAlign.Center) // theme-exempt: over media
                 Spacer(modifier = Modifier.height(12.dp))
                 PillButton(label = "Grant access", icon = Icons.Default.CameraAlt, filled = true) { permissionLauncher.launch(Manifest.permission.CAMERA) }
             }
@@ -419,10 +415,10 @@ private fun CameraCapturePane(
                 .padding(8.dp)
                 .size(32.dp)
                 .clip(CircleShape)
-                .background(Color.Black.copy(alpha = 0.5f))
+                .background(Color.Black.copy(alpha = 0.5f)) // theme-exempt: over media
                 .clickable(onClick = onClose),
             contentAlignment = Alignment.Center
-        ) { Icon(Icons.Default.Close, contentDescription = "Close camera", tint = White, modifier = Modifier.size(16.dp)) }
+        ) { Icon(Icons.Default.Close, contentDescription = "Close camera", tint = Color.White, modifier = Modifier.size(16.dp)) } // theme-exempt: over media
 
         if (hasPermission) {
             // Flip
@@ -432,12 +428,12 @@ private fun CameraCapturePane(
                     .padding(8.dp)
                     .size(32.dp)
                     .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .background(Color.Black.copy(alpha = 0.5f)) // theme-exempt: over media
                     .clickable {
                         lensFacing = if (lensFacing == CameraSelector.LENS_FACING_BACK) CameraSelector.LENS_FACING_FRONT else CameraSelector.LENS_FACING_BACK
                     },
                 contentAlignment = Alignment.Center
-            ) { Icon(Icons.Default.Cameraswitch, contentDescription = "Switch camera", tint = White, modifier = Modifier.size(16.dp)) }
+            ) { Icon(Icons.Default.Cameraswitch, contentDescription = "Switch camera", tint = Color.White, modifier = Modifier.size(16.dp)) } // theme-exempt: over media
 
             // Shutter
             Box(
@@ -446,7 +442,7 @@ private fun CameraCapturePane(
                     .padding(bottom = 16.dp)
                     .size(64.dp)
                     .clip(CircleShape)
-                    .background(White)
+                    .background(Color.White) // theme-exempt: over media
                     .clickable {
                         val file = File(context.cacheDir, "progress-${UUID.randomUUID()}.jpg")
                         val options = ImageCapture.OutputFileOptions.Builder(file).build()
@@ -462,17 +458,17 @@ private fun CameraCapturePane(
                     },
                 contentAlignment = Alignment.Center
             ) {
-                Box(modifier = Modifier.size(52.dp).clip(CircleShape).background(White).padding(2.dp).clip(CircleShape).background(FLPrimary))
+                Box(modifier = Modifier.size(52.dp).clip(CircleShape).background(Color.White).padding(2.dp).clip(CircleShape).background(FLPrimary)) // theme-exempt: over media
             }
         }
 
         captureError?.let { error ->
             Text(
-                error, fontSize = 12.sp, color = White,
+                error, fontSize = 12.sp, color = Color.White, // theme-exempt: over media
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(12.dp)
-                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                    .background(Color.Black.copy(alpha = 0.6f), RoundedCornerShape(6.dp)) // theme-exempt: over media
                     .padding(8.dp)
             )
         }

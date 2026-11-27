@@ -4,13 +4,13 @@ import java.util.UUID
 
 // MARK: - Enums
 
-enum class GoalType(val displayName: String) {
-    BodyComposition("Lose Weight"),
-    Performance("Get Stronger"),
-    Consistency("Build a Routine"),
-    Nutrition("Eat Better"),
-    RecoveryWellness("Sleep & Recover"),
-    Custom("Custom Goal")
+enum class GoalType(val displayName: String, val subtitle: String) {
+    BodyComposition("Lose Weight", "Reach a target body weight."),
+    Performance("Get Stronger", "Improve a lift or strength metric."),
+    Consistency("Build a Routine", "Stay consistent with workouts or habits."),
+    Nutrition("Eat Better", "Meet a measurable nutrition target."),
+    RecoveryWellness("Sleep & Recover", "Reach a sleep or recovery target."),
+    Custom("Custom Goal", "Define a personalized, measurable target.")
 }
 
 enum class GoalStatus { Active, Paused, Completed, Archived }
@@ -94,8 +94,26 @@ data class Goal(
     val identityStatement: String? = null,
     val trajectoryStatus: TrajectoryStatus = TrajectoryStatus.OnTrack,
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    // Goals PRD definition (iOS `Goal` additions in f64f488). Null `subtype`
+    // = a goal created before the typed flow (legacy detail screen).
+    val subtype: GoalSubtype? = null,
+    val metricKey: String? = null,
+    val baselineValue: Double? = null,
+    val baselineDate: Long? = null,
+    val frequency: GoalFrequency? = null,
+    val frequencyTarget: Int? = null,
+    val trackingSource: GoalTrackingSource? = null,
+    val movementId: String? = null,
+    /** `GoalConfig` JSON; read through [settings], write with [withSettings]. */
+    val config: String? = null,
+    val isPinned: Boolean = false
 ) {
+    /** Decoded `GoalConfig` (empty config when absent or unreadable). */
+    val settings: GoalConfig get() = GoalJson.decodeConfig(config)
+
+    fun withSettings(settings: GoalConfig): Goal = copy(config = GoalJson.encodeConfig(settings))
+
     /** iOS `Goal.progressPercent`: 0 without a positive target, capped at 100. */
     val progressPercent: Double
         get() {
@@ -107,9 +125,22 @@ data class Goal(
     /** Server `GoalDto`: ISO dates, `createdAtUtc` / `updatedAtUtc` (iOS `Goal.CodingKeys`). */
     class WireAdapter : EpochWireAdapter<Goal>(
         Goal::class.java,
-        dateKeys = setOf("startDate", "targetDate", "completedDate", "createdAt", "updatedAt"),
+        dateKeys = setOf("startDate", "targetDate", "completedDate", "createdAt", "updatedAt", "baselineDate"),
         utcSuffixed = setOf("createdAt", "updatedAt")
-    )
+    ) {
+        /** Server enums this build doesn't know decode to null rather than failing the row (iOS `try?`). */
+        override fun preprocess(raw: com.google.gson.JsonObject) {
+            super.preprocess(raw)
+            fun dropUnknown(key: String, known: (String) -> Boolean) {
+                val e = raw.get(key) ?: return
+                if (!e.isJsonPrimitive || !known(e.asString)) raw.remove(key)
+            }
+            dropUnknown("subtype") { GoalSubtype.fromWire(it) != null }
+            dropUnknown("frequency") { GoalFrequency.fromWire(it) != null }
+            dropUnknown("trackingSource") { GoalTrackingSource.fromWire(it) != null }
+            raw.get("movementId")?.takeIf { it.isJsonPrimitive }?.let { raw.addProperty("movementId", it.asString.lowercase(java.util.Locale.US)) }
+        }
+    }
 }
 
 @com.google.gson.annotations.JsonAdapter(Habit.WireAdapter::class)

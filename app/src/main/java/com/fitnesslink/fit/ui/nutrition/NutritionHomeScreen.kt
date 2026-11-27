@@ -20,6 +20,7 @@ import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.TrackChanges
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,15 +41,11 @@ import com.fitnesslink.fit.nutrition.NutritionGoalsStore
 import com.fitnesslink.fit.ui.components.HeaderView
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.navigation.NutritionCoreRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.MealPlanViewModel
 import java.util.Date
 
@@ -81,7 +78,7 @@ fun NutritionHomeScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderView(onNotificationsTap = onNavigateToNotifications)
 
@@ -100,12 +97,12 @@ fun NutritionHomeScreen(
                     text = "Nutrition",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
-                    color = TextPrimaryColor
+                    color = FLTheme.colors.textPrimary
                 )
                 Text(
                     text = "Track calories and plan your meals",
                     fontSize = 14.sp,
-                    color = TextSecondaryColor
+                    color = FLTheme.colors.textSecondary
                 )
             }
 
@@ -156,7 +153,7 @@ fun NutritionHomeScreen(
                     text = "This Week",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimaryColor
+                    color = FLTheme.colors.textPrimary
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -188,7 +185,7 @@ fun NutritionHomeScreen(
                     text = "Quick Actions",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = TextPrimaryColor,
+                    color = FLTheme.colors.textPrimary,
                     modifier = Modifier.padding(horizontal = 20.dp)
                 )
                 Row(
@@ -218,6 +215,9 @@ fun NutritionHomeScreen(
                     )
                 }
             }
+
+            // Citations stay easy to find from the top of the Nutrition tab.
+            NutritionSourcesRow(modifier = Modifier.padding(horizontal = 20.dp))
         }
     }
 }
@@ -234,7 +234,7 @@ private fun FeatureCard(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -254,19 +254,19 @@ private fun FeatureCard(
                 text = title,
                 fontSize = 17.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = TextPrimaryColor
+                color = FLTheme.colors.textPrimary
             )
             Text(
                 text = subtitle,
                 fontSize = 13.sp,
-                color = TextSecondaryColor,
+                color = FLTheme.colors.textSecondary,
                 maxLines = 2
             )
         }
         Icon(
-            painter = painterResource(R.drawable.back),
+            imageVector = Icons.Default.ChevronRight,
             contentDescription = "Go",
-            tint = MediumGray,
+            tint = FLTheme.colors.textTertiary,
             modifier = Modifier.size(16.dp)
         )
     }
@@ -284,7 +284,7 @@ private fun FeatureCard(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -300,13 +300,13 @@ private fun FeatureCard(
                 .padding(12.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
-            Text(text = title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text(text = subtitle, fontSize = 13.sp, color = TextSecondaryColor, maxLines = 2)
+            Text(text = title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text(text = subtitle, fontSize = 13.sp, color = FLTheme.colors.textSecondary, maxLines = 2)
         }
         Icon(
-            painter = painterResource(R.drawable.back),
+            imageVector = Icons.Default.ChevronRight,
             contentDescription = "Go",
-            tint = MediumGray,
+            tint = FLTheme.colors.textTertiary,
             modifier = Modifier.size(16.dp)
         )
     }
@@ -321,7 +321,7 @@ private fun StatCard(
 ) {
     Column(
         modifier = modifier
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .padding(vertical = 14.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
@@ -335,7 +335,7 @@ private fun StatCard(
         Text(
             text = label,
             fontSize = 11.sp,
-            color = TextSecondaryColor
+            color = FLTheme.colors.textSecondary
         )
     }
 }
@@ -350,7 +350,7 @@ private fun QuickActionCard(
 ) {
     Column(
         modifier = modifier
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -366,7 +366,7 @@ private fun QuickActionCard(
             text = title,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
-            color = TextPrimaryColor
+            color = FLTheme.colors.textPrimary
         )
     }
 }

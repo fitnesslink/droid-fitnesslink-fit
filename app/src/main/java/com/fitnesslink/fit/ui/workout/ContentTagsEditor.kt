@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,11 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.model.ContentTagSelection
 import com.fitnesslink.fit.ui.components.TagOption
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.util.Locale
 
 // MARK: - Detail: chip rows (iOS ContentTagsViews.swift)
@@ -127,15 +124,15 @@ fun ContentTagsEditorSection(
 
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(kind.icon, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(14.dp))
+            Icon(kind.icon, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(14.dp))
             Spacer(modifier = Modifier.width(4.dp))
-            Text(text = kind.title, fontSize = 13.sp, color = TextSecondaryColor)
+            Text(text = kind.title, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             Spacer(modifier = Modifier.weight(1f))
             Text(
                 text = if (selection.selectedIds.isEmpty()) "Select ›" else "Edit ›",
                 fontSize = 13.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (selection.isLoaded) FLPrimary else TextSecondaryColor,
+                color = if (selection.isLoaded) FLPrimary else FLTheme.colors.textSecondary,
                 modifier = Modifier.clickable(enabled = selection.isLoaded) { showPicker = true }
             )
         }
@@ -145,7 +142,7 @@ fun ContentTagsEditorSection(
                 selection.isPendingReset -> "Will use the movements' ${kind.title.lowercase(Locale.US)} after save"
                 else -> "None yet"
             }
-            Text(text = label, fontSize = 13.sp, color = TextSecondaryColor)
+            Text(text = label, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
         } else {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 names.forEach { ContentTagChip(name = it, icon = kind.icon) }
@@ -156,19 +153,19 @@ fun ContentTagsEditorSection(
             selection.isShowingDerived && selection.selectedIds.isNotEmpty() -> "From movements"
             else -> null
         }
-        if (hint != null) Text(text = hint, fontSize = 11.sp, color = TextSecondaryColor, fontStyle = FontStyle.Italic)
+        if (hint != null) Text(text = hint, fontSize = 11.sp, color = FLTheme.colors.textSecondary, fontStyle = FontStyle.Italic)
         if (selection.isExplicit || selection.isTouched) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.clickable(enabled = !selection.isPendingReset) { onReset() }
             ) {
-                Icon(Icons.Filled.Undo, contentDescription = null, tint = if (selection.isPendingReset) TextSecondaryColor else FLPrimary, modifier = Modifier.size(14.dp))
+                Icon(Icons.Filled.Undo, contentDescription = null, tint = if (selection.isPendingReset) FLTheme.colors.textSecondary else FLPrimary, modifier = Modifier.size(14.dp))
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = "Reset to movement defaults",
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = if (selection.isPendingReset) TextSecondaryColor else FLPrimary
+                    color = if (selection.isPendingReset) FLTheme.colors.textSecondary else FLPrimary
                 )
             }
         }
@@ -211,7 +208,7 @@ fun ClassificationPickerSheet(
         }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.background, contentColor = FLTheme.colors.textPrimary) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(text = title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
@@ -227,7 +224,7 @@ fun ClassificationPickerSheet(
             Spacer(modifier = Modifier.height(8.dp))
             LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f, fill = false)) {
                 if (filtered.isEmpty()) {
-                    item { Text("No matches for “$search”", color = TextSecondaryColor, modifier = Modifier.padding(vertical = 12.dp)) }
+                    item { Text("No matches for “$search”", color = FLTheme.colors.textSecondary, modifier = Modifier.padding(vertical = 12.dp)) }
                 }
                 filtered.forEach { (category, items) ->
                     item(key = "cat-$category") {
@@ -235,7 +232,7 @@ fun ClassificationPickerSheet(
                             text = category.replaceFirstChar { it.uppercase() },
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
-                            color = TextSecondaryColor,
+                            color = FLTheme.colors.textSecondary,
                             modifier = Modifier.padding(top = 12.dp, bottom = 4.dp)
                         )
                     }
@@ -245,7 +242,7 @@ fun ClassificationPickerSheet(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(White)
+                                .background(FLTheme.colors.surface)
                                 .clickable {
                                     selected = if (isOn) selected - item.id else selected + item.id
                                     onSelectionChange(selected)
@@ -253,7 +250,7 @@ fun ClassificationPickerSheet(
                                 .padding(horizontal = 12.dp, vertical = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(text = item.name, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                            Text(text = item.name, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                             if (isOn) Icon(Icons.Filled.Check, contentDescription = "Selected", tint = FLPrimary)
                         }
                         Spacer(modifier = Modifier.height(4.dp))

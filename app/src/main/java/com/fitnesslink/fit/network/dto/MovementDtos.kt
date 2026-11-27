@@ -23,6 +23,41 @@ data class CreateMovementRequest(
     val thumbnailId: String? = null
 )
 
+/**
+ * `PUT /movements/{id}` body — mirrors the server `UpdateMovementRequest`
+ * (iOS `MovementService.UpdateMovementRequest`): every field is "null leaves
+ * it alone", and a non-null id list replaces the tags wholesale. Sent instead
+ * of the full `Movement` so read-only payload fields (sections, URLs, audit,
+ * share flags) never ride a PUT. The server answers 204.
+ */
+data class UpdateMovementRequest(
+    val name: String? = null,
+    val description: String? = null,
+    val videoId: String? = null,
+    val statusId: String? = null,
+    val imageId: String? = null,
+    val thumbnailId: String? = null,
+    val anatomyIds: List<String>? = null,
+    val equipmentIds: List<String>? = null,
+    val summary: String? = null,
+    val phoneVideoId: String? = null
+) {
+    companion object {
+        fun from(m: com.fitnesslink.fit.model.api.Movement) = UpdateMovementRequest(
+            name = m.name,
+            description = m.description,
+            videoId = m.videoId?.toString(),
+            statusId = m.statusId?.toString(),
+            imageId = m.imageId?.toString(),
+            thumbnailId = m.thumbnailId?.toString(),
+            anatomyIds = m.anatomyIds.map { it.toString() },
+            equipmentIds = m.equipmentIds.map { it.toString() },
+            summary = m.summary,
+            phoneVideoId = m.phoneVideoId?.toString()
+        )
+    }
+}
+
 /** `GET /movements/favorites` row. */
 data class MovementFavoriteDto(
     val movementId: String,

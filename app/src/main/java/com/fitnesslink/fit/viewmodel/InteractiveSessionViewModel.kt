@@ -10,6 +10,7 @@ import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.model.DistanceRule
 import com.fitnesslink.fit.model.DistanceUnit
 import com.fitnesslink.fit.model.DistanceValue
+import com.fitnesslink.fit.model.EmomMath
 import com.fitnesslink.fit.model.IntervalMath
 import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.IntervalPhase
@@ -24,6 +25,9 @@ import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.session.ActiveWorkoutSession
 import com.fitnesslink.fit.session.AudioCueService
+import com.fitnesslink.fit.session.EmomCoach
+import com.fitnesslink.fit.session.EmomCueContext
+import com.fitnesslink.fit.session.EmomOutcomeWriter
 import com.fitnesslink.fit.session.IntervalRunner
 import com.fitnesslink.fit.session.MovementHistoryStore
 import com.fitnesslink.fit.session.MovementPreviousWeight
@@ -47,6 +51,7 @@ import com.fitnesslink.fit.session.SessionTransitionEngine.RestKind
 import com.fitnesslink.fit.session.SessionTransitionEngine.Transition
 import com.fitnesslink.fit.session.SessionWorkoutRefresh
 import com.fitnesslink.fit.session.SetState
+import com.fitnesslink.fit.session.UnconfirmedSetItem
 import com.fitnesslink.fit.session.UpNextDescriptor
 import com.fitnesslink.fit.session.WorkoutSummaryStats
 import kotlinx.coroutines.Job
@@ -101,6 +106,10 @@ class InteractiveSessionViewModel : ViewModel() {
     var isWorkoutComplete by mutableStateOf(false)
         private set
     var showLogSheet by mutableStateOf(false)
+    /** Workout-end "You Have Unconfirmed Sets" sheet (Universal Logging §11.3). */
+    var showUnconfirmedSets by mutableStateOf(false)
+    /** The logging screen opened by Review Sets — on the affected exercise, which may not be the one under the cursor. */
+    var reviewLogTarget by mutableStateOf<Pair<WorkoutTask, Int>?>(null)
     var showFinishConfirmation by mutableStateOf(false)
         private set
     var workoutName by mutableStateOf("")
@@ -111,6 +120,10 @@ class InteractiveSessionViewModel : ViewModel() {
         private set
     var intervalRunner: IntervalRunner? = null
         private set
+    /** EMOM voice coach (PRD §8); one per session so its phrase rotations carry across blocks. */
+    private val emomCoach = EmomCoach()
+    /** True while an EMOM block's runner is live. */
+    val isEmomRunning: Boolean get() = intervalRunner?.let { it.emomPlan != null && it.phase != IntervalPhase.DONE } == true
     var phaseOptions by mutableStateOf<List<PhaseOption>>(emptyList())
         private set
     var isWorkoutEditable by mutableStateOf(false)
@@ -221,9 +234,43 @@ class InteractiveSessionViewModel : ViewModel() {
     val currentSetState: SetState get() = session.setState(workoutTask.id, currentIteration)
     val currentSetIsLogged: Boolean get() = actualSetLogs[workoutTask.id]?.get(currentIteration) != null
     val hasSessionOnlyEdits: Boolean get() = !session.overrides.isEmpty
-    val canSwapCurrentMovement: Boolean get() = SessionWorkoutEditor.canSwap(workoutTask) && intervalRunner == null
+    /**
+     * Swap is offered for interval movements too (FTNSSLNK-515): only the movement fields change,
+     * so the block's work / rest / rounds structure is kept, and a live runner is rebuilt in place.
+     */
+    val canSwapCurrentMovement: Boolean get() = SessionWorkoutEditor.canSwap(swapTargetTask)
     val canRemoveCurrentExercise: Boolean get() = SessionWorkoutEditor.canRemove(workoutTask)
+    /** Rep- and time-based loose movements alike (FTNSSLNK-512); [currentUsesDuration] picks the sheet. */
     val canEditCurrentSets: Boolean get() = SessionWorkoutEditor.canEditSets(workoutTask)
+    /** True when the current exercise is time-based — the menu opens the duration editor. */
+    val currentUsesDuration: Boolean get() = workoutTask.usesDuration
+    /** "Edit Sets & Time" / "Edit Sets & Reps" for the current exercise. */
+    val editCurrentSetsTitle: String get() = SessionWorkoutEditor.editSetsTitle(workoutTask)
+
+    /**
+     * The movement a swap replaces: inside a live interval block, the member on screen (the runner
+     * rotates through the group while the cursor stays on the lead); otherwise the current task.
+     */
+    val swapTargetTask: WorkoutTask
+        get() {
+            val runner = intervalRunner
+            if (runner != null && runner.phase != IntervalPhase.DONE) {
+                val member = runner.currentExercise
+                if (member != null) workoutTasks.firstOrNull { it.id == member.id }?.let { return it }
+            }
+            return workoutTask
+        }
+
+    /**
+     * Whether the info strip's ⋯ menu has anything to show — it is hidden otherwise, so it never
+     * opens empty (FTNSSLNK-515).
+     */
+    val hasEditMenuItems: Boolean
+        get() {
+            if (!isWorkoutEditable) return true
+            if (!workoutTask.isMovement) return false
+            return canSwapCurrentMovement || canEditCurrentSets || canRemoveCurrentExercise
+        }
 
     val summaryStats: WorkoutSummaryStats
         get() = WorkoutSummaryStats.build(
@@ -240,6 +287,11 @@ class InteractiveSessionViewModel : ViewModel() {
             if (runner != null && runner.phase != IntervalPhase.DONE) {
                 val next = runner.nextExercise
                 val slot = runner.nextSlot
+                if (next != null && slot != null && runner.emomPlan != null) {
+                    // EMOM REST card (§7.3): "Push-ups · 10 reps" / "Round 3 / 20".
+                    return descriptor(next, UpNextDescriptor.Kind.NextExercise, prescription = EmomMath.displayTarget(next),
+                        detail = "Round ${slot.second} / ${runner.roundsTotal}", startsIn = null)
+                }
                 if (next != null && slot != null) {
                     val detail = if (runner.intervalMode != IntervalMode.AMRAP) {
                         if (runner.setsTotal > 1) "Set ${slot.first} · Round ${slot.second} of ${runner.roundsTotal}" else "Round ${slot.second} of ${runner.roundsTotal}"
@@ -386,7 +438,7 @@ class InteractiveSessionViewModel : ViewModel() {
             val runner = intervalRunner ?: return false
             return when (runner.phase) {
                 IntervalPhase.PREPARE, IntervalPhase.BETWEEN_SETS_REST -> true
-                IntervalPhase.REST -> runner.leadTask?.restType != RestType.ACTIVE_RECOVERY
+                IntervalPhase.REST -> runner.emomPlan != null || runner.leadTask?.restType != RestType.ACTIVE_RECOVERY
                 IntervalPhase.WORK, IntervalPhase.DONE -> false
             }
         }
@@ -487,14 +539,46 @@ class InteractiveSessionViewModel : ViewModel() {
             return
         }
         val runner = intervalRunner
-        if (runner != null && runner.phase != IntervalPhase.DONE) { runner.skip(); bump(); return }
+        if (runner != null && runner.phase != IntervalPhase.DONE && runner.emomPlan != null) { emomNext(runner); return }
+        if (runner != null && runner.phase != IntervalPhase.DONE) { clearPauseForAdvance(); runner.skip(); bump(); return }
         apply(engine.next(cursor), completing = true)
+    }
+
+    /**
+     * FTNSSLNK-500: a pause taken on the preparation / rest screen must not carry into what comes
+     * next. Start Now, NEXT and a skipped rest are the user moving on — drop the paused state so the
+     * exercise clocks and the demo video run. The timers that matter re-arm on their own
+     * (`syncSetTimer` / `startRestCountdown` / `makeRunner` all honour [isVideoPaused]); a live
+     * interval runner resumes here. Play/Pause itself ([toggleVideoState]) still resumes only the
+     * currently active timer.
+     */
+    private fun clearPauseForAdvance() {
+        if (!isVideoPaused) return
+        isVideoPaused = false
+        // A paused rest kept its remainder for a resume that will never come — the rest is being left.
+        restPausedRemainingMs = null
+        intervalRunner?.resume()
+    }
+
+    /** EMOM Next / Skip Round (§7.2): stop speech, next round at its full interval, or leave after the last. */
+    private fun emomNext(runner: IntervalRunner) {
+        AudioCueService.silenceVoice()
+        clearPauseForAdvance()
+        if (!runner.emomNext()) { exitIntervalGroup(); return }
+        bump()
+    }
+
+    /** Leave the whole interval block (Skip Block); EMOM speech stops at once. */
+    fun leaveIntervalBlock() {
+        if (isEmomRunning) AudioCueService.silenceVoice()
+        exitIntervalGroup()
     }
 
     fun startWork() {
         if (!isPreparing) return
         cancelPrepCueGate()
         removeRestTimer()
+        clearPauseForAdvance()
         isPreparing = false
         pendingPhaseChange = null
         isRest = workoutTask.isRest
@@ -510,6 +594,8 @@ class InteractiveSessionViewModel : ViewModel() {
     }
 
     private fun apply(transition: Transition, completing: Boolean) {
+        // Every engine advance (NEXT, a skipped rest, Skip) leaves the paused prep / rest behind (FTNSSLNK-500).
+        clearPauseForAdvance()
         if (completing) markCurrentSetCompleted()
         when (transition) {
             is Transition.NextSet -> {
@@ -627,6 +713,7 @@ class InteractiveSessionViewModel : ViewModel() {
         removeRestTimer()
         val runner = intervalRunner
         if (runner != null && runner.phase != IntervalPhase.DONE) {
+            if (runner.emomPlan != null) AudioCueService.silenceVoice()
             if (runner.back()) { bump(); return }
             val blockStart = currentGroupRange()?.first ?: position
             if (blockStart <= 0) return
@@ -686,10 +773,20 @@ class InteractiveSessionViewModel : ViewModel() {
 
     private fun currentGroupRange(): IntRange? = engine.groupRange(position)
 
+    /** The preparation screen leads into an EMOM block — its last five seconds are spoken (§7.1). */
+    private val isPreparingEmomBlock: Boolean
+        get() {
+            if (!isPreparing) return false
+            val range = currentGroupRange() ?: return false
+            val lead = workoutTasks[range.first]
+            return lead.isInterval && lead.intervalMode == IntervalMode.EMOM
+        }
+
     /** The Up Next skip affordance. */
     fun getNextExercise() {
         val runner = intervalRunner
         if (runner != null) {
+            if (runner.emomPlan != null) AudioCueService.silenceVoice()
             if (runner.phase != IntervalPhase.DONE && runner.jumpToNextWork()) { bump(); return }
             exitIntervalGroup(); return
         }
@@ -705,7 +802,11 @@ class InteractiveSessionViewModel : ViewModel() {
     val canSkipSet: Boolean
         get() = workoutTask.isMovement && !workoutTask.isInterval && !workoutTask.isRest && intervalRunner == null && activeRestKind == null && !isWorkoutComplete
     val canSkipExercise: Boolean get() = canSkipSet || (intervalRunner != null && !isWorkoutComplete)
-    val skipExerciseLabel: String get() = if (currentGroupRange() != null) "Skip Block" else "Skip Exercise"
+    val skipExerciseLabel: String get() = when {
+        isEmomRunning -> "Skip Round"
+        currentGroupRange() != null -> "Skip Block"
+        else -> "Skip Exercise"
+    }
 
     fun skipCurrentSet() {
         if (!canSkipSet) return
@@ -718,7 +819,10 @@ class InteractiveSessionViewModel : ViewModel() {
 
     fun skipCurrentExercise() {
         if (!canSkipExercise) return
-        if (intervalRunner != null) { AudioCueService.skipped(); exitIntervalGroup(); return }
+        val runner = intervalRunner
+        // EMOM: Skip = Next (never marks the round complete, §7.2).
+        if (runner != null && isEmomRunning) { AudioCueService.skipped(); emomNext(runner); return }
+        if (runner != null) { AudioCueService.skipped(); exitIntervalGroup(); return }
         clearTransientState()
         stopSetTimer()
         val range = currentGroupRange()
@@ -739,6 +843,8 @@ class InteractiveSessionViewModel : ViewModel() {
 
     fun toggleVideoState() {
         isVideoPaused = !isVideoPaused
+        // EMOM: pause stops speech immediately; resume never replays missed cues (§8).
+        if (isVideoPaused && isEmomRunning) AudioCueService.silenceVoice()
         if (isVideoPaused) { stopSetTimer(); pauseRestTimer(); intervalRunner?.pause() }
         else { if (isRest) { if (!isAwaitingPrepCue) setRestTimer() } else syncSetTimer(); intervalRunner?.resume() }
         bump()
@@ -830,11 +936,29 @@ class InteractiveSessionViewModel : ViewModel() {
     // MARK: - Finish / discard
 
     private fun requestWorkoutComplete() {
+        // Unconfirmed sets first (Universal Logging §11.3).
+        if (unconfirmedSetItems.isNotEmpty()) { stopSetTimer(); showUnconfirmedSets = true; return }
         if (incompleteExerciseCount == 0) { currentSet = 1; currentRound = 1; completeWorkout() }
         else { stopSetTimer(); showFinishConfirmation = true }
     }
 
     fun finishAnyway() { showFinishConfirmation = false; currentSet = 1; currentRound = 1; completeWorkout() }
+
+    /** Incomplete sets holding entered values (Universal Logging §11.3). */
+    val unconfirmedSetItems: List<UnconfirmedSetItem> get() = session.unconfirmedSetItems(workoutTasks.filter { it.isMovement })
+
+    /** "Finish Without Completing": finish with the sets left incomplete. */
+    fun finishWithoutCompleting() { showUnconfirmedSets = false; finishAnyway() }
+
+    /** "Review Sets": open the logging screen on the first affected set. The cursor stays put; the user finishes again when ready. */
+    fun reviewUnconfirmedSets() {
+        showUnconfirmedSets = false
+        syncSetTimer()
+        reviewLogTarget = unconfirmedSetItems.firstOrNull()?.let { it.task to it.setNumber }
+    }
+
+    /** The set the logging screen highlights when opened from the player: the cursor's set / round. */
+    val logSheetSetNumber: Int get() = currentIteration
 
     fun continueWorkout() {
         showFinishConfirmation = false
@@ -890,9 +1014,19 @@ class InteractiveSessionViewModel : ViewModel() {
 
     fun swapCurrentMovement(movement: MovementLibraryItem, scope: SessionWorkoutEditor.Scope) {
         if (!canSwapCurrentMovement) return
-        val id = workoutTask.id
-        SessionWorkoutEditor.swap(id, movement, workoutId, scope)
-        reloadFromCache(id)
+        val anchorId = workoutTask.id
+        val targetId = swapTargetTask.id
+        // A live interval block keeps its place: capture it before the reload, then rebuild the
+        // runner on the swapped row (the reload keeps the old runner, which holds the old movement).
+        val liveBlock = intervalRunner?.takeIf { it.phase != IntervalPhase.DONE }?.snapshot()
+        SessionWorkoutEditor.swap(targetId, movement, workoutId, scope)
+        reloadFromCache(anchorId)
+        val row = currentIntervalTaskRow()
+        if (liveBlock != null && intervalRunner != null && row != null && row.task?.groupId == liveBlock.groupId) {
+            session.intervalSnapshot = liveBlock
+            makeRunner(row)
+            bump()
+        }
     }
 
     fun removeCurrentExercise(scope: SessionWorkoutEditor.Scope) {
@@ -906,6 +1040,17 @@ class InteractiveSessionViewModel : ViewModel() {
         if (!canEditCurrentSets) return
         val id = workoutTask.id
         SessionWorkoutEditor.updateSets(id, sets, reps, workoutTask.weightKg, workoutId, scope)
+        reloadFromCache(id)
+    }
+
+    /**
+     * Sets × time for a timed exercise (FTNSSLNK-512). The set timer's target is derived from the
+     * task, so the reload re-targets the running set; logged sets stay logged.
+     */
+    fun updateCurrentDuration(sets: Int, durationSeconds: Int, weightLbs: Int?, scope: SessionWorkoutEditor.Scope) {
+        if (!canEditCurrentSets) return
+        val id = workoutTask.id
+        SessionWorkoutEditor.updateDuration(id, sets, durationSeconds, weightLbs, workoutId, scope)
         reloadFromCache(id)
     }
 
@@ -1048,6 +1193,7 @@ class InteractiveSessionViewModel : ViewModel() {
             runner = IntervalRunner(row, prepareSeconds, clock)
             runner.onEvent = { handleRunnerEvent(it, runner) }
             intervalRunner = runner
+            if (runner.emomPlan != null) emomCoach.beginBlock()
             runner.start()
         }
         if (isVideoPaused) runner.pause()
@@ -1062,7 +1208,10 @@ class InteractiveSessionViewModel : ViewModel() {
 
     private fun handleRunnerEvent(event: IntervalRunner.Event, runner: IntervalRunner) {
         if (runner !== intervalRunner) return
-        AudioCueService.handle(event, finalRound = runner.isFinalRound, leadsToWork = runner.leadsIntoWork)
+        val isEmom = runner.emomPlan != null
+        // EMOM keeps today's beeps / haptics but speaks through its own coach (§8).
+        AudioCueService.handle(event, finalRound = runner.isFinalRound, leadsToWork = runner.leadsIntoWork, voice = !isEmom)
+        if (isEmom) for (cue in emomCoach.cues(event, EmomCueContext.from(runner))) AudioCueService.speakCoach(cue)
         session.intervalSnapshot = if (runner.phase == IntervalPhase.DONE) null else runner.snapshot()
         if (event == IntervalRunner.Event.BlockComplete) {
             viewModelScope.launch { if (runner === intervalRunner) exitIntervalGroup() }
@@ -1090,10 +1239,12 @@ class InteractiveSessionViewModel : ViewModel() {
         val roundsDone: Int? = runner?.takeIf { it.phase != IntervalPhase.DONE }?.let { r ->
             maxOf(0, r.currentSet - 1) * maxOf(r.roundsTotal, 1) + maxOf(0, r.currentRound - 1)
         }
+        // EMOM (§7.2): every round's outcome lands on its member's cycle iteration.
+        val emomWrites = runner?.emomPlan?.let { plan -> EmomOutcomeWriter.writes(plan, runner.memberTasks.map { it.id }, runner.emomOutcomes) }
         cancelRunner()
         val range = currentGroupRange() ?: return
         val finishedLead = workoutTasks[range.first]
-        recordIntervalBlockOutcome(range, roundsDone)
+        if (emomWrites != null) session.recordEmomOutcomes(emomWrites) else recordIntervalBlockOutcome(range, roundsDone)
         currentRound = 1
         var transition = engine.afterItem(range.last)
         val recoveryRest = finishedLead.roundRestSeconds
@@ -1143,7 +1294,7 @@ class InteractiveSessionViewModel : ViewModel() {
         if (seconds == restSecondsRemaining) return
         restSecondsRemaining = seconds
         rest = formatRestTime(seconds)
-        if (isPreparing) AudioCueService.play(SessionCueEvent.PrepTick(seconds))
+        if (isPreparing) AudioCueService.play(SessionCueEvent.PrepTick(seconds, spokenFrom = if (isPreparingEmomBlock) 5 else 3))
         else if (activeRestKind != null || workoutTask.isRest) AudioCueService.play(SessionCueEvent.RestTick(seconds))
     }
 

@@ -39,9 +39,17 @@ object SessionWorkoutEditor {
     /** User-authored workouts are editable at the source; contributor templates and shared-in workouts are not. */
     fun isEditable(workout: Workout): Boolean = workout.contributorId == null && workout.sharedByUserId == null
 
-    fun canSwap(task: WorkoutTask): Boolean = task.isMovement && !task.isInterval
+    /**
+     * Interval members swap too (FTNSSLNK-515): a swap only replaces the movement identity + media,
+     * so the block's work/rest timing and round structure are untouched.
+     */
+    fun canSwap(task: WorkoutTask): Boolean = task.isMovement
     fun canRemove(task: WorkoutTask): Boolean = task.isMovement && task.groupId.isEmpty()
-    fun canEditSets(task: WorkoutTask): Boolean = task.isMovement && task.groupId.isEmpty() && !task.usesDuration
+    /** Loose movements, rep- or time-based (FTNSSLNK-512 — timed work edits sets × duration via [updateDuration]). */
+    fun canEditSets(task: WorkoutTask): Boolean = task.isMovement && task.groupId.isEmpty()
+
+    /** Menu label for the sets editor: "Edit Sets & Time" for timed work. */
+    fun editSetsTitle(task: WorkoutTask): String = if (task.usesDuration) "Edit Sets & Time" else "Edit Sets & Reps"
 
     /** A fresh 3 × 10 movement task for [movement] (the editor's default prescription). */
     fun makeMovementTask(movement: MovementLibraryItem): WorkoutTask = WorkoutTask(
@@ -161,6 +169,25 @@ object SessionWorkoutEditor {
     }
 
     /**
+     * Time-based counterpart of [updateSets] (FTNSSLNK-512): sets × seconds per set, optional load
+     * (stored lbs), no reps. Logged sets are untouched; the sheet's single time applies to every set.
+     */
+    fun updateDuration(taskId: String, sets: Int, durationSeconds: Int, weightLbs: Int?, workoutId: String, scope: Scope) {
+        when (scope) {
+            Scope.SESSION_ONLY -> {
+                val o = ActiveWorkoutSession.overrides
+                val reps = o.setChanges[taskId]?.reps ?: 0
+                ActiveWorkoutSession.setOverrides(o.copy(setChanges = o.setChanges +
+                    (taskId to SessionSetOverride(sets, reps, durationSeconds = durationSeconds, weightLbs = weightLbs))))
+            }
+            Scope.PERMANENT -> {
+                val w = DatabaseManager.workout(workoutId) ?: return
+                persistPermanent(mapTask(w, taskId) { SessionOverrides.applyDuration(it, sets, durationSeconds, weightLbs) })
+            }
+        }
+    }
+
+    /**
      * Bake every session-only edit into a personal copy of the workout (created through the normal
      * create path, so it works offline and doesn't trip the server's fork-while-in-progress guard).
      * The running session stays on the original. Returns the new workout's local id.
@@ -257,21 +284,22 @@ sealed class PlaylistEditRequest {
     object SaveMyVersion : PlaylistEditRequest()
 
     val needsMovementPick: Boolean get() = this is Add || this is AddToPhase || this is Swap
-    val pickerTitle: String get() = if (this is Swap) "Replace Exercise" else "Add Exercise"
+    val pickerTitle: String get() = if (this is Swap) "Swap Exercise" else "Add Exercise"
 }
 
-/** Do → Build: what the user can change about the running workout from inside the interactive session. */
+/**
+ * Do → Build: what the user can change about the running workout from inside the interactive
+ * session. Insertions (add after / at end / to phase) were dropped from Interactive Mode
+ * (FTNSSLNK-505); Playlist Mode adds exercises through [PlaylistEditRequest].
+ */
 sealed class SessionEditAction {
-    object AddAfterCurrent : SessionEditAction()
-    object AddAtEnd : SessionEditAction()
-    data class AddToPhase(val phaseId: String) : SessionEditAction()
     object Swap : SessionEditAction()
     object EditSets : SessionEditAction()
     object Remove : SessionEditAction()
     object SaveMyVersion : SessionEditAction()
 
-    val needsMovementPick: Boolean get() = this is AddAfterCurrent || this is AddAtEnd || this is AddToPhase || this is Swap
-    val pickerTitle: String get() = if (this is Swap) "Replace Exercise" else "Add Exercise"
+    val needsMovementPick: Boolean get() = this is Swap
+    val pickerTitle: String get() = if (this is Swap) "Swap Exercise" else "Add Exercise"
 }
 
 /** One row of the "Add exercise to phase" submenu. */

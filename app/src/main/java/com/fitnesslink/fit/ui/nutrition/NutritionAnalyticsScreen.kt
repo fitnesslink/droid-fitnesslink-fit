@@ -47,15 +47,11 @@ import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.profile.charts.ReportBarChart
 import com.fitnesslink.fit.ui.profile.charts.ReportLineChart
 import com.fitnesslink.fit.ui.profile.charts.ReportSegmentedPicker
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.NutritionAnalyticsRange
 import com.fitnesslink.fit.viewmodel.NutritionAnalyticsViewModel
 import java.text.SimpleDateFormat
@@ -76,13 +72,13 @@ fun NutritionAnalyticsScreen(
 ) {
     LaunchedEffect(viewModel.selectedRange) { viewModel.load() }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(top = 10.dp, bottom = 30.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Nutrition Trends", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+            Text("Nutrition Trends", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp))
             ReportSegmentedPicker(
                 options = NutritionAnalyticsRange.entries, selected = viewModel.selectedRange,
                 label = { it.label }, onSelect = { viewModel.selectRange(it) },
@@ -117,8 +113,8 @@ private fun CaloriesCard(vm: NutritionAnalyticsViewModel) {
         if (vm.hasAnyFoodData) {
             ReportBarChart(points = vm.caloriePoints, color = FLPrimary, height = 200.dp)
             vm.calorieTargetAverage?.let { target ->
-                Text("Daily target ≈ ${Math.round(target)} cal (dashed where set)", fontSize = 11.sp, color = TextSecondaryColor)
-                LegendRow(listOf(FLPrimary to "Consumed", TextPrimaryColor.copy(alpha = 0.55f) to "Daily target"))
+                Text("Daily target ≈ ${Math.round(target)} cal (dashed where set)", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
+                LegendRow(listOf(FLPrimary to "Consumed", FLTheme.colors.textPrimary.copy(alpha = 0.55f) to "Daily target"))
             }
         } else {
             ChartEmptyState(Icons.Default.Restaurant, "No food logged in this range yet.")
@@ -137,7 +133,7 @@ private fun MacrosCard(vm: NutritionAnalyticsViewModel) {
                 height = 200.dp
             )
             LegendRow(vm.macroLines.map { (colors[it.id] ?: FLPrimary) to it.name })
-            Text("Dashed lines show your daily targets where set.", fontSize = 11.sp, color = TextSecondaryColor)
+            Text("Dashed lines show your daily targets where set.", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         } else {
             ChartEmptyState(Icons.Default.ShowChart, "Log meals to see macro trends here.")
         }
@@ -150,7 +146,7 @@ private fun WaterCard(vm: NutritionAnalyticsViewModel) {
     ChartCard("Water", subtitle) {
         if (vm.hasAnyWaterData) {
             ReportBarChart(points = vm.waterPoints, color = BlueTheme, height = 160.dp)
-            vm.waterDailyGoal?.let { goal -> Text("Goal: ${Math.round(goal)} ${vm.waterUnit} per day", fontSize = 11.sp, color = TextSecondaryColor) }
+            vm.waterDailyGoal?.let { goal -> Text("Goal: ${Math.round(goal)} ${vm.waterUnit} per day", fontSize = 11.sp, color = FLTheme.colors.textSecondary) }
         } else {
             ChartEmptyState(Icons.Default.WaterDrop, "No water logged in this range yet.")
         }
@@ -161,10 +157,10 @@ private fun WaterCard(vm: NutritionAnalyticsViewModel) {
 private fun ConsistencyCard(vm: NutritionAnalyticsViewModel) {
     val c = vm.consistency ?: return
     Column(
-        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(16.dp),
+        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Consistency", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text("Consistency", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ConsistencyStat(Icons.Default.CalendarMonth, FLPrimary, "${c.daysWithFood} of ${c.daysInRange}", "Days logged", Modifier.weight(1f))
             ConsistencyStat(Icons.Default.Percent, BlueTheme, "${Math.round(c.foodLoggingRate * 100)}%", "Logging rate", Modifier.weight(1f))
@@ -185,8 +181,8 @@ private fun ConsistencyStat(icon: ImageVector, color: Color, value: String, labe
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(16.dp))
         }
         Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-            Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+            Text(value, fontSize = 15.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+            Text(label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
         }
     }
 }
@@ -196,15 +192,15 @@ private fun GoalProgressCard(vm: NutritionAnalyticsViewModel) {
     val progress = vm.weightProgress ?: return
     val dateFormat = SimpleDateFormat("MMM d, yyyy", Locale.getDefault())
     Column(
-        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(16.dp),
+        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text("Goal Progress", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text("Goal Progress", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
         if (progress.points.isEmpty()) {
             ChartEmptyState(Icons.Default.MonitorWeight, "Log your weight to see progress.")
             return@Column
         }
-        Text("Weight in ${progress.unit}, with 7-day average", fontSize = 12.sp, color = TextSecondaryColor)
+        Text("Weight in ${progress.unit}, with 7-day average", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         val all = vm.weightPoints + vm.movingAvgPoints + vm.planLinePoints
         val minY = (all.minOfOrNull { it.value } ?: 0.0)
         val maxY = (all.maxOfOrNull { it.value } ?: 1.0)
@@ -227,12 +223,12 @@ private fun GoalProgressCard(vm: NutritionAnalyticsViewModel) {
             }
             progress.plan?.let { plan ->
                 GoalStat(signed(plan.latestVarianceFromPlan, progress.unit), "Vs plan", if (abs(plan.latestVarianceFromPlan) <= 1) FLPrimary else OrangeTheme, Modifier.weight(1f))
-                vm.estimatedGoalDate?.let { GoalStat(dateFormat.format(it), "Est. goal date", TextPrimaryColor, Modifier.weight(1f)) }
+                vm.estimatedGoalDate?.let { GoalStat(dateFormat.format(it), "Est. goal date", FLTheme.colors.textPrimary, Modifier.weight(1f)) }
             }
         }
         progress.plan?.let { plan ->
             plan.goalWeight?.let { goal ->
-                Text("Plan: ${trimmed(plan.weeklyChange)} ${progress.unit}/week toward ${trimmed(goal)} ${progress.unit}", fontSize = 11.sp, color = TextSecondaryColor)
+                Text("Plan: ${trimmed(plan.weeklyChange)} ${progress.unit}/week toward ${trimmed(goal)} ${progress.unit}", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
             }
         }
     }
@@ -295,7 +291,7 @@ private fun padToAxis(points: List<ChartPoint>, axis: List<java.util.Date>): Lis
 private fun GoalStat(value: String, label: String, color: Color, modifier: Modifier = Modifier) {
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(1.dp)) {
         Text(value, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = color)
-        Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
@@ -313,12 +309,12 @@ private fun trimmed(value: Double): String = if (value == Math.rint(value)) valu
 @Composable
 private fun ChartCard(title: String, subtitle: String, content: @Composable () -> Unit) {
     Column(
-        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(White, RoundedCornerShape(12.dp)).padding(16.dp),
+        modifier = Modifier.padding(horizontal = 20.dp).fillMaxWidth().background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-            Text(subtitle, fontSize = 12.sp, color = TextSecondaryColor)
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+            Text(subtitle, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
         }
         content()
     }
@@ -330,7 +326,7 @@ private fun LegendRow(entries: List<Pair<Color, String>>) {
         entries.forEach { (color, label) ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 Box(modifier = Modifier.size(8.dp).background(color, CircleShape))
-                Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+                Text(label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
             }
         }
     }
@@ -339,8 +335,8 @@ private fun LegendRow(entries: List<Pair<Color, String>>) {
 @Composable
 private fun ChartEmptyState(icon: ImageVector, text: String) {
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Icon(icon, contentDescription = null, tint = MediumGray, modifier = Modifier.size(18.dp))
-        Text(text, fontSize = 13.sp, color = TextSecondaryColor)
+        Icon(icon, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
+        Text(text, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.weight(1f))
     }
 }

@@ -55,13 +55,20 @@ data class SessionHistoryRow(
     val weightLbs: Double,
     val durationSeconds: Int?,
     /** Logged distance (FTNSSLNK-409); only a logged set carries one. */
-    val distance: DistanceValue? = null
+    val distance: DistanceValue? = null,
+    /** Universal Logging extras (Set RPE, speed, incline). Local history only — the sessions API has no fields for them yet. */
+    val setRpe: Int? = null,
+    val speedMph: Double? = null,
+    val incline: Double? = null
 ) {
     /** Performed sets — the only ones the local stats tables hold and the only ones that contribute reps / volume. */
     val isPerformed: Boolean get() = status == SessionSetStatus.COMPLETED
 
-    /** `intervalSeconds` on the wire: only timed tasks carry a window. */
-    val intervalSeconds: Int? get() = if (task.usesDuration) durationSeconds else null
+    /**
+     * `intervalSeconds` on the wire: timed tasks carry their window; a rep task carries one only
+     * when the user logged a Duration on it (Universal Logging "+ Add Metric").
+     */
+    val intervalSeconds: Int? get() = if (task.usesDuration || metricsLogged) durationSeconds else null
 
     /** The history request for this row. Skipped / incomplete sets post their status with every metric null. */
     fun request(workoutId: String, userId: String, logDate: Date): SessionHistoryLogRequest = SessionHistoryLogRequest(
@@ -101,8 +108,14 @@ object SessionHistoryRows {
             for (setNumber in 1..maxOf(required, 1)) {
                 val entry = progress.entry(task.id, setNumber)
                 val logged = logs[setNumber]
-                val status = SessionSetStatus.fromSetState(entry.state)
-                    ?: (if (logged != null) SessionSetStatus.COMPLETED else continue)
+                val draft = entry.draft
+                val status = SessionSetStatus.fromSetState(entry.state) ?: when {
+                    logged != null -> SessionSetStatus.COMPLETED
+                    // Universal Logging "Finish Without Completing" (PRD §11.3): a set the user filled
+                    // in but never confirmed is recorded Incomplete, not dropped.
+                    entry.userModified == true && draft != null && UniversalSetValues.hasAnyValue(draft) -> SessionSetStatus.INCOMPLETE
+                    else -> continue
+                }
                 if (status != SessionSetStatus.COMPLETED) {
                     rows.add(SessionHistoryRow(task, setNumber, status, metricsLogged = false, reps = 0, weightLbs = 0.0, durationSeconds = null))
                     continue
@@ -111,8 +124,10 @@ object SessionHistoryRows {
                     rows.add(SessionHistoryRow(
                         task, setNumber, SessionSetStatus.COMPLETED, metricsLogged = true,
                         reps = logged.reps, weightLbs = logged.weightKg ?: 0.0,
-                        durationSeconds = logged.durationSeconds ?: entry.durationSeconds,
-                        distance = logged.distanceValue ?: entry.distanceValue
+                        // A rep task's set timer isn't a logged duration.
+                        durationSeconds = if (task.usesDuration) (logged.durationSeconds ?: entry.durationSeconds) else logged.durationSeconds,
+                        distance = logged.distanceValue ?: entry.distanceValue,
+                        setRpe = logged.rpe, speedMph = logged.speedMph, incline = logged.incline
                     ))
                     continue
                 }

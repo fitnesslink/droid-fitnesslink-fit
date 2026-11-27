@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -40,13 +41,8 @@ import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.ProgramDaySlot
 import com.fitnesslink.fit.model.ProgramWeek
 import com.fitnesslink.fit.programs.ScheduledWorkoutInfo
-import com.fitnesslink.fit.ui.theme.BlendGray
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.FLPrimaryDark
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * Program Detail schedule section (iOS `ProgramScheduleSectionView`): a
@@ -81,13 +77,13 @@ fun ProgramScheduleSection(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.Bottom) {
-            Text("Schedule", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+            Text("Schedule", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
             if (totalWeeks > 1) {
                 Row {
-                    Text("Week $selectedWeekNumber of $totalWeeks", fontSize = 13.sp, color = TextSecondaryColor)
+                    Text("Week $selectedWeekNumber of $totalWeeks", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                     if (showPhases) {
-                        Text(" · ", fontSize = 13.sp, color = TextSecondaryColor)
+                        Text(" · ", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                         Text(phaseName, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimaryDark)
                     }
                 }
@@ -104,14 +100,14 @@ fun ProgramScheduleSection(
                             .widthIn(min = 46.dp)
                             .height(50.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(if (selected) FLPrimary else White)
+                            .background(if (selected) FLPrimary else FLTheme.colors.surface)
                             .clickable { selectedWeekNumber = week.weekNumber; expandedDayKey = null }
                             .padding(horizontal = 10.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center
                     ) {
-                        Text("WK", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = (if (selected) White else TextPrimaryColor).copy(alpha = 0.75f))
-                        Text("${week.weekNumber}", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = if (selected) White else TextPrimaryColor)
+                        Text("WK", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = (if (selected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary).copy(alpha = 0.75f))
+                        Text("${week.weekNumber}", fontSize = 17.sp, fontWeight = FontWeight.Bold, color = if (selected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary)
                     }
                 }
             }
@@ -157,14 +153,14 @@ private fun androidx.compose.foundation.layout.RowScope.PhaseSegment(label: Stri
                 .fillMaxWidth()
                 .height(3.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(if (active) FLPrimary else BlendGray)
+                .background(if (active) FLPrimary else FLTheme.colors.divider)
         )
         Text(
             label.uppercase(),
             fontSize = 11.sp,
             fontWeight = FontWeight.SemiBold,
             letterSpacing = 0.7.sp,
-            color = if (active) FLPrimaryDark else MediumGray
+            color = if (active) FLPrimaryDark else FLTheme.colors.textTertiary
         )
     }
 }
@@ -175,13 +171,13 @@ private fun ScheduleRestRow(day: ProgramDaySlot) {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(White.copy(alpha = 0.5f))
+            .background(FLTheme.colors.surface.copy(alpha = 0.5f))
             .padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(day.dayLabel.uppercase(), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MediumGray, modifier = Modifier.width(38.dp))
-        Text("Rest", fontSize = 13.sp, color = MediumGray)
+        Text(day.dayLabel.uppercase(), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textTertiary, modifier = Modifier.width(38.dp))
+        Text("Rest", fontSize = 13.sp, color = FLTheme.colors.textTertiary)
     }
 }
 
@@ -197,7 +193,7 @@ private fun ScheduleWorkoutCard(day: ProgramDaySlot, info: ScheduledWorkoutInfo?
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .then(if (expandable) Modifier.clickable(onClick = onToggle) else Modifier)
     ) {
         Row(
@@ -207,14 +203,14 @@ private fun ScheduleWorkoutCard(day: ProgramDaySlot, info: ScheduledWorkoutInfo?
         ) {
             Text(day.dayLabel.uppercase(), fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimaryDark, modifier = Modifier.width(38.dp))
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
-                if (meta.isNotEmpty()) Text(meta, fontSize = 12.sp, color = TextSecondaryColor)
+                Text(name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
+                if (meta.isNotEmpty()) Text(meta, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
             if (expandable) {
                 Icon(
                     Icons.Default.KeyboardArrowDown,
                     contentDescription = if (expanded) "Collapse" else "Expand",
-                    tint = MediumGray,
+                    tint = FLTheme.colors.textTertiary,
                     modifier = Modifier.size(20.dp).rotate(if (expanded) 180f else 0f)
                 )
             }
@@ -225,7 +221,7 @@ private fun ScheduleWorkoutCard(day: ProgramDaySlot, info: ScheduledWorkoutInfo?
                 exercises.forEach { exercise ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 6.dp)) {
                         Box(modifier = Modifier.size(5.dp).clip(CircleShape).background(FLPrimary))
-                        Text(exercise, fontSize = 13.sp, color = TextSecondaryColor)
+                        Text(exercise, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }

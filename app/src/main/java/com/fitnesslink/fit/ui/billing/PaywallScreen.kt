@@ -19,13 +19,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CardGiftcard
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Restaurant
@@ -44,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -61,16 +65,17 @@ import com.fitnesslink.fit.billing.BillingPresentation
 import com.fitnesslink.fit.billing.EntitlementState
 import com.fitnesslink.fit.billing.EntitlementStore
 import com.fitnesslink.fit.billing.PlayBillingManager
+import com.fitnesslink.fit.billing.PlayBillingRules
+import com.fitnesslink.fit.billing.RestoreResult
 import com.fitnesslink.fit.network.dto.BillingTerm
 import com.fitnesslink.fit.ui.components.ActionButtonView
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.launch
 
 /**
  * FTNSSLNK-283 port of iOS `PaywallView`. The gate: nothing in FitnessLink
- * is free, so this is not dismissible — the only ways past are a completed
- * purchase, a successful restore, or signing out.
+ * is free, so the only ways past are a completed purchase or a successful
+ * restore. The close button and Sign Out both log out back to Welcome.
  *
  * Play's subscription policy requires everything shown here: price and
  * duration, the trial terms when one is offered, a Restore control, and
@@ -89,11 +94,14 @@ fun PaywallScreen(
     val purchaseInFlight by PlayBillingManager.purchaseInFlight.collectAsState()
     val purchaseStalled by PlayBillingManager.purchaseStalled.collectAsState()
     val collided by PlayBillingManager.collidedPurchaseTokens.collectAsState()
-    val verificationPending by PlayBillingManager.verificationPendingTokens.collectAsState()
+    val pendingPayments by PlayBillingManager.pendingPaymentTokens.collectAsState()
+    val unconfirmed by PlayBillingManager.unconfirmedPurchaseTokens.collectAsState()
     val entitlementState by EntitlementStore.state.collectAsState()
 
     var selectedTerm by remember { mutableStateOf(BillingTerm.MONTHLY) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    /** Non-error outcomes (restore results, "already Premium") — shown in a calmer colour. */
+    var infoMessage by remember { mutableStateOf<String?>(null) }
     var isRestoring by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -109,7 +117,7 @@ fun PaywallScreen(
     val selected = offers.firstOrNull { it.term == selectedTerm } ?: offers.firstOrNull()
     val monthly = offers.firstOrNull { it.term == BillingTerm.MONTHLY }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.Black)) { // theme-exempt: over media
         Image(
             painter = painterResource(R.drawable.welcome),
             contentDescription = null,
@@ -119,7 +127,7 @@ fun PaywallScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Black)))
+                .background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.35f), Color.Black))) // theme-exempt: over media
         )
 
         Column(
@@ -137,12 +145,20 @@ fun PaywallScreen(
                 modifier = Modifier.width(134.dp)
             )
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Everything, unlocked", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = White)
+            Text("Everything, unlocked", fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White) // theme-exempt: over media
             Spacer(modifier = Modifier.height(12.dp))
             Text(
                 "Workouts, programs, nutrition and progress tracking — one membership.",
                 fontSize = 15.sp,
-                color = White.copy(alpha = 0.75f),
+                color = Color.White.copy(alpha = 0.75f), // theme-exempt: over media
+                textAlign = TextAlign.Center
+            )
+            // iOS 21ce001 (App Review 5.6): the requirement must be stated, not implied.
+            Text(
+                "A subscription is required to use FitnessLink.",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = Color.White, // theme-exempt: over media
                 textAlign = TextAlign.Center
             )
 
@@ -155,19 +171,26 @@ fun PaywallScreen(
 
             Spacer(modifier = Modifier.height(28.dp))
 
+            // The free trial is the first thing to see when picking a price,
+            // not only the CTA and the small print below the plans.
+            BillingPresentation.trialBannerTitle(selected?.trialPeriod, offers.map { it.trialPeriod })?.let { title ->
+                TrialBanner(title)
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
             // Plan cards
             when {
                 isLoadingProducts && offers.isEmpty() -> Box(
                     modifier = Modifier.fillMaxWidth().height(160.dp),
                     contentAlignment = Alignment.Center
-                ) { CircularProgressIndicator(color = White) }
+                ) { CircularProgressIndicator(color = Color.White) } // theme-exempt: over media
 
                 loadError != null && offers.isEmpty() -> Column(
                     modifier = Modifier.fillMaxWidth().height(160.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Text(loadError ?: "", fontSize = 14.sp, color = White.copy(alpha = 0.8f), textAlign = TextAlign.Center)
+                    Text(loadError ?: "", fontSize = 14.sp, color = Color.White.copy(alpha = 0.8f), textAlign = TextAlign.Center) // theme-exempt: over media
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         "Try Again",
@@ -186,6 +209,9 @@ fun PaywallScreen(
                         PlanCard(
                             title = offer.title,
                             priceLine = BillingPresentation.priceLine(offer.formattedPrice, offer.billingPeriod),
+                            trialLine = offer.trialPeriod?.let { p ->
+                                BillingPresentation.trialLengthAdjective(p)?.let { "$it free trial, then" } ?: "Free trial, then"
+                            },
                             isSelected = selected?.term == offer.term,
                             savingsBadge = savings,
                             onClick = { selectedTerm = offer.term }
@@ -199,7 +225,7 @@ fun PaywallScreen(
             // Notices
             val entitlementError = (entitlementState as? EntitlementState.Error)?.message
             if (entitlementError != null && errorMessage == null) {
-                Notice(entitlementError, Color(0xFFFFB74D))
+                Notice(entitlementError, Color(0xFFFFB74D)) // theme-exempt: over media
                 Text(
                     "Retry",
                     fontSize = 14.sp,
@@ -211,21 +237,25 @@ fun PaywallScreen(
                 )
             }
             if (collided.isNotEmpty() && errorMessage == null) {
-                Notice(BillingException.AlreadyLinkedToAnotherAccount.message ?: "", Color(0xFFFFB74D))
+                Notice(BillingException.AlreadyLinkedToAnotherAccount.message ?: "", Color(0xFFFFB74D)) // theme-exempt: over media
             }
-            if (verificationPending.isNotEmpty() && errorMessage == null) {
-                Notice(BillingException.VerificationUnavailable.message ?: "", Color(0xFFFFB74D))
+            if (pendingPayments.isNotEmpty() && errorMessage == null) {
+                Notice(BillingException.PaymentPending.message ?: "", Color.White.copy(alpha = 0.85f)) // theme-exempt: over media
+            }
+            if (unconfirmed.isNotEmpty() && errorMessage == null) {
+                Notice(BillingException.VerificationDelayed(duringRestore = false).message ?: "", Color(0xFFFFB74D)) // theme-exempt: over media
             }
             if (purchaseStalled && errorMessage == null) {
                 Notice(
                     "Google Play didn't respond. Tap to try again — if it keeps happening, close and reopen FitnessLink.",
-                    Color(0xFFFFB74D)
+                    Color(0xFFFFB74D) // theme-exempt: over media
                 )
             }
-            errorMessage?.let { Notice(it, Color(0xFFEF5350)) }
+            errorMessage?.let { Notice(it, Color(0xFFEF5350)) } // theme-exempt: over media
+            infoMessage?.let { if (errorMessage == null) Notice(it, Color.White.copy(alpha = 0.85f)) } // theme-exempt: over media
 
             ActionButtonView(
-                text = if (selected?.hasTrial == true) BillingPresentation.trialButtonText(selected.trialPeriod) else "Subscribe",
+                text = BillingPresentation.ctaText(selected?.trialPeriod),
                 isEnabled = selected != null,
                 isLoading = purchaseInFlight,
                 onClick = {
@@ -235,16 +265,21 @@ fun PaywallScreen(
                         return@ActionButtonView
                     }
                     errorMessage = null
+                    infoMessage = null
                     PlayBillingManager.clearPurchaseStalled()
                     scope.launch {
                         try {
                             val entitlement = PlayBillingManager.purchase(activity, offer)
                             if (entitlement?.isEntitled == true) onEntitled()
-                            // null = cancelled / pending / stalled — stay put, say nothing.
-                        } catch (e: BillingException.VerificationUnavailable) {
-                            // Shown by the verificationPending notice.
+                            // null = cancelled (silent) / pending / stalled — the notices above cover the last two.
+                        } catch (e: BillingException.VerificationDelayed) {
+                            // Shown by the unconfirmed-purchase notice; the drain keeps retrying.
+                        } catch (e: BillingException.AlreadyLinkedToAnotherAccount) {
+                            // Shown by the collision notice.
+                        } catch (e: BillingException) {
+                            errorMessage = e.message
                         } catch (e: Exception) {
-                            errorMessage = e.message ?: "Something went wrong. Please try again."
+                            errorMessage = PlayBillingRules.GENERIC_STORE_MESSAGE
                         }
                     }
                 }
@@ -255,30 +290,42 @@ fun PaywallScreen(
                 Text(
                     BillingPresentation.disclosure(it.formattedPrice, it.billingPeriod, it.trialPeriod),
                     fontSize = 12.sp,
-                    color = White.copy(alpha = 0.6f),
+                    color = Color.White.copy(alpha = 0.6f), // theme-exempt: over media
                     textAlign = TextAlign.Center
                 )
             }
 
             Spacer(modifier = Modifier.height(14.dp))
             if (isRestoring) {
-                CircularProgressIndicator(color = White, modifier = Modifier.size(20.dp))
+                CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp)) // theme-exempt: over media
             } else {
                 Text(
                     "Restore Purchases",
                     fontSize = 15.sp,
                     fontWeight = FontWeight.SemiBold,
-                    color = White,
+                    color = Color.White, // theme-exempt: over media
                     modifier = Modifier.clickable {
                         errorMessage = null
+                        infoMessage = null
                         isRestoring = true
                         scope.launch {
                             try {
-                                val entitlement = PlayBillingManager.restorePurchases()
-                                if (entitlement.isEntitled) onEntitled()
-                                else errorMessage = BillingException.NoActiveSubscription.message
+                                val result = PlayBillingManager.restorePurchases()
+                                val entitled = when (result) {
+                                    is RestoreResult.Restored -> result.entitlement.isEntitled
+                                    is RestoreResult.AlreadyPremium -> true
+                                    else -> false
+                                }
+                                infoMessage = if (result is RestoreResult.Restored && !entitled) {
+                                    BillingException.NoActiveSubscription.message
+                                } else {
+                                    PlayBillingRules.restoreMessage(result)
+                                }
+                                if (entitled) onEntitled()
+                            } catch (e: BillingException) {
+                                errorMessage = e.message
                             } catch (e: Exception) {
-                                errorMessage = e.message ?: "Restore failed. Please try again."
+                                errorMessage = "Restore failed. Please try again."
                             } finally {
                                 isRestoring = false
                             }
@@ -297,8 +344,29 @@ fun PaywallScreen(
             Text(
                 "Sign Out",
                 fontSize = 13.sp,
-                color = White.copy(alpha = 0.5f),
+                color = Color.White.copy(alpha = 0.5f), // theme-exempt: over media
                 modifier = Modifier.clickable(onClick = onLogout).padding(8.dp)
+            )
+        }
+
+        // iOS 21ce001 (App Review 5.6): a visible way off the purchase page.
+        // Closing signs out back to Welcome, since nothing past here is free.
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .statusBarsPadding()
+                .padding(top = 12.dp, end = 16.dp)
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(Color.White.copy(alpha = 0.18f)) // theme-exempt: over media
+                .clickable(onClick = onLogout),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                Icons.Default.Close,
+                contentDescription = "Close",
+                tint = Color.White, // theme-exempt: over media
+                modifier = Modifier.size(18.dp)
             )
         }
     }
@@ -308,17 +376,42 @@ fun PaywallScreen(
 private fun BenefitRow(icon: androidx.compose.ui.graphics.vector.ImageVector, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
-        Text(text, fontSize = 15.sp, color = White.copy(alpha = 0.9f))
+        Text(text, fontSize = 15.sp, color = Color.White.copy(alpha = 0.9f)) // theme-exempt: over media
     }
 }
 
 @Composable
-private fun PlanCard(title: String, priceLine: String, isSelected: Boolean, savingsBadge: String?, onClick: () -> Unit) {
+private fun TrialBanner(title: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(14.dp))
-            .background(White.copy(alpha = if (isSelected) 0.16f else 0.08f))
+            .background(FLPrimary.copy(alpha = 0.18f))
+            .border(1.dp, FLPrimary.copy(alpha = 0.6f), RoundedCornerShape(14.dp))
+            .semantics(mergeDescendants = true) {}
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(Icons.Default.CardGiftcard, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(22.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(title, fontSize = 17.sp, fontWeight = FontWeight.Bold, color = Color.White) // theme-exempt: over media
+            Text(
+                BillingPresentation.TRIAL_BANNER_SUBTITLE,
+                fontSize = 13.sp,
+                color = Color.White.copy(alpha = 0.75f) // theme-exempt: over media
+            )
+        }
+    }
+}
+
+@Composable
+private fun PlanCard(title: String, priceLine: String, trialLine: String?, isSelected: Boolean, savingsBadge: String?, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White.copy(alpha = if (isSelected) 0.16f else 0.08f)) // theme-exempt: over media
             .border(1.5.dp, if (isSelected) FLPrimary else Color.Transparent, RoundedCornerShape(14.dp))
             .clickable(onClick = onClick)
             .padding(16.dp),
@@ -328,13 +421,14 @@ private fun PlanCard(title: String, priceLine: String, isSelected: Boolean, savi
         Icon(
             if (isSelected) Icons.Default.CheckCircle else Icons.Default.RadioButtonUnchecked,
             contentDescription = null,
-            tint = if (isSelected) FLPrimary else White.copy(alpha = 0.4f),
+            tint = if (isSelected) FLPrimary else Color.White.copy(alpha = 0.4f), // theme-exempt: over media
             modifier = Modifier.size(22.dp)
         )
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+            Text(title, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = Color.White) // theme-exempt: over media
             // Price and duration straight from Play — backend display prices are reporting-only.
-            Text(priceLine, fontSize = 13.sp, color = White.copy(alpha = 0.7f))
+            if (trialLine != null) Text(trialLine, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
+            Text(priceLine, fontSize = 13.sp, color = Color.White.copy(alpha = 0.7f)) // theme-exempt: over media
         }
         if (savingsBadge != null) {
             Box(
@@ -343,7 +437,7 @@ private fun PlanCard(title: String, priceLine: String, isSelected: Boolean, savi
                     .background(FLPrimary)
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                Text(savingsBadge, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = White)
+                Text(savingsBadge, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = Color.White) // theme-exempt: over media
             }
         }
     }
@@ -362,7 +456,7 @@ private fun Notice(text: String, color: Color) {
 
 @Composable
 private fun LinkText(text: String, onClick: () -> Unit) {
-    Text(text, fontSize = 12.sp, color = White.copy(alpha = 0.7f), modifier = Modifier.clickable(onClick = onClick))
+    Text(text, fontSize = 12.sp, color = Color.White.copy(alpha = 0.7f), modifier = Modifier.clickable(onClick = onClick)) // theme-exempt: over media
 }
 
 /** Walk the ContextWrapper chain to the hosting Activity (needed by `launchBillingFlow`). */

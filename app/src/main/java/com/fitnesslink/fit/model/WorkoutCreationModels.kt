@@ -49,7 +49,15 @@ data class TaskSetConfig(
     val durationSeconds: Int? = null,
     /** Logged distance for cardio / distance work, in [distanceUnit] ("km" | "mi"). Session logs only. */
     val distance: Double? = null,
-    val distanceUnit: String? = null
+    val distanceUnit: String? = null,
+    /**
+     * Universal Workout Logging (PRD §7.2, §5.2): the user's Set RPE (1–10), treadmill-style
+     * speed (always stored in mph, shown in the user's distance unit per hour) and incline (%).
+     * Session logs only — never part of a programmed set config. Null keys are omitted on encode.
+     */
+    val rpe: Int? = null,
+    val speedMph: Double? = null,
+    val incline: Double? = null
 ) {
     /** The logged distance with its unit, when both are present. */
     val distanceValue: DistanceValue?
@@ -100,7 +108,7 @@ enum class IntervalMode(val rawValue: String) {
     @SerializedName("tabata") TABATA("tabata"),
     /** User-defined work / rest / rounds with fixed-duration rest. */
     @SerializedName("hiit") HIIT("hiit"),
-    /** Every-minute-on-the-minute: rest is the remainder of the minute; `window / 60` rounds. */
+    /** Every interval on the interval (EMOM PRD v2.0): one exercise per interval, rotating; rest = remainder of the interval. */
     @SerializedName("emom") EMOM("emom"),
     /** As many rounds as possible in a fixed window. */
     @SerializedName("amrap") AMRAP("amrap");
@@ -138,7 +146,7 @@ data class IntervalPlan(
     val mode: IntervalMode,
     val workSeconds: Int,
     val restSeconds: Int,
-    /** Tabata / HIIT: stored rounds; EMOM: `window / 60`; AMRAP: 0 (counted at runtime). */
+    /** Tabata / HIIT: stored rounds; EMOM: total rounds (exercises × cycles); AMRAP: 0 (counted at runtime). */
     val roundsPerSet: Int,
     val sets: Int,
     /** Only applied when `sets > 1`. */
@@ -168,9 +176,10 @@ object IntervalMath {
     /**
      * Resolve a lead task (+ its row's `totalRounds`) into a plan. [mode]
      * overrides the task's stored mode when the row carries it. Defaults for
-     * missing work / rest / window match [IntervalPreset].
+     * missing work / rest / window match [IntervalPreset]. [exerciseCount] is
+     * only read by EMOM (a block with no stored timing runs one cycle).
      */
-    fun plan(lead: WorkoutTask, rowTotalRounds: Int = 0, mode: IntervalMode? = null): IntervalPlan {
+    fun plan(lead: WorkoutTask, rowTotalRounds: Int = 0, mode: IntervalMode? = null, exerciseCount: Int = 1): IntervalPlan {
         val resolvedMode = mode ?: lead.intervalMode ?: IntervalMode.HIIT
         val sets = maxOf(1, lead.intervalSets ?: 1)
         val setRest = maxOf(0, lead.effectiveIntervalSetRestSeconds ?: defaultSetRestSeconds)
@@ -188,15 +197,7 @@ object IntervalMath {
                     windowSeconds = rounds * work + maxOf(0, rounds - 1) * rest
                 )
             }
-            IntervalMode.EMOM -> {
-                val window = maxOf(60, lead.intervalWindowSeconds ?: IntervalPreset.emomDefault.totalSeconds)
-                val work = minOf(60, maxOf(0, lead.intervalWorkSeconds ?: IntervalPreset.emomDefault.workSeconds))
-                IntervalPlan(
-                    mode = IntervalMode.EMOM, workSeconds = work, restSeconds = maxOf(0, 60 - work),
-                    roundsPerSet = maxOf(1, window / 60), sets = sets, betweenSetsRestSeconds = setRest,
-                    windowSeconds = window
-                )
-            }
+            IntervalMode.EMOM -> EmomMath.plan(lead, exerciseCount, rowTotalRounds).intervalPlan
             IntervalMode.AMRAP -> {
                 val window = maxOf(0, lead.intervalWindowSeconds ?: IntervalPreset.amrapDefault.totalSeconds)
                 IntervalPlan(
@@ -269,7 +270,7 @@ object IntervalMath {
         }
     }
 
-    /** Rest that follows round [k]. EMOM always fills the minute; Tabata / HIIT skip the rest after the final round. */
+    /** Rest that follows round [k]. EMOM plans carry no rest slot (rest is inside each interval); Tabata / HIIT skip the rest after the final round. */
     private fun restAfter(k: Int, rounds: Int, plan: IntervalPlan): Int {
         if (plan.mode == IntervalMode.EMOM) return plan.restSeconds
         return if (k < rounds) plan.restSeconds else 0
@@ -289,7 +290,11 @@ data class IntervalMetrics(
     /** Members of the block (lead + siblings) that are movements. */
     val exerciseCount: Int = 1,
     /** Active-recovery movement name when the lead uses active recovery; null for passive rest. */
-    val recoveryMovementName: String? = null
+    val recoveryMovementName: String? = null,
+    /** EMOM blocks only: the resolved plan (§2.1). */
+    val emom: EmomPlan? = null,
+    /** EMOM blocks only: "How this EMOM works" text (§4). */
+    val emomInstruction: String? = null
 ) {
     data class Tile(val label: String, val value: String) {
         val id: String get() = label
@@ -316,10 +321,7 @@ data class IntervalMetrics(
                     val core = "${plan.roundsPerSet} × ${plan.workSeconds}s/${plan.restSeconds}s"
                     if (sets > 1) "$sets × ($core) + $betweenSetsText rest · $total" else "$core · $total"
                 }
-                IntervalMode.EMOM -> {
-                    val setsPrefix = if (sets > 1) "$sets × " else ""
-                    "$setsPrefix${plan.roundsPerSet} min EMOM · ${plan.workSeconds}s work · $total"
-                }
+                IntervalMode.EMOM -> emom?.let { EmomMath.summaryTitle(it) } ?: "EMOM · $total"
                 IntervalMode.AMRAP -> {
                     val setsPrefix = if (sets > 1) "$sets × " else ""
                     "$setsPrefix${IntervalMath.formatTime(plan.windowSeconds)} AMRAP" + (if (sets > 1) " · $total" else "")
@@ -338,8 +340,8 @@ data class IntervalMetrics(
                     lines.add("${plan.workSeconds}s Work · ${plan.restSeconds}s Rest")
                 }
                 IntervalMode.EMOM -> {
-                    lines.add(if (sets > 1) "$sets Sets · ${plan.roundsPerSet} Minutes Each" else "${plan.roundsPerSet} Minutes")
-                    lines.add("${plan.workSeconds}s Work Every Minute")
+                    emom?.let { lines.add(EmomMath.roundsCyclesLine(it)) }
+                    lines.add("${plan.workSeconds}s Interval")
                 }
                 IntervalMode.AMRAP -> {
                     lines.add("As Many Rounds As Possible")
@@ -364,10 +366,8 @@ data class IntervalMetrics(
                     out.add(Tile("Sets", "$sets"))
                 }
                 IntervalMode.EMOM -> {
-                    out.add(Tile("Minutes", "${plan.roundsPerSet}"))
-                    out.add(Tile("Work / min", "${plan.workSeconds}s"))
-                    out.add(Tile("Rest / min", "${plan.restSeconds}s"))
-                    out.add(Tile("Sets", "$sets"))
+                    // Overview / Playlist tiles (§5): Duration, Interval, Rounds, Cycles — no Total tile.
+                    return emom?.let { EmomMath.overviewTiles(it) } ?: listOf(Tile("Duration", totalText))
                 }
                 IntervalMode.AMRAP -> {
                     out.add(Tile("Window", IntervalMath.formatTime(plan.windowSeconds)))
@@ -385,6 +385,17 @@ data class IntervalMetrics(
             val lead = row.task ?: return null
             val mode = row.intervalMode ?: lead.intervalMode ?: return null
             val members = listOf(lead) + row.advancedTasks
+            if (mode == IntervalMode.EMOM) {
+                val emomMembers = EmomMath.members(row)
+                val emom = EmomMath.plan(lead, emomMembers.size, row.totalRounds)
+                return IntervalMetrics(
+                    plan = emom.intervalPlan,
+                    exerciseCount = emom.exerciseCount,
+                    recoveryMovementName = null,
+                    emom = emom,
+                    emomInstruction = EmomText.instruction(emom, emomMembers)
+                )
+            }
             val recovery = if (lead.restType == RestType.ACTIVE_RECOVERY && lead.restMovementId != null) {
                 lead.restMovementName?.takeIf { it.isNotEmpty() } ?: "Recovery"
             } else null
@@ -474,7 +485,7 @@ object WorkoutDurationEstimator {
         val isInterval = lead.isInterval || lead.intervalMode != null
 
         if (isInterval) {
-            val plan = IntervalMath.plan(lead, rowTotalRounds = lead.totalRounds)
+            val plan = IntervalMath.plan(lead, rowTotalRounds = lead.totalRounds, exerciseCount = members.count { !it.isRest })
             return IntervalMath.blockSeconds(plan) + IntervalMath.defaultPrepareSeconds
         }
 
@@ -524,7 +535,8 @@ data class IntervalPreset(
     companion object {
         val tabata = IntervalPreset(IntervalMode.TABATA, "Tabata", 20, 10, 8, 240)
         val hiitDefault = IntervalPreset(IntervalMode.HIIT, "HIIT", 45, 15, 6, 360)
-        val emomDefault = IntervalPreset(IntervalMode.EMOM, "EMOM", 40, 20, 10, 600)
+        /** EMOM fallback when nothing is stored: 60 s interval. New blocks start at one cycle ([EmomMath.applyDefaults]). */
+        val emomDefault = IntervalPreset(IntervalMode.EMOM, "EMOM", 60, 0, 10, 600)
         val amrapDefault = IntervalPreset(IntervalMode.AMRAP, "AMRAP", 0, 0, 0, 600)
         val all = listOf(tabata, hiitDefault, emomDefault, amrapDefault)
     }

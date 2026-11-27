@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.calendar
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -42,12 +43,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.fitnesslink.fit.calendar.CalendarDurationChips
 import com.fitnesslink.fit.ui.components.PrimaryButtonView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.util.Calendar
 import java.util.Date
 import java.util.TimeZone
@@ -100,7 +96,7 @@ fun ScheduleDatePickerSheet(
                 .fillMaxSize()
                 .padding(top = 48.dp)
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .background(White)
+                .background(FLTheme.colors.surface)
         ) {
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(
@@ -118,7 +114,7 @@ fun ScheduleDatePickerSheet(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
+                        title, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary,
                         textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 20.dp)
                     )
                     DatePicker(
@@ -127,7 +123,7 @@ fun ScheduleDatePickerSheet(
                         headline = null,
                         showModeToggle = false,
                         colors = DatePickerDefaults.colors(
-                            containerColor = White,
+                            containerColor = FLTheme.colors.surface,
                             selectedDayContainerColor = FLPrimary,
                             todayDateBorderColor = FLPrimary,
                             todayContentColor = FLPrimary
@@ -137,14 +133,14 @@ fun ScheduleDatePickerSheet(
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Time", fontSize = 15.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                        Text("Time", fontSize = 15.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                         TimeInput(state = timeState)
                     }
                     if (showDurationChips) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Column(modifier = Modifier.fillMaxWidth()) {
                             Text(
-                                "Duration", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor,
+                                "Duration", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary,
                                 modifier = Modifier.padding(horizontal = 20.dp)
                             )
                             Spacer(modifier = Modifier.height(8.dp))
@@ -157,15 +153,15 @@ fun ScheduleDatePickerSheet(
                                     Box(
                                         modifier = Modifier
                                             .clip(CircleShape)
-                                            .background(if (isSelected) FLPrimary else BackgroundColor)
-                                            .border(1.dp, if (isSelected) FLPrimary else MediumGray.copy(alpha = 0.4f), CircleShape)
+                                            .background(if (isSelected) FLPrimary else FLTheme.colors.background)
+                                            .border(1.dp, if (isSelected) FLPrimary else FLTheme.colors.textTertiary.copy(alpha = 0.4f), CircleShape)
                                             .clickable { selectedDuration = if (isSelected) null else minutes }
                                             .padding(horizontal = 12.dp, vertical = 7.dp)
                                     ) {
                                         Text(
                                             CalendarDurationChips.label(minutes, workoutEstimateMinutes),
                                             fontSize = 13.sp, fontWeight = FontWeight.Medium,
-                                            color = if (isSelected) White else TextPrimaryColor
+                                            color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textPrimary
                                         )
                                     }
                                 }

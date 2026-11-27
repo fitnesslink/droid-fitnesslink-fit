@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
@@ -48,10 +49,6 @@ import com.fitnesslink.fit.model.HabitType
 import com.fitnesslink.fit.ui.goals.StreakBadge
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /** Glyph for a habit type (iOS `HabitType.sfSymbolName`). */
 fun habitTypeIcon(type: HabitType): ImageVector = when (type) {
@@ -90,7 +87,7 @@ fun HabitCard(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(if (done) FLPrimary.copy(alpha = 0.06f) else White)
+            .background(if (done) FLPrimary.copy(alpha = 0.06f) else FLTheme.colors.surface)
             .border(1.dp, if (done) FLPrimary.copy(alpha = 0.2f) else Color.Transparent, RoundedCornerShape(12.dp))
             .clickable(onClick = onTap)
             .padding(14.dp)
@@ -100,7 +97,7 @@ fun HabitCard(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .size(40.dp)
-                .border(2.5.dp, if (done) FLPrimary else MediumGray.copy(alpha = 0.5f), CircleShape)
+                .border(2.5.dp, if (done) FLPrimary else FLTheme.colors.textTertiary.copy(alpha = 0.5f), CircleShape)
                 .clip(CircleShape)
                 .clickable {
                     if (done) {
@@ -127,7 +124,7 @@ fun HabitCard(
                 Icon(
                     imageVector = habitTypeIcon(habit.habitType),
                     contentDescription = null,
-                    tint = MediumGray,
+                    tint = FLTheme.colors.textTertiary,
                     modifier = Modifier.size(16.dp)
                 )
             }
@@ -138,11 +135,11 @@ fun HabitCard(
                 text = habit.title,
                 fontSize = 15.sp,
                 fontWeight = FontWeight.Medium,
-                color = if (done) TextSecondaryColor else TextPrimaryColor,
+                color = if (done) FLTheme.colors.textSecondary else FLTheme.colors.textPrimary,
                 textDecoration = if (done) TextDecoration.LineThrough else TextDecoration.None
             )
             habit.anchorBehavior?.takeIf { it.isNotBlank() }?.let {
-                Text(text = it, fontSize = 12.sp, color = TextSecondaryColor)
+                Text(text = it, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
             }
             val current = habit.currentSensorValue
             val target = habit.targetValue
@@ -150,7 +147,7 @@ fun HabitCard(
                 LinearProgressIndicator(
                     progress = { (current / target).coerceIn(0.0, 1.0).toFloat() },
                     color = if (current >= target) FLPrimary else BlueTheme,
-                    trackColor = MediumGray.copy(alpha = 0.2f),
+                    trackColor = FLTheme.colors.textTertiary.copy(alpha = 0.2f),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(4.dp)
@@ -158,7 +155,7 @@ fun HabitCard(
                 Text(
                     text = "${current.toInt()} / ${target.toInt()} ${habit.targetUnit.orEmpty()}".trim(),
                     fontSize = 11.sp,
-                    color = TextSecondaryColor
+                    color = FLTheme.colors.textSecondary
                 )
             }
         }

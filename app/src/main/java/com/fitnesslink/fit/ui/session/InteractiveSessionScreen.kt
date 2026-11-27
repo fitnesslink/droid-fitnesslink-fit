@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -57,12 +58,15 @@ import com.fitnesslink.fit.session.SummaryRPEMode
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.CreateExerciseSheet
 import com.fitnesslink.fit.ui.workout.ExerciseBrowserSheet
 import com.fitnesslink.fit.viewmodel.InteractiveSessionViewModel
 import com.fitnesslink.fit.viewmodel.SessionEditAction
 import com.fitnesslink.fit.viewmodel.SessionWorkoutEditor
+
+// theme-exempt: always-dark player. Interactive Mode is dark in both modes (as on iOS): black
+// stage, video / rest image, white chrome. Sheets and dialogs it opens (SetLogSheet, sets editor,
+// movement info, confirmations) live in their own files and follow the app theme.
 
 /**
  * Interactive Mode (port of iOS `InteractiveSessionView`): full-bleed demo video with the prep /
@@ -114,9 +118,6 @@ fun InteractiveSessionScreen(
 
     fun applyEdit(action: SessionEditAction, movement: MovementLibraryItem?, scope: SessionWorkoutEditor.Scope) {
         when (action) {
-            SessionEditAction.AddAfterCurrent -> movement?.let { viewModel.addExercise(it, InteractiveSessionViewModel.AddPlacement.AfterCurrent, scope) }
-            SessionEditAction.AddAtEnd -> movement?.let { viewModel.addExercise(it, InteractiveSessionViewModel.AddPlacement.End, scope) }
-            is SessionEditAction.AddToPhase -> movement?.let { viewModel.addExercise(it, InteractiveSessionViewModel.AddPlacement.Phase(action.phaseId), scope) }
             SessionEditAction.Swap -> movement?.let { viewModel.swapCurrentMovement(it, scope) }
             SessionEditAction.Remove -> viewModel.removeCurrentExercise(scope)
             SessionEditAction.EditSets, SessionEditAction.SaveMyVersion -> Unit
@@ -144,8 +145,8 @@ fun InteractiveSessionScreen(
     Box(Modifier.fillMaxSize().background(Color.Black)) {
         if (viewModel.isLoadingWorkout && viewModel.workoutTask.id.isEmpty()) {
             Column(Modifier.fillMaxSize(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                CircularProgressIndicator(color = White)
-                Text("Loading workout…", color = White.copy(alpha = 0.8f), fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp))
+                CircularProgressIndicator(color = Color.White)
+                Text("Loading workout…", color = Color.White.copy(alpha = 0.8f), fontSize = 14.sp, modifier = Modifier.padding(top = 12.dp))
             }
         } else {
             SessionContent(viewModel, onInfo = { showMovementInfo = true }, onEdit = { action ->
@@ -173,23 +174,44 @@ fun InteractiveSessionScreen(
         )
     }
 
-    if (viewModel.showLogSheet) SetLogSheet(viewModel) { viewModel.showLogSheet = false }
+    // Universal Workout Logging (PRD v2.0 §2.3): opens over the guided workout; the workout + set timers keep running.
+    if (viewModel.showLogSheet) key(viewModel.workoutTask.id) {
+        UniversalLogSheet(viewModel.workoutTask, UniversalLogMode.INTERACTIVE, viewModel.logSheetSetNumber) { viewModel.showLogSheet = false }
+    }
+    viewModel.reviewLogTarget?.let { (task, setNumber) ->
+        key(task.id, setNumber) { UniversalLogSheet(task, UniversalLogMode.INTERACTIVE, setNumber) { viewModel.reviewLogTarget = null } }
+    }
+    // Workout-end unconfirmed sets (Universal Logging §11.3).
+    if (viewModel.showUnconfirmedSets) {
+        UnconfirmedSetsSheet(
+            items = viewModel.unconfirmedSetItems,
+            onReview = { viewModel.reviewUnconfirmedSets() },
+            onFinish = { viewModel.finishWithoutCompleting() },
+            onDismiss = { viewModel.showUnconfirmedSets = false }
+        )
+    }
     if (showMovementInfo) MovementInfoSheet(viewModel.workoutTask) { showMovementInfo = false }
     editAction?.let { action ->
         ExerciseBrowserSheet(
             onSelect = { movement -> editAction = null; movementPicked(movement, action) },
             onCreateNew = { editAction = null; createAction = action },
             onDismiss = { editAction = null },
-            pendingGroupType = null, pendingCount = 0
+            pendingGroupType = null, pendingCount = 0,
+            swapMode = action == SessionEditAction.Swap
         )
     }
     createAction?.let { action ->
         CreateExerciseSheet(onCreated = { movement -> createAction = null; movementPicked(movement, action) }, onDismiss = { createAction = null })
     }
     if (showSetsSheet) {
-        SessionSetsSheet(maxOf(viewModel.workoutTask.sets, 1), viewModel.workoutTask.reps, viewModel.workoutTask.name,
-            onSave = { s, r -> viewModel.updateCurrentSets(s, r, if (viewModel.isWorkoutEditable) SessionWorkoutEditor.Scope.PERMANENT else SessionWorkoutEditor.Scope.SESSION_ONLY) },
-            onDismiss = { showSetsSheet = false })
+        // Sets × reps, or sets × time for a timed exercise (FTNSSLNK-512) — the new duration drives the set timer.
+        val scope = if (viewModel.isWorkoutEditable) SessionWorkoutEditor.Scope.PERMANENT else SessionWorkoutEditor.Scope.SESSION_ONLY
+        SessionSetsEditorSheet(
+            task = viewModel.workoutTask,
+            onSaveReps = { s, r -> viewModel.updateCurrentSets(s, r, scope) },
+            onSaveDuration = { s, seconds, weight -> viewModel.updateCurrentDuration(s, seconds, weight, scope) },
+            onDismiss = { showSetsSheet = false }
+        )
     }
     val scopeAction = pendingScopeAction
     if (scopeAction != null) {
@@ -258,7 +280,7 @@ private fun SessionContent(viewModel: InteractiveSessionViewModel, onInfo: () ->
 
         Column(Modifier.align(Alignment.BottomCenter).padding(horizontal = 16.dp).padding(bottom = 34.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             viewModel.phaseLabelText?.let { phase ->
-                Text(phase, color = White.copy(alpha = 0.9f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
+                Text(phase, color = Color.White.copy(alpha = 0.9f), fontSize = 11.sp, fontWeight = FontWeight.Black, letterSpacing = 1.5.sp, maxLines = 1,
                     modifier = Modifier.clip(CircleShape).background(Color.Black.copy(alpha = 0.45f)).padding(horizontal = 10.dp, vertical = 5.dp))
             }
             val runner = viewModel.intervalRunner
@@ -273,13 +295,14 @@ private fun SessionContent(viewModel: InteractiveSessionViewModel, onInfo: () ->
                 canSkipSet = viewModel.canSkipSet,
                 canSkipExercise = viewModel.canSkipExercise,
                 skipExerciseLabel = viewModel.skipExerciseLabel,
-                showSkipBlock = runner != null,
+                showSkipBlock = runner != null && !viewModel.isEmomRunning,
                 onPrevious = { viewModel.getPrevious() },
                 onTogglePause = { viewModel.toggleVideoState() },
                 onSkipSet = { viewModel.skipCurrentSet() },
                 onSkipExercise = { viewModel.skipCurrentExercise() },
-                onSkipBlock = { viewModel.exitIntervalGroup() },
-                onNext = { viewModel.getNext() }
+                onSkipBlock = { viewModel.leaveIntervalBlock() },
+                onNext = { viewModel.getNext() },
+                skipBlockInMenu = viewModel.isEmomRunning
             )
             if (runner == null) {
                 SessionDockView(
@@ -300,7 +323,7 @@ private fun VideoLayer(viewModel: InteractiveSessionViewModel) {
     val task = viewModel.workoutTask
     if (runner != null) {
         val lead = runner.leadTask
-        val recovery = runner.phase == IntervalPhase.REST && lead?.restType == RestType.ACTIVE_RECOVERY
+        val recovery = runner.phase == IntervalPhase.REST && runner.emomPlan == null && lead?.restType == RestType.ACTIVE_RECOVERY
         val recoveryVideo = lead?.effectiveRestMovementVideoId
         val exercise = runner.currentExercise
         when {
@@ -345,24 +368,27 @@ private fun SessionInfoStrip(viewModel: InteractiveSessionViewModel, onInfo: () 
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (isGrouped) WorkoutControlTopView(task, viewModel.currentRound)
-            else viewModel.setHeadlineText?.let { Text(it, color = White, fontSize = 22.sp, fontWeight = FontWeight.Black, maxLines = 1) }
+            else viewModel.setHeadlineText?.let { Text(it, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Black, maxLines = 1) }
             Spacer(Modifier.weight(1f))
             if (task.isMovement) SetTimerLabel(viewModel.setTimerText, viewModel.setTimerCountsDown)
-            SessionEditMenu(viewModel.phaseOptions, task.isMovement, viewModel.canSwapCurrentMovement, viewModel.canEditCurrentSets, viewModel.canRemoveCurrentExercise,
-                viewModel.isWorkoutEditable, viewModel.hasSessionOnlyEdits, onEdit)
+            // Hidden when the menu would open empty (FTNSSLNK-515).
+            if (viewModel.hasEditMenuItems) {
+                SessionEditMenu(task.isMovement, viewModel.canSwapCurrentMovement, viewModel.canEditCurrentSets, viewModel.editCurrentSetsTitle,
+                    viewModel.canRemoveCurrentExercise, viewModel.isWorkoutEditable, viewModel.hasSessionOnlyEdits, onEdit)
+            }
         }
         if (task.isMovement) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(task.name, color = White, fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
-                if (task.movementId != null) Icon(Icons.Filled.Info, contentDescription = "Movement info", tint = White.copy(alpha = 0.9f), modifier = Modifier.size(20.dp).clickable { onInfo() })
+                Text(task.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Black, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                if (task.movementId != null) Icon(Icons.Filled.Info, contentDescription = "Movement info", tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(20.dp).clickable { onInfo() })
             }
             viewModel.currentTargetText?.let { Text(it, color = OrangeTheme, fontSize = 17.sp, fontWeight = FontWeight.Black, maxLines = 1) }
-            previous?.let { Text(it.previousLine, color = White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
+            previous?.let { Text(it.previousLine, color = Color.White.copy(alpha = 0.85f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold) }
         }
         val progress = viewModel.workoutProgressText
-        if (progress.isNotEmpty()) Text(progress, color = White.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+        if (progress.isNotEmpty()) Text(progress, color = Color.White.copy(alpha = 0.75f), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         if (task.isMovement && !task.instructions.isNullOrBlank()) {
-            HorizontalDivider(color = White.copy(alpha = 0.2f))
+            HorizontalDivider(color = Color.White.copy(alpha = 0.2f))
             SessionNoteCard(task.instructions, label = "NOTES", maxLines = 2, isBordered = false)
         }
     }

@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.progress
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -42,11 +43,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.model.PhotoAngle
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.ProgressPhotosViewModel
 import java.util.Locale
 
@@ -73,7 +70,7 @@ fun PhotoEntryDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             HeaderBackView(onBack = onBack)
@@ -84,11 +81,11 @@ fun PhotoEntryDetailScreen(
                         .padding(end = 16.dp)
                         .size(36.dp)
                         .clip(CircleShape)
-                        .background(White)
+                        .background(FLTheme.colors.surface)
                         .clickable { confirmDelete = true },
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Default.Delete, contentDescription = "Delete photos", tint = Color(0xFFE53935), modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Delete, contentDescription = "Delete photos", tint = FLTheme.colors.danger, modifier = Modifier.size(18.dp))
                 }
             }
         }
@@ -96,7 +93,7 @@ fun PhotoEntryDetailScreen(
         if (entry == null) {
             Text(
                 if (viewModel.entries.isEmpty()) "Loading…" else "These photos are no longer available.",
-                fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.padding(20.dp)
+                fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(20.dp)
             )
             return
         }
@@ -107,7 +104,7 @@ fun PhotoEntryDetailScreen(
         ) {
             item {
                 Text(
-                    longDate.format(entry.date), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor,
+                    longDate.format(entry.date), fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp, vertical = 4.dp),
@@ -126,7 +123,7 @@ fun PhotoEntryDetailScreen(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             Icon(Icons.Default.Person, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(16.dp))
-                            Text(angle.displayName, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                            Text(angle.displayName, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                         }
                         ProgressPhotoThumb(
                             photo = photo, angle = angle, height = 350.dp, showLabel = false,
@@ -134,7 +131,7 @@ fun PhotoEntryDetailScreen(
                                 .fillMaxWidth()
                                 .clip(RoundedCornerShape(12.dp))
                         )
-                        if (photo.notes.isNotBlank()) Text(photo.notes, fontSize = 14.sp, color = TextSecondaryColor)
+                        if (photo.notes.isNotBlank()) Text(photo.notes, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }
@@ -142,9 +139,9 @@ fun PhotoEntryDetailScreen(
             if (entry.notes.isNotEmpty()) {
                 item {
                     DetailCard {
-                        Text("Notes", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                        Text("Notes", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(entry.notes, fontSize = 14.sp, color = TextSecondaryColor)
+                        Text(entry.notes, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }
@@ -153,15 +150,15 @@ fun PhotoEntryDetailScreen(
                 item {
                     DetailCard {
                         Row {
-                            Text("Body Weight", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                            Text("Body Weight", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                             Spacer(modifier = Modifier.weight(1f))
-                            Text(longDate.format(weight.date), fontSize = 11.sp, color = TextSecondaryColor)
+                            Text(longDate.format(weight.date), fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.MonitorWeight, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("${String.format(Locale.US, "%.1f", weight.weight)} ${weight.unit.label}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                            Text("${String.format(Locale.US, "%.1f", weight.weight)} ${weight.unit.label}", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                         }
                     }
                 }
@@ -171,16 +168,16 @@ fun PhotoEntryDetailScreen(
                 item {
                     DetailCard {
                         Row {
-                            Text("Measurements", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                            Text("Measurements", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                             Spacer(modifier = Modifier.weight(1f))
-                            Text(longDate.format(measurements.date), fontSize = 11.sp, color = TextSecondaryColor)
+                            Text(longDate.format(measurements.date), fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                         }
                         Spacer(modifier = Modifier.height(8.dp))
                         measurements.measurements.forEach { m ->
                             Row(modifier = Modifier.padding(vertical = 2.dp)) {
-                                Text(m.bodyPart.displayName, fontSize = 13.sp, color = TextSecondaryColor)
+                                Text(m.bodyPart.displayName, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                                 Spacer(modifier = Modifier.weight(1f))
-                                Text("${formatMeasurement(m.value)} ${m.unit.label}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+                                Text("${formatMeasurement(m.value)} ${m.unit.label}", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
                             }
                         }
                     }
@@ -210,7 +207,7 @@ private fun DetailCard(content: @Composable () -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 20.dp),
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = White)
+        colors = CardDefaults.cardColors(containerColor = FLTheme.colors.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) { content() }
     }

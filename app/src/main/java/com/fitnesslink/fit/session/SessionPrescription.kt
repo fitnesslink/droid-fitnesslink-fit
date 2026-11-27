@@ -149,7 +149,7 @@ object SessionPrescription {
 
         if (lead.isInterval) {
             val mode = lead.intervalMode ?: return null
-            val plan = IntervalMath.plan(lead, rowTotalRounds = lead.totalRounds, mode = mode)
+            val plan = IntervalMath.plan(lead, rowTotalRounds = lead.totalRounds, mode = mode, exerciseCount = range.count { !tasks[it].isRest })
             val setsSuffix = if (plan.sets > 1) " · ${plan.sets} SETS" else ""
             val spokenSets = if (plan.sets > 1) ", ${plan.sets} sets" else ""
             val detail: String
@@ -167,9 +167,11 @@ object SessionPrescription {
                     memberMetric = { null }
                 }
                 IntervalMode.EMOM -> {
-                    detail = "${compactSeconds(plan.windowSeconds)} · ${compactSeconds(plan.workSeconds)} WORK EVERY MINUTE$setsSuffix"
-                    spokenDetail = "${VoicePhrase.spokenSeconds(plan.windowSeconds)}, " +
-                        "${VoicePhrase.spokenSeconds(plan.workSeconds)} work every minute$spokenSets"
+                    // EMOM v2: one exercise per interval (plan.workSeconds = the interval; one set).
+                    val rounds = plan.roundsPerSet
+                    detail = "${compactSeconds(plan.windowSeconds)} · ${compactSeconds(plan.workSeconds)} INTERVAL · $rounds ${if (rounds == 1) "ROUND" else "ROUNDS"}"
+                    spokenDetail = "${VoicePhrase.spokenSeconds(plan.windowSeconds)}, one exercise every " +
+                        "${VoicePhrase.spokenSeconds(plan.workSeconds)}, $rounds ${if (rounds == 1) "round" else "rounds"}"
                     memberMetric = { unit(it) }
                 }
                 IntervalMode.AMRAP -> {
@@ -218,7 +220,7 @@ data class PreparationBlockSummary(
     val kind: Kind,
     /** `SUPERSET` / `CIRCUIT` (or the stored group name) / `HIIT` / `TABATA` / `EMOM` / `AMRAP`. */
     val title: String,
-    /** `3 ROUNDS` / `4 ROUNDS · 30 SEC WORK / 15 SEC REST` / `10 MIN · 40 SEC WORK EVERY MINUTE` / `12 MIN`. */
+    /** `3 ROUNDS` / `4 ROUNDS · 30 SEC WORK / 15 SEC REST` / `20 MIN · 60 SEC INTERVAL · 20 ROUNDS` / `12 MIN`. */
     val detail: String,
     val members: List<Member>,
     /** 1-based ordinal of the member the user is about to start. */

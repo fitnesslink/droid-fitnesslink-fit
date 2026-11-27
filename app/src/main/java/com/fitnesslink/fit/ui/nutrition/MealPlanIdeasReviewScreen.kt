@@ -45,15 +45,11 @@ import com.fitnesslink.fit.network.dto.ApplyMealPlanWeekResult
 import com.fitnesslink.fit.network.dto.DraftMeal
 import com.fitnesslink.fit.network.dto.DraftMealPlanDay
 import com.fitnesslink.fit.nutrition.MealPlanStore
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.MealPlanIdeasViewModel
 import com.fitnesslink.fit.viewmodel.MealPlanIdeasViewModel.Companion.allMeals
 import com.fitnesslink.fit.viewmodel.MealPlanViewModel
@@ -86,10 +82,10 @@ fun MealPlanIdeasReviewScreen(
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         PlanTopBar(title = "Review Ideas", onBack = { if (!viewModel.isApplying) onBack() })
         if (draft == null) {
-            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { Text("No ideas to review.", color = TextSecondaryColor) }
+            Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) { Text("No ideas to review.", color = FLTheme.colors.textSecondary) }
         } else {
             Column(
                 modifier = Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
@@ -99,15 +95,15 @@ fun MealPlanIdeasReviewScreen(
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(Icons.Filled.AutoAwesome, contentDescription = null, tint = PurpleTheme)
-                        Text("Meal plan ideas", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                        Text("Meal plan ideas", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     }
-                    Text(MealPlanViewModel.weekRangeLabel(draft.weekStart.ifEmpty { viewModel.weekStart }), fontSize = 14.sp, color = TextSecondaryColor)
-                    draft.notes?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 14.sp, color = TextSecondaryColor) }
+                    Text(MealPlanViewModel.weekRangeLabel(draft.weekStart.ifEmpty { viewModel.weekStart }), fontSize = 14.sp, color = FLTheme.colors.textSecondary)
+                    draft.notes?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 14.sp, color = FLTheme.colors.textSecondary) }
                     Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text("${viewModel.selectedCount} of ${draft.allMeals().size} ideas selected", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
                         viewModel.averageDailyCalories?.let { Text("· ~$it cal/day", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLPrimary) }
                     }
-                    Text("Tap an idea to include or skip it. You can edit any meal after it's added.", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("Tap an idea to include or skip it. You can edit any meal after it's added.", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
 
                 draft.days.forEach { day ->
@@ -116,20 +112,20 @@ fun MealPlanIdeasReviewScreen(
 
                 Text(
                     "These are ideas to get you started, not nutrition or medical advice. Calories and macros are estimates — check labels and adjust to suit you.",
-                    fontSize = 12.sp, color = TextSecondaryColor
+                    fontSize = 12.sp, color = FLTheme.colors.textSecondary
                 )
             }
         }
 
         // Action bar
-        Column(modifier = Modifier.fillMaxWidth().background(White).padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface).padding(horizontal = 20.dp, vertical = 12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             viewModel.applyErrorMessage?.let { Text(it, fontSize = 13.sp, color = OrangeTheme) }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
-                    modifier = Modifier.weight(1f).background(BackgroundColor, RoundedCornerShape(10.dp))
+                    modifier = Modifier.weight(1f).background(FLTheme.colors.background, RoundedCornerShape(10.dp))
                         .clickable(enabled = !viewModel.isApplying) { viewModel.discard(); onBack() }.padding(vertical = 14.dp),
                     contentAlignment = Alignment.Center
-                ) { Text("Discard", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor) }
+                ) { Text("Discard", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary) }
                 val canApply = !viewModel.isApplying && draft != null && viewModel.selectedCount > 0
                 Box(
                     modifier = Modifier.weight(1f).background(if (canApply) FLPrimary else FLPrimary.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
@@ -139,12 +135,12 @@ fun MealPlanIdeasReviewScreen(
                 ) {
                     if (viewModel.isApplying) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = White)
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = FLTheme.colors.onBrand)
                             Spacer(Modifier.width(6.dp))
-                            Text("Adding…", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+                            Text("Adding…", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
                         }
                     } else {
-                        Text(if (viewModel.selectedCount == 0) "Add to Plan" else "Add ${viewModel.selectedCount} to Plan", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = White)
+                        Text(if (viewModel.selectedCount == 0) "Add to Plan" else "Add ${viewModel.selectedCount} to Plan", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
                     }
                 }
             }
@@ -172,11 +168,11 @@ private fun DayCard(day: DraftMealPlanDay, vm: MealPlanIdeasViewModel, expanded:
     PlanCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             val title = if (day.day.isNotEmpty()) "${MealPlanViewModel.weekdayFull(day.day)} · ${MealPlanViewModel.mediumDay(day.day)}" else day.day
-            Text(title.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor, modifier = Modifier.weight(1f))
+            Text(title.uppercase(), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary, modifier = Modifier.weight(1f))
             val cal = vm.selectedCalories(day)
             if (cal > 0) Text("$cal cal", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary)
         }
-        if (day.meals.isEmpty()) Text("No ideas for this day.", fontSize = 13.sp, color = TextSecondaryColor)
+        if (day.meals.isEmpty()) Text("No ideas for this day.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
         day.meals.forEachIndexed { index, planned ->
             val key = vm.key(day, index)
             MealRow(
@@ -196,23 +192,23 @@ private fun MealRow(mealType: String, meal: DraftMeal, selected: Boolean, isExpa
     ) {
         Icon(
             if (selected) Icons.Filled.CheckCircle else Icons.Outlined.Circle, contentDescription = if (selected) "Included" else "Skipped",
-            tint = if (selected) FLPrimary else MediumGray, modifier = Modifier.size(22.dp)
+            tint = if (selected) FLPrimary else FLTheme.colors.textTertiary, modifier = Modifier.size(22.dp)
         )
         Column(modifier = Modifier.weight(1f).alpha(if (selected) 1f else 0.45f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(mealType.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
+            Text(mealType.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
             Row(verticalAlignment = Alignment.Top) {
-                Text(meal.recipeName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                Text(meal.recipeName, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                 Text("${meal.calories} cal", fontSize = 13.sp, fontWeight = FontWeight.Medium, color = FLPrimary)
             }
-            meal.description?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor, maxLines = if (isExpanded) Int.MAX_VALUE else 2) }
+            meal.description?.takeIf { it.isNotEmpty() }?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = if (isExpanded) Int.MAX_VALUE else 2) }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("P: ${planGrams(meal.protein)}", fontSize = 12.sp, color = BlueTheme)
                 Text("F: ${planGrams(meal.fat)}", fontSize = 12.sp, color = OrangeTheme)
                 Text("C: ${planGrams(meal.carbs)}", fontSize = 12.sp, color = PurpleTheme)
                 meal.prepMinutes?.let {
                     Spacer(Modifier.weight(1f))
-                    Icon(Icons.Filled.Schedule, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(12.dp))
-                    Text("${it}m", fontSize = 12.sp, color = TextSecondaryColor)
+                    Icon(Icons.Filled.Schedule, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(12.dp))
+                    Text("${it}m", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             }
             if (meal.ingredients.isNotEmpty()) {
@@ -225,7 +221,7 @@ private fun MealRow(mealType: String, meal: DraftMeal, selected: Boolean, isExpa
                 if (isExpanded) {
                     Text(
                         meal.ingredients.joinToString(", ") { ing -> listOfNotNull(ing.quantity, ing.unit, ing.name).map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" ") },
-                        fontSize = 12.sp, color = TextSecondaryColor
+                        fontSize = 12.sp, color = FLTheme.colors.textSecondary
                     )
                 }
             }

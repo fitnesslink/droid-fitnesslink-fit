@@ -36,10 +36,8 @@ import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.session.ActiveWorkoutSession
 import com.fitnesslink.fit.session.MovementHistoryStore
 import com.fitnesslink.fit.session.MovementPerformanceLines
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.viewmodel.InteractiveSessionViewModel
 import com.fitnesslink.fit.viewmodel.PlaylistViewModel
 
@@ -74,21 +72,21 @@ fun PlaylistMovementLogSheet(viewModel: PlaylistViewModel, task: WorkoutTask, se
         onDismiss()
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, containerColor = FLTheme.colors.surface) {
         Column(Modifier.padding(20.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(task.name, fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                if (!task.isInterval && task.displayMetric.isNotEmpty()) Text(task.displayMetric, fontSize = 13.sp, color = TextSecondaryColor)
-                setNumber?.let { Text("Logging ${unit.lowercase()} $it of $plannedCount", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor) }
+                if (!task.isInterval && task.displayMetric.isNotEmpty()) Text(task.displayMetric, fontSize = 13.sp, color = FLTheme.colors.textSecondary)
+                setNumber?.let { Text("Logging ${unit.lowercase()} $it of $plannedCount", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary) }
                 previous?.let { Text(it.lastTimeLine, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLPrimary) }
-                topSet?.let { Text("Top set: ${MovementPerformanceLines.topSetLine(it)}", fontSize = 13.sp, color = TextSecondaryColor) }
+                topSet?.let { Text("Top set: ${MovementPerformanceLines.topSetLine(it)}", fontSize = 13.sp, color = FLTheme.colors.textSecondary) }
             }
-            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(BackgroundColor).padding(vertical = 12.dp)) {
+            Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(FLTheme.colors.background).padding(vertical = 12.dp)) {
                 Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp)) {
-                    Text(unit, fontSize = 12.sp, color = TextSecondaryColor, modifier = Modifier.width(44.dp))
-                    Text("Weight (${WeightUnit.current.label})", fontSize = 12.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
-                    Text("Reps", fontSize = 12.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.width(80.dp))
-                    if (task.usesDuration) Text("Time", fontSize = 12.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.width(56.dp))
+                    Text(unit, fontSize = 12.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.width(44.dp))
+                    Text("Weight (${WeightUnit.current.label})", fontSize = 12.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                    Text("Reps", fontSize = 12.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(80.dp))
+                    if (task.usesDuration) Text("Time", fontSize = 12.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(56.dp))
                 }
                 rows.forEachIndexed { index, row ->
                     Row(Modifier.padding(horizontal = 12.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -99,14 +97,14 @@ fun PlaylistMovementLogSheet(viewModel: PlaylistViewModel, task: WorkoutTask, se
                         OutlinedTextField(row.repsText, { v -> rows = rows.toMutableList().also { it[index] = row.copy(repsText = v) } },
                             placeholder = { Text("0", textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
                             singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), modifier = Modifier.width(80.dp))
-                        if (task.usesDuration) Text(InteractiveSessionViewModel.formatDuration(row.durationSeconds ?: 0), fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center, modifier = Modifier.width(56.dp))
+                        if (task.usesDuration) Text(InteractiveSessionViewModel.formatDuration(row.durationSeconds ?: 0), fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center, modifier = Modifier.width(56.dp))
                     }
                 }
             }
             CompletedToggle(checked = viewModel.isCompleted(task.id)) { viewModel.toggleCompleted(task.id) }
-            Text("Save", color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+            Text("Save", color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLPrimary).clickable { save() }.padding(vertical = 14.dp))
-            Text("Cancel", color = TextSecondaryColor, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().clickable { onDismiss() }.padding(vertical = 8.dp))
+            Text("Cancel", color = FLTheme.colors.textSecondary, fontSize = 14.sp, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().clickable { onDismiss() }.padding(vertical = 8.dp))
             Spacer(Modifier.height(16.dp))
         }
     }

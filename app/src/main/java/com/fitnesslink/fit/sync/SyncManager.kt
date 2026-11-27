@@ -139,6 +139,7 @@ object SyncManager {
         SyncDomain.MEAL_SLOTS,
         SyncDomain.GROCERY_ITEMS,
         SyncDomain.GOALS,
+        SyncDomain.GOAL_ENTRIES,
         SyncDomain.HABITS,
         SyncDomain.HABIT_LOGS,
         SyncDomain.MEASUREMENTS,

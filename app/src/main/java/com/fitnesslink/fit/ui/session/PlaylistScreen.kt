@@ -34,9 +34,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,11 +69,8 @@ import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.TimeInfoView
 import com.fitnesslink.fit.ui.components.TrainingLevelInfoView
 import com.fitnesslink.fit.ui.navigation.AppRouter
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.workout.CreateExerciseSheet
 import com.fitnesslink.fit.ui.workout.ExerciseBrowserSheet
 import com.fitnesslink.fit.viewmodel.PlaylistEditRequest
@@ -105,12 +105,19 @@ fun PlaylistScreen(
     var videoTask by remember { mutableStateOf<WorkoutTask?>(null) }
     var infoTask by remember { mutableStateOf<WorkoutTask?>(null) }
     var highlightInteractive by remember { mutableStateOf(false) }
+    // iOS `didAutoOpen`: resuming into Interactive happens only on the first
+    // open. Saveable because this screen is rebuilt whenever Interactive's
+    // "Playlist" button pops back here; by then the session's last mode is
+    // Interactive, and re-running the auto-open would bounce straight back.
+    var didAutoOpen by rememberSaveable { mutableStateOf(false) }
 
     LaunchedEffect(workoutId) {
         AudioCueService.attach(context)
         SessionSettings.attach(context)
         viewModel.loadData(workoutId, programId)
-        if (viewModel.shouldReopenInteractive) {
+        val firstOpen = !didAutoOpen
+        didAutoOpen = true
+        if (viewModel.shouldReopenInteractive && firstOpen) {
             viewModel.shouldReopenInteractive = false
             delay(50)
             onNavigateToInteractive(workoutId)
@@ -123,6 +130,9 @@ fun PlaylistScreen(
             highlightInteractive = false
         }
     }
+    // Cut the first-session tip if the user leaves mid-sentence (iOS 23ef55d onDisappear).
+    val hintPlaying by rememberUpdatedState(highlightInteractive)
+    DisposableEffect(Unit) { onDispose { if (hintPlaying) AudioCueService.silenceVoice() } }
     // Coming back from Interactive: re-read the cache (edits made there) and record the playlist mode.
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -159,13 +169,13 @@ fun PlaylistScreen(
         return
     }
 
-    Box(Modifier.fillMaxSize().background(BackgroundColor)) {
+    Box(Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
             Hero(viewModel, highlightInteractive, onBack) { onNavigateToInteractive(workoutId) }
             Column(Modifier.padding(horizontal = 20.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 if (viewModel.isLoadingWorkout && viewModel.workout.phases.isEmpty()) {
                     Column(Modifier.fillMaxWidth().padding(top = 60.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        CircularProgressIndicator(color = FLPrimary); Text("Loading workout…", color = TextSecondaryColor, fontSize = 14.sp)
+                        CircularProgressIndicator(color = FLPrimary); Text("Loading workout…", color = FLTheme.colors.textSecondary, fontSize = 14.sp)
                     }
                 } else {
                     PlaylistTasks(viewModel, onPlayVideo = { videoTask = it }, onInfo = { infoTask = it })
@@ -180,18 +190,36 @@ fun PlaylistScreen(
     infoTask?.let { task -> MovementInfoSheet(task) { infoTask = null } }
     viewModel.logTargetTaskId?.let { id ->
         val task = viewModel.workout.allTasks.firstOrNull { it.id == id }
-        if (task != null) PlaylistMovementLogSheet(viewModel, task, viewModel.logTargetSetNumber) { viewModel.closeLogSheet() } else viewModel.closeLogSheet()
+        // Universal Workout Logging (PRD v2.0 §2.2): targets show, actuals auto-save, circles complete sets.
+        if (task != null) key(id, viewModel.logTargetSetNumber) {
+            UniversalLogSheet(task, UniversalLogMode.PLAYLIST, viewModel.logTargetSetNumber) { viewModel.closeLogSheet() }
+        } else viewModel.closeLogSheet()
+    }
+    // Workout-end unconfirmed sets (Universal Logging §11.3).
+    if (viewModel.showUnconfirmedSets) {
+        UnconfirmedSetsSheet(
+            items = viewModel.unconfirmedSetItems,
+            onReview = { viewModel.reviewUnconfirmedSet(it) },
+            onFinish = { viewModel.finishWithoutCompleting() },
+            onDismiss = { viewModel.showUnconfirmedSets = false }
+        )
     }
     pickerRequest?.let { request ->
         ExerciseBrowserSheet(
             onSelect = { movement -> pickerRequest = null; movementPicked(movement, request) },
             onCreateNew = { pickerRequest = null; createRequest = request },
-            onDismiss = { pickerRequest = null }, pendingGroupType = null, pendingCount = 0
+            onDismiss = { pickerRequest = null }, pendingGroupType = null, pendingCount = 0,
+            swapMode = request is PlaylistEditRequest.Swap
         )
     }
     createRequest?.let { request -> CreateExerciseSheet(onCreated = { movement -> createRequest = null; movementPicked(movement, request) }, onDismiss = { createRequest = null }) }
     setsTarget?.let { task ->
-        SessionSetsSheet(maxOf(task.sets, 1), task.reps, task.name, onSave = { s, r -> viewModel.updateSets(task.id, s, r) }, onDismiss = { setsTarget = null })
+        SessionSetsEditorSheet(
+            task = task,
+            onSaveReps = { s, r -> viewModel.updateSets(task.id, s, r) },
+            onSaveDuration = { s, seconds, weight -> viewModel.updateDuration(task.id, s, seconds, weight) },
+            onDismiss = { setsTarget = null }
+        )
     }
     removeTarget?.let { task ->
         ConfirmDialog("Remove this exercise?", if (viewModel.isWorkoutEditable) "${task.name} will be removed from this workout." else "${task.name} will be skipped for this session.", "Remove", destructive = true,
@@ -230,23 +258,25 @@ private fun Hero(viewModel: PlaylistViewModel, highlightInteractive: Boolean, on
     val workout = viewModel.workout
     Box(Modifier.fillMaxWidth().height(370.dp)) {
         FLImageView(ref = (workout.thumbnailId ?: workout.imageId)?.let { MediaRef.WorkoutThumbnail(it.toString()) }, modifier = Modifier.fillMaxSize())
+        // theme-exempt: over media (the hero photo's scrim and everything drawn on it stay white-on-dark in both modes, like iOS)
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)))))
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 BackCircleButton(onClick = onBack)
                 Spacer(Modifier.weight(1f))
-                Text(viewModel.timerText, color = White, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, fontFamily = FontFamily.Monospace,
+                Text(viewModel.timerText, color = Color.White, // theme-exempt: over media
+                    fontSize = 22.sp, fontWeight = FontWeight.SemiBold, fontFamily = FontFamily.Monospace,
                     modifier = Modifier.clip(RoundedCornerShape(20.dp)).background(Color.Black.copy(alpha = 0.35f)).padding(horizontal = 16.dp, vertical = 8.dp))
                 Spacer(Modifier.weight(1f))
                 Box(
-                    Modifier.size(36.dp).clip(CircleShape).background(White).clickable { onInteractive() }
+                    Modifier.size(36.dp).clip(CircleShape).background(Color.White).clickable { onInteractive() } // theme-exempt: over media
                         .then(if (highlightInteractive) Modifier.border(3.dp, FLPrimary, CircleShape) else Modifier),
                     contentAlignment = Alignment.Center
                 ) { Image(painterResource(R.drawable.interactive), contentDescription = "Interactive mode", modifier = Modifier.size(14.dp)) }
             }
             Spacer(Modifier.weight(1f))
             Column(Modifier.padding(horizontal = 25.dp).padding(bottom = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(workout.name, color = White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(workout.name, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold) // theme-exempt: over media
                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     TrainingLevelInfoView(level = workout.trainingLevel)
                     if (workout.displayTime.isNotEmpty()) TimeInfoView(time = workout.displayTime)
@@ -262,12 +292,12 @@ private fun PlaylistTasks(viewModel: PlaylistViewModel, onPlayVideo: (WorkoutTas
     var addMenu by remember { mutableStateOf(false) }
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (workout.description.isNotEmpty()) {
-            Text("Description", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-            Text(workout.description, fontSize = 14.sp, color = TextPrimaryColor)
+            Text("Description", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+            Text(workout.description, fontSize = 14.sp, color = FLTheme.colors.textPrimary)
         }
         workout.phases.forEach { phase ->
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(phase.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(top = 10.dp))
+                Text(phase.name, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(top = 10.dp))
                 phase.taskRows.forEach { row ->
                     val task = row.task
                     when {
@@ -295,10 +325,10 @@ private fun PlaylistTasks(viewModel: PlaylistViewModel, onPlayVideo: (WorkoutTas
             }
             if (!viewModel.isWorkoutEditable) {
                 Row(Modifier.fillMaxWidth().clickable { viewModel.requestEdit(PlaylistEditRequest.SaveMyVersion) }.padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Icon(Icons.Filled.Save, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(18.dp))
-                    Text(if (viewModel.hasSessionOnlyEdits) "Save my changes as my workout" else "Save as my workout", color = TextSecondaryColor, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Icon(Icons.Filled.Save, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(18.dp))
+                    Text(if (viewModel.hasSessionOnlyEdits) "Save my changes as my workout" else "Save as my workout", color = FLTheme.colors.textSecondary, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
                 }
-                Text("Changes to a coach's workout apply to this session only.", color = TextSecondaryColor, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 14.dp))
+                Text("Changes to a coach's workout apply to this session only.", color = FLTheme.colors.textSecondary, fontSize = 12.sp, modifier = Modifier.padding(horizontal = 14.dp))
             }
         }
     }
@@ -312,16 +342,16 @@ private fun FinishBar(viewModel: PlaylistViewModel, modifier: Modifier, onDiscar
             Modifier.weight(1f).clip(RoundedCornerShape(12.dp)).background(FLPrimary).clickable { viewModel.requestFinish() }.padding(vertical = 14.dp),
             horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Filled.Flag, contentDescription = null, tint = White, modifier = Modifier.size(18.dp))
+            Icon(Icons.Filled.Flag, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Finish Workout", color = White, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
+            Text("Finish Workout", color = FLTheme.colors.onBrand, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
         }
         Box {
-            Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(White).clickable { menu = true }, contentAlignment = Alignment.Center) {
-                Icon(Icons.Filled.MoreVert, contentDescription = "Session options", tint = TextPrimaryColor)
+            Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).clickable { menu = true }, contentAlignment = Alignment.Center) {
+                Icon(Icons.Filled.MoreVert, contentDescription = "Session options", tint = FLTheme.colors.textPrimary)
             }
             DropdownMenu(expanded = menu, onDismissRequest = { menu = false }) {
-                DropdownMenuItem(text = { Text("Discard Session", color = Color(0xFFE53935)) }, onClick = { menu = false; onDiscard() })
+                DropdownMenuItem(text = { Text("Discard Session", color = sessionDestructive) }, onClick = { menu = false; onDiscard() })
             }
         }
     }
@@ -331,6 +361,7 @@ private fun FinishBar(viewModel: PlaylistViewModel, modifier: Modifier, onDiscar
 @Composable
 private fun MovementVideoCover(task: WorkoutTask, onDismiss: () -> Unit) {
     androidx.compose.ui.window.Dialog(onDismissRequest = onDismiss, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+        // theme-exempt: over media (fullscreen video cover, black letterbox and white captions in both modes)
         Box(Modifier.fillMaxSize().background(Color.Black)) {
             val videoId = task.effectiveMovementVideoId
             if (videoId != null) {
@@ -341,10 +372,10 @@ private fun MovementVideoCover(task: WorkoutTask, onDismiss: () -> Unit) {
                 )
             }
             Column(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color.Black.copy(alpha = 0.6f), Color.Transparent))).statusBarsPadding().padding(20.dp)) {
-                Text(task.name, color = White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                if (!task.isInterval) Text(task.displayMetric, color = White.copy(alpha = 0.85f), fontSize = 13.sp)
+                Text(task.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                if (!task.isInterval) Text(task.displayMetric, color = Color.White.copy(alpha = 0.85f), fontSize = 13.sp)
             }
-            Icon(Icons.Filled.Close, contentDescription = "Close", tint = White.copy(alpha = 0.9f),
+            Icon(Icons.Filled.Close, contentDescription = "Close", tint = Color.White.copy(alpha = 0.9f),
                 modifier = Modifier.align(Alignment.TopEnd).statusBarsPadding().padding(16.dp).size(32.dp).clickable { onDismiss() })
         }
     }

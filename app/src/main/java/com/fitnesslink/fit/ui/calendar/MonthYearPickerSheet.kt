@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.calendar
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
@@ -29,11 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.text.DateFormatSymbols
 import java.util.Calendar
 
@@ -62,7 +59,7 @@ fun MonthYearPickerSheet(
     val selectedMonthIndex by remember { derivedStateOf { centeredIndex(monthState) } }
     val selectedYearIndex by remember { derivedStateOf { centeredIndex(yearState) } }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = White) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.surface) {
         Column(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
@@ -70,7 +67,7 @@ fun MonthYearPickerSheet(
             ) {
                 TextButton(onClick = onDismiss) { Text("Cancel", color = FLPrimary) }
                 Text(
-                    "Select Month", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor,
+                    "Select Month", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary,
                     textAlign = TextAlign.Center, modifier = Modifier.weight(1f)
                 )
                 TextButton(onClick = {
@@ -89,7 +86,7 @@ fun MonthYearPickerSheet(
                         .align(Alignment.Center)
                         .fillMaxWidth()
                         .height(WHEEL_ROW_HEIGHT)
-                        .background(BackgroundColor, RoundedCornerShape(10.dp))
+                        .background(FLTheme.colors.background, RoundedCornerShape(10.dp))
                 )
                 Row(modifier = Modifier.fillMaxWidth()) {
                     WheelColumn(items = months, state = monthState, selectedIndex = selectedMonthIndex, modifier = Modifier.weight(1.4f))
@@ -125,7 +122,7 @@ private fun WheelColumn(items: List<String>, state: LazyListState, selectedIndex
                     items[index],
                     fontSize = if (isSelected) 20.sp else 17.sp,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (isSelected) TextPrimaryColor else TextSecondaryColor,
+                    color = if (isSelected) FLTheme.colors.textPrimary else FLTheme.colors.textSecondary,
                     modifier = Modifier.alpha(if (isSelected) 1f else 0.6f)
                 )
             }

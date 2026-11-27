@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.goals
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -40,14 +41,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fitnesslink.fit.goals.HabitDayStatus
 import com.fitnesslink.fit.ui.components.HeaderBackView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.HabitDetailViewModel
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -74,7 +70,7 @@ fun HabitDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
         Column(
@@ -96,12 +92,12 @@ fun HabitDetailScreen(
                     Icon(habitTypeIcon(habit.habitType), contentDescription = null, tint = tierColor, modifier = Modifier.size(22.dp))
                     HabitTierPill(habit.tier, filled = true)
                 }
-                Text(habit.title.ifBlank { "Habit" }, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, textAlign = TextAlign.Center)
-                habit.anchorBehavior?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 14.sp, color = TextSecondaryColor, textAlign = TextAlign.Center) }
+                Text(habit.title.ifBlank { "Habit" }, fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, textAlign = TextAlign.Center)
+                habit.anchorBehavior?.takeIf { it.isNotBlank() }?.let { Text(it, fontSize = 14.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center) }
                 viewModel.goalTitle?.let { goalTitle ->
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Default.Flag, contentDescription = null, tint = TextSecondaryColor, modifier = Modifier.size(12.dp))
-                        Text(goalTitle, fontSize = 12.sp, color = TextSecondaryColor)
+                        Icon(Icons.Default.Flag, contentDescription = null, tint = FLTheme.colors.textSecondary, modifier = Modifier.size(12.dp))
+                        Text(goalTitle, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                     }
                 }
             }
@@ -121,12 +117,12 @@ fun HabitDetailScreen(
             ) {
                 Icon(
                     if (done) Icons.Default.CheckCircle else Icons.Default.Check,
-                    contentDescription = null, tint = if (done) FLPrimary else White, modifier = Modifier.size(18.dp)
+                    contentDescription = null, tint = if (done) FLPrimary else FLTheme.colors.onBrand, modifier = Modifier.size(18.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     if (done) "Done today — tap to undo" else "Mark done today",
-                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (done) FLPrimary else White
+                    fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (done) FLPrimary else FLTheme.colors.onBrand
                 )
             }
 
@@ -135,7 +131,7 @@ fun HabitDetailScreen(
                 modifier = Modifier
                     .padding(horizontal = 20.dp)
                     .fillMaxWidth()
-                    .background(White, RoundedCornerShape(12.dp))
+                    .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
                     .padding(20.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
@@ -143,14 +139,14 @@ fun HabitDetailScreen(
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         Icon(Icons.Default.LocalFireDepartment, contentDescription = null, tint = OrangeTheme, modifier = Modifier.size(22.dp))
-                        Text("${viewModel.streak.currentCount}", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                        Text("${viewModel.streak.currentCount}", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     }
-                    Text("Current Streak", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("Current Streak", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
                 VerticalRule()
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("${viewModel.streak.longestCount}", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                    Text("Longest", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("${viewModel.streak.longestCount}", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                    Text("Longest", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
                 VerticalRule()
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -164,7 +160,7 @@ fun HabitDetailScreen(
                             )
                         }
                     }
-                    Text("Freezes", fontSize = 12.sp, color = TextSecondaryColor)
+                    Text("Freezes", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 }
             }
 
@@ -177,7 +173,7 @@ fun HabitDetailScreen(
 
             // Statistics
             Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(horizontal = 20.dp)) {
-                Text("Statistics", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text("Statistics", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     GoalStatCard("Completion Rate", "${viewModel.stats.completionRate.toInt()}%", modifier = Modifier.weight(1f))
                     GoalStatCard("Total Days", "${viewModel.stats.totalDays}", modifier = Modifier.weight(1f))
@@ -191,12 +187,12 @@ fun HabitDetailScreen(
             // Recent activity
             if (viewModel.recentLogs.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 20.dp)) {
-                    Text("Recent Activity", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                    Text("Recent Activity", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     viewModel.recentLogs.take(7).forEach { log ->
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Icon(Icons.Default.CheckCircle, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(14.dp))
-                            Text(mediumDate.format(Date(log.completedAt)), fontSize = 14.sp, color = TextPrimaryColor, modifier = Modifier.weight(1f))
-                            Text(log.completionType.name, fontSize = 12.sp, color = TextSecondaryColor)
+                            Text(mediumDate.format(Date(log.completedAt)), fontSize = 14.sp, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
+                            Text(log.completionType.name, fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                         }
                     }
                 }
@@ -211,7 +207,7 @@ private fun VerticalRule() {
         modifier = Modifier
             .width(1.dp)
             .height(40.dp)
-            .background(MediumGray.copy(alpha = 0.3f))
+            .background(FLTheme.colors.textTertiary.copy(alpha = 0.3f))
     )
 }
 
@@ -233,15 +229,15 @@ fun CalendarHeatmapView(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(12.dp))
+            .background(FLTheme.colors.surface, RoundedCornerShape(12.dp))
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text("Activity", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+        Text("Activity", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
         Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
             Column(verticalArrangement = Arrangement.spacedBy(gap)) {
                 listOf("S", "M", "T", "W", "T", "F", "S").forEach {
-                    Text(it, fontSize = 9.sp, color = TextSecondaryColor, modifier = Modifier.size(cellSize))
+                    Text(it, fontSize = 9.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.size(cellSize))
                 }
             }
             for (week in 0 until weeks) {
@@ -266,7 +262,7 @@ fun CalendarHeatmapView(
 private fun LegendSwatch(color: Color, label: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Box(modifier = Modifier.size(10.dp).background(color, RoundedCornerShape(2.dp)))
-        Text(label, fontSize = 10.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 10.sp, color = FLTheme.colors.textSecondary)
     }
 }
 

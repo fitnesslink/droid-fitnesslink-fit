@@ -11,6 +11,7 @@ import com.fitnesslink.fit.classification.ClassificationStore
 import com.fitnesslink.fit.media.MediaUploadCoordinator
 import com.fitnesslink.fit.media.UploadState
 import com.fitnesslink.fit.model.ContentTagSelection
+import com.fitnesslink.fit.model.EmomMath
 import com.fitnesslink.fit.model.ExerciseGroupType
 import com.fitnesslink.fit.model.IntervalMode
 import com.fitnesslink.fit.model.MovementLibraryItem
@@ -265,6 +266,12 @@ class WorkoutEditorViewModel : ViewModel() {
      * draining pending phases first. Save & Close joins the job.
      */
     fun save(): Job {
+        // EMOM (§3.5): a time target longer than its interval can't be saved — say why in the save-error surface.
+        emomSaveBlockingMessage?.let { message ->
+            saveErrorMessage = message
+            saveErrorIsFatal = true
+            return Job().also { it.complete() }
+        }
         if (workout.name.isBlank()) workout = workout.copy(name = "My Workout")
         val wasNew = isNewWorkout
         DatabaseManager.insertWorkout(workout)
@@ -429,7 +436,7 @@ class WorkoutEditorViewModel : ViewModel() {
             com.fitnesslink.fit.model.api.WorkoutPhaseTemplateTask(
                 id = t.id, workoutTaskTypeId = t.workoutTaskTypeId, order = t.order, groupId = t.groupId, movementId = t.movementId,
                 advancedMovementId = t.advancedMovementId, reps = t.reps, sets = t.sets, restSeconds = t.restSeconds, rounds = t.rounds,
-                intervalSeconds = t.intervalSeconds, instructions = t.instructions, weightKg = t.weightKg, incline = t.incline,
+                intervalSeconds = t.intervalSeconds, instructions = t.instructions, coachNotes = t.coachNotes, weightKg = t.weightKg, incline = t.incline,
                 paceSeconds = t.paceSeconds, speed = t.speed, caloriesBurned = t.caloriesBurned, heartRate = t.heartRate,
                 roundRestSeconds = t.roundRestSeconds, intervalMode = t.intervalMode, intervalWorkSeconds = t.intervalWorkSeconds,
                 intervalRestSeconds = t.intervalRestSeconds, intervalWindowSeconds = t.intervalWindowSeconds, intervalSets = t.intervalSets,
@@ -483,8 +490,47 @@ class WorkoutEditorViewModel : ViewModel() {
 
     // MARK: - Exercises
 
-    fun addExercise(movement: MovementLibraryItem, phaseIndex: Int) {
-        val phase = workout.phases.getOrNull(phaseIndex) ?: return
+    // MARK: - Exercise browser add / undo (FTNSSLNK-513)
+
+    /** What one immediate-add from the browser inserted, so a re-tap can take it back out. */
+    data class BrowserAdd(val taskId: String, val restTaskId: String?)
+
+    /** Keyed by lowercased movement id. Cleared when the browser closes. */
+    private val browserAdds = mutableMapOf<String, BrowserAdd>()
+    private var lastAutoInsertedRestId: String? = null
+
+    /** Browser entry point: [addExercise], remembering what was inserted for [undoBrowserAdd]. */
+    fun addExerciseFromBrowser(movement: MovementLibraryItem, phaseIndex: Int) {
+        lastAutoInsertedRestId = null
+        val taskId = addExercise(movement, phaseIndex) ?: return
+        browserAdds[movement.id.lowercase(Locale.US)] = BrowserAdd(taskId, lastAutoInsertedRestId)
+        lastAutoInsertedRestId = null
+    }
+
+    /**
+     * Undo a browser add (tap on an already-added row). Removes the task (and
+     * the rest auto-inserted with it) from whichever phase holds it, and drops
+     * it from a still-pending group's picks.
+     */
+    fun undoBrowserAdd(movementId: String) {
+        val add = browserAdds.remove(movementId.lowercase(Locale.US)) ?: return
+        pendingGroupTaskIds = pendingGroupTaskIds.filter { it != add.taskId }
+        selectedTaskIds = selectedTaskIds - add.taskId
+        val ids = setOfNotNull(add.taskId, add.restTaskId)
+        workout = workout.copy(phases = workout.phases.map { phase ->
+            phase.copy(taskRows = phase.taskRows.filterNot { row ->
+                val id = row.task?.id
+                id != null && ids.contains(id) && row.advancedTasks.isEmpty()
+            })
+        })
+        isDirty = true
+    }
+
+    fun clearBrowserAdds() { browserAdds.clear() }
+
+    /** Returns the inserted task id (null when the phase doesn't exist). */
+    fun addExercise(movement: MovementLibraryItem, phaseIndex: Int): String? {
+        val phase = workout.phases.getOrNull(phaseIndex) ?: return null
         val fresh = DatabaseManager.movement(movement.id) ?: movement
         val task = WorkoutRowOps.makeMovementTask(fresh).copy(order = phase.taskRows.size, phaseId = phase.id, phaseName = phase.name, workoutPhaseId = phase.id)
 
@@ -498,19 +544,22 @@ class WorkoutEditorViewModel : ViewModel() {
                 finalizePendingGroup()
                 showExerciseBrowser = false
             }
-            return
+            return task.id
         }
 
         val rows = phase.taskRows.toMutableList()
         val phaseName = phase.name.lowercase(Locale.US)
         val existingMovements = rows.mapNotNull { it.task }.filter { it.isMovement }
         if (existingMovements.isNotEmpty() && (phaseName.contains("main") || phaseName.contains("exercis"))) {
-            rows.add(TaskRow(task = WorkoutRowOps.makeRestTask(60, ClassificationStore.workoutTaskTypeId("Rest"))))
+            val rest = WorkoutRowOps.makeRestTask(60, ClassificationStore.workoutTaskTypeId("Rest"))
+            rows.add(TaskRow(task = rest))
+            lastAutoInsertedRestId = rest.id
         }
         rows.add(TaskRow(task = task))
         updatePhase(phaseIndex) { it.copy(taskRows = rows) }
         DatabaseManager.logRecentMovement(fresh.id)
         isDirty = true
+        return task.id
     }
 
     fun finalizePendingGroup() {
@@ -806,6 +855,31 @@ class WorkoutEditorViewModel : ViewModel() {
         it.copy(task = it.task?.copy(intervalSetRestSeconds = seconds?.let { s -> maxOf(0, s) }, roundRestSeconds = null))
     }
     fun updateIntervalWindow(taskId: String, seconds: Int) = forRow(taskId) { WorkoutRowOps.withIntervalWindow(it, seconds) }
+
+    // MARK: - EMOM (PRD v2.0 §3)
+
+    /** Edit EMOM "Done": write interval + cycles (rounds / window derived) and the block's coach notes. */
+    fun applyEmomEdit(taskId: String, intervalSeconds: Int, cycles: Int, coachNotes: String?) = forRow(taskId) { row ->
+        val timed = EmomMath.applyTiming(row, intervalSeconds, cycles)
+        timed.copy(task = timed.task?.copy(coachNotes = coachNotes?.takeIf { it.isNotBlank() }))
+    }
+
+    /**
+     * EMOM member Reps / Time selector: switching to Time seeds a target that fits the interval
+     * (the existing seed is 60 s, which may be longer than a short interval).
+     */
+    fun setEmomMemberUsesDuration(taskId: String, usesDuration: Boolean, intervalSeconds: Int) {
+        forTask(taskId) { task ->
+            val switched = WorkoutRowOps.withUsesDuration(task, usesDuration)
+            if (!usesDuration) return@forTask switched
+            val seed = minOf(task.durationSeconds?.takeIf { it > 0 } ?: intervalSeconds, intervalSeconds)
+            WorkoutRowOps.updatedDuration(switched, maxOf(switched.sets, 1), seed, switched.weightKg?.toDouble())
+        }
+        isDirty = true
+    }
+
+    /** The EMOM time-target problem that blocks Save (§3.5), or null. */
+    val emomSaveBlockingMessage: String? get() = EmomMath.saveBlockingMessage(workout.phases)
 
     // MARK: - Multi-select
 

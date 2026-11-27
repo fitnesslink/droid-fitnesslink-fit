@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.programs
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -69,11 +70,7 @@ import com.fitnesslink.fit.ui.components.SecondaryButtonView
 import com.fitnesslink.fit.ui.components.TrainingLevelInfoView
 import com.fitnesslink.fit.ui.navigation.AppRouter
 import com.fitnesslink.fit.ui.navigation.ProgramRoutes
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -220,14 +217,14 @@ fun StartProgramScreen(
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             BackCircleButton(onClick = onBack)
             Spacer(modifier = Modifier.weight(1f))
-            Text("Start Your Program", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+            Text("Start Your Program", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.size(36.dp))
         }
@@ -243,7 +240,7 @@ fun StartProgramScreen(
                     modifier = Modifier.size(72.dp).clip(RoundedCornerShape(12.dp))
                 )
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(program.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, maxLines = 3)
+                    Text(program.name, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, maxLines = 3)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         program.trainingLevels.filter { it.isNotEmpty() }.forEach { TrainingLevelInfoView(level = it) }
                         if (program.location.isNotEmpty()) LocationInfoView(location = program.location)
@@ -253,7 +250,7 @@ fun StartProgramScreen(
 
             // Stats
             Row(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).padding(vertical = 14.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface).padding(vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Stat("$workoutsPerWeek", "Workouts/Week", Modifier.weight(1f))
@@ -266,18 +263,18 @@ fun StartProgramScreen(
             }
 
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text("Choose Your Start Date", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-                Text("Select the date you'd like to begin Week 1.", fontSize = 13.sp, color = TextSecondaryColor)
+                Text("Choose Your Start Date", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+                Text("Select the date you'd like to begin Week 1.", fontSize = 13.sp, color = FLTheme.colors.textSecondary)
             }
 
-            Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White)) {
+            Box(modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface)) {
                 DatePicker(
                     state = pickerState,
                     title = null,
                     headline = null,
                     showModeToggle = false,
                     colors = DatePickerDefaults.colors(
-                        containerColor = White,
+                        containerColor = FLTheme.colors.surface,
                         selectedDayContainerColor = FLPrimary,
                         todayDateBorderColor = FLPrimary,
                         todayContentColor = FLPrimary
@@ -287,17 +284,17 @@ fun StartProgramScreen(
 
             // Timeline
             Column(
-                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).padding(16.dp),
+                modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Your Program Timeline", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                Text("Your Program Timeline", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                 (1..totalWeeks).forEach { week ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text("Week $week", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.width(70.dp))
-                        Text(preview.weekRangeLabel(week), fontSize = 14.sp, color = TextSecondaryColor)
+                        Text("Week $week", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.width(70.dp))
+                        Text(preview.weekRangeLabel(week), fontSize = 14.sp, color = FLTheme.colors.textSecondary)
                         Spacer(modifier = Modifier.weight(1f))
                         ProgramPhases.name(week, totalWeeks, program.weekPhases)?.let {
-                            Text("$it Phase", fontSize = 12.sp, color = TextSecondaryColor)
+                            Text("$it Phase", fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                         }
                     }
                 }
@@ -305,7 +302,7 @@ fun StartProgramScreen(
         }
 
         Column(
-            modifier = Modifier.fillMaxWidth().background(White).padding(horizontal = 20.dp, vertical = 12.dp),
+            modifier = Modifier.fillMaxWidth().background(FLTheme.colors.surface).padding(horizontal = 20.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -320,7 +317,7 @@ fun StartProgramScreen(
             ) {
                 if (isStarting) {
                     Box(modifier = Modifier.fillMaxWidth().background(FLPrimary).padding(vertical = 9.dp), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = White, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
+                        CircularProgressIndicator(color = FLTheme.colors.onBrand, strokeWidth = 2.dp, modifier = Modifier.size(18.dp))
                     }
                 } else {
                     Box(modifier = Modifier.alpha(if (canStart) 1f else 0.5f)) { PrimaryButtonView(text = "Start Program") }
@@ -329,7 +326,7 @@ fun StartProgramScreen(
             if (schedules.isEmpty() && !isLoading) {
                 Text(
                     "This program's schedule isn't available yet. Check your connection and try again.",
-                    fontSize = 12.sp, color = TextSecondaryColor, textAlign = TextAlign.Center
+                    fontSize = 12.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center
                 )
             }
         }
@@ -339,14 +336,14 @@ fun StartProgramScreen(
 @Composable
 private fun Stat(value: String, label: String, modifier: Modifier = Modifier) {
     Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
-        Text(label, fontSize = 11.sp, color = TextSecondaryColor)
+        Text(value, fontSize = 16.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
+        Text(label, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
     }
 }
 
 @Composable
 private fun VerticalRule() {
-    Box(modifier = Modifier.width(1.dp).height(32.dp).background(TextSecondaryColor.copy(alpha = 0.2f)))
+    Box(modifier = Modifier.width(1.dp).height(32.dp).background(FLTheme.colors.textSecondary.copy(alpha = 0.2f)))
 }
 
 /** Local-midnight millis → the UTC-midnight millis Material's DatePicker uses for the same calendar day. */
@@ -378,29 +375,29 @@ fun ProgramStartedScreen(program: UserProgram, onViewMyProgram: () -> Unit, onVi
     val dateLabel = remember(program.startDate) { SimpleDateFormat("MMMM d, yyyy", Locale.getDefault()).format(Date(program.startDate)) }
 
     Column(
-        modifier = Modifier.fillMaxSize().background(BackgroundColor).padding(20.dp),
+        modifier = Modifier.fillMaxSize().background(FLTheme.colors.background).padding(20.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Box(
-                modifier = Modifier.size(36.dp).clip(CircleShape).background(White).clickable(onClick = onViewMyProgram),
+                modifier = Modifier.size(36.dp).clip(CircleShape).background(FLTheme.colors.surface).clickable(onClick = onViewMyProgram),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(Icons.Default.Close, contentDescription = "Close", tint = TextPrimaryColor, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = FLTheme.colors.textPrimary, modifier = Modifier.size(16.dp))
             }
         }
         Spacer(modifier = Modifier.weight(1f))
         Icon(Icons.Default.EventAvailable, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(72.dp))
         Spacer(modifier = Modifier.height(24.dp))
-        Text("You're All Set!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+        Text("You're All Set!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
         Spacer(modifier = Modifier.height(10.dp))
         Text(
             "Your ${program.programName} program starts $dateLabel.",
-            fontSize = 15.sp, color = TextSecondaryColor, textAlign = TextAlign.Center
+            fontSize = 15.sp, color = FLTheme.colors.textSecondary, textAlign = TextAlign.Center
         )
         Spacer(modifier = Modifier.height(24.dp))
         Column(
-            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(White).padding(16.dp),
+            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(FLTheme.colors.surface).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             Confirmation("All workouts have been added to your calendar.")
@@ -422,6 +419,6 @@ fun ProgramStartedScreen(program: UserProgram, onViewMyProgram: () -> Unit, onVi
 private fun Confirmation(text: String) {
     Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
         Icon(Icons.Default.CheckCircle, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))
-        Text(text, fontSize = 14.sp, color = TextPrimaryColor)
+        Text(text, fontSize = 14.sp, color = FLTheme.colors.textPrimary)
     }
 }

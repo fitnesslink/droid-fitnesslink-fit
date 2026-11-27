@@ -10,3 +10,6 @@
 local.properties
 /app/build
 .kotlin
+
+# Signed release output (Generate Signed Bundle/APK) — build artifacts, not source
+/app/release/

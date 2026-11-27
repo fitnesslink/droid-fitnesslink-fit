@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.catalog
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -52,12 +53,12 @@ import com.fitnesslink.fit.ui.components.EquipmentChipStrip
 import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.components.FavoritesFilterControl
 import com.fitnesslink.fit.ui.components.HeaderBackView
+import com.fitnesslink.fit.ui.components.MoreFiltersButton
+import com.fitnesslink.fit.ui.movements.MoreFiltersSelection
+import com.fitnesslink.fit.ui.movements.MoreFiltersSheet
 import com.fitnesslink.fit.ui.components.SearchView
 import com.fitnesslink.fit.ui.components.SharedBadge
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.ui.workout.FavoriteHeartButton
 import com.fitnesslink.fit.ui.workout.WorkoutRowView
 import com.fitnesslink.fit.ui.workout.thumbRef
@@ -76,6 +77,7 @@ fun WorkoutsScreen(
     onNavigateToWorkoutEditor: () -> Unit = {}
 ) {
     val viewModel: WorkoutsViewModel = viewModel()
+    var showMoreFilters by remember { mutableStateOf(false) }
     var layout by remember { mutableStateOf(runCatching { ContentLayoutPrefs.get() }.getOrDefault(ContentLayout.CARD)) }
     val contributors by ContributorStore.contributors.collectAsState()
     val anatomy by ClassificationStore.anatomy.collectAsState()
@@ -108,7 +110,7 @@ fun WorkoutsScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
         Row(
@@ -135,7 +137,7 @@ fun WorkoutsScreen(
                 containerColor = FLPrimary,
                 modifier = Modifier.size(42.dp)
             ) {
-                Text("+", color = White, fontSize = 20.sp)
+                Text("+", color = FLTheme.colors.onBrand, fontSize = 20.sp)
             }
         }
 
@@ -158,6 +160,11 @@ fun WorkoutsScreen(
                     onToggleMine = { viewModel.toggleMine() }
                 )
             }
+            // FTNSSLNK-503: More Filters beside the quick filters. The drawer
+            // edits the same equipment / anatomy sets as the chip strips below,
+            // plus a duration bucket — all applied client-side.
+            Spacer(modifier = Modifier.weight(1f))
+            MoreFiltersButton(activeCount = viewModel.moreFiltersCount, onClick = { showMoreFilters = true })
         }
 
         if (equipmentOptions.isNotEmpty()) {
@@ -167,6 +174,24 @@ fun WorkoutsScreen(
         if (anatomyOptions.isNotEmpty()) {
             Spacer(modifier = Modifier.height(8.dp))
             AnatomyChipStrip(options = anatomyOptions, selected = viewModel.selectedAnatomyIds, onToggle = viewModel::toggleAnatomy)
+        }
+
+        if (showMoreFilters) {
+            MoreFiltersSheet(
+                initial = MoreFiltersSelection(
+                    anatomyIds = viewModel.selectedAnatomyIds,
+                    equipmentIds = viewModel.selectedEquipmentIds,
+                    durationIds = viewModel.selectedDurationIds
+                ),
+                onApply = { sel ->
+                    // Chip strips compare lowercased ids.
+                    viewModel.selectedAnatomyIds = sel.anatomyIds.map { it.lowercase() }.toSet()
+                    viewModel.selectedEquipmentIds = sel.equipmentIds.map { it.lowercase() }.toSet()
+                    viewModel.selectedDurationIds = sel.durationIds
+                },
+                onDismiss = { showMoreFilters = false },
+                durationOptions = viewModel.durationOptions
+            )
         }
 
         LevelFilterRow(selected = viewModel.levelFilter, onSelect = { viewModel.levelFilter = it })
@@ -197,7 +222,7 @@ fun WorkoutsScreen(
                 Text(
                     text = if (viewModel.hasActiveFilters || viewModel.searchText.isNotBlank()) "Clear the filters to see everything." else "Tap + to build your first workout.",
                     fontSize = 13.sp,
-                    color = TextSecondaryColor
+                    color = FLTheme.colors.textSecondary
                 )
             }
         } else {
@@ -241,7 +266,7 @@ private fun LevelFilterRow(
         Text(
             text = "Level",
             fontSize = 12.sp,
-            color = TextSecondaryColor,
+            color = FLTheme.colors.textSecondary,
             modifier = Modifier.padding(end = 8.dp)
         )
         LazyRow(
@@ -253,10 +278,10 @@ private fun LevelFilterRow(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(16.dp))
-                        .background(if (isSelected) FLPrimary else White)
+                        .background(if (isSelected) FLPrimary else FLTheme.colors.surface)
                         .border(
                             1.dp,
-                            if (isSelected) FLPrimary else TextSecondaryColor.copy(alpha = 0.3f),
+                            if (isSelected) FLPrimary else FLTheme.colors.textSecondary.copy(alpha = 0.3f),
                             RoundedCornerShape(16.dp)
                         )
                         .clickable { onSelect(option) }
@@ -266,7 +291,7 @@ private fun LevelFilterRow(
                         text = option ?: "All",
                         fontSize = 12.sp,
                         fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (isSelected) White else TextSecondaryColor
+                        color = if (isSelected) FLTheme.colors.onBrand else FLTheme.colors.textSecondary
                     )
                 }
             }
@@ -285,7 +310,7 @@ fun WorkoutItemView(
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .clickable(onClick = onClick)
     ) {
         FLImageView(
@@ -309,7 +334,7 @@ fun WorkoutItemView(
                     Text(
                         text = workout.time,
                         fontSize = 13.sp,
-                        color = TextSecondaryColor
+                        color = FLTheme.colors.textSecondary
                     )
                 }
                 if (workout.isSharedWithMe) {

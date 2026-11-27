@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -53,12 +54,8 @@ import com.fitnesslink.fit.ui.components.FLImageView
 import com.fitnesslink.fit.ui.movements.MovementContentView
 import com.fitnesslink.fit.ui.movements.MovementTagChip
 import com.fitnesslink.fit.ui.session.MuxVideoPlayer
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * Modal preview for a movement before the user commits to adding it (iOS
@@ -106,14 +103,14 @@ fun MovementPreviewSheet(
                 .fillMaxSize()
                 .padding(top = 40.dp)
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
-                .background(BackgroundColor)
+                .background(FLTheme.colors.background)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Spacer(modifier = Modifier.weight(1f))
-                IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Close", tint = TextPrimaryColor) }
+                IconButton(onClick = onDismiss) { Icon(Icons.Default.Close, contentDescription = "Close", tint = FLTheme.colors.textPrimary) }
             }
 
             Column(
@@ -137,7 +134,7 @@ fun MovementPreviewSheet(
                             } else {
                                 // Mux-only asset: no separate thumbnail exists, so a neutral backdrop
                                 // keeps the Watch Demo button reachable.
-                                Box(modifier = Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.9f)))
+                                Box(modifier = Modifier.fillMaxSize().background(FLTheme.colors.scrim.copy(alpha = 0.9f)))
                             }
                             if (videoId != null) {
                                 WatchDemoButton(
@@ -151,7 +148,7 @@ fun MovementPreviewSheet(
                 }
 
                 Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(movement.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                    Text(movement.name, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                     if (anatomyNames.isNotEmpty() || equipmentNames.isNotEmpty()) {
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                             anatomyNames.forEach { MovementTagChip(it, Icons.Default.SportsGymnastics, FLPrimary) }
@@ -170,13 +167,13 @@ fun MovementPreviewSheet(
                 if (hydrated?.summary.isNullOrBlank() && (hydrated?.sections.isNullOrEmpty())) {
                     val description = hydrated?.description ?: movement.description
                     if (description.isNotBlank()) {
-                        Text(description, fontSize = 14.sp, color = TextSecondaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+                        Text(description, fontSize = 14.sp, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(horizontal = 20.dp))
                     }
                 }
 
                 if (anatomyNames.isNotEmpty() || equipmentNames.isNotEmpty()) {
                     Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text("Details", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor)
+                        Text("Details", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary)
                         if (anatomyNames.isNotEmpty()) DetailRow(Icons.Default.SportsGymnastics, "Muscle Group", anatomyNames.joinToString(", "))
                         if (equipmentNames.isNotEmpty()) DetailRow(Icons.Default.FitnessCenter, "Equipment", equipmentNames.joinToString(", "))
                     }
@@ -193,7 +190,7 @@ fun MovementPreviewSheet(
                         .clickable(onClick = onAdd),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(addLabel, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = White)
+                    Text(addLabel, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
                 }
                 Spacer(modifier = Modifier.height(30.dp))
             }
@@ -212,17 +209,17 @@ internal fun WatchDemoButton(modifier: Modifier = Modifier, onClick: () -> Unit)
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
     ) {
-        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = White, modifier = Modifier.size(14.dp))
-        Text("Watch Demo", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = White)
+        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = FLTheme.colors.onBrand, modifier = Modifier.size(14.dp))
+        Text("Watch Demo", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.onBrand)
     }
 }
 
 @Composable
 internal fun NoPreviewPlaceholder(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.9f)), contentAlignment = Alignment.Center) {
+    Box(modifier = modifier.fillMaxSize().background(FLTheme.colors.scrim.copy(alpha = 0.9f)), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Icon(Icons.Default.PlayCircle, contentDescription = null, tint = White.copy(alpha = 0.7f), modifier = Modifier.size(48.dp))
-            Text("No Preview Available", fontSize = 14.sp, color = White.copy(alpha = 0.5f))
+            Icon(Icons.Default.PlayCircle, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(48.dp)) // theme-exempt: over media
+            Text("No Preview Available", fontSize = 14.sp, color = Color.White.copy(alpha = 0.5f)) // theme-exempt: over media
         }
     }
 }
@@ -232,8 +229,8 @@ private fun DetailRow(icon: androidx.compose.ui.graphics.vector.ImageVector, lab
     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, contentDescription = null, tint = FLPrimary, modifier = Modifier.size(18.dp))
         Spacer(modifier = Modifier.width(12.dp))
-        Text(label, fontSize = 14.sp, color = TextSecondaryColor)
+        Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         Spacer(modifier = Modifier.weight(1f))
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = TextPrimaryColor)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textPrimary)
     }
 }

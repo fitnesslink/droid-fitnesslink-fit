@@ -77,11 +77,13 @@ import com.fitnesslink.fit.session.WorkoutSummaryLayout
 import com.fitnesslink.fit.session.WorkoutSummaryStats
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.auth.AuthManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+// theme-exempt: over media. The Workout Summary is white-on-dark over the welcome photo in both
+// modes, matching iOS `WorkoutCompletedView`. ShareResultsSheet (a Material dialog) follows the theme.
 
 /**
  * The Workout Summary (port of iOS `WorkoutCompletedView`): celebration → name → RPE → stats →
@@ -119,16 +121,16 @@ fun WorkoutCompletedScreen(
         Column(Modifier.fillMaxSize().statusBarsPadding()) {
             Box(Modifier.fillMaxWidth().padding(top = 12.dp)) {
                 Image(painterResource(R.drawable.logo), contentDescription = "FitnessLink", modifier = Modifier.width(134.dp).align(Alignment.Center))
-                Icon(Icons.Filled.Close, contentDescription = "Close", tint = White, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 20.dp).size(28.dp).clickable { onDismiss() })
+                Icon(Icons.Filled.Close, contentDescription = "Close", tint = Color.White, modifier = Modifier.align(Alignment.CenterEnd).padding(end = 20.dp).size(28.dp).clickable { onDismiss() })
             }
             Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(top = 20.dp, bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 sections.forEach { section ->
                     when (section) {
                         WorkoutSummaryLayout.Section.CELEBRATION -> Celebration(stats)
-                        WorkoutSummaryLayout.Section.WORKOUT_NAME -> Text(workoutName, color = White.copy(alpha = 0.8f), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 24.dp))
+                        WorkoutSummaryLayout.Section.WORKOUT_NAME -> Text(workoutName, color = Color.White.copy(alpha = 0.8f), fontSize = 18.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 24.dp))
                         WorkoutSummaryLayout.Section.RPE -> when (rpeMode) {
                             SummaryRPEMode.Editable -> RPESliderView(rpeValue, { rpeValue = it }, Modifier.padding(horizontal = 32.dp))
-                            is SummaryRPEMode.ReadOnly -> Text("RPE ${rpeMode.value} · ${SummaryRPE.label(rpeMode.value)}", color = White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                            is SummaryRPEMode.ReadOnly -> Text("RPE ${rpeMode.value} · ${SummaryRPE.label(rpeMode.value)}", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                             SummaryRPEMode.Hidden -> Unit
                         }
                         WorkoutSummaryLayout.Section.STATS -> SummaryStatsGrid(stats, Modifier.padding(horizontal = 20.dp))
@@ -138,12 +140,12 @@ fun WorkoutCompletedScreen(
                 }
             }
             Column(Modifier.padding(horizontal = 32.dp).padding(top = 8.dp, bottom = 36.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(WorkoutSummaryLayout.primaryAction, color = White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
+                Text(WorkoutSummaryLayout.primaryAction, color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().height(56.dp).clip(RoundedCornerShape(28.dp)).background(FLPrimary).clickable { onComplete(effectiveRpe) }.padding(top = 16.dp))
                 Row(Modifier.fillMaxWidth().height(44.dp).clickable { showShare = true }, horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Filled.Share, contentDescription = null, tint = White.copy(alpha = 0.85f), modifier = Modifier.size(16.dp))
+                    Icon(Icons.Filled.Share, contentDescription = null, tint = Color.White.copy(alpha = 0.85f), modifier = Modifier.size(16.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(WorkoutSummaryLayout.secondaryAction, color = White.copy(alpha = 0.85f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                    Text(WorkoutSummaryLayout.secondaryAction, color = Color.White.copy(alpha = 0.85f), fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -165,9 +167,9 @@ fun WorkoutCompletedScreen(
 @Composable
 private fun Celebration(stats: WorkoutSummaryStats) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(horizontal = 24.dp)) {
-        Text(WorkoutSummaryLayout.congratulations, color = White.copy(alpha = 0.9f), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
-        Text(WorkoutSummaryLayout.headline, color = White, fontSize = 26.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
-        Box(Modifier.size(56.dp).clip(CircleShape).background(FLPrimary), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Check, contentDescription = null, tint = White, modifier = Modifier.size(28.dp)) }
+        Text(WorkoutSummaryLayout.congratulations, color = Color.White.copy(alpha = 0.9f), fontSize = 20.sp, fontWeight = FontWeight.SemiBold)
+        Text(WorkoutSummaryLayout.headline, color = Color.White, fontSize = 26.sp, fontWeight = FontWeight.Black, textAlign = TextAlign.Center)
+        Box(Modifier.size(56.dp).clip(CircleShape).background(FLPrimary), contentAlignment = Alignment.Center) { Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(28.dp)) }
         stats.completionText?.let { Text(it, color = OrangeTheme, fontSize = 14.sp, fontWeight = FontWeight.SemiBold) }
     }
 }
@@ -182,14 +184,14 @@ fun SummaryStatsGrid(stats: WorkoutSummaryStats, modifier: Modifier = Modifier) 
         stats.volumeText?.let { add(Triple("Total Volume", it, "🏋")) }
         stats.distanceText?.let { add(Triple("Distance", it, "📍")) }
     }
-    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(White.copy(alpha = 0.08f)).padding(vertical = 20.dp, horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha = 0.08f)).padding(vertical = 20.dp, horizontal = 12.dp), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         items.chunked(3).forEach { row ->
             Row(Modifier.fillMaxWidth()) {
                 row.forEach { (label, value, icon) ->
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                         Text(icon, fontSize = 16.sp)
-                        Text(value, color = White, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                        Text(label, color = White.copy(alpha = 0.6f), fontSize = 11.sp)
+                        Text(value, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Text(label, color = Color.White.copy(alpha = 0.6f), fontSize = 11.sp)
                     }
                 }
                 repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
@@ -200,17 +202,17 @@ fun SummaryStatsGrid(stats: WorkoutSummaryStats, modifier: Modifier = Modifier) 
 
 @Composable
 fun MissedExercisesSection(missed: List<com.fitnesslink.fit.session.MissedExercise>, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(White.copy(alpha = 0.08f)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha = 0.08f)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (missed.isEmpty()) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = FLPrimary); Spacer(Modifier.width(8.dp))
-                Text(WorkoutSummaryStats.allCompletedText, color = White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                Text(WorkoutSummaryStats.allCompletedText, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
             }
         } else {
-            Text("MISSED EXERCISES", color = White.copy(alpha = 0.6f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+            Text("MISSED EXERCISES", color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             missed.forEach { m ->
                 Row(Modifier.fillMaxWidth()) {
-                    Text(m.name, color = White, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, modifier = Modifier.weight(1f))
+                    Text(m.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Medium, maxLines = 1, modifier = Modifier.weight(1f))
                     Text(m.detail, color = OrangeTheme, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -225,12 +227,12 @@ fun AchievementsSection(achievements: SessionAchievements, modifier: Modifier = 
     val items = achievements.items
     val perMovement = achievements.records.size + achievements.firstTimeLogged.size
     val visible = if (expanded || achievements.foldedRecordCount == 0) items else items.take(SessionAchievements.visibleRecordLimit) + items.drop(perMovement)
-    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(White.copy(alpha = 0.08f)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("YOUR ACHIEVEMENTS", color = White.copy(alpha = 0.6f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+    Column(modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color.White.copy(alpha = 0.08f)).padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Text("YOUR ACHIEVEMENTS", color = Color.White.copy(alpha = 0.6f), fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         visible.forEach { item ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Icon(Icons.Filled.EmojiEvents, contentDescription = null, tint = OrangeTheme, modifier = Modifier.size(20.dp))
-                Text(item.text, color = White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 2)
+                Text(item.text, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, maxLines = 2)
             }
         }
         if (!expanded && achievements.foldedRecordCount > 0) {
@@ -245,7 +247,7 @@ fun RPESliderView(value: Int?, onChange: (Int) -> Unit, modifier: Modifier = Mod
     var trackWidth by remember { mutableStateOf(1) }
     val fraction = SummaryRPE.fraction(value ?: 0).toFloat()
     Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(SummaryRPE.prompt, color = White.copy(alpha = 0.7f), fontSize = 15.sp, fontWeight = FontWeight.Medium)
+        Text(SummaryRPE.prompt, color = Color.White.copy(alpha = 0.7f), fontSize = 15.sp, fontWeight = FontWeight.Medium)
         Box(
             Modifier.fillMaxWidth().height(28.dp).onSizeChanged { trackWidth = maxOf(1, it.width) }
                 .pointerInput(Unit) { detectTapGestures { offset -> onChange(SummaryRPE.valueFromFraction((offset.x / trackWidth).toDouble())) } }
@@ -254,18 +256,18 @@ fun RPESliderView(value: Int?, onChange: (Int) -> Unit, modifier: Modifier = Mod
         ) {
             Box(Modifier.fillMaxWidth().height(3.dp).clip(CircleShape).background(FLPrimary.copy(alpha = 0.25f)))
             Box(Modifier.fillMaxWidth(fraction).height(3.dp).clip(CircleShape).background(FLPrimary))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { repeat(11) { Box(Modifier.size(3.dp).clip(CircleShape).background(White.copy(alpha = 0.35f))) } }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { repeat(11) { Box(Modifier.size(3.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.35f))) } }
             Box(Modifier.fillMaxWidth(fraction), contentAlignment = Alignment.CenterEnd) {
-                Box(Modifier.size(24.dp).clip(CircleShape).background(if (value == null) White.copy(alpha = 0.6f) else FLPrimary))
+                Box(Modifier.size(24.dp).clip(CircleShape).background(if (value == null) Color.White.copy(alpha = 0.6f) else FLPrimary))
             }
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-            Text(SummaryRPE.minAnchor, color = White.copy(alpha = 0.5f), fontSize = 11.sp, modifier = Modifier.weight(1f))
+            Text(SummaryRPE.minAnchor, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp, modifier = Modifier.weight(1f))
             if (value != null) {
                 Text("$value RPE · ${SummaryRPE.label(value)}", color = Color.Black, fontSize = 12.sp, fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(White.copy(alpha = 0.85f)).padding(horizontal = 14.dp, vertical = 6.dp))
-            } else Text("Optional", color = White.copy(alpha = 0.5f), fontSize = 12.sp, modifier = Modifier.padding(vertical = 6.dp))
-            Text(SummaryRPE.maxAnchor, color = White.copy(alpha = 0.5f), fontSize = 11.sp, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
+                    modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.85f)).padding(horizontal = 14.dp, vertical = 6.dp))
+            } else Text("Optional", color = Color.White.copy(alpha = 0.5f), fontSize = 12.sp, modifier = Modifier.padding(vertical = 6.dp))
+            Text(SummaryRPE.maxAnchor, color = Color.White.copy(alpha = 0.5f), fontSize = 11.sp, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
         }
     }
 }
@@ -303,7 +305,7 @@ fun ShareResultsSheet(
                     TextButton(onClick = { addEmail() }, enabled = isValidEmail(newEmail.trim())) { Text("Add") }
                 }
                 OutlinedTextField(note, { note = it }, placeholder = { Text("Add a note (optional)") }, minLines = 2, maxLines = 4, modifier = Modifier.fillMaxWidth())
-                error?.let { Text(it, color = Color(0xFFE53935), fontSize = 12.sp) }
+                error?.let { Text(it, color = sessionDestructive, fontSize = 12.sp) }
                 Text("Share via another app…", color = FLPrimary, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.clickable { onSystemShare() }.padding(vertical = 4.dp))
                 Text("Skip sharing", color = Color.Gray, fontSize = 13.sp, modifier = Modifier.clickable { onFinish() }.padding(vertical = 4.dp))
             }
@@ -354,7 +356,7 @@ fun WorkoutSummaryReopenView(sessionId: String, onBack: () -> Unit) {
     val data = loaded
     when {
         missing -> LaunchedEffect(Unit) { onBack() }
-        data == null -> Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = White) }
+        data == null -> Box(Modifier.fillMaxSize().background(Color.Black), contentAlignment = Alignment.Center) { CircularProgressIndicator(color = Color.White) }
         else -> {
             val (row, stats, achievements) = data
             WorkoutCompletedScreen(

@@ -39,14 +39,11 @@ import com.fitnesslink.fit.persistence.DatabaseManager
 import com.fitnesslink.fit.persistence.foodEntries
 import com.fitnesslink.fit.ui.components.HeaderBackView
 import com.fitnesslink.fit.ui.components.SeparatorView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
+import com.fitnesslink.fit.ui.theme.FLTheme
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -105,47 +102,47 @@ fun WeeklyProgressScreen(onBack: () -> Unit) {
     val avgCarbs = if (weeklyData.isEmpty()) 0 else (weeklyData.sumOf { it.carbs } / count).toInt()
     val maxCalories = weeklyData.maxOfOrNull { it.calories }?.takeIf { it > 0 } ?: 1
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderBackView(onBack = onBack)
         Column(
             modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text("Weekly Progress", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp))
+            Text("Weekly Progress", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp).padding(top = 10.dp))
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp)).padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Daily Calories", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Daily Calories", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 Row(modifier = Modifier.fillMaxWidth().height(160.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
                     weeklyData.forEach { day ->
                         Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
-                            Text("${day.calories}", fontSize = 10.sp, color = TextSecondaryColor)
+                            Text("${day.calories}", fontSize = 10.sp, color = FLTheme.colors.textSecondary)
                             Spacer(modifier = Modifier.height(4.dp))
                             Box(
                                 modifier = Modifier.fillMaxWidth().height(barHeight(day.calories, maxCalories)).clip(RoundedCornerShape(4.dp))
                                     .background(if (day.calories >= day.goal) FLPrimary else FLPrimary.copy(alpha = 0.5f))
                             )
                             Spacer(modifier = Modifier.height(4.dp))
-                            Text(day.dayLabel, fontSize = 11.sp, color = TextSecondaryColor)
+                            Text(day.dayLabel, fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                         }
                     }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Box(modifier = Modifier.size(12.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(FLPrimary))
-                    Text("At/above goal", fontSize = 11.sp, color = TextSecondaryColor)
+                    Text("At/above goal", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                     Spacer(modifier = Modifier.width(4.dp))
                     Box(modifier = Modifier.size(12.dp, 4.dp).clip(RoundedCornerShape(2.dp)).background(FLPrimary.copy(alpha = 0.5f)))
-                    Text("Below goal", fontSize = 11.sp, color = TextSecondaryColor)
+                    Text("Below goal", fontSize = 11.sp, color = FLTheme.colors.textSecondary)
                 }
             }
 
             Column(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(White, RoundedCornerShape(12.dp)).padding(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).background(FLTheme.colors.surface, RoundedCornerShape(12.dp)).padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text("Weekly Averages", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                Text("Weekly Averages", fontSize = 16.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                 AverageRow("Calories", "$avgCalories cal", FLPrimary)
                 SeparatorView()
                 AverageRow("Protein", "${avgProtein}g", BlueTheme)
@@ -163,9 +160,9 @@ private fun AverageRow(label: String, value: String, color: Color) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Box(modifier = Modifier.size(8.dp).background(color, CircleShape))
-            Text(label, fontSize = 14.sp, color = TextSecondaryColor)
+            Text(label, fontSize = 14.sp, color = FLTheme.colors.textSecondary)
         }
-        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+        Text(value, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
     }
 }
 

@@ -10,6 +10,7 @@ import com.fitnesslink.fit.billing.PlayBillingManager
 import com.fitnesslink.fit.settings.UserSettings
 import com.fitnesslink.fit.calendar.CalendarService
 import com.fitnesslink.fit.goals.GoalStore
+import com.fitnesslink.fit.health.HealthConnectService
 import com.fitnesslink.fit.progress.BodyTrackingStore
 import com.fitnesslink.fit.calendar.CalendarSyncService
 import com.fitnesslink.fit.classification.ClassificationStore
@@ -69,6 +70,7 @@ class FitnessLinkApp : Application() {
         EntitlementStore.attach(this)
         PlayBillingManager.attach(this)
         ContentLayoutPrefs.initialize(this)
+        HealthConnectService.attach(this)
         // Auth state listener must attach after the DB exists (it hydrates
         // the cached user) and before the first frame (splash gating).
         AuthManager.initialize(this)
@@ -81,6 +83,8 @@ class FitnessLinkApp : Application() {
         // recompute from the server's unread count on every foreground.
         ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
+                // Grants can change in Health Connect's settings while we're backgrounded.
+                appScope.launch { HealthConnectService.refresh() }
                 if (AuthManager.isAuthenticated.value) {
                     appScope.launch { NotificationBadge.refreshFromServer() }
                     // iOS reconciles the classification taxonomy on every foreground; the store

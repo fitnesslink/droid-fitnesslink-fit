@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.profile
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -59,14 +60,10 @@ import com.fitnesslink.fit.ui.profile.charts.ReportTimeRangePicker
 import com.fitnesslink.fit.ui.profile.charts.ReportTrendRow
 import com.fitnesslink.fit.ui.profile.charts.formatReportDate
 import com.fitnesslink.fit.ui.profile.charts.formatReportDuration
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutReportViewModel
 import java.util.Locale
 
@@ -95,7 +92,7 @@ fun WorkoutAggregateDetailScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
     ) {
         HeaderBackView(onBack = onBack)
 
@@ -108,7 +105,7 @@ fun WorkoutAggregateDetailScreen(
         ) {
             Column(modifier = Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(aggregate?.workoutName ?: workoutName, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                Text("${aggregate?.timesCompleted ?: 0} completed sessions", fontSize = 14.sp, color = TextSecondaryColor)
+                Text("${aggregate?.timesCompleted ?: 0} completed sessions", fontSize = 14.sp, color = FLTheme.colors.textSecondary)
             }
 
             ReportTimeRangePicker(
@@ -172,7 +169,7 @@ private fun TrendsCard(agg: WorkoutAggregate) {
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -200,7 +197,7 @@ private fun PerformanceCharts(agg: WorkoutAggregate) {
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
@@ -208,13 +205,13 @@ private fun PerformanceCharts(agg: WorkoutAggregate) {
             Text("Volume Trend", fontSize = 15.sp, fontWeight = FontWeight.Bold)
             ReportLineChart(points = volumePoints, color = PurpleTheme, height = 140.dp)
         }
-        HorizontalDivider(color = MediumGray.copy(alpha = 0.3f))
+        HorizontalDivider(color = FLTheme.colors.textTertiary.copy(alpha = 0.3f))
         if (withRpe.size >= 2) {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text("RPE Trend", fontSize = 15.sp, fontWeight = FontWeight.Bold)
                 ReportLineChart(points = rpePoints, color = OrangeTheme, height = 140.dp, fill = false, yRange = 1.0..10.0)
             }
-            HorizontalDivider(color = MediumGray.copy(alpha = 0.3f))
+            HorizontalDivider(color = FLTheme.colors.textTertiary.copy(alpha = 0.3f))
         }
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("Duration Trend", fontSize = 15.sp, fontWeight = FontWeight.Bold)
@@ -232,7 +229,7 @@ private fun BestSessionCard(session: SessionRow) {
             .padding(horizontal = 20.dp)
             .fillMaxWidth()
             .clip(RoundedCornerShape(12.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(14.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -242,7 +239,7 @@ private fun BestSessionCard(session: SessionRow) {
         }
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(formatReportDate(session.date), fontSize = 13.sp, color = TextSecondaryColor)
+                Text(formatReportDate(session.date), fontSize = 13.sp, color = FLTheme.colors.textSecondary)
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text(
                         "${WeightUnit.displayWholeNumber(session.totalWeightLifted)} ${WeightUnit.current.label}",
@@ -282,7 +279,7 @@ private fun HistoryRow(session: SessionRow, onClick: () -> Unit, onLongClick: ()
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(10.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .combinedClickable(onClick = onClick, onLongClick = onLongClick)
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -291,11 +288,11 @@ private fun HistoryRow(session: SessionRow, onClick: () -> Unit, onLongClick: ()
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(formatReportDate(session.date), fontSize = 14.sp, fontWeight = FontWeight.Medium)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(formatReportDuration(session.durationSeconds), fontSize = 12.sp, color = TextSecondaryColor)
+                Text(formatReportDuration(session.durationSeconds), fontSize = 12.sp, color = FLTheme.colors.textSecondary)
                 if (session.totalWeightLifted > 0) {
                     Text(
                         "${WeightUnit.displayWholeNumber(session.totalWeightLifted)} ${WeightUnit.current.label}",
-                        fontSize = 12.sp, color = TextSecondaryColor
+                        fontSize = 12.sp, color = FLTheme.colors.textSecondary
                     )
                 }
             }
@@ -310,6 +307,6 @@ private fun HistoryRow(session: SessionRow, onClick: () -> Unit, onLongClick: ()
         } else {
             Icon(Icons.Default.Warning, contentDescription = "Incomplete", tint = OrangeTheme, modifier = Modifier.size(16.dp))
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(18.dp))
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(18.dp))
     }
 }

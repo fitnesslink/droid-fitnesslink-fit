@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.home
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,8 +34,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.White
 
 /**
  * One-tap shortcuts to the app's most common next steps (iOS
@@ -45,7 +44,7 @@ import com.fitnesslink.fit.ui.theme.White
 @Composable
 fun HomeQuickActionsView(onNavigate: (String) -> Unit, onSetGoal: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Text("Quick Taps", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.padding(horizontal = 20.dp))
+        Text("Quick Taps", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 20.dp))
         Row(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
             modifier = Modifier
@@ -70,7 +69,7 @@ private fun QuickAction(icon: ImageVector, title: String, emphasized: Boolean = 
         modifier = Modifier
             .width(88.dp)
             .clip(RoundedCornerShape(12.dp))
-            .background(if (emphasized) FLPrimary.copy(alpha = 0.12f) else White)
+            .background(if (emphasized) FLPrimary.copy(alpha = 0.12f) else FLTheme.colors.surface)
             .border(1.5.dp, if (emphasized) FLPrimary else Color.Transparent, RoundedCornerShape(12.dp))
             .clickable(onClick = onClick)
             .padding(vertical = 14.dp, horizontal = 4.dp)
@@ -80,7 +79,7 @@ private fun QuickAction(icon: ImageVector, title: String, emphasized: Boolean = 
             text = title,
             fontSize = 11.sp,
             fontWeight = FontWeight.Medium,
-            color = TextPrimaryColor,
+            color = FLTheme.colors.textPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

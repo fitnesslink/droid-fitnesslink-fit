@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.calendar
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,10 +42,7 @@ import com.fitnesslink.fit.R
 import com.fitnesslink.fit.calendar.CalendarDayKeys
 import com.fitnesslink.fit.model.CalendarCell
 import com.fitnesslink.fit.model.CalendarHeaderCell
-import com.fitnesslink.fit.ui.theme.CalendarLine
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.White
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -91,7 +89,7 @@ fun MonthCalendarView(
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(White)
+            .background(FLTheme.colors.surface)
             .padding(16.dp)
     ) {
         // Header
@@ -139,10 +137,10 @@ fun MonthCalendarView(
 
         Row(modifier = Modifier.fillMaxWidth()) {
             headerItems.forEach { day ->
-                Text(day.name, fontSize = 10.sp, textAlign = TextAlign.Center, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                Text(day.name, fontSize = 10.sp, textAlign = TextAlign.Center, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
             }
         }
-        Box(modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(1.dp).background(CalendarLine))
+        Box(modifier = Modifier.fillMaxWidth().padding(top = 4.dp).height(1.dp).background(FLTheme.colors.calendarLine))
 
         cells.chunked(7).forEach { rowCells ->
             Row(modifier = Modifier.fillMaxWidth()) {

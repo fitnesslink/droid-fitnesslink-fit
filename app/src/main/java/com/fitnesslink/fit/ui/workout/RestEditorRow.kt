@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.workout
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -41,13 +42,7 @@ import com.fitnesslink.fit.media.MediaRef
 import com.fitnesslink.fit.model.RestType
 import com.fitnesslink.fit.model.WorkoutTask
 import com.fitnesslink.fit.ui.components.FLImageView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.ImagePlaceholder
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.viewmodel.WorkoutEditorViewModel
 import com.fitnesslink.fit.workouts.WorkoutRowOps
 
@@ -64,12 +59,12 @@ fun RestEditorRow(task: WorkoutTask, phaseIndex: Int, viewModel: WorkoutEditorVi
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(BackgroundColor)
+            .background(FLTheme.colors.background)
             .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp)).background(White)) {
+            Row(modifier = Modifier.weight(1f).clip(RoundedCornerShape(8.dp)).background(FLTheme.colors.surface)) {
                 SegmentPill("Passive Rest", task.restType == RestType.PASSIVE, Modifier.weight(1f)) {
                     viewModel.updateRestType(task.id, RestType.PASSIVE)
                 }
@@ -83,7 +78,7 @@ fun RestEditorRow(task: WorkoutTask, phaseIndex: Int, viewModel: WorkoutEditorVi
                 modifier = Modifier.clickable { showTimePicker = true }
             )
             Icon(
-                Icons.Filled.Cancel, contentDescription = "Remove rest", tint = MediumGray,
+                Icons.Filled.Cancel, contentDescription = "Remove rest", tint = FLTheme.colors.textTertiary,
                 modifier = Modifier.size(18.dp).clickable { viewModel.removeRest(task.id, phaseIndex) }
             )
         }
@@ -92,7 +87,7 @@ fun RestEditorRow(task: WorkoutTask, phaseIndex: Int, viewModel: WorkoutEditorVi
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(8.dp))
-                    .background(White)
+                    .background(FLTheme.colors.surface)
                     .clickable { viewModel.restMovementPickerTaskId = task.id }
                     .padding(horizontal = 10.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
@@ -102,10 +97,10 @@ fun RestEditorRow(task: WorkoutTask, phaseIndex: Int, viewModel: WorkoutEditorVi
                 Text(
                     text = task.restMovementName ?: "Choose Recovery Movement",
                     fontSize = 14.sp, fontWeight = FontWeight.Medium,
-                    color = if (task.restMovementName == null) TextSecondaryColor else TextPrimaryColor,
+                    color = if (task.restMovementName == null) FLTheme.colors.textSecondary else FLTheme.colors.textPrimary,
                     modifier = Modifier.weight(1f)
                 )
-                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = MediumGray)
+                Icon(Icons.Filled.KeyboardArrowRight, contentDescription = null, tint = FLTheme.colors.textTertiary)
             }
         }
     }
@@ -125,10 +120,10 @@ fun RestEditorRow(task: WorkoutTask, phaseIndex: Int, viewModel: WorkoutEditorVi
 internal fun SegmentPill(label: String, active: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Text(
         text = label, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 1,
-        color = if (active) White else TextPrimaryColor,
+        color = if (active) FLTheme.colors.onBrand else FLTheme.colors.textPrimary,
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
-            .background(if (active) FLPrimary else White)
+            .background(if (active) FLPrimary else FLTheme.colors.surface)
             .clickable(onClick = onClick)
             .padding(vertical = 8.dp, horizontal = 4.dp)
     )
@@ -140,10 +135,10 @@ internal fun RecoveryThumbnail(thumbnailId: String?, sizeDp: Int) {
         FLImageView(ref = MediaRef.MovementThumbnail(thumbnailId), modifier = Modifier.size(sizeDp.dp).clip(RoundedCornerShape(6.dp)))
     } else {
         Box(
-            modifier = Modifier.size(sizeDp.dp).clip(RoundedCornerShape(6.dp)).background(ImagePlaceholder),
+            modifier = Modifier.size(sizeDp.dp).clip(RoundedCornerShape(6.dp)).background(FLTheme.colors.imagePlaceholder),
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null, tint = MediumGray, modifier = Modifier.size((sizeDp / 2).dp))
+            Icon(Icons.AutoMirrored.Filled.DirectionsRun, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size((sizeDp / 2).dp))
         }
     }
 }
@@ -179,9 +174,9 @@ fun RestDurationPickerSheet(
                         modifier = Modifier.width(120.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("seconds", fontSize = 16.sp, color = TextSecondaryColor)
+                    Text("seconds", fontSize = 16.sp, color = FLTheme.colors.textSecondary)
                 }
-                Text("Quick presets", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = TextSecondaryColor)
+                Text("Quick presets", fontSize = 12.sp, fontWeight = FontWeight.Medium, color = FLTheme.colors.textSecondary)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     presets.forEach { secs ->
                         Text(

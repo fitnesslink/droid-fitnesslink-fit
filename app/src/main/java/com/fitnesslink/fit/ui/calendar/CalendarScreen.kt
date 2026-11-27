@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.calendar
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -41,10 +42,7 @@ import com.fitnesslink.fit.calendar.CalendarSyncService
 import com.fitnesslink.fit.calendar.tapRoute
 import com.fitnesslink.fit.ui.catalog.ProgramEditorScreen
 import com.fitnesslink.fit.ui.components.HeaderView
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
 import com.fitnesslink.fit.ui.workout.WorkoutEditorScreen
 import com.fitnesslink.fit.viewmodel.CalendarViewModel
 import kotlinx.coroutines.delay
@@ -145,7 +143,7 @@ fun CalendarScreen(
             title = { Text("Remove $n workout${if (n == 1) "" else "s"} from your calendar?") },
             confirmButton = {
                 TextButton(onClick = { showBulkDeleteConfirm = false; viewModel.deleteSelectedEntries() }) {
-                    Text("Remove from Calendar", color = Color.Red)
+                    Text("Remove from Calendar", color = FLTheme.colors.danger)
                 }
             },
             dismissButton = { TextButton(onClick = { showBulkDeleteConfirm = false }) { Text("Cancel") } }
@@ -154,7 +152,7 @@ fun CalendarScreen(
 
     // MARK: - Body
 
-    Column(modifier = Modifier.fillMaxSize().background(BackgroundColor)) {
+    Column(modifier = Modifier.fillMaxSize().background(FLTheme.colors.background)) {
         HeaderView(onNotificationsTap = onNavigateToNotifications)
 
         Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
@@ -178,7 +176,7 @@ fun CalendarScreen(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(viewModel.selectedDayLabel, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TextPrimaryColor, modifier = Modifier.weight(1f))
+                Text(viewModel.selectedDayLabel, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textPrimary, modifier = Modifier.weight(1f))
                 if (viewModel.filteredContent.isNotEmpty()) {
                     Text(
                         if (viewModel.isSelecting) "Done" else "Select",
@@ -231,7 +229,7 @@ fun CalendarScreen(
                         Spacer(modifier = Modifier.weight(1f))
                         val count = viewModel.selectedEntryIds.size
                         TextButton(onClick = { showBulkDeleteConfirm = true }, enabled = count > 0) {
-                            Text("Delete ($count)", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (count > 0) Color.Red else MediumGray)
+                            Text("Delete ($count)", fontSize = 14.sp, fontWeight = FontWeight.SemiBold, color = if (count > 0) FLTheme.colors.danger else FLTheme.colors.textTertiary)
                         }
                     }
                 }
@@ -245,7 +243,7 @@ fun CalendarScreen(
 @Composable
 private fun FullScreenEditor(onDismiss: () -> Unit, content: @Composable () -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
-        Surface(modifier = Modifier.fillMaxSize(), color = BackgroundColor) {
+        Surface(modifier = Modifier.fillMaxSize(), color = FLTheme.colors.background) {
             Box(modifier = Modifier.fillMaxSize()) { content() }
         }
     }

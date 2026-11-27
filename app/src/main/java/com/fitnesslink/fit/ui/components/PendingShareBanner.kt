@@ -30,9 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.api.SharedContent
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
+import com.fitnesslink.fit.ui.theme.FLTheme
 
 /**
  * Accept / Decline card shown at the top of a workout, program or movement
@@ -86,13 +84,13 @@ fun PendingShareBanner(
                 text = "$sharer shared this $kindLabel with you",
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
-                color = TextPrimaryColor
+                color = FLTheme.colors.textPrimary
             )
         }
         Text(
             text = "Accept to add it to your library, or decline to leave it out.",
             fontSize = 13.sp,
-            color = TextSecondaryColor
+            color = FLTheme.colors.textSecondary
         )
         Row(
             modifier = Modifier.fillMaxWidth().alpha(if (isBusy) 0.6f else 1f),
@@ -103,7 +101,7 @@ fun PendingShareBanner(
                 enabled = !isBusy,
                 modifier = Modifier.weight(1f),
                 shape = RoundedCornerShape(10.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = FLPrimary, contentColor = White)
+                colors = ButtonDefaults.buttonColors(containerColor = FLPrimary, contentColor = FLTheme.colors.onBrand)
             ) {
                 Text("Accept", fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
             }

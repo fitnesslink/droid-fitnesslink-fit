@@ -1,5 +1,6 @@
 package com.fitnesslink.fit.ui.quickstart
 
+import com.fitnesslink.fit.ui.theme.FLTheme
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -52,15 +53,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.fitnesslink.fit.model.api.AvailableWorkoutPhase
 import com.fitnesslink.fit.session.QuickStartSuggestions
-import com.fitnesslink.fit.ui.theme.BackgroundColor
 import com.fitnesslink.fit.ui.theme.BlueTheme
 import com.fitnesslink.fit.ui.theme.FLPrimary
-import com.fitnesslink.fit.ui.theme.MediumGray
 import com.fitnesslink.fit.ui.theme.OrangeTheme
 import com.fitnesslink.fit.ui.theme.PurpleTheme
-import com.fitnesslink.fit.ui.theme.TextPrimaryColor
-import com.fitnesslink.fit.ui.theme.TextSecondaryColor
-import com.fitnesslink.fit.ui.theme.White
 import com.fitnesslink.fit.workouts.WorkoutPhaseStore
 import kotlinx.coroutines.launch
 
@@ -144,36 +140,36 @@ fun QuickStartPhasePickerSheet(alreadyAttachedIds: Set<String>, onPick: (Availab
         }
     }
 
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = BackgroundColor) {
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState, containerColor = FLTheme.colors.background, contentColor = FLTheme.colors.textPrimary) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Text("Add Phase", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor, modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp))
+            Text("Add Phase", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary, modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp))
             QuickStartPhaseOption.standard.forEach { option ->
                 val attached = attachedNames.contains(QuickStartPhaseOption.normalized(option.name))
                 val busy = resolvingName == option.name
                 PhaseRow(option.icon, option.color, option.name, option.subtitle, attached, busy) { pick(option.name) }
             }
             if (extraCustomPhases.isNotEmpty()) {
-                Text("MY PHASES", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextSecondaryColor, modifier = Modifier.padding(top = 8.dp))
+                Text("MY PHASES", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = FLTheme.colors.textSecondary, modifier = Modifier.padding(top = 8.dp))
                 extraCustomPhases.forEach { phase ->
                     val attached = alreadyAttachedIds.contains(phase.id)
                     PhaseRow(Icons.Filled.Label, FLPrimary, phase.name, null, attached, false) { if (!attached) { onPick(phase); onDismiss() } }
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 4.dp)) {
-                HorizontalDivider(Modifier.weight(1f), color = MediumGray.copy(alpha = 0.4f))
-                Text("OR", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-                HorizontalDivider(Modifier.weight(1f), color = MediumGray.copy(alpha = 0.4f))
+                HorizontalDivider(Modifier.weight(1f), color = FLTheme.colors.textTertiary.copy(alpha = 0.4f))
+                Text("OR", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
+                HorizontalDivider(Modifier.weight(1f), color = FLTheme.colors.textTertiary.copy(alpha = 0.4f))
             }
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).padding(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).padding(12.dp)) {
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Custom Phase", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = TextPrimaryColor)
+                    Text("Custom Phase", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textPrimary)
                     OutlinedTextField(value = customName, onValueChange = { customName = it }, singleLine = true, placeholder = { Text("e.g. Power, Skill Work, Rehab") }, modifier = Modifier.fillMaxWidth())
                 }
                 val canAdd = customName.isNotBlank() && resolvingName == null
                 if (resolvingName != null && resolvingName == customName.trim()) CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(24.dp))
-                else Icon(Icons.Filled.ArrowCircleRight, contentDescription = "Add custom phase", tint = if (canAdd) FLPrimary else MediumGray, modifier = Modifier.size(28.dp).clickable(enabled = canAdd) { pick(customName) })
+                else Icon(Icons.Filled.ArrowCircleRight, contentDescription = "Add custom phase", tint = if (canAdd) FLPrimary else FLTheme.colors.textTertiary, modifier = Modifier.size(28.dp).clickable(enabled = canAdd) { pick(customName) })
             }
-            errorMessage?.let { Text(it, fontSize = 12.sp, color = Color(0xFFE53935)) }
+            errorMessage?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.danger) }
         }
     }
 }
@@ -182,19 +178,19 @@ fun QuickStartPhasePickerSheet(alreadyAttachedIds: Set<String>, onPick: (Availab
 private fun PhaseRow(icon: ImageVector, color: Color, name: String, subtitle: String?, attached: Boolean, busy: Boolean, onClick: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
-        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(White).clickable(enabled = !attached && !busy, onClick = onClick).padding(12.dp)
+        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(FLTheme.colors.surface).clickable(enabled = !attached && !busy, onClick = onClick).padding(12.dp)
     ) {
         Box(Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(color.copy(alpha = 0.15f)), contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
         }
         Column(Modifier.weight(1f)) {
-            Text(name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (attached) TextSecondaryColor else TextPrimaryColor)
-            subtitle?.let { Text(it, fontSize = 12.sp, color = TextSecondaryColor, maxLines = 1, overflow = TextOverflow.Ellipsis) }
+            Text(name, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = if (attached) FLTheme.colors.textSecondary else FLTheme.colors.textPrimary)
+            subtitle?.let { Text(it, fontSize = 12.sp, color = FLTheme.colors.textSecondary, maxLines = 1, overflow = TextOverflow.Ellipsis) }
         }
         when {
             busy -> CircularProgressIndicator(color = FLPrimary, modifier = Modifier.size(18.dp))
-            attached -> Text("Added", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondaryColor)
-            else -> Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = MediumGray, modifier = Modifier.size(16.dp))
+            attached -> Text("Added", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = FLTheme.colors.textSecondary)
+            else -> Icon(Icons.Filled.ChevronRight, contentDescription = null, tint = FLTheme.colors.textTertiary, modifier = Modifier.size(16.dp))
         }
     }
 }
